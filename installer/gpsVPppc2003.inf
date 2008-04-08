@@ -1,0 +1,63 @@
+[Version]
+Signature="$Windows NT$"      ; required as-is
+Provider="Vsevolod Shorin"    ; max of 30 chars, cannot use XML reserved chars
+CESignature="$Windows CE$"    ; required as-is
+
+[CEStrings]
+AppName="gpsVP"               ; max of 40 chars, no XML reserved chars
+InstallDir=%CE1%\%AppName%    ; Installation directory on device
+
+[CEDevice]
+VersionMin=4.00               ; required as-is
+VersionMax=4.99               ; required as-is
+
+[DefaultInstall]              ; operations to complete during install
+CEShortcuts=Shortcuts         ; Create a shortcut
+CopyFiles=Exe,Map,Point,Track ; Copy files, in our case "Magic 8 Ball.exe"
+AddReg=RegSettings
+
+[SourceDisksNames]            ; directory that holds source data
+1=,"Common1",,"src"
+
+[SourceDisksFiles]            ; listing of all files to be included in cab
+VisualPainterPPC.exe=1
+world.img=1
+readme.txt=1
+GPS waypoints.wpt=1
+
+[DestinationDirs]             ; default directory destination for each entry
+Exe=0,%InstallDir%
+Map=0,%CE5%\GPS maps
+Track=0,%CE5%\GPS Tracks
+Point=0,%CE5%
+Shortcuts=0,%CE2%\Start Menu
+
+[Exe]                         ; alias for use in DefaultInstall above
+gpsVP.exe,VisualPainterPPC.exe,,0x00000002
+
+[Map]
+world.img,,,0x00000002
+
+[Point]
+GPS waypoints.wpt,,,0x00000012
+
+[Track]
+readme.txt,,,0x00000002
+
+[Shortcuts]                   ; shortcut created in destination directory
+gpsVP,0,gpsVP.exe,%CE11%
+
+[RegSettings]
+HKCU,Software\Vsevolod Shorin\VSMapViewer,WaypointsFileDef,0x00000002,%CE5%\GPS waypoints.wpt
+HKCU,Software\Vsevolod Shorin\VSMapViewer,TrackFolderDef,0x00000002,%CE5%\GPS Tracks
+HKCU,Software\Vsevolod Shorin\VSMapViewer,PortDef,0x00000002,com6:
+HKCU,Software\Vsevolod Shorin\VSMapViewer,AtlasDef,0x00000003,22,00,00,00,5C,00,4D,00,79,00,20,00,44,00,6F,00,63,00,75,00,6D,00,65,00,6E,00,74,00,73,00,5C,00,47,00,50,00,53,00,20,00,6D,00,61,00,70,00,73,00,5C,00,77,00,6F,00,72,00,6C,00,64,00,2E,00,69,00,6D,00,67,00,00,00,01,00
+HKCU,Software\Vsevolod Shorin\VSMapViewer,CenterDef,0x00000003,76,60,04,00,07,B7,20,00
+HKCU,Software\Vsevolod Shorin\VSMapViewer,Keymap,0x00000003,00,10,00,00,00,00,01,10,00,00,00,00,02,10,00,00,00,00,03,10,00,00,00,00,15,10,00,00,00,00,1D,10,00,00,00,00,04,10\
+	,00,00,00,00,11,10,77,00,00,00,12,10,00,00,00,00,13,10,78,00,00,00,14,10,30,00,00,00,07,10,31,00,00,00,08,10,32,00,00,00,09,10,25,00,00,00,0A,10,27,00,00,00,0B,10,26,00\
+	,00,00,0C,10,28,00,00,00,16,10,00,00,00,00,26,10,35,00,00,00,25,10,34,00,00,00,20,10,00,00,00,00,21,10,00,00,00,00,22,10,00,00,00,00,23,10,00,00,00,00,24,10,00,00,00,00\
+	,10,10,37,00,00,00,0F,10,38,00,00,00,17,10,39,00,00,00,05,10,00,00,00,00,0E,10,33,00,00,00,18,10,00,00,00,00,19,10,36,00,00,00,2D,10,00,00,00,00,27,10,00,00,00,00,28,10\
+	,00,00,00,00,29,10,00,00,00,00,2A,10,00,00,00,00,2B,10,00,00,00,00,2C,10,00,00,00,00,1F,10,00,00,00,00,1E,10,00,00,00,00,2F,10,00,00,00,00,31,10,00,00,00,00,1B,10,00,00\
+	,00,00,1C,10,00,00,00,00,0D,10,0D,00,00,00,06,10,00,00,00,00,59,9C,00,00,00,00,7E,9C,00,00,00,00,7F,9C,00,00,00,00,A5,9C,00,00,00,00,72,9C,00,00,00,00,1A,10,00,00,00,00\
+	,2E,10,00,00,00,00,30,10,00,00,00,00
+HKCU,Software\Vsevolod Shorin\VSMapViewer,ScaleDDef,0x00010003,50000

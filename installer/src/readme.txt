@@ -1,0 +1,1 @@
+This folder contains GPS tracks created by gpsVP.
