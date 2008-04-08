@@ -1,0 +1,472 @@
+;GPSmapper element types list
+;
+;RGN10 & RGN20 types-all types are two bytes, first byte is a major type byte, second byte is a subtype.
+;
+;WARNING-RGN10 can use both bytes, RGN20 can use only the first byte, so if we want-create a Dinning point on map, using RGN10 we can define if it has-be an Asian(0x2a02) or Chinese(0x2a04) but using RGN20 element we can only define it as a Dinning area(0x2a)-no subtype is allowed!
+;
+;THIS FILE IS USED BY GPSMAPPER.EXE FILE!
+;YOU CAN MODIFY THIS FILE (ie. translate)-but keep the format of a single line consistent!
+;between hex type (0xYYYY) and name of element you must use TAB as separator!
+;
+;Hexadecimal Type	Name
+;*******************************************************************************
+;* RGN10 & RGN20                                                               *
+;*******************************************************************************
+;
+[RGN10/20 types]
+0x0100-0x0500	City name(Point, fat, big) 
+0x0600-0x0A00	City name(Point, big) 
+0x0B00	City name (Point, small) 
+0x0C00	City name (Point, small) 
+0x0D00	City name (Point, small) 
+0x0E00-0x1100	City name(Point, big) 
+0x1200	Marine info
+0x1400-0x153F	Region name (no Point, big)
+0x1E00-0x1E3F	Region name (no Point, middle)
+0x210F	Exit(Service)
+0x2000-0x203F	Exit
+0x2100-0x213F	Exit(with facilities)
+0x2200-0x223F	Exit(Restroom) 
+0x2300-0x233F	Exit(Convenience Store)
+0x2400-0x243F	Exit(Weight Station)
+0x2500-0x253F	Exit(Tollbooth Booth)
+0x2600-0x263F	Exit(Information) 
+0x2700-0x273F	Exit
+0x2800-0x283F	Region name (no Point, small)
+0x2A00	Dining(Other) 
+0x2A01	Dining(American) 
+0x2A02	Dining(Asian) 
+0x2A03	Dining(Barbecue) 
+0x2A04	Dining(Chinese) 
+0x2A05	Dining(Deli/Bakery) 
+0x2A06	Dining(International) 
+0x2A07	Fast Food
+0x2A08	Dining(Italian) 
+0x2A09	Dining(Mexican) 
+0x2A0A	Dining(Pizza) 
+0x2A0B	Dining(Sea Food)
+0x2A0C	Dining(Steak/Grill) 
+0x2A0D	Dining(Bagel/Donut) 
+0x2A0E	Dining(Cafe/Diner) 
+0x2A0F	Dining(French) 
+0x2A10	Dining(German) 
+0x2A11	Dining(British Isles)
+0x2B00	Hotel(Other) 
+0x2B01	Hotel/Motel
+0x2B02	Bed & Breakfast inn
+0x2B03	Camping/RV-Park
+0x2B04	Resort
+0x2C01	Amusement Park
+0x2C02	Museum/History
+0x2C03	Libraries
+0x2C04	Land Mark
+0x2C05	School
+0x2C06	Park
+0x2C07	Zoo
+0x2C08	Sportpark, Stadium,(point)
+0x2C09	Fair, Conference(point)
+0x2C0A	Vine restaurant(point)
+0x2C0B	Place of Worship
+0x2C0C	Hot Spring
+0x2D01	Theater
+0x2D02	Bar
+0x2D03	Cinema
+0x2D04	Casino
+0x2D05	Golf
+0x2D06	Skiing Center
+0x2D07	Bowling
+0x2D08	Ice/Sporting
+0x2D09	Swimming
+0x2D0A	Sports(point)
+0x2D0B	Sailing Airport
+0x2E00	Some store
+0x2E01	Department Store
+0x2E02	Grocery
+0x2E03	General Merchandiser
+0x2E04	Shopping Center
+0x2E05	Pharmacy
+0x2E06	Convenience
+0x2E07	Apparel
+0x2E08	House and Garden
+0x2E09	Home Furnishing
+0x2E0a	Special Retail
+0x2E0b	Computer/Software
+0x2F00	generic service 
+0x2F01	Fuel/Gas
+0x2F02	Car Rental
+0x2F03	Car Repair
+0x2F04	Airport
+0x2F05	Post Office
+0x2F06	Bank
+0x2F07	Car Dealer(point)
+0x2F08	Bus Station
+0x2F09	Marina
+0x2F0A	Wrecker Service
+0x2F0B	Parking
+0x2F0C	Restroom
+0x2F0D	Automobile Club
+0x2F0E	Car Wash
+0x2F0F	Garmin Dealer
+0x2F10	Personal Service
+0x2F11	Business Service
+0x2F12	Communication
+0x2F13	Repair Service
+0x2F14	Social Service
+0x2F15	Utility
+0x2F16	Truck Stop
+0x3000	generic emergency/government
+0x3001	Police Station
+0x3002	Hospital
+0x3003	Public Office
+0x3004	Justice
+0x3005	Concert hall(point)
+0x3006	Border Station(point)
+0x4000-0x403F	Golf
+0x4100-0x413F	Fish
+0x4200-0x423F	Wreck
+0x4300-0x433F	Marina
+0x4400-0x443F	Gas
+0x4500-0x453F	Restaurant
+0x4600-0x463F	Bar
+0x4700-0x473F	Boat Ramp
+0x4800-0x483F	Camping
+0x4900-0x493F	Park
+0x4A00-0x4A3F	Picnic Area
+0x4B00-0x4B3F	Hospital
+0x4C00-0x4C3F	Information
+0x4D00-0x4D3F	Parking
+0x4E00-0x4E3F	Restroom
+0x4F00-0x4F3F	Shower
+0x5000-0x503F	Drinking Water
+0x5100-0x513F	Telephone
+0x5200-0x523F	Scenic Area
+0x5300-0x533F	Skiing
+0x5400-0x543F	Swimming
+0x5500-0x553F	Dam
+0x5700-0x573F	Danger Area
+0x5800-0x583F	restricted Area
+0x5900	Generic Airport
+0x5901	Large Airport
+0x5902	Medium Airport
+0x5903	Small Airport
+0x5904	Heliport
+0x5905-0x593F	Airport
+0x5D00-0x5D3F	Daymark,Green Square
+0x5E00-0x5E3F	Daymark,Red Triangle
+0x6200	Depth with point in feet one decimal place
+0x6300	Height without point in feet no decimal place
+0x6400	Manmade Feature
+0x6401	Bridge
+0x6402	Building
+0x6403	Cemetery
+0x6404	Church
+0x6405	Civil
+0x6406	Crossing
+0x6407	Dam
+0x6408	Hospital
+0x6409	Levee
+0x640A	Locale
+0x640B	Military
+0x640C	Mine
+0x640D	Oil Field
+0x640E	Park
+0x640F	Post
+0x6410	School
+0x6411	Tower
+0x6412	Trail
+0x6413	Tunnel
+0x6414	Drink water
+0x6415	Ghost Town 
+0x6416	Subdivision
+0x6500	Water Feature
+0x6501	Arroyo
+0x6502	Sand Bar
+0x6503	Bay
+0x6504	Bend
+0x6505	Canal
+0x6506	Channel
+0x6507	Cove
+0x6508	Falls
+0x6509	Geyser
+0x650A	Glacier
+0x650B	Harbour
+0x650C	Island
+0x650D	Lake
+0x650E	Rapids
+0x650F	Reservoir
+0x6510	Sea
+0x6511	Spring
+0x6512	Stream
+0x6513	Swamp
+0x6600	Land Feature
+0x6601	Arch
+0x6602	Area
+0x6603	Basin
+0x6604	Beach
+0x6605	Bench
+0x6606	Cape
+0x6607	Cliff
+0x6608	Crater
+0x6609	Flat
+0x660A	Forest
+0x660B	Gap
+0x660C	Gut
+0x660D	Isthmus
+0x660E	Lava
+0x660F	Pillar
+0x6610	Plain
+0x6611	Range
+0x6612	Reserve
+0x6613	Ridge
+0x6614	Rock
+0x6615	Slope
+0x6616	Summit
+0x6617	Valley
+0x6618	Woods
+0x1C00	unclassified Obstruction
+0x1C01	Wreck
+0x1C02	submerged Wreck, dangerous
+0x1C03	submerged Wreck, non-dangerous
+0x1C04	Wreck, cleared by Wire-drag
+0x1C05	Obstruction, visible at high Water
+0x1C06	Obstruction, awash
+0x1C07	Obstruction, submerged
+0x1C08	Obstruction, cleared by Wire-drag
+0x1C09	Rock, awash
+0x1C0A	Rock, submerged at low Water
+0x1C0B	Sounding
+0x1D01	Tide Prediction
+0x1B01	Fog Horn
+0x1A01	Fog Horn
+0x1901	Fog Horn
+0x1801	Fog Horn
+0x1701	Fog Horn
+0x1601	Fog Horn
+0x1B02	Radio Beacon
+0x1A02	Radio Beacon
+0x1902	Radio Beacon
+0x1802	Radio Beacon
+0x1702	Radio Beacon
+0x1602	Radio Beacon
+0x1B03	Racon
+0x1A03	Racon
+0x1903	Racon
+0x1803	Racon
+0x1703	Racon
+0x1603	Racon
+0x1B04	Daybeacon, red Triangle
+0x1A04	Daybeacon, red Triangle
+0x1904	Daybeacon, red Triangle
+0x1804	Daybeacon, red Triangle
+0x1704	Daybeacon, red Triangle
+0x1604	Daybeacon, red Triangle
+0x1B05	Daybeacon, green Square
+0x1A05	Daybeacon, green Square
+0x1905	Daybeacon, green Square
+0x1805	Daybeacon, green Square
+0x1705	Daybeacon, green Square
+0x1605	Daybeacon, green Square
+0x1B06	Daybeacon, white Diamond
+0x1A06	Daybeacon, white Diamond
+0x1906	Daybeacon, white Diamond
+0x1806	Daybeacon, white Diamond
+0x1706	Daybeacon, white Diamond
+0x1606	Daybeacon, white Diamond
+0x1B07	unlit Navaid, white
+0x1A07	unlit Navaid, white
+0x1907	unlit Navaid, white
+0x1807	unlit Navaid, white
+0x1707	unlit Navaid, white
+0x1607	unlit Navaid, white
+0x1B08	unlit Navaid, red
+0x1A08	unlit Navaid, red
+0x1908	unlit Navaid, red
+0x1808	unlit Navaid, red
+0x1708	unlit Navaid, red
+0x1608	unlit Navaid, red
+0x1B09	unlit Navaid, green
+0x1A09	unlit Navaid, green
+0x1909	unlit Navaid, green
+0x1809	unlit Navaid, green
+0x1709	unlit Navaid, green
+0x1609	unlit Navaid, green
+0x1B0A	unlit Navaid, black
+0x1A0A	unlit Navaid, black
+0x190A	unlit Navaid, black
+0x180A	unlit Navaid, black
+0x170A	unlit Navaid, black
+0x160A	unlit Navaid, black
+0x1B0B	unlit Navaid, yellow or amber
+0x1A0B	unlit Navaid, yellow or amber
+0x190B	unlit Navaid, yellow or amber
+0x180B	unlit Navaid, yellow or amber
+0x170B	unlit Navaid, yellow or amber
+0x160B	unlit Navaid, yellow or amber
+0x1B0C	unlit Navaid, orange
+0x1A0C	unlit Navaid, orange
+0x190C	unlit Navaid, orange
+0x180C	unlit Navaid, orange
+0x170C	unlit Navaid, orange
+0x160C	unlit Navaid, orange
+0x1B0D	unlit Navaid, multi colored
+0x1A0D	unlit Navaid, multi colored
+0x190D	unlit Navaid, multi colored
+0x180D	unlit Navaid, multi colored
+0x170D	unlit Navaid, multi colored
+0x160D	unlit Navaid, multi colored
+0x1B0E	Navaid, unknown
+0x1A0E	Navaid, unknown
+0x190E	Navaid, unknown
+0x180E	Navaid, unknown
+0x170E	Navaid, unknown
+0x160E	Navaid, unknown
+0x1B0F	lighted Navaid, white
+0x1A0F	lighted Navaid, white
+0x190F	lighted Navaid, white
+0x180F	lighted Navaid, white
+0x170F	lighted Navaid, white
+0x160F	lighted Navaid, white
+0x1B10	lighted Navaid, red
+0x1A10	lighted Navaid, red
+0x1910	lighted Navaid, red
+0x1810	lighted Navaid, red
+0x1710	lighted Navaid, red
+0x1610	lighted Navaid, red
+0x1B11	lighted Navaid, green
+0x1A11	lighted Navaid, green
+0x1911	lighted Navaid, green
+0x1811	lighted Navaid, green
+0x1711	lighted Navaid, green
+0x1611	lighted Navaid, green
+0x1B12	lighted Navaid, yellow or amber
+0x1A12	lighted Navaid, yellow or amber
+0x1912	lighted Navaid, yellow or amber
+0x1812	lighted Navaid, yellow or amber
+0x1712	lighted Navaid, yellow or amber
+0x1612	lighted Navaid, yellow or amber
+0x1B13	lighted Navaid, orange
+0x1A13	lighted Navaid, orange
+0x1913	lighted Navaid, orange
+0x1813	lighted Navaid, orange
+0x1713	lighted Navaid, orange
+0x1613	lighted Navaid, orange
+0x1B14	lighted Navaid, violet
+0x1A14	lighted Navaid, violet
+0x1914	lighted Navaid, violet
+0x1814	lighted Navaid, violet
+0x1714	lighted Navaid, violet
+0x1614	lighted Navaid, violet
+0x1B15	lighted Navaid, blue
+0x1A15	lighted Navaid, blue
+0x1915	lighted Navaid, blue
+0x1815	lighted Navaid, blue
+0x1715	lighted Navaid, blue
+0x1615	lighted Navaid, blue
+0x1B16	lighted Navaid, multi colored
+0x1A16	lighted Navaid, multi colored
+0x1916	lighted Navaid, multi colored
+0x1816	lighted Navaid, multi colored
+0x1716	lighted Navaid, multi colored
+0x1616	lighted Navaid, multi colored
+[END-RGN10/20 types]
+
+;*******************************************************************************
+;* RGN40                                                                       *
+;*******************************************************************************
+	
+[RGN40 types]
+0x01	Major HWY thick 
+0x02	Principal HWY-thick 
+0x03	Principal HWY-medium
+0x04	Arterial Road -medium
+0x05	Arterial Road-thick
+0x06	Road-thin
+0x07	Alley-thick
+0x08	Ramp
+0x09	Ramp
+0x0a	Unpaved Road-thin
+0x0b	Major HWY Connector-thick
+0x0c	Roundabout
+0x14	Railroad
+0x15	Shoreline
+0x16	Trail
+0x18	Stream-thin
+0x19	Time-Zone
+0x1a	Ferry
+0x1b	Ferry
+0x1c	Political Boundary
+0x1d	County Boundary
+0x1e	Intl. Boundary
+0x1f	River
+0x20	Land Contour (thin) Height in feet
+0x21	Land Contour (medium) Height in feet
+0x22	Land Contour (thick) Height in feet
+0x23	Depth Contour (thin) Depth in feet
+0x24	Depth Contour (medium) Depth in feet
+0x25	Depth Contour (thick) Depth in feet
+0x26	Intermittent River 
+0x27	Airport Runway
+0x28	Pipeline
+0x29	Powerline
+0x2a	Marine Boundary (no line) 
+0x2b	Marine Hazard (no line) 
+[END-RGN40 types]
+;
+;*******************************************************************************
+;* RGN80                                                                       *
+;*******************************************************************************
+;
+[RGN80 types]
+0x01	City
+0x02	City
+0x03	City
+0x04	Military
+0x05	Parking Lot
+0x06	Parking Garage
+0x07	Airport
+0x08	Shopping Center
+0x09	Marina
+0x0a	University
+0x0b	Hospital
+0x0c	Industrial
+0x0d	Reservation
+0x0e	Airport Runway
+0x13	Man made area
+0x14	National park
+0x15	National park
+0x16	National park
+0x17	City Park
+0x18	Golf
+0x19	Sport
+0x1a	Cemetery
+0x1e	State Park
+0x1f	State Park
+0x28	Ocean
+0x3b	Blue-Unknown
+0x32	Sea
+0x3b	Blue-Unknown
+0x3c	Lake
+0x3d	Lake
+0x3e	Lake
+0x3f	Lake
+0x40	Lake
+0x41	Lake
+0x42	Lake
+0x43	Lake
+0x44	Lake
+0x45	Blue-Unknown
+0x46	River
+0x47	River
+0x48	River
+0x49	River
+0x4b	Background
+0x4c	Intermittent River/Lake
+0x4d	Glaciers
+0x4e	Orchard or plantation
+0x4f	Scrub
+0x50	Woods
+0x51	Wetland
+0x52	Tundra
+0x53	Flats
+[END-RGN80 types]
+

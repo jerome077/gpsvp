@@ -1,0 +1,333 @@
+00 FF FF FF	# Background
+01 00 00 00	# Text color
+02 00 00 00	# Cursor color
+03 01 10 1 # Polyline
+03 02 0E 0 # POI
+03 03 0E 0 # Waypoint
+03 04 14 1 # Road name
+03 05 0E 1 # Screen button
+
+
+80 0 FF FF BF	# Some unknown terrain
+80 1 BF BF BF	# City
+80 2 BF BF BF	# City
+80 3 BF BF BF	# City
+80 4 7F 7F 7F	# Military
+80 5 7F 7F 7F	# Parking Lot
+80 6 7F 7F 7F	# Parking Garage
+80 7 FF CC CC	# Airport
+80 8 CC FF CC	# Shopping Center
+80 9 DD DD DD	# Marina
+80 A 00 00 00	# University
+80 B 88 00 00	# Hospital
+80 C 7F 7F 7F	# Industrial
+80 D FF BF 3F	# Reservation
+80 E BF BF BF	# Airport Runway
+80 13 99 99 99	# Man made area
+80 14 7F EF 7F	# National park
+80 15 7F EF 7F	# National park
+80 16 7F EF 7F	# National park
+80 17 7F BF 00	# City Park
+80 18 00 FF 00	# Golf
+80 19 FF BF 7F	# Sport
+80 1A 00 FF 00	# Cemetery
+80 1E 00 FF 00	# State Park
+80 1F 00 FF 00	# State Park
+80 FF CC FF CC 00 FF 00 1 1 # Detailed map
+
+# Water
+80 28 00 00 FF
+80 29 00 00 FF
+80 32 00 00 FF
+80 3b 00 00 FF
+80 3c 00 00 FF
+80 3d 00 00 FF
+80 3e 00 00 FF
+80 3f 00 00 FF
+80 40 00 00 FF
+80 41 00 00 FF
+80 42 00 00 FF
+80 43 00 00 FF
+80 44 00 00 FF
+80 45 00 00 FF
+80 46 00 00 FF
+80 47 00 00 FF
+80 48 00 00 FF
+80 49 00 00 FF
+
+80 4d 66 66 66	# Glaciers
+80 4e 66 FF 66	# Orchard or plantation
+80 4f 99 FF 99	# Scrub
+80 50 BF FF BF	# Woods
+80 51 88 88 FF	# Wetland 
+80 52 66 66 66	# Tundra
+80 53 FF FF FF	# Flats (island?)
+
+# Major highway
+40 01 BF 7F 7F 0 4
+# Principal highway
+40 02 BF 7F 7F 0 3
+# Other highway road
+40 03 BF 7F 7F 0 2
+
+40 04 BF 7F 7F 0 3
+40 05 BF 7F 7F 0 2
+40 06 BF 7F 7F 0 1
+40 07 BF 7F 7F 0 1
+40 0a BF 7F 7F 0 1
+40 0b BF 7F 7F 0 4
+# Railroad
+40 14 00 00 00 0 3 FF FF FF 1 1
+# 0x15	Shoreline
+40 15 00 00 FF 0 1
+# 0x16	Trail
+40 16 00 00 00 1 1
+# 0x18	Stream-thin
+40 18 00 00 FF 0 1
+#0x19	Time-Zone
+40 19 00 00 FF 1 1
+# 0x1a	Ferry
+40 1A 00 00 00 1 1
+#0x1b	Ferry
+40 1B 00 00 00 1 1
+# Boundaries
+40 1C 00 FF 00 1 1
+40 1D 00 FF 00 1 1
+40 1E 00 FF 00 1 1
+#0x1f	River
+40 1F 00 00 FF 0 2
+#0x20	Land contour
+40 20 FF 80 00 1 1
+40 21 FF 80 00 1 1
+40 22 FF 80 00 1 1
+#0x23	Depth Contour (thin) Depth in feet
+40 23 00 00 88 1 1
+40 24 00 00 88 1 1
+40 25 00 00 88 1 1
+#0x26	Intermittent River 
+40 26 00 00 FF 1 1
+# Power line
+40 29 00 00 00 1 1
+# Track
+40 FF FF 00 FF 0 4
+# Vector
+40 FE 7F 7F 7F 1 3 FF FF FF 1 1
+# Scale
+40 FD FF FF FF 0 4 00 00 00 1 2 
+# Old track
+40 FC 77 00 77 0 3
+# Bad vector
+40 200 7F 7F 7F 1 3 FF FF FF 1 1
+# Good vector
+40 201 7F 7F FF 1 5 7F FF 7F 0 3
+40 202 00 00 00 0 6 CF CF CF 0 2
+40 203 CF CF CF 0 6 00 00 00 0 2
+
+40 100 00 00 00 0 5 FF 00 00 0 3
+40 101 00 00 00 0 5 FF FF 00 0 3
+40 102 00 00 00 0 5 00 FF 00 0 3
+
+10 0100 "city6"
+10 0200 "city6"
+10 0300 "city5"
+10 0400 "city4"
+10 0500 "city4"
+10 0600 "city4"
+10 0700 "city3"
+10 0800 "city3"
+10 0900 "city3"
+10 0A00 "city2"
+10 0B00 "city2"
+10 0C00 "city2"
+10 0D00 "city2"
+10 0E00 "city1"
+10 0F00 "city1"
+10 1000 "city1"
+10 1100 "city1"
+10 1400 "Empty"
+10 1500 "Empty"
+10 1e00 "Empty"
+
+10 2000 "Exit"
+
+10 2100 "Exit"
+10 2101 "Exit"
+10 2102 "Exit"
+10 2103 "Exit"
+10 2104 "Exit"
+10 2105 "Exit"
+10 2106 "Exit"
+10 2107 "Exit"
+10 2108 "Exit"
+10 2109 "Exit"
+10 210a "Exit"
+10 210b "Exit"
+10 210c "Exit"
+10 210d "Exit"
+10 210e "Exit"
+10 210f "Exit"
+
+10 2110 "Exit"
+10 2111 "Exit"
+10 2112 "Exit"
+10 2113 "Exit"
+10 2114 "Exit"
+10 2115 "Exit"
+10 2116 "Exit"
+10 2117 "Exit"
+10 2118 "Exit"
+10 2119 "Exit"
+10 211a "Exit"
+10 211b "Exit"
+10 211c "Exit"
+10 211d "Exit"
+10 211e "Exit"
+10 211f "Exit"
+
+10 2200 "Restroom"
+10 2201 "Restroom"
+10 2202 "Restroom"
+10 2203 "Restroom"
+10 2204 "Restroom"
+10 2205 "Restroom"
+10 2206 "Restroom"
+10 2207 "Restroom"
+10 2208 "Restroom"
+10 2209 "Restroom"
+10 220a "Restroom"
+10 220b "Restroom"
+10 220c "Restroom"
+10 220d "Restroom"
+10 220e "Restroom"
+10 220f "Restroom"
+
+10 2300 "Exit"
+10 2301 "Exit"
+10 2302 "Exit"
+10 2303 "Exit"
+10 2304 "Exit"
+10 2305 "Exit"
+10 2306 "Exit"
+10 2307 "Exit"
+10 2308 "Exit"
+10 2309 "Exit"
+10 230a "Exit"
+10 230b "Exit"
+10 230c "Exit"
+10 230d "Exit"
+10 230e "Exit"
+10 230f "Exit"
+
+10 2310 "Exit"
+10 2311 "Exit"
+10 2312 "Exit"
+10 2313 "Exit"
+10 2314 "Exit"
+10 2315 "Exit"
+10 2316 "Exit"
+10 2317 "Exit"
+10 2318 "Exit"
+10 2319 "Exit"
+10 231a "Exit"
+10 231b "Exit"
+10 231c "Exit"
+10 231d "Exit"
+10 231e "Exit"
+10 231f "Exit"
+
+10 2400 "Weight"
+
+10 2500 "Toll"
+
+10 2600 "Information"
+
+10 2700 "Exit"
+
+
+10 2900 "Dot"
+
+10 2a00 "Dining"
+10 2a03 "Dining"
+10 2a06 "Dining"
+10 2a07 "Dining"
+10 2a0a "Dining"
+10 2a0e "Dining"
+10 2B00 "Lodging"
+10 2800 "Empty"
+10 2c01 "Amusement"
+10 2C02 "Museum"
+10 2c05 "Photo"
+10 2c05 "School"
+10 2c06 "Park"
+10 2c08 "Sports"
+10 2C09 "Facilities"
+10 2c0a "Dining"
+10 2c0b "Church"		
+10 2d01 "Concert"
+10 2d02 "Dining"
+10 2d03 "Cinema"
+10 2d04 "Casino"
+10 2d09 "Swimming"
+10 2d0a "Sports"
+10 2e00 "Shop"
+10 2e01 "Shop"
+10 2e02 "Shop"
+10 2e04 "Shop"
+10 2e05 "Pharmacy"
+10 2e07 "Shop"
+10 2e0a "Shop"
+10 2e0b "Computer"
+10 2f00 "Service"
+10 2f01 "Fuel"
+10 2f03 "Repair"
+10 2f05 "Post"
+10 2f06 "Bank"
+10 2f07 "Car"
+10 2f08 "Transportation"
+10 2f0a "Repair"
+10 2f0b "Parking"
+10 2f09 "Marina"
+10 2f0c "Restroom"
+10 2f0e "Car"
+
+10 3001 "Police"
+10 3002 "Hospital"
+10 3003 "Civil"
+10 3005 "Concert"
+10 3007 "Civil"
+10 3008 "Facilities" # Change to fire department
+
+10 4600 "Dining"
+10 4a00 "Picnic"
+10 4300 "Marina"
+10 4400 "Fuel"
+10 4500 "Dining"
+10 4700 "Boats"
+10 4b00 "Hospital"
+10 4d00 "Parking"
+10 4e00 "Restroom"
+
+10 5100 "Telephone"
+10 5200 "Photo"
+10 5400 "Swimming"
+10 5901 "Airport"
+10 5902 "Airport"
+
+10 6300 "DOT"
+
+10 6401 "Bridge"
+10 6404 "Church"
+10 6408 "Hospital"
+10 640e "Park"
+10 640f "Post"
+10 6410 "School"
+10 6411 "Tower"
+10 6414 "Water"
+
+10 0000 "Unknown"
+10 10001 "aim" #  Center
+10 10002 -7 8 "Start"
+10 10003 "Competitor"
+10 FFFD "DOT" #  Traffic node
+10 FFFE -7 8 "Flag" #  Waypoint alarmed
+10 FFFF -7 8 "Flag" #  Waypoint

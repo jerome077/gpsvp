@@ -1,0 +1,98 @@
+00 00 00 00	# Background
+01 CE CE CE	# Text color
+02 FF F2 00	# Cursor color
+
+80 1 77 5F 43	# City
+80 2 77 5F 43	# City
+80 3 77 5F 43	# City
+80 4 FF 00 FF	# Military
+80 5 CC CC FF	# Parking Lot
+80 6 CC CC FF	# Parking Garage
+80 7 FF CC CC	# Airport
+80 8 CC FF CC	# Shopping Center
+80 9 88 88 88	# Marina
+80 A FF FF FF	# University
+80 B 88 00 00	# Hospital
+80 C FF FF FF	# Industrial
+80 D FF FF FF	# Reservation
+80 E FF FF FF	# Airport Runway
+80 13 99 99 99	# Man made area
+80 14 1C 5B 1C	# National park
+80 15 1C 5B 1C	# National park
+80 16 1C 5B 1C	# National park
+80 17 47 91 2D	# City Park
+80 18 47 91 2D	# Golf
+80 19 00 FF 00	# Sport
+80 1A 00 FF 00	# Cemetery
+80 1E 3E 7F 27	# State Park
+80 1F 3E 7F 27	# State Park
+80 FF 21 41 42	# Detailed map
+
+# Water
+80 28 1F 53 8E
+80 29 1F 53 8E
+80 32 1F 53 8E
+80 3b 1F 53 8E
+80 3c 1F 53 8E
+80 3d 1F 53 8E
+80 3e 1F 53 8E
+80 3f 1F 53 8E
+80 40 1F 53 8E
+80 41 1F 53 8E
+80 42 1F 53 8E
+80 43 1F 53 8E
+80 44 1F 53 8E
+80 45 1F 53 8E
+80 46 1F 53 8E
+80 47 1F 53 8E
+80 48 1F 53 8E
+80 49 1F 53 8E
+
+80 4d 66 66 66	# Glaciers
+80 4e 66 FF 66	# Orchard or plantation
+80 4f 99 FF 99	# Scrub
+80 50 00 FF 00	# Woods
+80 51 4A 4A 89	# Wetland 
+80 52 66 66 66	# Tundra
+80 53 FF FF FF	# Flats (island?)
+
+# Major highway
+40 01 E5 86 5E 0 5
+# Principal highway
+40 02 A0 5B 58 0 4
+# Other highway road
+40 03 AD 87 8F 0 3
+40 04 AD 87 8F 0 2
+40 05 AD 87 8F 0 1
+40 06 AD 87 8F 0 1
+40 07 AD 87 8F 0 1
+# Railroad
+40 14 91 91 91 0 3 00 00 00 1 1
+# 0x15	Shoreline
+40 15 00 00 FF 0 1
+# 0x16	Trail
+40 16 FF FF FF 1 1
+# 0x18	Stream-thin
+40 18 27 6C B5 0 1
+#0x19	Time-Zone
+40 19 00 00 FF 1 1
+# 0x1a	Ferry
+40 1A FF FF FF 1 1
+#0x1b	Ferry
+40 1B FF FF FF 1 1
+# Boundaries
+40 1C FF 00 00 0 3 FF FF FF 1 1
+40 1D FF 00 00 0 3 FF FF FF 1 1
+40 1E FF 00 00 0 3 FF FF FF 1 1
+#0x1f	River
+40 1F 1F 53 8E 0 2
+#0x23	Depth Contour (thin) Depth in feet
+40 23 00 00 88 1 1
+#0x26	Intermittent River 
+40 26 1F 53 8E 1 1
+# Power line
+40 29 FF FF FF 1 1
+# Track
+40 FF FF 00 FF 0 2
+# Vector
+40 FE FF 00 00 1 4

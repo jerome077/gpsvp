@@ -1,0 +1,97 @@
+00 00 00 00	# Background
+01 FF FF FF	# Text color
+02 FF FF FF	# Cursor color
+
+80 1 FF 99 00	# City
+80 2 FF 99 00	# City
+80 3 FF 99 00	# City
+80 4 FF 00 FF	# Military
+80 5 CC CC FF	# Parking Lot
+80 6 CC CC FF	# Parking Garage
+80 7 FF ÑÑ ÑÑ	# Airport
+80 8 CC FF CC	# Shopping Center
+80 9 88 88 88	# Marina
+80 A FF FF FF	# University
+80 B 88 00 00	# Hospital
+80 C FF FF FF	# Industrial
+80 D FF FF FF	# Reservation
+80 E FF FF FF	# Airport Runway
+80 13 99 99 99	# Man made area
+80 14 00 FF 00	# National park
+80 15 00 FF 00	# National park
+80 16 00 FF 00	# National park
+80 17 00 FF 00	# City Park
+80 18 00 FF 00	# Golf
+80 19 00 FF 00	# Sport
+80 1A 00 FF 00	# Cemetery
+80 1E 00 FF 00	# State Park
+80 1F 00 FF 00	# State Park
+
+# Water
+80 28 00 00 FF
+80 29 00 00 FF
+80 32 00 00 FF
+80 3b 00 00 FF
+80 3c 00 00 FF
+80 3d 00 00 FF
+80 3e 00 00 FF
+80 3f 00 00 FF
+80 40 00 00 FF
+80 41 00 00 FF
+80 42 00 00 FF
+80 43 00 00 FF
+80 44 00 00 FF
+80 45 00 00 FF
+80 46 00 00 FF
+80 47 00 00 FF
+80 48 00 00 FF
+80 49 00 00 FF
+
+80 4d 66 66 66	# Glaciers
+80 4e 66 FF 66	# Orchard or plantation
+80 4f 99 FF 99	# Scrub
+80 50 00 FF 00	# Woods
+80 51 88 88 FF	# Wetland 
+80 52 66 66 66	# Tundra
+80 53 FF FF FF	# Flats (island?)
+
+# Major highway
+40 01 FF FF FF 0 4 FF 88 44 0 2
+# Principal highway
+40 02 FF FF FF 0 3 FF 88 44 0 1
+# Other highway road
+40 03 FF FF FF 0 2
+40 04 FF FF FF 0 2
+40 05 FF FF FF 0 1
+40 06 FF FF FF 0 1
+40 07 FF FF FF 0 1
+# Railroad
+40 14 FF FF FF 0 3 00 00 00 1 1
+# 0x15	Shoreline
+40 15 00 00 FF 0 1
+# 0x16	Trail
+40 16 FF FF FF 1 1
+# 0x18	Stream-thin
+40 18 00 FF 00 0 1
+#0x19	Time-Zone
+40 19 00 00 FF 1 1
+# 0x1a	Ferry
+40 1A FF FF FF 1 1
+#0x1b	Ferry
+40 1B FF FF FF 1 1
+# Boundaries
+40 1C 00 FF 00 1 1
+40 1D 00 FF 00 1 1
+40 1E 00 FF 00 1 1
+#0x1f	River
+40 1F 00 00 FF 0 2
+#0x23	Depth Contour (thin) Depth in feet
+40 23 00 00 88 1 1
+#0x26	Intermittent River 
+40 26 00 00 FF 1 1
+# Power line
+40 29 FF FF FF 1 1
+# Track
+40 FF FF 00 FF 0 2
+# Vector
+40 FE FF 00 00 1 4
