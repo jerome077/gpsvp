@@ -59,7 +59,7 @@ void CNMEAParser::CommandComplete()
 	if (listParts[0] == "GPGGA" && listParts.size() >= 10)
 	{
 		//check fix quality and loc number availablity before we go any further
-		int fixQuality = atoi(listParts[6].c_str());
+		double fixQuality = myatof(listParts[6].c_str());
 		if ( (fixQuality == 0) || (listParts[2].length() < 5 || listParts[4].length() < 5) )
 		{
 			// If no number then no track and no cursor
