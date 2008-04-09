@@ -58,8 +58,9 @@ void CNMEAParser::CommandComplete()
 	// Coordinates from GPS device
 	if (listParts[0] == "GPGGA" && listParts.size() >= 10)
 	{
-		// Check numbers availability
-		if  (listParts[2].length() < 5 || listParts[4].length() < 5)
+		//check fix quality and loc number availablity before we go any further
+		int fixQuality = atoi(listParts[6].c_str());
+		if ( (fixQuality == 0) || (listParts[2].length() < 5 || listParts[4].length() < 5) )
 		{
 			// If no number then no track and no cursor
 			m_pClient->NoFix();
