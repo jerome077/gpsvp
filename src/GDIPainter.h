@@ -151,6 +151,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	Int m_iOffTypePrev;
 	Int m_iOffTypePrevPrev;
 	HBRUSH m_hBgBrush;
+	COLORREF m_crBg;
 	COLORREF m_crText;
 	bool m_fMandatoryLabel;
 	ScreenRectSet m_srsLabels;

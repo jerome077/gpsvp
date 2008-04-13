@@ -120,11 +120,11 @@ void CGDIPainter::FinishObject()
 			m_hdc.getTextExtentPoint(m_wcName, &sz);
 			if (m_curRect.Height() * 2 > sz.cy && m_curRect.Width() * 2 > sz.cx)
 			{
-				m_hdc.SetTextColor(0xffffff - m_crText);
-				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2 + 2, m_curRect.Center().y - sz.cy / 2, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2 - 2, m_curRect.Center().y - sz.cy / 2, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2, m_curRect.Center().y - sz.cy / 2 + 2, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2, m_curRect.Center().y - sz.cy / 2 - 2, 0, 0, m_wcName, 0);
+				m_hdc.SetTextColor(m_crBg);
+				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2 + 1, m_curRect.Center().y - sz.cy / 2, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2 - 1, m_curRect.Center().y - sz.cy / 2, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2, m_curRect.Center().y - sz.cy / 2 + 1, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2, m_curRect.Center().y - sz.cy / 2 - 1, 0, 0, m_wcName, 0);
 				m_hdc.SetTextColor(m_crText);
 				m_hdc.ExtTextOut(m_curRect.Center().x - sz.cx / 2, m_curRect.Center().y - sz.cy / 2, 0, 0, m_wcName, 0);
 			}
@@ -228,11 +228,11 @@ void CGDIPainter::FinishObject()
 
 				HFONT hFont = m_FontCache.GetFont(1, angle);
 				m_hdc.SelectObject(hFont);
-				m_hdc.SetTextColor(0xffffff - m_crText);
-				m_hdc.ExtTextOut(x-2, y, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(x+2, y, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(x, y-2, 0, 0, m_wcName, 0);
-				m_hdc.ExtTextOut(x, y+2, 0, 0, m_wcName, 0);
+				m_hdc.SetTextColor(m_crBg);
+				m_hdc.ExtTextOut(x-1, y, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(x+1, y, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(x, y-1, 0, 0, m_wcName, 0);
+				m_hdc.ExtTextOut(x, y+1, 0, 0, m_wcName, 0);
 				m_hdc.SetTextColor(m_crText);
 				m_hdc.ExtTextOut(x, y, 0, 0, m_wcName, 0);
 			}
@@ -645,11 +645,11 @@ void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * w
 				m_hdc.SelectObject(m_FontCache.GetFont(3, 0));
 			else
 				m_hdc.SelectObject(m_FontCache.GetFont(2, 0));
-			m_hdc.SetTextColor(0xffffff - m_crText);
-			m_hdc.ExtTextOut(sp.x - 2, sp.y, 0, 0, wcName, 0);
-			m_hdc.ExtTextOut(sp.x + 2, sp.y, 0, 0, wcName, 0);
-			m_hdc.ExtTextOut(sp.x, sp.y - 2, 0, 0, wcName, 0);
-			m_hdc.ExtTextOut(sp.x, sp.y + 2, 0, 0, wcName, 0);
+			m_hdc.SetTextColor(m_crBg);
+			m_hdc.ExtTextOut(sp.x - 1, sp.y, 0, 0, wcName, 0);
+			m_hdc.ExtTextOut(sp.x + 1, sp.y, 0, 0, wcName, 0);
+			m_hdc.ExtTextOut(sp.x, sp.y - 1, 0, 0, wcName, 0);
+			m_hdc.ExtTextOut(sp.x, sp.y + 1, 0, 0, wcName, 0);
 			m_hdc.SetTextColor(m_crText);
 			m_hdc.ExtTextOut(sp.x, sp.y, 0, 0, wcName, 0);
 		}
@@ -758,7 +758,8 @@ void CGDIPainter::ParseString(const char * buff, const std::wstring & wstrBase)
 			{
 				if (vRecord.size() == 4)
 				{
-					m_hBgBrush = CreateSolidBrush(RGB(vRecord[1], vRecord[2], vRecord[3]));
+					m_crBg = RGB(vRecord[1], vRecord[2], vRecord[3]);
+					m_hBgBrush = CreateSolidBrush(m_crBg);	
 				}
 				break;
 			}
@@ -921,11 +922,11 @@ void CGDIPainter::PaintStatusLine(const wchar_t * wcName)
 		return;
 	HFONT hFont = m_FontCache.GetFont(4, 0);
 	m_hdc.SelectObject(hFont);
-	m_hdc.SetTextColor(0xffffff - m_crText);
-	m_hdc.ExtTextOut(4 + 2, m_iStatusLineOffset + 4, 0, 0, wcName, 0);
-	m_hdc.ExtTextOut(4 - 2, m_iStatusLineOffset + 4, 0, 0, wcName, 0);
-	m_hdc.ExtTextOut(4, m_iStatusLineOffset + 4 + 2, 0, 0, wcName, 0);
-	m_hdc.ExtTextOut(4, m_iStatusLineOffset + 4 - 2, 0, 0, wcName, 0);
+	m_hdc.SetTextColor(m_crBg);
+	m_hdc.ExtTextOut(4 + 1, m_iStatusLineOffset + 4, 0, 0, wcName, 0);
+	m_hdc.ExtTextOut(4 - 1, m_iStatusLineOffset + 4, 0, 0, wcName, 0);
+	m_hdc.ExtTextOut(4, m_iStatusLineOffset + 4 + 1, 0, 0, wcName, 0);
+	m_hdc.ExtTextOut(4, m_iStatusLineOffset + 4 - 1, 0, 0, wcName, 0);
 	m_hdc.SetTextColor(m_crText);
 	m_hdc.ExtTextOut(4, m_iStatusLineOffset + 4, 0, 0, wcName, 0);
 	SIZE size;
