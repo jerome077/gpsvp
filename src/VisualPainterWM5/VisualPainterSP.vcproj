@@ -2964,6 +2964,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Team.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Team.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Track.cpp"
 				>
 				<FileConfiguration

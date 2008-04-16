@@ -36,7 +36,7 @@ public:
 	{
 		if (update) {
 			char url[10000];
-			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%S&channel=%S", name.c_str(), channel.c_str());
+			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%S&channel=%S&lat=%d&lng=%d", name.c_str(), channel.c_str(), gpCurrent.lat, gpCurrent.lon);
 			return url;
 		}
 		return "";
