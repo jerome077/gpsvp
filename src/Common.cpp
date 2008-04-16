@@ -475,6 +475,8 @@ double TextToDergee(wchar_t * wcText)
 		}
 		++wcText;
 	}
+	if (dDegree == 0 && dCurrent != 0)
+		dDegree = dCurrent;
 	return dDegree * sign;
 }
 
