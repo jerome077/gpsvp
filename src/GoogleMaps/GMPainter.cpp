@@ -422,7 +422,7 @@ std::string CGMPainter::GetRequest()
 		}
 	}
 
-	if ((data.type == gtMap) || (data.type == gtSatellite) || (data.type == gtHybrid)) {
+	if ((data.type == gtMap) || (data.type == gtSatellite) || (data.type == gtTopo)) { // gtHybrid
 		if (!m_bGotMapVersions) {
 			return "http://gpsvp.com/GoogleMaps.txt";
 		}

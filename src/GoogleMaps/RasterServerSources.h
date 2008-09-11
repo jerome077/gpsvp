@@ -23,10 +23,11 @@ enum enumGMapType
 	gtOsm,
 	gtMap,
 	gtSatellite,
-	gtHybrid,
+	gtTopo,
 	gtMSMap,
 	gtMSSat,
 	gtMSHyb,
+	gtHybrid,
 	gtCount
 };
 
@@ -144,6 +145,33 @@ public:
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gmap");
+	};
+
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+};
+
+class CGTopoSource : public CRasterMapSource
+{
+public:
+	CGTopoSource();
+
+	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
+	{
+		char buffer[256];
+		sprintf(buffer, "%sx=%d&y=%d&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		return buffer;
+	};
+
+	virtual bool GetDiskFileName(
+			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		)
+	{
+		wchar_t filename[MAX_PATH];
+
+		wsprintf(filename, L"x=%d&y=%d&zoom=%d.jpg", gfdata.X, gfdata.Y, gfdata.level);
+		name = filename;
+
+		return GetDiskGenericFileName(gfdata, root, path, L"gtopo");
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;

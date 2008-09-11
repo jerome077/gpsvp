@@ -2600,8 +2600,9 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("OpenStreetMap.org map"), mcGMapType + gtOsm);
 				mmMapType.CreateItem(L("Google.com map"), mcGMapType + gtMap);
 				mmMapType.CreateItem(L("Google.com satellite"), mcGMapType + gtSatellite);
-				mmMapType.CreateItem(L("Google.com hybrid"), mcGMapType + gtHybrid);
-				mmMapType.EnableMenuItem(mcGMapType + gtHybrid, false);
+				// mmMapType.CreateItem(L("Google.com hybrid"), mcGMapType + gtHybrid);
+				mmMapType.CreateItem(L("Google.com topo"), mcGMapType + gtTopo);
+				// mmMapType.EnableMenuItem(mcGMapType + gtHybrid, false);
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
@@ -3092,6 +3093,7 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcGMapType + 5:
 		case mcGMapType + 6:
 		case mcGMapType + 7:
+		case mcGMapType + 8:
 			{
 				int iNewType = wp - mcGMapType;
 				if (iNewType == m_riGMapType())

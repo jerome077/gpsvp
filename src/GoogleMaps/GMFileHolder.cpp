@@ -32,6 +32,7 @@ CGMFileHolder::CGMFileHolder(void)
 	m_vecRMS[gtMap] = new CGMapSource();
 	m_vecRMS[gtSatellite] = new CGSatSource();
 	m_vecRMS[gtHybrid] = new CNullSource();
+	m_vecRMS[gtTopo] = new CGTopoSource();
 	m_vecRMS[gtMSMap] = new CMSMapSource();
 	m_vecRMS[gtMSSat] = new CMSSatSource();
 	m_vecRMS[gtMSHyb] = new CMSHybSource();
@@ -392,7 +393,7 @@ bool CGMFileHolder::NeedRelocateFiles()
 long CGMFileHolder::ProcessPrefixes(const std::string &s)
 {
 	const char *cur = s.c_str();
-	enumGMapType vecTypesInRequest[] = {gtMap, gtSatellite};
+	enumGMapType vecTypesInRequest[] = {gtMap, gtSatellite, gtHybrid, gtTopo};
 	for (int i=0; i<sizeof(vecTypesInRequest)/sizeof(vecTypesInRequest[0]); i++) {
 		std::list<std::string> lst;
 		const char *pGMap = strstr(cur, "["); 

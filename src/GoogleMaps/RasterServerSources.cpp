@@ -57,6 +57,18 @@ CGMapSource::CGMapSource()
 	SetType(gtMap);
 }
 
+CGTopoSource::CGTopoSource()
+{
+	std::list<std::string> lst;
+	lst.push_back("http://mt0.google.com/mt?n=404&v=w2p.81&hl=en&");
+	lst.push_back("http://mt1.google.com/mt?n=404&v=w2p.81&hl=en&");
+	lst.push_back("http://mt2.google.com/mt?n=404&v=w2p.81&hl=en&");
+	lst.push_back("http://mt3.google.com/mt?n=404&v=w2p.81&hl=en&");
+	SetServerPrefixes(lst);
+
+	SetType(gtTopo);
+}
+
 CGSatSource::CGSatSource()
 {
 	std::list<std::string> lst;
@@ -124,6 +136,28 @@ bool CGMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) c
 		data.X = x;
 		data.Y = y;
 		data.type = gtMap;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool CGTopoSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+{
+	std::string::size_type q = name.find(L".jpg");
+	if (q == std::string::npos)
+		return false;
+	if (name.length() > (q + 4)) {
+		return false;
+	}
+
+	long x, y, zoom;
+	int nReadFields = swscanf(name.c_str(), L"x=%d&y=%d&zoom=%d.jpg", &x, &y, &zoom);
+	if (nReadFields == 3) {
+		data.level = (unsigned char) zoom;
+		data.X = x;
+		data.Y = y;
+		data.type = gtTopo;
 		return true;
 	} else {
 		return false;
