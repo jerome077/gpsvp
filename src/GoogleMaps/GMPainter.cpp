@@ -163,6 +163,8 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	// Начинаем рисовать
 	long nHalfWidth = (rect.right - rect.left) / 2;
 	long nHalfHeigth = (rect.bottom - rect.top) / 2;
+	long nHorizCenter = (rect.right + rect.left) / 2;
+	long nVertCenter = (rect.bottom + rect.top) / 2;
 	for (long curX = NumX; ; curX++) {
 		long xcoord = long((curX * 256 - cntX) * scale) + nHalfWidth;
 		long xcoord_next = long(((curX+1) * 256 - cntX) * scale) + nHalfWidth;
@@ -200,7 +202,15 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 				if (DrawSegment(dc, r_src, r, data)) {
 					RECT rect_is;
 					if (GetIntersectionRECT(&rect_is, r, rect)) {
-						long nSq = (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top);
+						long nSq = sqrt((float) (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top));
+						// Now decrease nSq by a distance between the drawing area center and 
+						// a tile center
+						long nHC = (r.right + r.left) / 2;
+						long nVC = (r.bottom + r.top) / 2;
+						long nH = nHorizCenter - nHC;
+						long nV = nVertCenter  - nVC;
+						long nAdj = (long) sqrt((float) nH*nH + nV*nV);
+						nSq -= nAdj;
 						mapMissing[nSq] = data;
 					}
 				}
