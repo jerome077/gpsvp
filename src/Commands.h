@@ -132,6 +132,7 @@ enum enumMenuCommands
 	mcTeamSettings,
 	mcTeamUpdateNow,
 	mcTeamUpdatePeriodically,
+	mcoInvertSatelliteImages,
 };
 
 #endif // COMMANDS_H

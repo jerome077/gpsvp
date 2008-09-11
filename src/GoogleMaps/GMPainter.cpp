@@ -220,6 +220,11 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 	HBITMAP hbm = NULL;
 	bool bHBITMAPInited = false;
 
+	DWORD rop = SRCCOPY;
+	if (app.m_Options[mcoInvertSatelliteImages] && (m_GMFH.GetRMS((enumGMapType) data.type)->IsSatellite())) {
+		rop = SRCINVERT;
+	}
+
 	// Смотрим, есть ли в кэше
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
 	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел
@@ -361,7 +366,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 
 		if ((nWidth == gfr.width) && (nHeight == gfr.heigth)) {
 			BitBlt(dc, dstrect.left, dstrect.top, nWidth, nHeight,
-				srcdc, srcrect.left, srcrect.top, SRCCOPY);
+				srcdc, srcrect.left, srcrect.top, rop);
 		} else {
 
 #ifdef UNDER_CE
@@ -376,7 +381,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			StretchBlt(dc, dstrect.left, dstrect.top, nWidth, nHeight,
-				srcdc, srcrect.left, srcrect.top, srcrect.right - srcrect.left, srcrect.bottom - srcrect.top, SRCCOPY);
+				srcdc, srcrect.left, srcrect.top, srcrect.right - srcrect.left, srcrect.bottom - srcrect.top, rop);
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
 			SetBrushOrgEx(dc, pt.x, pt.y, NULL);

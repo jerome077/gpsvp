@@ -54,6 +54,14 @@ public:
 	HANDLE RelocateFiles(HANDLE h, long nMaxMSec = INFINITE); 
 	bool NeedRelocateFiles(); 
 
+	const CRasterMapSource *GetRMS(enum enumGMapType t) const
+	{
+		if (t < gtCount)
+			return m_vecRMS[t];
+		else 
+			return NULL;
+	};
+
 protected:
 	long BuildInternalIndex();
 

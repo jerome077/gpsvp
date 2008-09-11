@@ -93,6 +93,11 @@ public:
 		m_it = m_lstPrefixes.begin();
 	};
 
+	virtual bool IsSatellite() const
+	{
+		return false;
+	};
+
 protected:
 	virtual std::string GetNextPrefix()
 	{
@@ -204,6 +209,8 @@ public:
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
 
+	virtual bool IsSatellite() const { return true; }
+
 protected:
 	std::string GetSatelliteBlockName(const GEOFILE_DATA& data) const;
 };
@@ -277,6 +284,7 @@ public:
 	{
 		const static std::wstring prefix = L"mssat"; return prefix;
 	}
+	virtual bool IsSatellite() const { return true; }
 };
 
 class CMSHybSource : public CMSSource
@@ -296,6 +304,7 @@ public:
 	{
 		const static std::wstring prefix = L"mshyb"; return prefix;
 	}
+	virtual bool IsSatellite() const { return true; }
 };
 
 class COSMSource : public CRasterMapSource

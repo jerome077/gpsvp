@@ -1758,6 +1758,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Cache auto delete"), L"CacheAutoDelete", false, mcoRasterCacheAutoDelete);
 	m_Options.AddOption(L("Show Garmin maps"), L"ShowGarminMaps", true, mcoShowGarminMaps);
 	m_Options.AddOption(L("Prefer Google zoom levels"), L"GoogleZoomLevels", false, mcoGoogleZoomLevels);
+	m_Options.AddOption(L("Invert satellite images"), L"InvertSatelliteImages", false, mcoInvertSatelliteImages);
 	m_Options.AddOption(L("Show fastest way"), L"ShowFastestWay", true, mcoShowFastestWay);
 	m_Options.AddOption(L("Show traffic information"), L"ShowTrafficInformation", true, mcoShowTrafficInformation);
 	m_Options.AddOption(L("Use test server"), L"TestServer", false, mcoTestServer);
@@ -2629,6 +2630,7 @@ void CMapApp::InitMenu()
 			mmGoogleMaps.CreateBreak();
 			mmGoogleMaps.CreateItem(L("Prefer Google zoom levels"), mcoGoogleZoomLevels);
 			mmGoogleMaps.CreateItem(L("Enable raster downloading"), mcoDownloadGoogleMaps);
+			mmGoogleMaps.CreateItem(L("Invert satellite images"), mcoInvertSatelliteImages);		
 		}
 		{
 			CMenu & mmSearch = mmMaps.CreateSubMenu(L("Search"));
