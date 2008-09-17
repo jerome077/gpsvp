@@ -202,16 +202,14 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 				if (DrawSegment(dc, r_src, r, data)) {
 					RECT rect_is;
 					if (GetIntersectionRECT(&rect_is, r, rect)) {
-						long nSq = sqrt((float) (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top));
-						// Now decrease nSq by a distance between the drawing area center and 
-						// a tile center
+						//sqrt((float) (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top));
+						// Use a distance between the drawing area center and a tile center to sort tiles
 						long nHC = (r.right + r.left) / 2;
 						long nVC = (r.bottom + r.top) / 2;
 						long nH = nHorizCenter - nHC;
 						long nV = nVertCenter  - nVC;
-						long nAdj = (long) sqrt((float) nH*nH + nV*nV);
-						nSq -= nAdj;
-						mapMissing[nSq] = data;
+						long nDist = nH*nH + nV*nV;
+						mapMissing[nDist] = data;
 					}
 				}
 			}
@@ -219,7 +217,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	}
 
 	if (!mapMissing.empty()) {
-		m_Missing = mapMissing.rbegin()->second;
+		m_Missing = mapMissing.begin()->second;
 	}
 
 	return 0;
