@@ -32,8 +32,12 @@ class CLblSubfile
 	UInt m_uiCodepage;
 	UInt m_uiDataOffset;
 	UInt m_uiDataLength;
+	UInt m_uiPoiOffset;
+	UInt m_uiPoiLength;
 	typedef stdext::hash_map<UInt, std::wstring> LabelCache;
 	LabelCache m_cache;
+	typedef stdext::hash_map<UInt, UInt> PoiCache;
+	PoiCache m_poiCache;
 public:
 	//! Object constants
 	enum enumConstants {
@@ -43,6 +47,7 @@ public:
 	//! Parse undelying subfile
 	void Parse(CSubFile * pSubFile);
 	const wchar_t * GetLabel(UInt uiOffset);
+	UInt GetLabelOffsetForPoi(UInt uiOffset);
 	// void Dump();
 };
 

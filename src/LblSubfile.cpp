@@ -35,6 +35,8 @@ void CLblSubfile::Parse(CSubFile * pSubFile)
 	m_uiDataOffset = GetUInt32(data + 0x15);
 	m_uiDataLength = GetUInt32(data + 0x19);
 
+	m_uiPoiOffset = GetUInt32(data + 0x57);
+	m_uiPoiLength = GetUInt32(data + 0x5B);	
 }
 
 const wchar_t * CLblSubfile::GetLabel(UInt uiOffset)
@@ -148,6 +150,18 @@ const wchar_t * CLblSubfile::GetLabel(UInt uiOffset)
 	}
 
 	return (m_cache[uiOffset] = res).c_str();
+}
+
+UInt CLblSubfile::GetLabelOffsetForPoi(UInt uiOffset){
+	PoiCache::iterator it = m_poiCache.find(uiOffset);
+	if (it != m_poiCache.end())
+		return it->second;
+
+	Byte data[3];
+	m_pSubFile->Read(data, m_uiPoiOffset + uiOffset, 3);
+	UInt labelOffset=GetUInt24(data);
+
+	return (m_poiCache[uiOffset] = labelOffset);
 }
 
 //void CLblSubfile::Dump()

@@ -375,9 +375,7 @@ UInt CPoint::Parse(Byte * data, UInt uiMaxSize, GeoPoint gpBase, UInt uiBits, CS
 	m_uiType &= 0x7F;
 	UInt uiLabelInfo = GetUInt24(data + 0x1);
 	bool fFlag = (uiLabelInfo & 0x800000) != 0;
-	uiLabelInfo &= 0x7FFFFF;
-	if (uiLabelInfo < 0x400000)
-		m_uiLabel = uiLabelInfo;
+	m_uiLabel = uiLabelInfo &0x7FFFFF;
 
 	Int iLongitude = GetInt16(data + 4);
 	Int iLatitude = GetInt16(data + 6);
@@ -440,7 +438,15 @@ UInt CPoint::Paint(Byte * data, UInt uiMaxSize, GeoPoint gpBase, UInt uiBits, CS
 
 void CPoint::Paint(IPainter * pPainter, CSubdivision * pOwner)
 {
-	pPainter->PaintPoint(m_uiType, m_gpPoint, pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(m_uiLabel));
+	UInt labelOffset = m_uiLabel;
+	if((labelOffset & 0x400000) != 0){
+		labelOffset = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabelOffsetForPoi(labelOffset & 0x3FFFFF);
+	}
+	const wchar_t *label = NULL;
+	if(labelOffset != 0){
+		label = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(labelOffset);
+	}
+	pPainter->PaintPoint(m_uiType, m_gpPoint, label);
 }
 
 UInt CPolyObject::Parse(Byte * data, UInt uiMaxSize)
