@@ -1,9 +1,11 @@
 #include "Common.h"
 #include "Header.h"
 #include "IPainter.h"
+#include "PlatformDef.h"
 
 #include <iostream>
 #include <gtkmm.h>
+#include <map>
 
 Dict dict;
 Dict & GetDict()
@@ -131,11 +133,41 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		// std::cerr << "FinishObject" << std::endl; 
 		if (polygon)
 		{
-			if (type != 0x4b)
-				cr->fill();
+			if (type == 0x4b)
+				return;
+			PolygonToolMap::iterator it = m_PolygonTools.find(type);
+			if (it != m_PolygonTools.end())
+			{
+				PolygonTools & t = it->second;
+				t.m_hPen.Set(cr);
+				t.m_hBrush.Set(cr);
+			}
+			else
+			{
+				m_hDefaultPen.Set(cr);
+				m_hDefaultBrush.Set(cr);
+			}
+			cr->fill();
 		}
-		else
-			cr->stroke();
+		else 
+		{
+			PolylineToolMap::iterator it = m_PolylinePens.find(type);
+			if (it != m_PolylinePens.end())
+			{
+				it->second.first.Set(cr);
+				cr->stroke_preserve();
+				if (it->second.second)
+				{
+					it->second.second.Set(cr);
+					cr->stroke_preserve();
+				}
+			}
+			else
+			{
+				m_hDefaultPen.Set(cr);
+				cr->stroke();
+			}
+		}
 	};
 	virtual void AddPoint(const GeoPoint & gp) 
 	{ 
@@ -301,6 +333,256 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		*/
 		return res;
 	}
+	
+	
+	struct RGB
+	{
+		RGB() : r(0), g(0), b(0) {}
+		RGB(int r_, int g_, int b_) : r(r_), g(g_), b(b_) {}
+		int r,g,b;
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			cr->set_source_rgb(double(r)/255, double(g)/255, double(b)/255);
+		}
+	};
+	struct CPen
+	{
+		CPen() : style(-1), width(0), color(RGB(0,0,0)) {}
+		CPen(int style_, int width_, RGB color_) : style(style_), width(width_), color(color_) {}
+		operator bool() const {return style != -1;}
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			if (style)
+			{
+				static std::vector<double> dashes;
+				dashes.resize(1);
+				dashes[0] = 3;
+				cr->set_dash(dashes, 0);
+			}
+			else
+				cr->unset_dash();
+			cr->set_line_width(width);
+			color.Set(cr);
+		}
+		int style;
+		int width;
+		RGB color;
+	};
+	
+	struct CBrush
+	{
+		CBrush() : color(RGB(0,0,0)) {}
+		CBrush(RGB color_) : color(color_) {}
+		RGB color;
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			color.Set(cr);
+		}
+	};
+	CPen m_hDefaultPen;
+	CBrush m_hDefaultBrush;
+	
+	struct PolygonTools
+	{ 
+		CPen m_hPen;
+		CBrush m_hBrush;
+	};
+	typedef std::map<UInt, PolygonTools> PolygonToolMap;
+	PolygonToolMap m_PolygonTools;
+
+	struct PointTools
+	{
+		// HICON m_hIcon;
+		// HBITMAP m_hBmp;
+		int m_iDiffX;
+		int m_iDiffY;
+
+		PointTools() : m_iDiffX(0), m_iDiffY(0) {}
+	};
+	typedef std::map<UInt, PointTools> PointToolMap;
+	PointToolMap m_PointTools;
+	
+	struct PolylineTools
+	{
+		CPen first;
+		CPen second;
+	};
+	typedef std::map<UInt, PolylineTools> PolylineToolMap;
+	PolylineToolMap m_PolylinePens;
+	
+	RGB m_crBg;
+	CBrush m_hBgBrush;
+	RGB m_crText;
+	CPen m_hCursorPen;
+	CBrush m_hCursorBrush;
+	
+	void InitToolsCommon()
+	{
+		// Create default tools
+		m_hDefaultPen = CPen(1, 1, RGB(0xff, 0x0, 0x0));
+		m_hDefaultBrush = CBrush(RGB(0xff, 0x0, 0x0));
+		// Prepare font structures
+		/*
+		m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, L"satelliteno", IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, L"satellitenofix", IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, L"satelliteyes", IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, L"satellitewait", IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, L"satellitedisabled", IMAGE_ICON, 32, 32, 0);
+		*/
+	}
+	void InitTools(const fnchar_t * strFilename)
+	{
+		InitToolsCommon();
+
+		char buff[100];
+		FILE * pFile = fopen(strFilename, "rt");
+		if (pFile == NULL)
+			return;
+		while(fgets(buff, sizeof(buff), pFile) != 0)
+		{
+			ParseString(buff, strFilename);
+		}
+
+		if (pFile != NULL)
+			fclose(pFile);
+	}
+	void ParseString(const char * buff, const std::fnstring & wstrBase)
+	{
+		std::vector<long> vRecord;
+		string strRecord;
+		const char * pos = buff;
+		while ((*pos != 0) && (*pos != '\n') && (*pos != '\r'))
+		{
+			while (isspace(*pos))
+				++ pos;
+			char * newpos = 0;
+			long lNum = strtol(pos, &newpos, 16);
+			if (newpos == pos)
+			{
+				if (*newpos != '"')
+					break;
+				pos = ++newpos;
+				while (*newpos && *newpos != '\n' && *newpos != '\r' && *newpos != '"')
+					++newpos;
+				strRecord = string(pos, newpos - pos);
+				break;
+			}
+			pos = newpos;
+			vRecord.push_back(lNum);
+		}
+		if (vRecord.size() > 0)
+		{
+			switch(vRecord[0])
+			{
+			case maskPolygons:
+				{
+					if (vRecord.size() == 5)
+					{
+						PolygonTools & pt = m_PolygonTools[vRecord[1]];
+						pt.m_hPen = CPen(0, 1, RGB(vRecord[2], vRecord[3], vRecord[4]));
+						pt.m_hBrush = CBrush(RGB(vRecord[2], vRecord[3], vRecord[4]));
+					}
+					if (vRecord.size() == 10)
+					{
+						PolygonTools & pt = m_PolygonTools[vRecord[1]];
+						pt.m_hPen = CPen(vRecord[8] * 1, vRecord[9], RGB(vRecord[5], vRecord[6], vRecord[7]));
+						pt.m_hBrush = CBrush(RGB(vRecord[2], vRecord[3], vRecord[4]));
+					}
+					break;
+				}
+			case maskPoints:
+				{
+					if (vRecord.size() == 4 && strRecord != "")
+					{
+						PointTools & pt = m_PointTools[vRecord[1]];
+						/*
+						// LINUXTODO:
+						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
+						if (!pt.m_hIcon)
+						{
+							int i = wcstol(wstrRecord.c_str(), 0, 10);
+							if (i)
+							pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
+						}
+						*/
+						pt.m_iDiffX = vRecord[2];
+						pt.m_iDiffY = vRecord[3];
+					}
+					if (vRecord.size() == 2 && strRecord != "")
+					{
+						PointTools & pt = m_PointTools[vRecord[1]];
+						/*
+						// LINUXTODO:
+						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
+						if (!pt.m_hIcon)
+						{
+							int i = wcstol(wstrRecord.c_str(), 0, 10);
+							if (i)
+							pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
+						}
+						*/
+						pt.m_iDiffX = 0;
+						pt.m_iDiffY = 0;
+					}
+					break;
+				}
+			case maskPolylines:
+				{
+					if (vRecord.size() == 7)
+					{
+						m_PolylinePens[vRecord[1]].first = CPen(vRecord[5] * 1, vRecord[6], RGB(vRecord[2], vRecord[3], vRecord[4]));
+					}
+					if (vRecord.size() == 12)
+					{
+						m_PolylinePens[vRecord[1]].first = CPen(vRecord[5] * 1, vRecord[6], RGB(vRecord[2], vRecord[3], vRecord[4]));
+						m_PolylinePens[vRecord[1]].second = CPen(vRecord[10] * 1, vRecord[11], RGB(vRecord[7], vRecord[8], vRecord[9]));
+					}
+					break;
+				}
+			case 0:
+				{
+					if (vRecord.size() == 4)
+					{
+						m_crBg = RGB(vRecord[1], vRecord[2], vRecord[3]);
+						m_hBgBrush = CBrush(m_crBg);	
+					}
+					break;
+				}
+			case 1:
+				{
+					if (vRecord.size() == 4)
+					{
+						m_crText = RGB(vRecord[1], vRecord[2], vRecord[3]);
+					}
+					break;
+				}
+			case 2:
+				{
+					if (vRecord.size() == 4)
+					{
+						m_hCursorPen = CPen(0, 1, RGB(vRecord[1], vRecord[2], vRecord[3]));
+						m_hCursorBrush = CBrush(RGB(vRecord[1], vRecord[2], vRecord[3]));
+					}
+					break;
+				}
+			case 3:
+				{
+					/*
+					// LINUXTODO:
+					if (vRecord.size() == 4)
+						m_FontCache.SetTemplate(vRecord[1], vRecord[2], vRecord[3] != 0);
+					*/
+					break;
+				}
+			}
+		}
+		/*
+		else if (!wstrRecord.empty())
+		{
+			m_hResourceInst = LoadLibraryEx(MakeFilename(wstrRecord, wstrBase).c_str(), 0, LOAD_LIBRARY_AS_DATAFILE);
+		}
+		*/
+	}
 };
 
 int main(int argc, char ** argv)
@@ -317,6 +599,7 @@ int main(int argc, char ** argv)
 	dp.m_gpCenter = f.GetCenter();
 	dp.m_ruiScale10 = 100;
 	dp.iDegree360 = 0;
+	dp.InitTools("Resources/Normal.vpc");
 	
 	Gtk::Window  window;
 	window.add(dp);
