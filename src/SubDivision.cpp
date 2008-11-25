@@ -442,7 +442,7 @@ void CPoint::Paint(IPainter * pPainter, CSubdivision * pOwner)
 	if((labelOffset & 0x400000) != 0){
 		labelOffset = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabelOffsetForPoi(labelOffset & 0x3FFFFF);
 	}
-	const wchar_t *label = NULL;
+	const tchar_t *label = NULL;
 	if(labelOffset != 0){
 		label = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(labelOffset);
 	}
@@ -584,7 +584,7 @@ UInt CPolyObject::Paint(enumObjTypes eType, CSubdivision * pOwner, const GeoPoin
 	bool fLabelInNet = ((uiLabelInfo & 0x800000) != 0x0);
 	uiLabelInfo &= 0x3fffff; // TODO: check if bit mask is correct
 
-	const wchar_t * wstrLabel = 0;
+	const tchar_t * wstrLabel = 0;
 	if (uiLabelInfo)
 	{
 		if (fLabelInNet)

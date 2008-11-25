@@ -39,7 +39,7 @@ class CLblSubfile
 	UInt m_uiDataLength;
 	UInt m_uiPoiOffset;
 	UInt m_uiPoiLength;
-	typedef hash_map<UInt, std::wstring> LabelCache;
+	typedef hash_map<UInt, std::tstring> LabelCache;
 	LabelCache m_cache;
 	typedef hash_map<UInt, UInt> PoiCache;
 	PoiCache m_poiCache;
@@ -51,7 +51,7 @@ public:
 	};
 	//! Parse undelying subfile
 	void Parse(CSubFile * pSubFile);
-	const wchar_t * GetLabel(UInt uiOffset);
+	const tchar_t * GetLabel(UInt uiOffset);
 	UInt GetLabelOffsetForPoi(UInt uiOffset);
 	// void Dump();
 };

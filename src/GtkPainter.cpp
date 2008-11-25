@@ -135,25 +135,38 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 	DumpPainter(CIMGFile & f_) : f(f_) {}
 	bool polygon;
 	UInt type;
-	virtual void StartPolygon(UInt uiType, const wchar_t * wcName) 
+	const tchar_t * name;
+	std::vector<ScreenPoint> m_pointList;
+	virtual void StartPolygon(UInt uiType, const tchar_t * wcName) 
 	{ 
-		// std::cerr << "StartPolygon" << std::endl;
 		cr->begin_new_path();
 		started = false;
 		polygon = true;
 		type = uiType;
+		name = wcName;
+		m_pointList.resize(0);
 	};
-	virtual void StartPolyline(UInt uiType, const wchar_t * wcName) 
+	virtual void StartPolyline(UInt uiType, const tchar_t * wcName) 
 	{ 
-		// std::cerr << "StartPolyline" << std::endl; 
 		cr->begin_new_path();
 		started = false;
 		polygon = false;
 		type = uiType;
+		name = wcName;
+		m_pointList.resize(0);
 	};
+
+	Cairo::TextExtents m_LabelSize;
+
+	void CalculateLabelSize()
+	{
+		Check(name != 0);
+		cr->set_font_size(14);
+		cr->get_text_extents(name, m_LabelSize);
+	}
+	
 	virtual void FinishObject() 
 	{ 
-		// std::cerr << "FinishObject" << std::endl; 
 		if (polygon)
 		{
 			if (type == 0x4b)
@@ -188,8 +201,70 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 			else
 			{
 				m_hDefaultPen.Set(cr);
-				cr->stroke();
+				cr->stroke_preserve();
 			}
+			if (name != NULL)
+			{
+				int len2 = sqr(m_pointList.front().x - m_pointList.back().x) + sqr(m_pointList.front().y - m_pointList.back().y);
+				CalculateLabelSize();
+				if (len2 > sqr(100) || len2 > sqr(m_LabelSize.width) )
+				{
+					int m_iWriteSegment = (m_pointList.size() - 1) / 2;
+					int x1 = m_pointList[m_iWriteSegment].x;
+					int y1 = m_pointList[m_iWriteSegment].y;
+					int x2 = m_pointList[m_iWriteSegment + 1].x;
+					int y2 = m_pointList[m_iWriteSegment + 1].y;
+					if (x1 > x2)
+					{
+						swap(x1, x2);
+						swap(y1, y2);
+					}
+					double dx = x2 - x1;
+					double dy = y2 - y1;
+					double d = sqrt(double(dx * dx + dy * dy));
+					
+					if (d > 0)
+					{
+						int x, y;
+						x = int(x1 + double(dy) * (m_LabelSize.height / 2 - 2) / d);
+						y = int(y1 - double(dx) * (m_LabelSize.height / 2 - 2) / d);
+
+						x += int(dx * (d - m_LabelSize.width) / 2 / d);
+						y += int(dy * (d - m_LabelSize.width) / 2 / d);
+
+						// HFONT hFont = m_FontCache.GetFont(1, angle);
+						// m_hdc.SelectObject(hFont);
+						// m_hdc.SetTextColor(m_crBg);
+						// m_hdc.ExtTextOut(x-1, y, 0, 0, m_wcName, 0);
+						// m_hdc.ExtTextOut(x+1, y, 0, 0, m_wcName, 0);
+						// m_hdc.ExtTextOut(x, y-1, 0, 0, m_wcName, 0);
+						// m_hdc.ExtTextOut(x, y+1, 0, 0, m_wcName, 0);
+						// m_hdc.SetTextColor(m_crText);
+						// m_hdc.ExtTextOut(x, y, 0, 0, m_wcName, 0);
+
+						Cairo::Matrix m;
+						m.xx = dx / d * 14;
+						m.xy = -dy / d * 14;
+						m.yx = dy / d * 14;
+						m.yy = dx / d * 14;
+						m.x0 = 0;
+						m.y0 = 0;
+						cr->set_font_matrix(m);
+						m_crBg.Set(cr);
+						cr->move_to(x-1, y);
+						cr->show_text(name);
+						cr->move_to(x+1, y);
+						cr->show_text(name);
+						cr->move_to(x, y-1);
+						cr->show_text(name);
+						cr->move_to(x, y+1);
+						cr->show_text(name);
+						m_crText.Set(cr);
+						cr->move_to(x, y);
+						cr->show_text(name);
+					}
+				}
+			}		
 		}
 	};
 	virtual void AddPoint(const GeoPoint & gp) 
@@ -201,6 +276,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		else
 			cr->move_to(p.x, p.y);
 		started = true;
+		m_pointList.push_back(p);
 	};
 	virtual bool WillPaint(const GeoRect & rect) { 
 		ScreenRect sRect = GeoToScreen(rect);
@@ -216,7 +292,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		// std::cerr << "WillPaint: false" << std::endl;
 		return false;
 	};
-	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * wcName) 
+	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName) 
 	{ 
 		// std::cerr << "PaintPoint" << std::endl; 
 	}

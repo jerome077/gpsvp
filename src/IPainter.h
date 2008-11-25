@@ -22,9 +22,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 struct IPainter
 {
 	//! Start painting polygon
-	virtual void StartPolygon(UInt uiType, const wchar_t * wcName) = 0;
+	virtual void StartPolygon(UInt uiType, const tchar_t * wcName) = 0;
 	//! Start painting polyline
-	virtual void StartPolyline(UInt uiType, const wchar_t * wcName) = 0;
+	virtual void StartPolyline(UInt uiType, const tchar_t * wcName) = 0;
 	//! Finish painting polygon
 	virtual void FinishObject() = 0;
 	//! Add point to currently painted object
@@ -34,7 +34,7 @@ struct IPainter
 	//! Set view center coordinates
 	virtual void SetView(const GeoPoint & gp, bool fManual) = 0;
 	//! Paint one point
-	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * wcName) = 0;
+	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName) = 0;
 	virtual void SetLabelMandatory() = 0;
 	virtual GeoRect GetRect() = 0;
 };

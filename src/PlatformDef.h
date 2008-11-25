@@ -116,4 +116,12 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 
 #define fnstring basic_string<fnchar_t>
 
+#ifdef LINUX
+#	define tchar_t char
+#else
+#	define tchar_t wchar_t
+#endif
+
+#define tstring basic_string<tchar_t>
+
 #endif // PLATFORMDEF_H
