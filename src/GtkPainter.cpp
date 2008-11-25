@@ -105,6 +105,29 @@ struct ScreenRect
 	}
 };
 
+struct ScreenDiff
+{
+	ScreenDiff(const ScreenDiff & d) { dx = d.dx; dy = d.dy; }
+	ScreenDiff(int x, int y) : dx(x), dy(y) {}
+	bool Null() {return dx == 0.0 && dy == 0.0;}
+	int dx;
+	int dy;
+	void operator *=(int i) {dx*=i; dy*=i;}
+	void operator /=(int i) {dx/=i; dy/=i;}
+};
+
+inline ScreenPoint & operator -= (ScreenPoint & pt, const ScreenDiff & d)
+{
+	pt.x -= d.dx;
+	pt.y -= d.dy;
+	return pt;
+}
+
+inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
+{
+	return pt -= d;
+}
+
 
 struct DumpPainter : public Gtk::DrawingArea, public IPainter
 {
@@ -193,7 +216,6 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		// std::cerr << "WillPaint: false" << std::endl;
 		return false;
 	};
-	virtual void SetView(const GeoPoint & gp, bool fManual) { std::cerr << "SetView" << std::endl; };
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * wcName) 
 	{ 
 		// std::cerr << "PaintPoint" << std::endl; 
@@ -583,6 +605,79 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 		}
 		*/
 	}
+	bool on_scroll(GdkEventScroll * event)
+	{
+		if (event->direction == GDK_SCROLL_UP)
+			ZoomIn();
+		else
+			ZoomOut();
+	}
+	int orig_x, orig_y;
+	bool on_press(GdkEventButton* event) 
+	{
+		orig_x = event->x;
+		orig_y = event->y;
+	}
+	bool on_release(GdkEventButton* event) 
+	{
+		Move(ScreenDiff(event->x - orig_x, event->y - orig_y));
+	}
+	void Move(ScreenDiff d)
+	{
+		SetView(ScreenToGeo(m_spWindowCenter - d), true);
+	}
+	void SetView(const GeoPoint & gp, bool fManual)
+	{
+		/*
+		if (fManual && app.m_Options[mcoFollowCursor])
+			m_iManualTimer = 60;
+		else if (m_iManualTimer > 0)
+			return;
+		*/
+		GeoPoint actual = gp;
+		const int cnMaxLat = 0x360000;
+		const int cnMaxLon = 0x800000;
+		if (actual.lat > cnMaxLat)
+			actual.lat = cnMaxLat;
+		if (actual.lat < -cnMaxLat)
+			actual.lat = -cnMaxLat;
+		if (actual.lon > cnMaxLon)
+			actual.lon = cnMaxLon;
+		if (actual.lon < -cnMaxLon)
+			actual.lon = -cnMaxLon;
+
+		// m_gpCenterView = actual;
+		m_gpCenter = actual;
+		// m_fViewSet = true;
+		Redraw();
+	}
+	
+	enum { 
+		ciMinZoom = 1,		//!< Minimum zoom
+		ciMaxZoom = 100000	//!< Maximum zoom
+	};
+	void ZoomIn()
+	{
+		if (m_ruiScale10 == ciMinZoom)
+			return;
+		// Decrease scale twice
+		// Correct if minimum reached
+		m_ruiScale10 = max((int)(ciMinZoom), m_ruiScale10 / 2);
+		Redraw();
+	}
+	void ZoomOut()
+	{
+		if (m_ruiScale10 == ciMaxZoom)
+			return;
+		// Increase scale twice
+		// Correct if maximum reached
+		m_ruiScale10 = min((int)(ciMaxZoom), m_ruiScale10 * 2);
+		Redraw();
+	}
+	void Redraw()
+	{
+		get_window()->invalidate_rect(get_allocation(), true);
+	}
 };
 
 int main(int argc, char ** argv)
@@ -604,6 +699,11 @@ int main(int argc, char ** argv)
 	Gtk::Window  window;
 	window.add(dp);
 	dp.show();
+	dp.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
+	dp.signal_button_press_event().connect(sigc::mem_fun(dp, &DumpPainter::on_press));
+	dp.signal_button_release_event().connect(sigc::mem_fun(dp, &DumpPainter::on_release));
+	// window.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
+	dp.set_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK );
  	Gtk::Main::run (window);
  	// toolkit.run(dp);
 
