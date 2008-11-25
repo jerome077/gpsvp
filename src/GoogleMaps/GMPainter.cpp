@@ -410,10 +410,10 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 	return 0;
 }
 
-void CGMPainter::SetMapFolder(const wchar_t * wcFolder)
+void CGMPainter::SetMapFolder(const wchar_t * wcFolder, const CVersionNumber& gpsVPVersion)
 {
 	m_wstrMapFolder = wcFolder;
-	m_GMFH.InitFromDir(wcFolder, false);
+	m_GMFH.InitFromDir(wcFolder, gpsVPVersion, false);
 }
 
 bool CGMPainter::RotationAllowed()

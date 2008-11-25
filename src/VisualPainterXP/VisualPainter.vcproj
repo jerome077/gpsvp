@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="VisualPainter"
 	ProjectGUID="{3FDE22F6-2D27-46E0-B23C-4057065F901D}"
 	RootNamespace="VisualPainter"
@@ -897,6 +897,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIniExt.h"
+				>
+			</File>
+			<File
 				RelativePath="..\SubDivision.cpp"
 				>
 				<FileConfiguration
@@ -1008,6 +1016,10 @@
 			</File>
 			<File
 				RelativePath="..\TreSubfile.h"
+				>
+			</File>
+			<File
+				RelativePath="..\VersionNumber.h"
 				>
 			</File>
 			<File

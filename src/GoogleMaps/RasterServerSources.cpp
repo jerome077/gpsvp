@@ -15,6 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <windows.h>
 #include "../PlatformDef.h"
 #include "../Lock.h"
+#include "../SimpleIniExt.h"
 #include "RasterServerSources.h"
 
 #ifndef UNDER_CE
@@ -361,3 +362,158 @@ bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) co
 		return false;
 	}
 }
+
+CUserWMSMapSource::CUserWMSMapSource(long iMapType,
+					                 const std::wstring& mapName,
+					                 const std::wstring& configFile,
+									 const std::wstring& cacheRoot,
+									 const CVersionNumber& gpsVPVersion)
+	: m_MapName(mapName),
+	  m_CacheRoot(cacheRoot),
+	  m_ConfigErrorCode(cecOK),
+	  m_DemoPoint(0, 0),
+	  m_DemoPointZoomOne(14)
+{
+	SetType(enumGMapType(iMapType));
+
+    CSimpleIniExtW iniFile;
+    iniFile.LoadFile(configFile.c_str());
+
+	if (iniFile.GetSectionSize(L"Tiled MAP") <= 0)
+	{
+		m_ConfigErrorCode = cecError;
+		return;
+	}
+	CVersionNumber mapMinVersion(iniFile.GetValue(L"Tiled MAP", L"gpsVPVersionMin", L"" /*default*/));
+	if (gpsVPVersion < mapMinVersion)
+		m_ConfigErrorCode = cecMapVersionNewerAsGpsVP;
+
+	m_DefaultProps.URLSchema = iniFile.GetValue(L"Tiled MAP", L"URL", L"" /*default*/);
+	m_DefaultProps.FilenameSchema = iniFile.GetValue(L"Tiled MAP", L"Filename", L"" /*default*/);
+	m_DefaultProps.SubpathSchema = iniFile.GetValue(L"Tiled MAP", L"Subpath", L"" /*default*/);
+	for(int zoomOne=1;zoomOne<=LEVEL_REVERSE_OFFSET;zoomOne++)
+	{
+		wchar_t valueName[32];
+		swprintf(valueName, 32, L"ZoomOne%d", zoomOne);
+		std::wstring sMapForZoom = iniFile.GetValue(L"Tiled MAP", valueName, L"" /*default*/);
+		if (sMapForZoom.empty())
+		{
+			m_ZoomProps[zoomOne-1] = &m_DefaultProps;
+		}
+		else
+		{
+			CUserMapZoomProp_MAP::iterator it = m_MapZoomProps.find(sMapForZoom);
+		    if (it != m_MapZoomProps.end())
+			{
+				m_ZoomProps[zoomOne-1] = &(it->second);
+			}
+			else
+			{
+				CUserMapZoomProp& zoomProps = m_MapZoomProps[sMapForZoom];
+				zoomProps.URLSchema = iniFile.GetValue(sMapForZoom.c_str(), L"URL", L"" /*default*/);
+				zoomProps.FilenameSchema = iniFile.GetValue(sMapForZoom.c_str(), L"Filename", L"" /*default*/);
+				zoomProps.SubpathSchema = iniFile.GetValue(sMapForZoom.c_str(), L"Subpath", L"" /*default*/);
+				m_ZoomProps[zoomOne-1] = &zoomProps;
+			}
+		}
+	}//for zoomOne
+
+	double DemoPointLon = iniFile.GetDoubleValue(L"Tiled MAP", L"DemoPointLon", L"0" /*default*/);
+	double DemoPointLat = iniFile.GetDoubleValue(L"Tiled MAP", L"DemoPointLat", L"0" /*default*/);
+	m_DemoPointZoomOne = iniFile.GetIntValue(L"Tiled MAP", L"DemoPointZoomOne", L"14" /*default*/);
+	m_DemoPoint = GeoPoint(DemoPointLon, DemoPointLat);
+}
+
+bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+{
+    return false;
+}
+
+void ReplaceSubStr(std::wstring& AString,
+				   const std::wstring& oldSub,
+				   const std::wstring& newSub)
+{
+	size_t found = AString.find(oldSub);
+	while (std::wstring::npos != found)
+	{
+		AString.replace(found, oldSub.length(), newSub);
+		found = AString.find(oldSub, found);
+	}
+}
+
+void CUserWMSMapSource::ReplaceSchemaSubStrings(const GEOFILE_DATA& data, std::wstring& AString)
+{
+	wchar_t buffer[32];
+	double Long1 = XtoLong(data.X,data.level);
+	double Lat1 = YtoLat(data.Y+1,data.level);
+	double Long2 = XtoLong(data.X+1,data.level);
+	double Lat2 = YtoLat(data.Y,data.level);
+
+	swprintf(buffer, 32, L"%.14f", Long1);
+	ReplaceSubStr(AString, L"%LONG1", buffer);
+
+	swprintf(buffer, 32, L"%.14f", Lat1);
+	ReplaceSubStr(AString, L"%LAT1", buffer);
+
+	swprintf(buffer, 32, L"%.14f", Long2);
+	ReplaceSubStr(AString, L"%LONG2", buffer);
+
+	swprintf(buffer, 32, L"%.14f", Lat2);
+	ReplaceSubStr(AString, L"%LAT2", buffer);
+
+	swprintf(buffer, 32, L"%d", data.X);
+	ReplaceSubStr(AString, L"%X", buffer);
+
+	swprintf(buffer, 32, L"%d", data.Y);
+	ReplaceSubStr(AString, L"%Y", buffer);
+
+	swprintf(buffer, 32, L"%d", data.level);
+	ReplaceSubStr(AString, L"%ZOOM_17", buffer);  // 17 = Whole Earth in 1 tile
+
+	swprintf(buffer, 32, L"%d", LEVEL_REVERSE_OFFSET-data.level);
+	ReplaceSubStr(AString, L"%ZOOM_01", buffer);  //  1 = Whole Earth in 1 tile
+
+	swprintf(buffer, 32, L"%d", 17-data.level);
+	ReplaceSubStr(AString, L"%ZOOM_00", buffer);  //  0 = Whole Earth in 1 tile
+}
+
+
+std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
+{
+	CUserMapZoomProp& zoomProps = GetZoomProps(data.level);
+	std::wstring wstrUrl = zoomProps.URLSchema;
+    ReplaceSchemaSubStrings(data, wstrUrl);
+    std::string strUrl;
+    strUrl.assign(wstrUrl.begin(), wstrUrl.end());
+	//sprintf(buffer, "http://tile.openstreetmap.org/%d/%d/%d.png", 17 - data.level, data.X, data.Y);
+	return strUrl;
+}
+
+bool CUserWMSMapSource::GetDiskFileName(
+		const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+	)
+{
+	CUserMapZoomProp& zoomProps = GetZoomProps(gfdata.level);
+	name = zoomProps.FilenameSchema;
+	ReplaceSchemaSubStrings(gfdata, name);
+
+	if (!zoomProps.SubpathSchema.empty())
+	{
+		path = zoomProps.SubpathSchema;
+        ReplaceSchemaSubStrings(gfdata, path);
+		path = m_MapName + L"/" + path;
+		if (!root.empty())
+			path = root + L"/" + path;
+		return true;
+	}
+	else
+		return GetDiskGenericFileName(gfdata, root, path, m_MapName.c_str());
+}
+
+GeoPoint CUserWMSMapSource::GetDemoPoint(double &scale) const
+{
+	// I don't exactely how to calculate the "scale". I've just tried and
+	// found out that the following works:
+	scale = pow(2.0, 16.0-m_DemoPointZoomOne);
+	return m_DemoPoint;
+};

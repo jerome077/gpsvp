@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="VisualPainterSP"
 	ProjectGUID="{720A2BD9-32EA-47B3-9F01-333690934EEE}"
 	RootNamespace="VisualPainterSP"
@@ -3338,6 +3338,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIniExt.h"
+				>
+			</File>
+			<File
 				RelativePath="..\StdAfx.cpp"
 				>
 				<FileConfiguration
@@ -3840,6 +3848,10 @@
 			</File>
 			<File
 				RelativePath="..\TypeInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\VersionNumber.h"
 				>
 			</File>
 			<File

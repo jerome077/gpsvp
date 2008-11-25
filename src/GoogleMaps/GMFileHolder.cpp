@@ -23,30 +23,184 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 const DWORD MID_REQUEST_MSEC = 1000;
 
 CGMFileHolder::CGMFileHolder(void)
+	: m_WMSMapsListed(false)
 {
 	m_bInitialized = false;
 	m_wdLastRequestTicks = 0;
 
 	// Создаём именаторы
-	m_vecRMS[gtNone] = new CNullSource();
-	m_vecRMS[gtMap] = new CGMapSource();
-	m_vecRMS[gtSatellite] = new CGSatSource();
-	m_vecRMS[gtHybrid] = new CNullSource();
-	m_vecRMS[gtTopo] = new CGTopoSource();
-	m_vecRMS[gtMSMap] = new CMSMapSource();
-	m_vecRMS[gtMSSat] = new CMSSatSource();
-	m_vecRMS[gtMSHyb] = new CMSHybSource();
-	m_vecRMS[gtOsm] = new COSMSource();
+	m_vecRMS.push_back(new CNullSource());  // gtNone
+	m_vecRMS.push_back(new COSMSource());   // gtOsm
+	m_vecRMS.push_back(new CGMapSource());  // gtMap
+	m_vecRMS.push_back(new CGSatSource());  // gtSatellite
+	m_vecRMS.push_back(new CGTopoSource()); // gtTopo
+	m_vecRMS.push_back(new CMSMapSource()); // gtMSMap
+	m_vecRMS.push_back(new CMSSatSource()); // gtMSSat
+	m_vecRMS.push_back(new CMSHybSource()); // gtMSHyb
+	m_vecRMS.push_back(new CNullSource());  // gtHybrid
 }
 
 CGMFileHolder::~CGMFileHolder(void)
 {
-	for (long i=gtNone; i<gtCount; i++) {
+	for (long i=gtNone, iEnd=GetGMapCount(); i<iEnd; i++) {
 		if (m_vecRMS[i] != NULL) {
 			delete m_vecRMS[i];
 			m_vecRMS[i] = NULL;
 		}
 	}
+}
+
+
+// Class which looks after all possible map configuration files
+class CMapConfigFinder
+{
+public:
+	// Datatype for the items of the list:
+	class CMapConfig
+	{
+	public:
+		std::wstring MapName;
+		std::wstring IniFileWithPath;
+	};
+	// iterator for the list:
+	typedef std::list<CMapConfig>::const_iterator const_iterator;
+	CMapConfigFinder::const_iterator begin() { return m_list.begin(); };
+	CMapConfigFinder::const_iterator end() { return m_list.end(); };
+
+	// constructor
+	CMapConfigFinder(const std::wstring& strMapsRoot)
+	{
+		WIN32_FIND_DATA FindFileData;
+
+		// Find all config files from the MapConfigs folder:
+		std::wstring strMapConfigsPath = FindApplicationBasePath() + L"MapConfigs\\";
+		std::wstring strSearch = strMapConfigsPath + L"*.ini";
+		HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
+		if (INVALID_HANDLE_VALUE != hFind)
+		{
+			do
+			{
+				CMapConfig mapConfig;
+				mapConfig.MapName = GetNameWithoutINIExtension(FindFileData);
+				mapConfig.IniFileWithPath = strMapConfigsPath + FindFileData.cFileName;
+				m_list.push_back(mapConfig);
+			}
+			while (FindNextFile(hFind, &FindFileData));
+			FindClose(hFind);
+		}
+
+		// Find all folders in the map cache with a config file:
+		strSearch = strMapsRoot + L"\\*";
+		hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
+		if (INVALID_HANDLE_VALUE != hFind)
+		{
+			do
+			{
+				if (   isNormalDirectory(FindFileData)
+					&& hasMapCfgFile(strMapsRoot, FindFileData)
+				   )
+				{
+					CMapConfig mapConfig;
+					mapConfig.MapName = FindFileData.cFileName;
+					mapConfig.IniFileWithPath = strMapsRoot + L"\\" + FindFileData.cFileName + L"\\mapcfg.ini";
+					m_list.push_back(mapConfig);
+				}
+			}
+			while (FindNextFile(hFind, &FindFileData));
+			FindClose(hFind);
+		}
+	};
+
+protected:
+	std::list<CMapConfig> m_list;
+
+	std::wstring GetNameWithoutINIExtension(const WIN32_FIND_DATA &FindFileData)
+	{
+		std::wstring strFilename = FindFileData.cFileName;
+		return strFilename.substr(0, strFilename.length()-4);
+	}
+
+	bool isNormalDirectory(const WIN32_FIND_DATA& ffd)
+	{
+		return (  ((ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+			   && ('.' != ffd.cFileName[0]) // no "." at the beginning
+			   );
+	}
+
+	bool hasMapCfgFile(const std::wstring& mapRootFolder, const WIN32_FIND_DATA& ffd)
+	{
+		WIN32_FIND_DATA wwd;
+		std::wstring strSearch = mapRootFolder + L"\\" + ffd.cFileName + L"\\mapcfg.ini";
+		HANDLE h = FindFirstFile(strSearch.c_str(), &wwd);
+		if (h && (h != INVALID_HANDLE_VALUE))
+		{
+			FindClose(h);
+			if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				return true;
+		}
+		return false;
+	}
+
+	std::wstring FindApplicationBasePath()
+	{
+		TCHAR szTempName[MAX_PATH]=TEXT("\0");
+		int iLen = GetModuleFileName(NULL,szTempName,MAX_PATH);
+		if (0 != iLen)
+		{
+			std::wstring strPath = szTempName;
+			size_t found1 = strPath.rfind(L"\\");
+			if (std::string::npos != found1)
+			{
+				return strPath.substr(0, found1+1); // +1 to keep the trailing slash
+			}
+			else return L"";
+		}
+		else return L"";
+	}
+};
+
+void CGMFileHolder::FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion)
+{
+	WPARAM currentWMSNumber = gtFirstWMSMapType;
+
+    bool bMapErrors = false;
+	std::wstring sMapErrors = L"Following maps won't be loaded (wrong configuration):";
+	bool bMapVersionWarnings = false;
+	std::wstring sMapVersionWarnings = L"Following maps are for a newer version of gpsVP:";
+	CMapConfigFinder configList(m_strMapsRoot);
+	CMapConfigFinder::const_iterator iter = configList.begin();
+	while (configList.end() != iter)
+	{
+		CUserWMSMapSource* mapSource = new CUserWMSMapSource(currentWMSNumber,
+			                                                 iter->MapName,
+			                                                 iter->IniFileWithPath,
+												             m_strMapsRoot,
+												             gpsVPVersion);
+		if (CUserWMSMapSource::cecError == mapSource->GetConfigError())
+		{
+			bMapErrors = true;
+			sMapErrors += L" " + iter->MapName;
+			delete mapSource; //don't keep the map
+		}
+		else if (CUserWMSMapSource::cecMapVersionNewerAsGpsVP == mapSource->GetConfigError())
+		{
+			bMapVersionWarnings = true;
+			sMapVersionWarnings += L" " + iter->MapName;
+			m_vecRMS.push_back(mapSource); // Keep the map anyway
+			currentWMSNumber++;
+		}
+		else
+		{
+			m_vecRMS.push_back(mapSource); // Keep the map
+			currentWMSNumber++;
+		}
+		if (currentWMSNumber > gtLastGMapType) break; // Maximal count of WMS-Maps reached
+		iter++;
+	}
+	if (bMapErrors)
+		MessageBox(NULL, sMapErrors.c_str(), L"Wrong maps", MB_ICONEXCLAMATION);
+	if (bMapVersionWarnings)
+		MessageBox(NULL, sMapVersionWarnings.c_str(), L"Please update gpsVP", MB_ICONEXCLAMATION);
 }
 
 const long CGMFileHolder::GetFileName(std::wstring& name, const GEOFILE_DATA& data) const
@@ -77,7 +231,7 @@ const long CGMFileHolder::GetFileName(std::wstring& name, const GEOFILE_DATA& da
 	}
 }
 
-long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, bool bCreateIndexIfNeeded)
+long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded)
 {
 	AutoLock l;
 
@@ -94,6 +248,14 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, bool bCreateIndexIfNeede
 	}
 
 	NeedRelocateFiles();
+
+	// Adding WMS-Maps to the list
+	// (Currently only the first time. You have to restart the program if you change the cache folder)
+	if (! m_WMSMapsListed)
+	{
+		FindAndAddWMSMaps(gpsVPVersion);
+		m_WMSMapsListed = true;
+	}
 
 	return 0;
 }
@@ -246,7 +408,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 		} else {
 			// Файл - разобрать имя на фрагменты
 			bool bNameParsed = false;
-			for (long i=gtMap; i<gtCount; i++) {
+			for (long i=gtMap, iEnd=GetGMapCount(); i<iEnd; i++) {
 				if (m_vecRMS[i]->IsGoodFileName(data, fd.cFileName)) {
 					bNameParsed = true;
 					break;
@@ -415,4 +577,14 @@ long CGMFileHolder::ProcessPrefixes(const std::string &s)
 	}
 
 	return 0;
+}
+
+std::wstring CGMFileHolder::GetWMSMapName(long indexWMS) const
+{
+	return ((CUserWMSMapSource *)m_vecRMS[gtFirstWMSMapType+indexWMS])->GetName();
+}
+
+GeoPoint CGMFileHolder::GetDemoPoint(enumGMapType type, double &scale) const
+{
+	return m_vecRMS[type]->GetDemoPoint(scale);
 }

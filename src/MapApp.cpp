@@ -46,6 +46,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "HttpClient.h"
 #include "GoogleMaps/GMPainter.h"
+#include "VersionNumber.h"
 
 const DWORD MIN_CPUMON_STEP_MS = 900;
 
@@ -60,7 +61,7 @@ extern HINSTANCE g_hInst;
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 
-const char * sVersion = "0.4.15";
+const CVersionNumber g_gpsVPVersion(0, 4, 15);
 
 class CNmeaCommandsDlg : public CMADialog
 {
@@ -1675,7 +1676,7 @@ void CMapApp::SetRasterMapFolder()
 	{
 #endif
 		m_rsRasterMapFolder = strFile;
-		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str());
+		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
 	}
 }
 
@@ -1799,9 +1800,6 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_riMetrics.Init(hRegKey, L"MetricSystem", 0);
 	m_riWaypointsRadius.Init(hRegKey, L"WaypointsRadius", 40000000);
 	m_riDetail.Init(hRegKey, L"Detail", 0);
-	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
-	if (m_riGMapType() < 0 || m_riGMapType() > gtCount)
-		m_riGMapType.Set(0);
 	m_riConnectPeriodMin.Init(hRegKey, L"ConnectPeriod", 0);
 	m_gpNavigate.Init(hRegKey, L"NavigatePoint", GeoPoint(0,0));
 	m_fNavigate.Init(hRegKey, L"Navigate", false);
@@ -1937,7 +1935,11 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_rsRasterMapFolder.Init(hRegKey, L"RasterMapFolder");
 	if (!m_rsRasterMapFolder().empty())
-		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str());
+		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
+	// Only after loading the list of WMS-Maps
+	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
+	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
+		m_riGMapType.Set(0);
 
 	CheckOptions();
 
@@ -2607,6 +2609,7 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
+				InitMenuAllWMSMaps(mmMapType);
 			}
 			{
 				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
@@ -2786,6 +2789,15 @@ void CMapApp::InitMenu()
 	CheckMenu();
 }
 
+void CMapApp::InitMenuAllWMSMaps(CMenu& baseMenu)
+{
+	for(int i=0, iEnd=m_pRasterMapPainter->GetWMSMapCount();
+		i<iEnd; i++)
+	{
+		baseMenu.CreateItem(m_pRasterMapPainter->GetWMSMapName(i).c_str(), mcFirstWMSMapType+i);
+	}
+}
+
 void CMapApp::CheckMenu()
 {
 	CMenu & menu = m_MenuBar.GetMenu();
@@ -2799,7 +2811,8 @@ void CMapApp::CheckMenu()
 	menu.CheckMenuItem(mcConnectPeriod4, m_riConnectPeriodMin() == 4);
 	menu.CheckMenuItem(mcConnectPeriod9, m_riConnectPeriodMin() == 9);
 
-	for (int i = 0; i < gtCount; ++i)
+	for (int i = 0, iEnd = m_pRasterMapPainter->GetGMapCount();
+		 i < iEnd; ++i)
 		menu.CheckMenuItem(mcGMapType + i, i == m_riGMapType());
 
 	menu.EnableMenuItem(mcCloseColors, !m_rsToolsFile().empty());
@@ -3082,27 +3095,17 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			SetDetail(m_riDetail() + 1);
 			break;
 		case mcPrevGMapType:
-			SetGMapType((m_riGMapType() - 1 + gtCount) % gtCount);
+			{
+				long mapCount = m_pRasterMapPainter->GetGMapCount();
+				SetGMapType((m_riGMapType() - 1 + mapCount) % mapCount);
+			}
 			break;
 		case mcNextGMapType:
-			SetGMapType((m_riGMapType() + 1 + gtCount) % gtCount);
-			break;
-		case mcGMapType + 0:
-		case mcGMapType + 1:
-		case mcGMapType + 2:
-		case mcGMapType + 3:
-		case mcGMapType + 4:
-		case mcGMapType + 5:
-		case mcGMapType + 6:
-		case mcGMapType + 7:
-		case mcGMapType + 8:
 			{
-				int iNewType = wp - mcGMapType;
-				if (iNewType == m_riGMapType())
-					iNewType = 0;
-				SetGMapType(iNewType);
-				break;
+				long mapCount = m_pRasterMapPainter->GetGMapCount();
+				SetGMapType((m_riGMapType() + 1 + mapCount) % mapCount);
 			}
+			break;
 		case mcDownlRasterAddCurrentView:
 			DRMAddCurrentView();
 			break;
@@ -3138,6 +3141,14 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			break;
 		default:
 			{
+			    if ((mcGMapType <= wp) && (wp <= mcLastGMapType))
+				{
+					int iNewType = wp - mcGMapType;
+					if (iNewType == m_riGMapType())
+						iNewType = 0;
+					SetGMapType(iNewType);
+					break;
+				}
 				if (m_Options.ProcessCommand(wp, m_MenuBar))
 				{
 					switch (wp) {
@@ -3281,6 +3292,17 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		if (m_Options[mcoDebugMode])
 			mmMenu.CreateItem(L("Debug: cursor here"), 3);
 
+
+		CMenu & mmRaster = mmMenu.CreateSubMenu(L("Raster map"));
+		double m_dummyScale;
+		if (GeoPoint(0, 0) != m_pRasterMapPainter->GetDemoPoint(enumGMapType(m_riGMapType()), m_dummyScale))
+		{
+			mmRaster.CreateItem(L("Go to demo point"), 51);
+		}
+		else
+		{
+			mmRaster.CreateItem(L("No demo point"), -1);
+		}
 		
 //		RECT rect = m_painter.GetScreenRect();
 		DWORD res = mmMenu.Popup(sp.x, sp.y, m_hWnd);
@@ -3404,6 +3426,12 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 				+ L"\n" + L("Type: ") + m_TypeInfo.PolygonType(pginfo.uiType)
 				).c_str(),
 				L("Area info"),MB_ICONINFORMATION);
+			break;
+		case 51:
+			double scale;
+		    GeoPoint demoPoint = m_pRasterMapPainter->GetDemoPoint(enumGMapType(m_riGMapType()), scale);
+			m_painter.SetView(demoPoint, true);
+			m_painter.SetXScale(scale);
 			break;
 		}
 	}
@@ -3845,7 +3873,7 @@ void CMapApp::About()
 {
 	wchar_t buffer[10000];
 	swprintf(buffer, 10000, L"%s %S\n%s %S\n%s.\n%s",
-		L("gpsVP version"), sVersion, L("Built on"), __DATE__, 
+		L("gpsVP version"), g_gpsVPVersion.AsString().c_str(), L("Built on"), __DATE__, 
 		L("GPS navigation software for PCs, handhelds and smartphones"),
 		L"Copyright (c) 2005-2008, Vsevolod E. Shorin\nAll rights reserved.\n\n"
 		L"Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n"
@@ -3945,7 +3973,7 @@ void CMapApp::HttpThreadRoutine()
 				request = "http://";
 				request += GetServerName(); 
 				request += "/LatestVersion.php?version=";
-				request += sVersion;
+				request += g_gpsVPVersion.AsString();
 				request_source = 1;
 			}
 			if (request.empty() && !m_fStopHttpThread)
@@ -4051,7 +4079,7 @@ void CMapApp::HttpThreadRoutine()
 					m_wstrHttpStatus = L"Requesting";
 				}
 				CHttpRequest req(0);
-				req.Request(request, std::string("gpsVP ") + sVersion);
+				req.Request(request, std::string("gpsVP ") + g_gpsVPVersion.AsString());
 				m_monDataIn += req.GetIncoming();
 				m_monDataOut += req.GetOutgoing();
 				m_monDataTotal += req.GetIncoming() + req.GetOutgoing();

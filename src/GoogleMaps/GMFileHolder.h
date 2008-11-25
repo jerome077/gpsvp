@@ -20,6 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <set>
 #include "../Track.h"
 #include "RasterServerSources.h"
+#include "../VersionNumber.h"
 
 class CGMFileHolder
 {
@@ -32,7 +33,7 @@ public:
 		m_strDefaultFileName = pszDefaultFile;
 	};
 
-	long InitFromDir(const wchar_t *pszRoot, bool bCreateIndexIfNeeded = true);
+	long InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded = true);
 	void Deinit();
 
 	const long GetFileName(std::wstring& name, const GEOFILE_DATA& data) const;
@@ -56,11 +57,16 @@ public:
 
 	const CRasterMapSource *GetRMS(enum enumGMapType t) const
 	{
-		if (t < gtCount)
+		if (t < m_vecRMS.size())
 			return m_vecRMS[t];
 		else 
 			return NULL;
 	};
+
+	long GetGMapCount() const { return m_vecRMS.size(); };
+	long GetWMSMapCount() const { return m_vecRMS.size()-gtFirstWMSMapType; };
+	std::wstring GetWMSMapName(long indexWMS) const;
+	GeoPoint GetDemoPoint(enumGMapType type, double &scale) const;
 
 protected:
 	long BuildInternalIndex();
@@ -69,6 +75,8 @@ protected:
 	bool DeleteDirIfEmpty(std::wstring sDir, bool bDeleteThis = true);
 
 	bool GetDiskFileName(const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root = L"") const;
+
+    void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
 
 private:
 	// Здесь - общий префикс для всех директорий
@@ -85,7 +93,8 @@ private:
 	long m_nMinLevel, m_nMaxLevel; 
 
 	// Текущий номер сервера
-	CRasterMapSource * m_vecRMS[gtCount];
+	std::vector<PRasterMapSource> m_vecRMS;
+	bool m_WMSMapsListed;
 
 	unsigned char m_nMTServerId;
 	unsigned char m_nKHServerId;

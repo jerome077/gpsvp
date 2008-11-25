@@ -102,8 +102,7 @@ enum enumMenuCommands
 	mcSetGoogleMapsFolder,
 	mcoDownloadGoogleMaps,
 	mcoShowWaypoints,
-	mcGMapType,
-	mcPrevGMapType = mcGMapType + 10,
+	mcPrevGMapType,
 	mcNextGMapType,
 	mcoShowCurrentTrack,
 	mcCloseTranslation,
@@ -133,6 +132,10 @@ enum enumMenuCommands
 	mcTeamUpdateNow,
 	mcTeamUpdatePeriodically,
 	mcoInvertSatelliteImages,
+	mcGMapType = 0x2000,
+	mcFirstWMSMapType = mcGMapType + 9,
+	// ...reserved for Map Types...
+	mcLastGMapType = 0x2FFF,
 };
 
 #endif // COMMANDS_H

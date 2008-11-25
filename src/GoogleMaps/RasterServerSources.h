@@ -16,6 +16,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 #include <list>
+#include <math.h>
+#include "../VersionNumber.h"
+#include "../GeoPoint.h"
 
 enum enumGMapType
 {
@@ -28,7 +31,8 @@ enum enumGMapType
 	gtMSSat,
 	gtMSHyb,
 	gtHybrid,
-	gtCount
+	gtFirstWMSMapType,
+	gtLastGMapType = 0x1000
 };
 
 const long LEVEL_REVERSE_OFFSET = 18;
@@ -98,6 +102,11 @@ public:
 		return false;
 	};
 
+	virtual GeoPoint GetDemoPoint(double &scale) const
+	{
+		return GeoPoint(0, 0);
+	};
+
 protected:
 	virtual std::string GetNextPrefix()
 	{
@@ -115,6 +124,8 @@ private:
 	std::list<std::string> m_lstPrefixes;
 	std::list<std::string>::iterator m_it;
 };
+
+typedef CRasterMapSource* PRasterMapSource;
 
 class CNullSource : public CRasterMapSource
 {
@@ -331,5 +342,74 @@ public:
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+};
+
+
+// Properties for one level of zoom of a user defined Map:
+class CUserMapZoomProp
+{
+public:
+	std::wstring URLSchema;
+	std::wstring FilenameSchema;
+	std::wstring SubpathSchema;
+};
+typedef std::map<std::wstring, CUserMapZoomProp> CUserMapZoomProp_MAP;
+
+
+class CUserWMSMapSource : public CRasterMapSource
+{
+private:
+    std::wstring m_MapName;
+    std::wstring m_CacheRoot;
+	GeoPoint m_DemoPoint; // A point where the map should be visible
+	int m_DemoPointZoomOne;
+
+public:
+	CUserWMSMapSource(long iMapType,
+					  const std::wstring& mapName,
+					  const std::wstring& configFile,
+					  const std::wstring& cacheRoot,
+					  const CVersionNumber& gpsVPVersion);
+	virtual std::string GetRequestURL(const GEOFILE_DATA& data);
+	std::wstring GetName() { return m_MapName; };
+
+	virtual bool GetDiskFileName(
+			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		);
+
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+
+	virtual GeoPoint GetDemoPoint(double &scale) const;
+
+	enum enumConfigErrorType { cecOK,
+		                       cecMapVersionNewerAsGpsVP,
+						       cecError };
+	enumConfigErrorType GetConfigError() { return m_ConfigErrorCode; };
+
+private:
+	// Calculation derived from here: http://www.supware.net/GoogleMapping/ 
+    double XtoLong(unsigned long x, unsigned char level)
+	{
+	    return 360.0*x/(1<<(17-level))-180;
+	}
+    double YtoLat(unsigned long y, unsigned char level)
+	{
+		return (atan(exp(3.14159265358979323846*(1.0-256.0*y/(1<<(24-level)))))/3.14159265358979323846-0.25)*360;
+	}
+    void ReplaceSchemaSubStrings(const GEOFILE_DATA& data, std::wstring& AString);
+
+	// Default map properties:
+	CUserMapZoomProp m_DefaultProps;
+	// Complementary map properties (Key = Name as in the ini file, Value = corresponding CUserMapZoomProp):
+	CUserMapZoomProp_MAP m_MapZoomProps;
+	// Array of pointers on the map properties for each zoom level:
+	CUserMapZoomProp* m_ZoomProps[LEVEL_REVERSE_OFFSET];
+	// Access to the map properties:
+	CUserMapZoomProp& GetZoomProps(long zoomSeventeen) // zoomSeventeen corresponds to 'data.level'
+	{
+		return *m_ZoomProps[17-zoomSeventeen];
+	};
+	enumConfigErrorType m_ConfigErrorCode;
+
 };
 

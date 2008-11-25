@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <gdiplus.h>
 #endif // UNDER_CE
 #include <list>
+#include "../VersionNumber.h"
 
 struct GEOFILE_CONTENTS {
 	HBITMAP h;
@@ -60,7 +61,7 @@ class CGMPainter
 public:
 	CGMPainter(void);
 	virtual ~CGMPainter(void);
-	void SetMapFolder(const wchar_t * wcFolder);
+	void SetMapFolder(const wchar_t * wcFolder, const CVersionNumber& gpsVPVersion);
 
 	void SetMaxCacheSize(long nBitmapsCount) 
 	{
@@ -89,6 +90,10 @@ public:
 	long DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadius, long nDetailedLevel);
 	void RelocateFiles(); 
 	bool NeedRelocateFiles(); 
+	long GetGMapCount() const { return m_GMFH.GetGMapCount(); };
+	long GetWMSMapCount() const { return m_GMFH.GetWMSMapCount(); };
+	std::wstring GetWMSMapName(long indexWMS) const { return m_GMFH.GetWMSMapName(indexWMS); };
+    GeoPoint GetDemoPoint(enumGMapType type, double &scale) const { return m_GMFH.GetDemoPoint(type, scale); };
 
 protected:
 	int DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& data);
