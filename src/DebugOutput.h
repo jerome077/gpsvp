@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define DEBUGOUTPUT_H
 
 #include <string>
+#include <ostream>
 
 using namespace std;
 
@@ -36,7 +37,7 @@ public:
 
 #ifndef NO_DEBUG_OUTPUT
 
-inline ostream & operator << (ostream & ostr, GeoPoint gp)
+inline ostream & operator << (ostream & ostr, const GeoPoint & gp)
 {
 	return ostr << gp.lon << ", " << gp.lat;
 }

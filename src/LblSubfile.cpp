@@ -15,8 +15,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "LblSubfile.h"
 #include "SubFile.h"
 #include "DebugOutput.h"
-#include "Windows.h"
-#include "Winnls.h"
+#include "PlatformDef.h"
+#ifndef LINUX
+#	include "Winnls.h"
+#else
+#	include <iconv.h>
+#	include <string.h>
+#endif
 #include "BitStream.h"
 
 void CLblSubfile::Parse(CSubFile * pSubFile)
@@ -56,7 +61,19 @@ const wchar_t * CLblSubfile::GetLabel(UInt uiOffset)
 
 		// Convert to wide char according to codepage
 		wchar_t wcRes[cnMaxLabel];
+#ifndef LINUX
 		MultiByteToWideChar(m_uiCodepage, 0, (char *)data, -1, wcRes, cnMaxLabel);
+#else
+		char encoding[100];
+		sprintf(encoding, "cp%d", m_uiCodepage);
+		iconv_t cd = iconv_open("ucs2", encoding);
+		size_t inbytesleft = strlen((char*)data);
+		size_t outbytesleft = cnMaxLabel;
+		char * inbuf = (char*)&data[0];
+		char * outbuf = (char*)&wcRes[0];
+		iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+		iconv_close(cd);
+#endif
 		// Return result
 		res = wcRes;
 	}

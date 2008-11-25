@@ -22,7 +22,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <vector>
 #include <list>
 #include "IPainter.h" // for IPainter
-#include <windows.h>
+#include "PlatformDef.h"
 #include "RegValues.h"
 #include "GeoPoint.h"
 #include "FontCache.h"

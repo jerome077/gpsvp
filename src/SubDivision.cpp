@@ -14,7 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "PlatformDef.h"
 #include "DebugOutput.h"
-#include "Subdivision.h"
+#include "SubDivision.h"
 #include "Common.h"
 #include "SubFile.h"
 #include "TreSubfile.h"

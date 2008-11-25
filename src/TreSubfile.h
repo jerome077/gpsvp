@@ -88,7 +88,7 @@ public:
 	//! Read subfile data
 	void Parse(CSubFile * pSubFile);
 	//! Debug dump of object data
-	// void Dump();
+	// void Dump() const;
 	//! Get-method for m_pRgnSubfile
 	CRgnSubfile * GetRgnSubfile() {return m_pRgnSubfile;}
 	CLblSubfile * GetLblSubfile() {return m_pLblSubfile;}

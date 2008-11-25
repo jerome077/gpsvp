@@ -21,6 +21,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 // This file contains platform-dependent functions
 // and macro definitions
 
+#ifndef LINUX
+#include <windows.h>
+#endif
+
 #ifndef DONT_DEFINE_MIN
 #	define DEFINE_MIN
 #endif
@@ -94,8 +98,22 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 	_wfopen_s(&res, name, mode);
 	return res;
 }
+#elif defined(LINUX)
+// LINUXTODO:
+inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
+{
+	return 0;
+}
 #else
 #	define wfopen _wfopen
 #endif
+
+#ifdef LINUX
+#	define fnchar_t char
+#else
+#	define fnchar_t wchar_t
+#endif
+
+#define fnstring basic_string<fnchar_t>
 
 #endif // PLATFORMDEF_H

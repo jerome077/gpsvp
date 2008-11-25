@@ -15,11 +15,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "DebugOutput.h"
 #include "Header.h"
 #include "NetSubfile.h"
-#include "ipainter.h"
+#include "IPainter.h"
 
 #include <algorithm>
 #include <fstream>
-#include <windows.h>
+#include "PlatformDef.h"
+#include <memory>
+#include <iostream>
 
 struct CIMGFile::Map
 {
@@ -37,17 +39,21 @@ struct CIMGFile::Map
 	CNetSubfile * m_pNetSubfile;
 	CIMGFile * m_pOwner;
 	GeoPoint GetCenter() const;
-	void Dump(const std::wstring & wstrFilename) const
+	void Dump(const std::fnstring & wstrFilename) const
 	{
-		wchar_t buff[100];
+		fnchar_t buff[100];
 		for (SubFiles::const_iterator it = m_SubFiles.begin(); it != m_SubFiles.end(); ++it)
 		{
-			wsprintf(buff, L".%S", it->first.c_str());
+	#ifdef LINUX
+			snprintf(buff, 100, ".%s", it->first.c_str());
+	#else
+			swprintf(buff, 100, L".%S", it->first.c_str());
+	#endif
 			int size = it->second.GetSize();
 			auto_ptr<Byte> buffer(new Byte[size]);
 			it->second.Read(buffer.get(), 0, size);
 			std::basic_ofstream<Byte> of((wstrFilename + buff).c_str());
-			of.write(buffer.get(), size);
+			of.write((unsigned char*)buffer.get(), size);
 		}
 	}
 	void ParseSubfiles()
@@ -148,7 +154,7 @@ void CIMGFile::Parse()
 //		(*it)->Dump();
 //}
 
-bool CIMGFile::Parse(const wchar_t * wcFilename)
+bool CIMGFile::Parse(const fnchar_t * wcFilename)
 {
 	m_wstrFilename = wcFilename;
 	static int s_iNextID = 0;

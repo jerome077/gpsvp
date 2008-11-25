@@ -53,4 +53,4 @@ public:
 	// void Dump();
 };
 
-#endif NETSUBFILE_H
+#endif // NETSUBFILE_H

@@ -20,6 +20,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <hash_map>
 
 using namespace std;
+#ifdef LINUX
+	using namespace __gnu_cxx;
+#else
+	using namespace stdext;
+#endif
 
 class CSubFile;
 
@@ -34,9 +39,9 @@ class CLblSubfile
 	UInt m_uiDataLength;
 	UInt m_uiPoiOffset;
 	UInt m_uiPoiLength;
-	typedef stdext::hash_map<UInt, std::wstring> LabelCache;
+	typedef hash_map<UInt, std::wstring> LabelCache;
 	LabelCache m_cache;
-	typedef stdext::hash_map<UInt, UInt> PoiCache;
+	typedef hash_map<UInt, UInt> PoiCache;
 	PoiCache m_poiCache;
 public:
 	//! Object constants

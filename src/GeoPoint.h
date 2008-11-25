@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define GEOPOINT_H
 
 #include "Common.h"
+#include "PlatformDef.h"
 #include <math.h>
 
 struct GeoPoint

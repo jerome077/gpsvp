@@ -17,8 +17,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "TreSubfile.h"
 #include "SubFile.h"
 #include "RgnSubfile.h"
-#include <windows.h>
 #include "IPainter.h"
+#include "PlatformDef.h"
+
+#include <memory>
+#include <iostream>
 
 void CTreSubfile::Parse(CSubFile * pSubFile)
 {
@@ -163,29 +166,29 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 }
 
 
-//void CTreSubfile::Dump()
+//void CTreSubfile::Dump() const
 //{
 //	// Dump everything
-//	dout << "\t\t""m_uiHeaderLength = " << m_uiHeaderLength << "\n";
-//	dout << "\t\t""m_strType = " << m_strType.c_str() << "\n";
-////	dout << "\t\t""m_iNorthBoundary = " << m_iNorthBoundary << " (" << Degree(m_iNorthBoundary) << ")\n";
-////	dout << "\t\t""m_iSouthBoundary = " << m_iSouthBoundary << " (" << Degree(m_iSouthBoundary) << ")\n";
-////	dout << "\t\t""m_iEastBoundary = " << m_iEastBoundary << " (" << Degree(m_iEastBoundary) << ")\n";
-////	dout << "\t\t""m_iWestBoundary = " << m_iWestBoundary << " (" << Degree(m_iWestBoundary) << ")\n";
+//	std::cerr << "\t\t""m_uiHeaderLength = " << m_uiHeaderLength << "\n";
+//	std::cerr << "\t\t""m_strType = " << m_strType.c_str() << "\n";
+////	std::cerr << "\t\t""m_iNorthBoundary = " << m_iNorthBoundary << " (" << Degree(m_iNorthBoundary) << ")\n";
+////	std::cerr << "\t\t""m_iSouthBoundary = " << m_iSouthBoundary << " (" << Degree(m_iSouthBoundary) << ")\n";
+////	std::cerr << "\t\t""m_iEastBoundary = " << m_iEastBoundary << " (" << Degree(m_iEastBoundary) << ")\n";
+////	std::cerr << "\t\t""m_iWestBoundary = " << m_iWestBoundary << " (" << Degree(m_iWestBoundary) << ")\n";
 //
-//	dout << "\t\t""m_uiMapLevelsOffset = " << m_uiMapLevelsOffset << "\n";
-//	dout << "\t\t""m_uiMapLevelsLen = " << m_uiMapLevelsLen << "\n";
-//	dout << "\t\t""m_uiSubdivisionOffset = " << m_uiSubdivisionOffset << "\n";
-//	dout << "\t\t""m_uiSubdivisionLen = " << m_uiSubdivisionLen << "\n";
-//	dout << "\t\t""m_uiPolylineOffset = " << m_uiPolylineOffset << "\n";
-//	dout << "\t\t""m_uiPolylineLen = " << m_uiPolylineLen << "\n";
-//	dout << "\t\t""m_uiPolylineRecSize = " << m_uiPolylineRecSize << "\n";
-//	dout << "\t\t""m_uiPolygonOffset = " << m_uiPolygonOffset << "\n";
-//	dout << "\t\t""m_uiPolygonLen = " << m_uiPolygonLen << "\n";
-//	dout << "\t\t""m_uiPolygonRecSize = " << m_uiPolygonRecSize << "\n";
-//	dout << "\t\t""m_uiPointOffset = " << m_uiPointOffset << "\n";
-//	dout << "\t\t""m_uiPointLen = " << m_uiPointLen << "\n";
-//	dout << "\t\t""m_uiPointRecSize = " << m_uiPointRecSize << "\n";
+//	std::cerr << "\t\t""m_uiMapLevelsOffset = " << m_uiMapLevelsOffset << "\n";
+//	std::cerr << "\t\t""m_uiMapLevelsLen = " << m_uiMapLevelsLen << "\n";
+//	std::cerr << "\t\t""m_uiSubdivisionOffset = " << m_uiSubdivisionOffset << "\n";
+//	std::cerr << "\t\t""m_uiSubdivisionLen = " << m_uiSubdivisionLen << "\n";
+//	std::cerr << "\t\t""m_uiPolylineOffset = " << m_uiPolylineOffset << "\n";
+//	std::cerr << "\t\t""m_uiPolylineLen = " << m_uiPolylineLen << "\n";
+//	std::cerr << "\t\t""m_uiPolylineRecSize = " << m_uiPolylineRecSize << "\n";
+//	std::cerr << "\t\t""m_uiPolygonOffset = " << m_uiPolygonOffset << "\n";
+//	std::cerr << "\t\t""m_uiPolygonLen = " << m_uiPolygonLen << "\n";
+//	std::cerr << "\t\t""m_uiPolygonRecSize = " << m_uiPolygonRecSize << "\n";
+//	std::cerr << "\t\t""m_uiPointOffset = " << m_uiPointOffset << "\n";
+//	std::cerr << "\t\t""m_uiPointLen = " << m_uiPointLen << "\n";
+//	std::cerr << "\t\t""m_uiPointRecSize = " << m_uiPointRecSize << "\n";
 //
 //	for (list<CMapLevel>::iterator itLevel = m_Levels.begin(); itLevel != m_Levels.end(); ++itLevel)
 //		itLevel->Dump();

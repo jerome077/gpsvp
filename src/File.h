@@ -52,7 +52,7 @@ public:
 	{}
 	~CFile();
 	//! Open file
-	void Open(const wstring & filename);
+	void Open(const fnstring & filename);
 	//! Read data from file
 	void Read(Byte * buffer, UInt nStart, UInt nCount);
 	//! Set	mask for XORing file data

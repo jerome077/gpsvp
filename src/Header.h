@@ -47,7 +47,7 @@ class CIMGFile
 
 	//! Parse opened OS file
 	void Parse();
-	wstring m_wstrFilename;
+	fnstring m_wstrFilename;
 	int m_iID;
 
 	struct Map;
@@ -59,7 +59,7 @@ public:
 		cnHeaderSize = 0x600 //!< Size of file header
 	};
 	//! Parse file with given name
-	bool Parse(const wchar_t * wcFilename);
+	bool Parse(const fnchar_t * wcFilename);
 	//! Debug dump of internal data
 	// void Dump();
 	//! Get-method for m_uiBlockSize
@@ -73,7 +73,7 @@ public:
 	GeoRect GetRect() const;
 	UInt GetLevelByScale(unsigned int uiScale10, IPainter * pPainter);
 	list<UInt> GetLevels(IPainter * pPainter);
-	wstring GetFilename() const {return m_wstrFilename;}
+	fnstring GetFilename() const {return m_wstrFilename;}
 	int GetID() const {return m_iID;};
 	void Trim(const GeoRect & rect);
 	bool WillRead() const;
