@@ -2,6 +2,7 @@
 #include "Header.h"
 #include "IPainter.h"
 #include "PlatformDef.h"
+#include "Atlas.h"
 
 #include <iostream>
 #include <gtkmm.h>
@@ -129,10 +130,14 @@ inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
 }
 
 
-struct DumpPainter : public Gtk::DrawingArea, public IPainter
+struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPainter
 {
-	CIMGFile & f;
-	DumpPainter(CIMGFile & f_) : f(f_) {}
+	CAtlas a;
+	DumpPainter() {}
+	void AddMap(const fnchar_t * name)
+	{
+		a.Add(name, this);
+	}
 	bool polygon;
 	UInt type;
 	const tchar_t * name;
@@ -328,8 +333,10 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
     	cr->set_line_width(3.0);
     	cr->set_source_rgb(0.8, 0.0, 0.0);
     	
-		f.Paint(this, 20, maskPolygons, true);
-		f.Paint(this, 20, maskPolylines, true);
+    	a.BeginPaint(m_uiScale10Cache, this, this);
+		a.PaintMapPlaceholders(this);
+		a.Paint(maskPolygons, true);
+		a.Paint(maskPolylines, true);
 		cr.clear();
 		return true;
 	}
@@ -752,22 +759,23 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter
 	}
 	void Redraw()
 	{
-		get_window()->invalidate_rect(get_allocation(), true);
+		if (get_window())
+			get_window()->invalidate_rect(get_allocation(), true);
 	}
+	
+	virtual void PaintText(const wchar_t * wcText){}
+	virtual void SetProgressItems(int iLevel, int iCount){}
+	virtual void SetProgress(int iLevel, int iProgress){}
+	virtual void Advance(int iLevel){}
 };
 
 int main(int argc, char ** argv)
 {
 	Gtk::Main    toolkit (argc, argv);
 
-	if (!argv[1])
-	{
-		return -1;
-	}
-	CIMGFile f;
-	f.Parse(argv[1]);
-	DumpPainter dp(f);
-	dp.m_gpCenter = f.GetCenter();
+	DumpPainter dp;
+	while (*++argv)
+		dp.AddMap(*argv);
 	dp.m_ruiScale10 = 100;
 	dp.iDegree360 = 0;
 	dp.InitTools("Resources/Normal.vpc");

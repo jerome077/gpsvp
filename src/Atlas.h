@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef ATLAS_H
 #define ATLAS_H
 
-#include <windows.h>
+#include "PlatformDef.h"
 #include "Header.h"
 
 inline bool operator == (const pair<CIMGFile, bool> & p, int id)
@@ -30,14 +30,18 @@ class CAtlas
 private:
 	typedef list<pair<CIMGFile, bool> > FileList;
 	FileList m_imgFiles;
+#ifndef LINUX
 	HKEY m_hRegKey;
+#endif
 	unsigned int m_uiScale10;
 	IPainter * m_pPainter;
 	list<CIMGFile *> m_listToPaint;
 	UInt m_uiBestBits;
 public:
+#ifndef LINUX
 	void Init(HKEY hRegKey);
-	void Add(const wchar_t * wcFilename, IPainter * pPainter);
+#endif
+	void Add(const fnchar_t * wcFilename, IPainter * pPainter);
 	void BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPainter * pStatusPainter);
 	void PaintMapPlaceholders(IPainter * pPainter);
 	void Paint(UInt uiObjectTypes, bool fDirectPaint);

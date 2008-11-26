@@ -13,16 +13,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #include "Atlas.h"
-#include "ipainter.h"
-#include "MapApp.h"
+#include "IPainter.h"
 #include <algorithm>
+#include "PlatformDef.h"
 
+#ifndef LINUX
 void CAtlas::Init(HKEY hRegKey)
 {
 	m_hRegKey = hRegKey;
 	Load();
 }
-void CAtlas::Add(const wchar_t * wcFilename, IPainter * pPainter)
+#endif
+
+void CAtlas::Add(const fnchar_t * wcFilename, IPainter * pPainter)
 {
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
@@ -38,7 +41,9 @@ void CAtlas::Add(const wchar_t * wcFilename, IPainter * pPainter)
 	Save();
 	if (!pPainter->WillPaint(m_imgFiles.back().first.GetRect()))
 		pPainter->SetView(m_imgFiles.back().first.GetCenter(), true);
+#ifndef LINUX
 	app.CheckMenu();
+#endif
 }
 void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPainter * pStatusPainter)
 {
@@ -151,8 +156,8 @@ void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 			continue;
 		if (*l > m_uiBestBits)				
 		{
-			std::wstring wstrName = it->first.GetFilename();
-			std::wstring::size_type slash = wstrName.find_last_of(L"\\/");
+			std::fnstring wstrName = it->first.GetFilename();
+			std::fnstring::size_type slash = wstrName.find_last_of(FN("\\/"));
 			if (slash != std::wstring::npos)
 				wstrName = wstrName.substr(slash + 1);
 			pPainter->StartPolygon(0xff, wstrName.c_str());
@@ -186,7 +191,7 @@ void CAtlas::GetList(IListAcceptor * pAcceptor)
 {
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
-		pAcceptor->AddItem(((it->second ? L"+ " : L"- ") + it->first.GetFilename()).c_str(), it->first.GetID());
+		pAcceptor->AddItem(((it->second ? FN("+ ") : FN("- ")) + it->first.GetFilename()).c_str(), it->first.GetID());
 	}
 }
 void CAtlas::GetListUpdateCurrent(int iSelected, IListAcceptor * pAcceptor)
@@ -194,7 +199,7 @@ void CAtlas::GetListUpdateCurrent(int iSelected, IListAcceptor * pAcceptor)
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
 		if (it->first.GetID() == iSelected)
-			pAcceptor->UpdateCurrent(((it->second ? L"+ " : L"- ") + it->first.GetFilename()).c_str());
+			pAcceptor->UpdateCurrent(((it->second ? FN("+ ") : FN("- ")) + it->first.GetFilename()).c_str());
 	}
 }
 void CAtlas::CloseMapByID(int iMap)
@@ -205,7 +210,9 @@ void CAtlas::CloseMapByID(int iMap)
 		{
 			m_imgFiles.erase(it);
 			Save();
+#ifndef LINUX
 			app.CheckMenu();
+#endif
 			return;
 		}
 	}
@@ -222,8 +229,10 @@ void CAtlas::ToggleActiveByID(int iMap)
 		}
 	}
 }
+
 void CAtlas::Load()
 {
+#ifndef LINUX
 	vector<Byte> data;
 	unsigned long ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
@@ -263,9 +272,11 @@ void CAtlas::Load()
 				m_imgFiles.pop_back();
 		}
 	}
+#endif
 }
 void CAtlas::Save()
 {
+#ifndef LINUX
 	vector<Byte> data;
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
@@ -283,6 +294,7 @@ void CAtlas::Save()
 		RegSetValueEx(m_hRegKey, L"Atlas", 0, REG_BINARY, &data[0], data.size());
 	else
 		RegSetValueEx(m_hRegKey, L"Atlas", 0, REG_BINARY, 0, 0);
+#endif
 }
 const CIMGFile & CAtlas::ById(int id)
 {
@@ -304,5 +316,7 @@ void CAtlas::CloseAll()
 {
 	m_imgFiles.clear();
 	Save();
+#ifndef LINUX
 	app.CheckMenu();
+#endif
 }

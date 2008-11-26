@@ -67,8 +67,8 @@ inline wstring a2w(const char * s)
 
 struct IListAcceptor
 {
-	virtual void AddItem(const wchar_t * wcLabel, int iId) = 0;
-	virtual void UpdateCurrent(const wchar_t * wcLabel) = 0;
+	virtual void AddItem(const tchar_t * wcLabel, int iId) = 0;
+	virtual void UpdateCurrent(const tchar_t * wcLabel) = 0;
 };
 
 struct IListAcceptor2

@@ -110,8 +110,10 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 
 #ifdef LINUX
 #	define fnchar_t char
+#	define FN(x) (x)
 #else
 #	define fnchar_t wchar_t
+#	define FN(x) (L##x)
 #endif
 
 #define fnstring basic_string<fnchar_t>
