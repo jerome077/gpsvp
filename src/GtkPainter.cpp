@@ -21,18 +21,25 @@ struct ScreenPoint
 	int x, y;
 };
 
+struct ScreenSize
+{
+	int cx,cy;
+	ScreenSize() {}
+	ScreenSize(long x, long y) { cx = x; cy = y; }
+};
+
 struct ScreenRect
 {
 	int left, right, top, bottom;
 	ScreenRect(){};
 	// ScreenRect(const RECT & rc){ *(RECT*)this = rc;};
-	/*ScreenRect(const ScreenPoint & sp, const ScreenSize & ss)
+	ScreenRect(const ScreenPoint & sp, const ScreenSize & ss)
 	{
 		left = sp.x;
 		top = sp.y;
 		right = sp.x + ss.cx;
 		bottom = sp.y + ss.cy;
-	}*/
+	}
 	void Init(const ScreenPoint & pt)
 	{
 		left = pt.x;
@@ -104,6 +111,18 @@ struct ScreenRect
 		if (top < r.top)
 			top = mymin(bottom, r.top);
 	}
+};
+
+class ScreenRectSet
+{
+private:
+	struct Data;
+	Data * m_data;
+public:
+	ScreenRectSet();
+	~ScreenRectSet();
+	bool Fit(const ScreenRect & sr);
+	void Reset();
 };
 
 struct ScreenDiff
@@ -188,7 +207,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 				m_hDefaultPen.Set(cr);
 				m_hDefaultBrush.Set(cr);
 			}
-			cr->fill();
+			cr->fill_preserve();
 		}
 		else 
 		{
@@ -299,7 +318,33 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	};
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName) 
 	{ 
-		// std::cerr << "PaintPoint" << std::endl; 
+		ScreenPoint sp = GeoToScreen(gp);
+		/*
+		if (false == WillPaint(sp))
+			return;
+		*/
+
+		if (uiType < 0x8000 || uiType == 0xfffe || uiType == 0xffff)
+		{
+			if (!m_srsPoints.Fit(ScreenRect(sp, ScreenSize(32,32))))
+				return;
+		}
+
+		PointToolMap::iterator it = m_PointTools.find(uiType);
+		if (it != m_PointTools.end())
+		{
+			sp.x -= it->second.m_iDiffX;
+			sp.y -= it->second.m_iDiffY;
+			if (it->second.s)
+			{
+				cr->set_source(it->second.s, sp.x - 16, sp.y - 16);
+				cr->paint();
+			}
+		}
+		else
+		{
+			// std::cerr << "Not found" << std::endl;
+		}
 	}
 	virtual void SetLabelMandatory() { std::cerr << "SetLabelMandatory" << std::endl; };
 	virtual GeoRect GetRect() { std::cerr << "GetRect" << std::endl;};
@@ -314,6 +359,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	int m_sin100;
 	ScreenPoint m_spWindowCenter;
 	ScreenRect m_srWindow;
+	ScreenRectSet m_srsPoints;
 
 	virtual bool on_expose_event(GdkEventExpose* event)
 	{
@@ -337,6 +383,8 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		a.PaintMapPlaceholders(this);
 		a.Paint(maskPolygons, true);
 		a.Paint(maskPolylines, true);
+		m_srsPoints.Reset();
+		a.Paint(maskPoints, true);
 		cr.clear();
 		return true;
 	}
@@ -499,6 +547,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	{
 		// HICON m_hIcon;
 		// HBITMAP m_hBmp;
+		Cairo::RefPtr<Cairo::ImageSurface> s;
 		int m_iDiffX;
 		int m_iDiffY;
 
@@ -600,6 +649,9 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 					if (vRecord.size() == 4 && strRecord != "")
 					{
 						PointTools & pt = m_PointTools[vRecord[1]];
+						try {
+							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + FN(".png")).c_str());
+						} catch (std::exception &) {}
 						/*
 						// LINUXTODO:
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
@@ -616,6 +668,9 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 					if (vRecord.size() == 2 && strRecord != "")
 					{
 						PointTools & pt = m_PointTools[vRecord[1]];
+						try {
+							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + FN(".png")).c_str());
+						} catch (std::exception &) {}
 						/*
 						// LINUXTODO:
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
@@ -768,6 +823,35 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	virtual void SetProgress(int iLevel, int iProgress){}
 	virtual void Advance(int iLevel){}
 };
+
+struct ScreenRectSet::Data
+{
+	std::list<ScreenRect> m_listRects;
+};
+
+ScreenRectSet::ScreenRectSet() : m_data(new Data)
+{
+}
+
+ScreenRectSet::~ScreenRectSet()
+{
+	delete m_data;
+}
+
+bool ScreenRectSet::Fit(const ScreenRect & sr)
+{
+	for (std::list<ScreenRect>::iterator it = m_data->m_listRects.begin(); it != m_data->m_listRects.end(); ++it)
+	{
+		if (true == it->IntersectHard(sr))
+			return false;
+	}
+	m_data->m_listRects.push_back(sr);
+	return true;
+}
+void ScreenRectSet::Reset()
+{
+	m_data->m_listRects.clear();
+}
 
 int main(int argc, char ** argv)
 {

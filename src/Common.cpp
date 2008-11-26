@@ -490,11 +490,11 @@ double TextToDergee(wchar_t * wcText)
 	return dDegree * sign;
 }
 
-std::wstring MakeFilename(const std::wstring & name, const std::wstring & basename)
+std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename)
 {
-	if (name[0] == L'/' || name[0] == L'\\')
+	if (name[0] == FN('/') || name[0] == FN('\\'))
 		return name;
-	int pos = basename.find_last_of(L"\\/");
+	int pos = basename.find_last_of(FN("\\/"));
 	if (pos == std::wstring::npos)
 		return name;
 	return basename.substr(0, pos + 1) + name;

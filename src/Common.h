@@ -121,7 +121,7 @@ static const double cdLandMile = 1.609;
 static const double cdFoot = 0.3048;
 static const double cdYard = 0.9144;
 static const double pi = 3.14159265358979;
-std::wstring MakeFilename(const std::wstring & name, const std::wstring & basename);
+std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename);
 
 #define L(x) (GetDict().Translate(L##x))
 
