@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "NMEAParser.h"
 #include "DebugOutput.h"
+#include <string.h>
 
 //! Constructor
 CNMEAParser::CNMEAParser() : 
@@ -21,9 +22,11 @@ CNMEAParser::CNMEAParser() :
 	m_iSatNum(0), 
 	m_pClient(0)
 {
+#ifndef LINUX
 	m_monStatus = L"-";
 	m_monTime.Reset();
 	m_monRawTime = L"-";
+#endif
 }
 
 void CNMEAParser::SetClient(IGPSClient * pClient)
@@ -64,10 +67,12 @@ void CNMEAParser::CommandComplete()
 		{
 			// If no number then no track and no cursor
 			m_pClient->NoFix();
-			m_monStatus = L("No fix");
 			m_pClient->SetConnectionStatus(IGPSClient::csNoFix);
+#ifndef LINUX
+			m_monStatus = L("No fix");
 			m_monTime.Reset();
 			m_monRawTime = L"-";
+#endif
 		}
 		else
 		{
@@ -89,7 +94,9 @@ void CNMEAParser::CommandComplete()
 				dLongitude = -dLongitude;
 			double dHDOP = myatof(listParts[8].c_str());
 			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dHDOP);
+#ifndef LINUX
 			m_monStatus = L("Fix");
+#endif
 			m_pClient->SetConnectionStatus(IGPSClient::csFix);
 		}
 	}
@@ -104,6 +111,7 @@ void CNMEAParser::CommandComplete()
 	}
 	if (listParts[0] == "GPRMC" && listParts.size() >= 10)
 	{
+#ifndef LINUX
 		m_dSpeed.Set(myatof(listParts[7].c_str()) * cdNauticalMile);
 		if (m_dSpeed.Get() > m_dMaxSpeed.Get())
 			m_dMaxSpeed.Set(m_dSpeed.Get());
@@ -119,6 +127,7 @@ void CNMEAParser::CommandComplete()
 				atoi(listParts[1].substr(4, 2).c_str()));
 			m_monRawTime = a2w(listParts[1].c_str()).c_str();
 		}
+#endif
 	}
 }
 void CNMEAParser::CommandStarted()
@@ -135,6 +144,7 @@ void CNMEAParser::ResetCommand()
 }
 void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 {
+#ifndef LINUX
 	AutoLock l;
 	
 	if (!m_wstrFilename.empty())
@@ -162,6 +172,7 @@ void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 	}
 
 	m_monGPSData += uiLen;
+#endif
 	// We parse all the data
 	while (uiLen > 0)
 	{
@@ -204,35 +215,46 @@ void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 
 void CNMEAParser::NewStream()
 {
+#ifndef LINUX
 	AutoLock l;
 	m_dSpeed.Reset();
-	m_pClient->NoFix();
-	m_pClient->NoVFix();
 	m_monStatus = L("No");
-	m_pClient->SetConnectionStatus(IGPSClient::csNotConnected);
 	m_monTime.Reset();
 	m_monRawTime = L"-";
+#endif
+	m_pClient->NoFix();
+	m_pClient->NoVFix();
+	m_pClient->SetConnectionStatus(IGPSClient::csNotConnected);
 }
 
 void CNMEAParser::ConnectionDisabled()
 {
+#ifndef LINUX
 	AutoLock l;
 	m_monStatus = L("Disabled");
+#endif
 	m_pClient->SetConnectionStatus(IGPSClient::csDisabled);
 }
 
 void CNMEAParser::GetList(IListAcceptor * pAcceptor)
 {
+#ifndef LINUX
 	AutoLock l;
+#endif
 	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 	{
-		wchar_t wstr[1000];
+#ifndef LINUX
+		tchar_t wstr[1000];
 		swprintf(wstr, 1000, L"%S", it->second.c_str());
 		pAcceptor->AddItem(wstr, 0);
+#else
+		pAcceptor->AddItem(it->second.c_str(), 0);
+#endif
 	}
 }
 void CNMEAParser::SaveCommands(const wchar_t * wstrFilename)
 {
+#ifndef LINUX
 	AutoLock l;
 	FILE * pFile = wfopen(wstrFilename, L"wt");
 	if (!pFile)
@@ -240,24 +262,30 @@ void CNMEAParser::SaveCommands(const wchar_t * wstrFilename)
 	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 		fprintf(pFile, "%s\n", it->second.c_str());
 	fclose(pFile);
+#endif
 }
 void CNMEAParser::Pause()
 {
+#ifndef LINUX
 	AutoLock l;
 	m_monStatus = L("Paused");
 	m_monTime.Reset();
 	m_monRawTime = L"-";
+#endif
 	m_pClient->SetConnectionStatus(IGPSClient::csPaused);
 	ResetCommand();
 }
 void CNMEAParser::DebugShowTime()
 {
+#ifndef LINUX
 	AutoLock l;
 	SYSTEMTIME st;
 	GetSystemTime(&st);
 	m_monTime.Set(st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+#endif
 }
 
+#ifndef LINUX
 void CNMEAParser::PaintSatellites(IMonitorPainter * pPainter)
 {
 	AutoLock l;
@@ -301,22 +329,29 @@ void CNMEAParser::InitMonitors(CMonitorSet & set, HKEY hRegKey, bool fDebugMode)
 	if (fDebugMode)
 		set.AddMonitor(&m_monRawTime);
 }
+#endif
 
 void CNMEAParser::SetTime()
 {
+#ifndef LINUX
 	AutoLock l;
 	m_monTime.SetTime();
+#endif
 }
 
 void CNMEAParser::SetFilename(wchar_t * wcFilename)
 {
+#ifndef LINUX
 	AutoLock l;
+#endif
 	m_wstrFilename = wcFilename;
 	m_fileBufferPos = 0;
 }
 
 std::wstring CNMEAParser::GetFilename()
 {
+#ifndef LINUX
 	AutoLock l;
+#endif
 	return m_wstrFilename;
 }

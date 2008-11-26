@@ -23,9 +23,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <stdio.h>
 #include "GeoPoint.h"
 #include <stdio.h>
-#include "Monitors.h"
-#include "Lock.h"
-#include "MonitorSet.h"
+#ifndef LINUX
+#	include "Monitors.h"
+#	include "MonitorSet.h"
+#	include "Lock.h"
+#endif
 
 using namespace std;
 
@@ -65,12 +67,14 @@ private:
 	map<string, string> m_mapCommands;
 	int m_iSatNum;
 	map<int, int> m_mapSats;
+#ifndef LINUX
 	CSpeedMonitor m_dSpeed;
 	CSpeedMonitor m_dMaxSpeed;
 	CTextMonitor m_monStatus;
 	CTimeMonitor m_monTime;
 	CMemoryMonitor m_monGPSData;
 	CTextMonitor m_monRawTime;
+#endif
 	std::wstring m_wstrFilename;
 	Byte m_fileBuffer[4096];
 	UInt m_fileBufferPos;
@@ -89,12 +93,14 @@ public:
 	void SaveCommands(const wchar_t * wstrFilename);
 	void Pause();
 	void DebugShowTime();
+#ifndef LINUX
 	void PaintSatellites(IMonitorPainter * pPainter);
 	void InitMonitors(CMonitorSet & set, HKEY hRegKey, bool fDebugMode);
+	const CTimeMonitor & GetTimeMonitor() const { return m_monTime; }
+#endif
 	void SetTime();
 	void SetFilename(wchar_t * wcFilename);
 	std::wstring GetFilename();
-	const CTimeMonitor & GetTimeMonitor() const { return m_monTime; }
 };
 
 #endif // NMEAPARSER_H

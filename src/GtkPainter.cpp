@@ -3,10 +3,15 @@
 #include "IPainter.h"
 #include "PlatformDef.h"
 #include "Atlas.h"
+#include "NMEAParser.h"
 
 #include <iostream>
 #include <gtkmm.h>
 #include <map>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
 
 Dict dict;
 Dict & GetDict()
@@ -149,7 +154,7 @@ inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
 }
 
 
-struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPainter
+struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPainter, public IGPSClient
 {
 	CAtlas a;
 	DumpPainter() {}
@@ -822,6 +827,87 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	virtual void SetProgressItems(int iLevel, int iCount){}
 	virtual void SetProgress(int iLevel, int iProgress){}
 	virtual void Advance(int iLevel){}
+
+	int m_hPortFile;
+	CNMEAParser m_NMEAParser;
+	bool m_fExiting;
+	std::string m_rsPort;
+
+	void ThreadRoutine()
+	{
+		m_NMEAParser.SetClient(this);
+		bool fWait = false;
+		Byte buff[4096];
+		unsigned long i;
+		m_rsPort = "/dev/ttyUSB0";
+		m_hPortFile = 0;
+		{
+			m_NMEAParser.NewStream();
+		}
+		while (!m_fExiting)
+		{
+			int iTime;
+			while (!m_fExiting)
+			{
+				if (m_rsPort != "")
+				{
+					m_hPortFile = open(m_rsPort.c_str(), O_RDWR);
+					struct termios tio;   
+					memset (&tio, 0, sizeof(tio));
+					tio.c_cflag = CS8 | CLOCAL | CREAD | O_NDELAY | O_NONBLOCK;
+					tio.c_iflag = IGNPAR;
+					tio.c_oflag = 0;
+					tio.c_lflag = 0;
+					tio.c_cc[VTIME]    = 0;
+					tio.c_cc[VMIN]     = 1;
+					int baudrate = 57600;
+					switch (baudrate)
+					{
+						case 4800:   baudrate=B4800; break;              
+						case 9600:   baudrate=B9600; break;
+						case 19200:  baudrate=B19200; break;
+						case 38400:  baudrate=B38400; break;
+						case 57600:  baudrate=B57600; break;
+						case 115200: baudrate=B115200; break;
+						case 230400: baudrate=B230400; break;
+					}
+					cfsetispeed(&tio,baudrate);
+					cfsetospeed(&tio,baudrate);
+					tcsetattr(m_hPortFile,TCSANOW,&tio);
+					while (write(m_hPortFile, "@AL,2,1\n", sizeof("@AL,2,1\n")-1) != sizeof("@AL,2,1\n")-1);
+				}
+				if (m_hPortFile)
+					break;
+				for (iTime = 9; --iTime && !m_fExiting;)
+					sleep(1);
+			}
+
+			while(m_hPortFile && !m_fExiting)
+			{
+				sleep(1);
+				i = read(m_hPortFile, buff, sizeof(buff));
+				std::cerr.write((const char *)&buff[0], i);
+				if (!i)
+					break;
+				if ((i < 1) || (i > sizeof(buff)))
+					break;
+				m_NMEAParser.AddData(buff, i);
+			}
+			if (m_hPortFile)
+			{
+				close(m_hPortFile);
+				m_hPortFile = 0;
+			}
+			m_NMEAParser.NewStream();
+			for (iTime = 5; --iTime && !m_fExiting;)
+				sleep(1);
+		}
+	};
+	virtual void NoFix() { std::cerr << "NoDix" << std::endl;}
+	virtual void Fix(GeoPoint gp, double dHDOP) { m_gpCenter = gp; Redraw(); }
+	virtual void NoVFix() {}
+	virtual void VFix(double dAltitude) {}
+	virtual void SetConnectionStatus(enumConnectionStatus iStatus) {}
 };
 
 struct ScreenRectSet::Data
@@ -855,6 +941,7 @@ void ScreenRectSet::Reset()
 
 int main(int argc, char ** argv)
 {
+	Glib::thread_init();
 	Gtk::Main    toolkit (argc, argv);
 
 	DumpPainter dp;
@@ -863,6 +950,7 @@ int main(int argc, char ** argv)
 	dp.m_ruiScale10 = 100;
 	dp.iDegree360 = 0;
 	dp.InitTools("Resources/Normal.vpc");
+	dp.m_fExiting = false;
 	
 	Gtk::Window  window;
 	window.add(dp);
@@ -872,6 +960,7 @@ int main(int argc, char ** argv)
 	dp.signal_button_release_event().connect(sigc::mem_fun(dp, &DumpPainter::on_release));
 	// window.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
 	dp.set_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK );
+	Glib::Thread::create(sigc::mem_fun(&dp, &DumpPainter::ThreadRoutine), true);
  	Gtk::Main::run (window);
  	// toolkit.run(dp);
 
