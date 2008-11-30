@@ -388,9 +388,9 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 	if (gpsVPVersion < mapMinVersion)
 		m_ConfigErrorCode = cecMapVersionNewerAsGpsVP;
 
-	m_DefaultProps.URLSchema = iniFile.GetValue(L"Tiled MAP", L"URL", L"" /*default*/);
-	m_DefaultProps.FilenameSchema = iniFile.GetValue(L"Tiled MAP", L"Filename", L"" /*default*/);
-	m_DefaultProps.SubpathSchema = iniFile.GetValue(L"Tiled MAP", L"Subpath", L"" /*default*/);
+	m_DefaultProps.URLSchema.assign(iniFile.GetValue(L"Tiled MAP", L"URL", L"" /*default*/));
+	m_DefaultProps.FilenameSchema.assign(iniFile.GetValue(L"Tiled MAP", L"Filename", L"" /*default*/));
+	m_DefaultProps.SubpathSchema.assign(iniFile.GetValue(L"Tiled MAP", L"Subpath", L"" /*default*/));
 	for(int zoomOne=1;zoomOne<=LEVEL_REVERSE_OFFSET;zoomOne++)
 	{
 		wchar_t valueName[32];
@@ -410,9 +410,9 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 			else
 			{
 				CUserMapZoomProp& zoomProps = m_MapZoomProps[sMapForZoom];
-				zoomProps.URLSchema = iniFile.GetValue(sMapForZoom.c_str(), L"URL", L"" /*default*/);
-				zoomProps.FilenameSchema = iniFile.GetValue(sMapForZoom.c_str(), L"Filename", L"" /*default*/);
-				zoomProps.SubpathSchema = iniFile.GetValue(sMapForZoom.c_str(), L"Subpath", L"" /*default*/);
+				zoomProps.URLSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"URL", L"" /*default*/));
+				zoomProps.FilenameSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"Filename", L"" /*default*/));
+				zoomProps.SubpathSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"Subpath", L"" /*default*/));
 				m_ZoomProps[zoomOne-1] = &zoomProps;
 			}
 		}
@@ -426,63 +426,13 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 
 bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
 {
-    return false;
+    return true;
 }
-
-void ReplaceSubStr(std::wstring& AString,
-				   const std::wstring& oldSub,
-				   const std::wstring& newSub)
-{
-	size_t found = AString.find(oldSub);
-	while (std::wstring::npos != found)
-	{
-		AString.replace(found, oldSub.length(), newSub);
-		found = AString.find(oldSub, found);
-	}
-}
-
-void CUserWMSMapSource::ReplaceSchemaSubStrings(const GEOFILE_DATA& data, std::wstring& AString)
-{
-	wchar_t buffer[32];
-	double Long1 = XtoLong(data.X,data.level);
-	double Lat1 = YtoLat(data.Y+1,data.level);
-	double Long2 = XtoLong(data.X+1,data.level);
-	double Lat2 = YtoLat(data.Y,data.level);
-
-	swprintf(buffer, 32, L"%.14f", Long1);
-	ReplaceSubStr(AString, L"%LONG1", buffer);
-
-	swprintf(buffer, 32, L"%.14f", Lat1);
-	ReplaceSubStr(AString, L"%LAT1", buffer);
-
-	swprintf(buffer, 32, L"%.14f", Long2);
-	ReplaceSubStr(AString, L"%LONG2", buffer);
-
-	swprintf(buffer, 32, L"%.14f", Lat2);
-	ReplaceSubStr(AString, L"%LAT2", buffer);
-
-	swprintf(buffer, 32, L"%d", data.X);
-	ReplaceSubStr(AString, L"%X", buffer);
-
-	swprintf(buffer, 32, L"%d", data.Y);
-	ReplaceSubStr(AString, L"%Y", buffer);
-
-	swprintf(buffer, 32, L"%d", data.level);
-	ReplaceSubStr(AString, L"%ZOOM_17", buffer);  // 17 = Whole Earth in 1 tile
-
-	swprintf(buffer, 32, L"%d", LEVEL_REVERSE_OFFSET-data.level);
-	ReplaceSubStr(AString, L"%ZOOM_01", buffer);  //  1 = Whole Earth in 1 tile
-
-	swprintf(buffer, 32, L"%d", 17-data.level);
-	ReplaceSubStr(AString, L"%ZOOM_00", buffer);  //  0 = Whole Earth in 1 tile
-}
-
 
 std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
 {
 	CUserMapZoomProp& zoomProps = GetZoomProps(data.level);
-	std::wstring wstrUrl = zoomProps.URLSchema;
-    ReplaceSchemaSubStrings(data, wstrUrl);
+	std::wstring wstrUrl = zoomProps.URLSchema.interpret(data.level, data.X, data.Y);
     std::string strUrl;
     strUrl.assign(wstrUrl.begin(), wstrUrl.end());
 	//sprintf(buffer, "http://tile.openstreetmap.org/%d/%d/%d.png", 17 - data.level, data.X, data.Y);
@@ -494,13 +444,11 @@ bool CUserWMSMapSource::GetDiskFileName(
 	)
 {
 	CUserMapZoomProp& zoomProps = GetZoomProps(gfdata.level);
-	name = zoomProps.FilenameSchema;
-	ReplaceSchemaSubStrings(gfdata, name);
+	name = zoomProps.FilenameSchema.interpret(gfdata.level, gfdata.X, gfdata.Y);
 
 	if (!zoomProps.SubpathSchema.empty())
 	{
-		path = zoomProps.SubpathSchema;
-        ReplaceSchemaSubStrings(gfdata, path);
+		path = zoomProps.SubpathSchema.interpret(gfdata.level, gfdata.X, gfdata.Y);
 		path = m_MapName + L"/" + path;
 		if (!root.empty())
 			path = root + L"/" + path;

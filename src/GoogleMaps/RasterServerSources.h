@@ -16,9 +16,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 #include <list>
-#include <math.h>
 #include "../VersionNumber.h"
 #include "../GeoPoint.h"
+#include "VariableInterpreter.h"
 
 enum enumGMapType
 {
@@ -349,13 +349,14 @@ public:
 class CUserMapZoomProp
 {
 public:
-	std::wstring URLSchema;
-	std::wstring FilenameSchema;
-	std::wstring SubpathSchema;
+	CStringSchema URLSchema;
+	CStringSchema FilenameSchema;
+	CStringSchema SubpathSchema;
 };
 typedef std::map<std::wstring, CUserMapZoomProp> CUserMapZoomProp_MAP;
 
 
+// User defined map type (mapcfg.ini)
 class CUserWMSMapSource : public CRasterMapSource
 {
 private:
@@ -387,17 +388,6 @@ public:
 	enumConfigErrorType GetConfigError() { return m_ConfigErrorCode; };
 
 private:
-	// Calculation derived from here: http://www.supware.net/GoogleMapping/ 
-    double XtoLong(unsigned long x, unsigned char level)
-	{
-	    return 360.0*x/(1<<(17-level))-180;
-	}
-    double YtoLat(unsigned long y, unsigned char level)
-	{
-		return (atan(exp(3.14159265358979323846*(1.0-256.0*y/(1<<(24-level)))))/3.14159265358979323846-0.25)*360;
-	}
-    void ReplaceSchemaSubStrings(const GEOFILE_DATA& data, std::wstring& AString);
-
 	// Default map properties:
 	CUserMapZoomProp m_DefaultProps;
 	// Complementary map properties (Key = Name as in the ini file, Value = corresponding CUserMapZoomProp):

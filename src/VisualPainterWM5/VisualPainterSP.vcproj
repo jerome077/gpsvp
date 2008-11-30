@@ -3227,6 +3227,14 @@
 				RelativePath="..\GoogleMaps\RasterServerSources.h"
 				>
 			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\Resources\lang\English.vpl"
