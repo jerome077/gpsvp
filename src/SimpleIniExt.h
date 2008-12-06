@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 class CSimpleIniExtW : public CSimpleIniW
 {
 public:
+	// -----------------------------------------------------------------------
 	int GetIntValue(const wchar_t * a_pSection,
                     const wchar_t * a_pKey,
                     const wchar_t * a_pDefault = NULL)
@@ -28,6 +29,7 @@ public:
 		return _wtoi(GetValue(a_pSection, a_pKey, a_pDefault));
 	};
 
+	// -----------------------------------------------------------------------
 	double GetDoubleValue(const wchar_t * a_pSection,
                           const wchar_t * a_pKey,
                           const wchar_t * a_pDefault = NULL)
@@ -38,6 +40,66 @@ public:
 		sVal.assign(wsVal.begin(), wsVal.end());
 		return atof(sVal.c_str());
 	};
+
+	// -----------------------------------------------------------------------
+    // Extended Version of LoadFile that automatically recognize if the file is ANSI or UTF-8.
+	// (Using the BOM, see http://en.wikipedia.org/wiki/Byte-order_mark)
+	SI_Error LoadAnsiOrUtf8File(const SI_WCHAR_T * a_pwszFile)
+	{
+	#ifdef _WIN32
+	    FILE * fp = NULL;
+	#if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
+	    _wfopen_s(&fp, a_pwszFile, L"rb");
+	#else // !__STDC_WANT_SECURE_LIB__
+	    fp = _wfopen(a_pwszFile, L"rb");
+	#endif // __STDC_WANT_SECURE_LIB__
+	    if (!fp) return SI_FILE;
+	    SI_Error rc = LoadAnsiOrUtf8File(fp);
+	    fclose(fp);
+	    return rc;
+	#else // !_WIN32 (therefore SI_CONVERT_ICU)
+	    char szFile[256];
+	    u_austrncpy(szFile, a_pwszFile, sizeof(szFile));
+	    return LoadAnsiOrUtf8File(szFile);
+	#endif // _WIN32
+	};
+
+	SI_Error LoadAnsiOrUtf8File(FILE * a_fpFile)
+	{
+	    // load the raw file data
+	    int retval = fseek(a_fpFile, 0, SEEK_END);
+	    if (retval != 0) {
+			return SI_FILE;
+		}
+		long lSize = ftell(a_fpFile);
+		if (lSize < 0) {
+	        return SI_FILE;
+	    }
+	    if (lSize == 0) {
+			return SI_OK;
+		}
+		char * pData = new char[lSize];
+		if (!pData) {
+	        return SI_NOMEM;
+	    }
+	    fseek(a_fpFile, 0, SEEK_SET);
+	    size_t uRead = fread(pData, sizeof(char), lSize, a_fpFile);
+	    if (uRead != (size_t) lSize) {
+			delete[] pData;
+			return SI_FILE;
+		}
+	
+	    // convert the raw data to unicode
+        if (uRead >= 3) {
+			if (memcmp(pData, SI_UTF8_SIGNATURE, 3) == 0) {
+				SetUnicode(true);
+			}
+		}		
+		SI_Error rc = Load(pData, uRead);
+	    delete[] pData;
+	    return rc;
+	};
+	// -----------------------------------------------------------------------
 };
 
 #endif // SIMPLEINIEXT_H

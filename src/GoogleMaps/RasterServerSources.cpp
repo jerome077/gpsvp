@@ -377,7 +377,7 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 	SetType(enumGMapType(iMapType));
 
     CSimpleIniExtW iniFile;
-    iniFile.LoadFile(configFile.c_str());
+    iniFile.LoadAnsiOrUtf8File(configFile.c_str());
 
 	if (iniFile.GetSectionSize(L"Tiled MAP") <= 0)
 	{
