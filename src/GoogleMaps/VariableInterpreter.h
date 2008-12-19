@@ -17,6 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include <vector>
 #include "../PlatformDef.h"
+#include "GMCommon.h"
 
 void Test_CStringSchema();
 
@@ -154,7 +155,10 @@ class CQRSTSchema: public CSchema
 {
 public:
 	CQRSTSchema(int maxChar) : m_MaxChar(maxChar)	{};
-	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y);
+	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
+	{
+		return GoogleXYZ17toQRSTW(x, y, l, m_MaxChar);
+	};
 
 protected:
 	// Maximal length of the interpreted value (0 for the whole value):
@@ -168,7 +172,10 @@ class CQKeySchema: public CSchema
 {
 public:
 	CQKeySchema(int maxChar) : m_MaxChar(maxChar)	{};
-	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y);
+	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
+	{
+		return GoogleXYZ17toQKeyW(x, y, l, m_MaxChar);
+	};
 
 protected:
 	// Maximal length of the interpreted value (0 for the whole value):

@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 #include <list>
+#include "GMCommon.h"
 #include "../VersionNumber.h"
 #include "../GeoPoint.h"
 #include "VariableInterpreter.h"
@@ -34,8 +35,6 @@ enum enumGMapType
 	gtFirstWMSMapType,
 	gtLastGMapType = 0x1000
 };
-
-const long LEVEL_REVERSE_OFFSET = 18;
 
 struct GEOFILE_DATA {
 	GEOFILE_DATA(unsigned char t, unsigned char l, unsigned long x, unsigned long y) 
@@ -223,7 +222,8 @@ public:
 	virtual bool IsSatellite() const { return true; }
 
 protected:
-	std::string GetSatelliteBlockName(const GEOFILE_DATA& data) const;
+	std::string GetSatelliteBlockName(const GEOFILE_DATA& data) const
+	{	return GoogleXYZ17toQRST(data.X, data.Y, data.level); };
 };
 
 class CMSSource : public CRasterMapSource
@@ -256,7 +256,8 @@ public:
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
 
 protected:
-	std::string GetBlockName(const GEOFILE_DATA& data) const;
+	std::string GetBlockName(const GEOFILE_DATA& data) const
+	{	return GoogleXYZ17toQKey(data.X, data.Y, data.level); };
 };
 
 class CMSMapSource : public CMSSource

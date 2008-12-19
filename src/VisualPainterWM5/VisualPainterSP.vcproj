@@ -3200,6 +3200,14 @@
 			Name="Google Maps"
 			>
 			<File
+				RelativePath="..\GoogleMaps\GMCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.h"
+				>
+			</File>
+			<File
 				RelativePath="..\GoogleMaps\GMFileHolder.cpp"
 				>
 			</File>

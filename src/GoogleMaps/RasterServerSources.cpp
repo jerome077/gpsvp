@@ -207,46 +207,6 @@ bool CGSatSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) c
 	return true;
 };
 
-std::string CGSatSource::GetSatelliteBlockName(const GEOFILE_DATA& data) const
-{
-	long NumX = data.X;
-	long NumY = data.Y;
-	long level = LEVEL_REVERSE_OFFSET - data.level;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	char buf[24];
-	buf[0] = 't';
-
-	for (long nPos = 1; nPos < level; nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = 'q';
-			} else {
-				buf[nPos] = 'r';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = 't';
-			} else { 
-				buf[nPos] = 's';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level] = '\0';
-	return buf;
-}
-
 bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
 {
 	long nLevel = 0;
@@ -296,46 +256,6 @@ bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) con
 	return true;
 };
 
-std::string CMSSource::GetBlockName(const GEOFILE_DATA& data) const
-{
-	long NumX = data.X;
-	long NumY = data.Y;
-	long level = LEVEL_REVERSE_OFFSET - data.level;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	char buf[24];
-
-	for (long nPos = 0; nPos < (level-1); nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = '0';
-			} else {
-				buf[nPos] = '1';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = '2';
-			} else { 
-				buf[nPos] = '3';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level-1] = '\0';
-	return buf;
-}
-
-
 COSMSource::COSMSource()
 {
 	SetType(gtOsm);
@@ -376,7 +296,7 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 {
 	SetType(enumGMapType(iMapType));
 
-    CSimpleIniExtW iniFile;
+	CSimpleIniExtW iniFile;
     iniFile.LoadAnsiOrUtf8File(configFile.c_str());
 
 	if (iniFile.GetSectionSize(L"Tiled MAP") <= 0)

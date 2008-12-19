@@ -13,9 +13,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "VariableInterpreter.h"
 #include <cassert>
-#include <math.h>
-
-const long LEVEL_REVERSE_OFFSET = 18;
 
 // ---------------------------------------------------------------
 
@@ -34,7 +31,8 @@ void Test_CStringSchema()
 	assert(S1.interpret(3, 8734, 5710) == L"abc8734def5710abc87345710def");
 	S1.assign(L"%LONG1,%LAT1,%LONG2,%LAT2");
 	assert(!S1.empty());
-	assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424206,11.93115234375000,47.78363463526377");	
+	//assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424206,11.93115234375000,47.78363463526377");	
+	assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424218,11.93115234375000,47.78363463526387");	
 	S1.assign(L"http://a.X.b/%ZOOM_17/%ZOOM_00/%ZOOM_01");
 	assert(!S1.empty());
 	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/3/14/15");	
@@ -212,23 +210,11 @@ std::wstring CStringSchema::interpret(unsigned char l, unsigned long x, unsigned
 
 // ---------------------------------------------------------------
 
-// Calculation derived from here: http://www.supware.net/GoogleMapping/ 
-double XtoLong(unsigned long x, unsigned char level)
-{
-    return 360.0*x/(1<<(17-level))-180;
-}
-
-double YtoLat(unsigned long y, unsigned char level)
-{
-	return (atan(exp(3.14159265358979323846*(1.0-256.0*y/(1<<(24-level)))))/3.14159265358979323846-0.25)*360;
-}
-
-// ---------------------------------------------------------------
 
 std::wstring CLongitudeSchema::interpret(unsigned char l, unsigned long x, unsigned long y)
 {
 	wchar_t buffer[32];
-	double Long1 = XtoLong(x + m_delta, l);
+	double Long1 = GoogleXZ17toLong(x + m_delta, l);
 	swprintf(buffer, 32, L"%.14f", Long1);
 	return buffer;
 };
@@ -238,96 +224,9 @@ std::wstring CLongitudeSchema::interpret(unsigned char l, unsigned long x, unsig
 std::wstring CLatitudeSchema::interpret(unsigned char l, unsigned long x, unsigned long y)
 {
 	wchar_t buffer[32];
-	double Lat1 = YtoLat(y + m_delta, l);
+	double Lat1 = GoogleYZ17toLat(y + m_delta, l);
 	swprintf(buffer, 32, L"%.14f", Lat1);
 	return buffer;
 };
-
-// ---------------------------------------------------------------
-
-std::wstring CQRSTSchema::interpret(unsigned char l, unsigned long x, unsigned long y)
-{
-	long NumX = x;
-	long NumY = y;
-	long level = LEVEL_REVERSE_OFFSET - l;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	wchar_t buf[24];
-	buf[0] = L't';
-
-	for (long nPos = 1; nPos < level; nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = L'q';
-			} else {
-				buf[nPos] = L'r';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = L't';
-			} else { 
-				buf[nPos] = L's';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level] = L'\0';
-	if ((m_MaxChar > 0) && (m_MaxChar < 24))
-		buf[m_MaxChar] = L'\0';
-	return buf;
-}
-
-// ---------------------------------------------------------------
-
-std::wstring CQKeySchema::interpret(unsigned char l, unsigned long x, unsigned long y)
-{
-	long NumX = x;
-	long NumY = y;
-	long level = LEVEL_REVERSE_OFFSET - l;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	wchar_t buf[24];
-
-	for (long nPos = 0; nPos < (level-1); nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = L'0';
-			} else {
-				buf[nPos] = L'1';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = L'2';
-			} else { 
-				buf[nPos] = L'3';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level-1] = L'\0';
-	if ((m_MaxChar > 0) && (m_MaxChar < 24))
-		buf[m_MaxChar] = L'\0';
-	return buf;
-}
 
 // ---------------------------------------------------------------
