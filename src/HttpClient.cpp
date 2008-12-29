@@ -50,6 +50,26 @@ void CHttpRequest::Data::Error(const char * descr)
 	}
 }
 
+bool CHttpRequest::bSocketsInitialized = false;
+
+void CHttpRequest::InitSocketsIfNecessary()
+{
+	if (!bSocketsInitialized)
+	{
+		WSADATA wsaData;
+		int wsaRes = WSAStartup(MAKEWORD(1, 1), &wsaData);
+		bSocketsInitialized = (0 == wsaRes);
+	}
+}
+
+void CHttpRequest::CleanupSocketsIfNecessary()
+{
+	if (bSocketsInitialized)
+	{
+		WSACleanup();
+	}
+}
+
 CHttpRequest::CHttpRequest(std::wstring * pwstrHttpStatus) : _data(new Data(pwstrHttpStatus))
 {
 }
@@ -69,8 +89,7 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 	_outgoing = 0;
 	_incoming = 0;
 	_size = 0;
-	static WSADATA wsaData;
-	static int wsaRes = WSAStartup(MAKEWORD(1, 1), &wsaData);
+	InitSocketsIfNecessary();
 	std::string server;
 	if (uri.find("http://") != 0) {
 		Error("Cannot find http://");
@@ -92,6 +111,7 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 	
 	std::string host = uri.substr(start, finish - start);
 
+	int wsaRes;
 	addrinfo * pAddrInfo;
 	if (wsaRes = getaddrinfo(host.c_str(), port.c_str(), 0, &pAddrInfo)) {
 		Error("Cannot resolve name");
@@ -109,6 +129,7 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 
 	if (r != 0) {
 		Error("Cannot connect");
+		closesocket(s);
 		return;
 	}
 
@@ -117,6 +138,7 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 	_outgoing += r;
 	if (r != full_data.length()) {
 		Error("Cannot send header");
+		closesocket(s);
 		return;
 	}
 	
@@ -132,31 +154,37 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 
 	if (r < 0) {
 		Error("Error receiving");
+		closesocket(s);
 		return;
 	}
 	if (rr == 0) {
 		Error("Nothing received");
+		closesocket(s);
 		return;
 	}
 	buffer[rr] = 0;
 	const char * delim1 = strchr(buffer, ' ');
 	if (!delim1) {
 		Error("First space not found");
+		closesocket(s);
 		return;
 	}
 	const char * delim2 = strchr(delim1 + 1, ' ');
 	if (!delim2) {
 		Error("Second space not found");
+		closesocket(s);
 		return;
 	}
 	const char * lineend = strstr(buffer, "\r\n");
 	if (lineend < delim2) {
 		Error("No two spaces in first line found");
+		closesocket(s);
 		return;
 	}
 	const char * body = strstr(buffer, "\r\n\r\n");
 	if (!body) {
 		Error("Body not found");
+		closesocket(s);
 		return;
 	}
 	// const char * contentlength = strstr(buffer, "\r\nContent-length: ");
@@ -174,9 +202,11 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 		memcpy(&_response[0], body + 4, _size);
 	if (_code != "200") {
 		Error((_code + " " + _description).c_str());
+		closesocket(s);
 		return;
 	}
 	// std::cout << _response.c_str() << "\n";
+	closesocket(s);
 }
 
 bool CHttpRequest::IsGood() const 

@@ -17,9 +17,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 
+// ---------------------------------------------------------------
+
 class CHttpRequest
 {
 private:
+	static bool bSocketsInitialized;
 	struct Data;
 	Data * _data;
 public:
@@ -32,6 +35,10 @@ public:
 	int GetSize() const;
 	int GetOutgoing() const;
 	int GetIncoming() const;
+	static void InitSocketsIfNecessary();
+	static void CleanupSocketsIfNecessary();
 };
+
+// ---------------------------------------------------------------
 
 #endif HTTPCLIENT_H

@@ -1255,6 +1255,7 @@ CMapApp::CMapApp() : m_fMoving(false), m_hWnd(0), m_hPortThread(0), m_hHttpThrea
 
 CMapApp::~CMapApp() 
 {
+	CHttpRequest::CleanupSocketsIfNecessary();
 #ifdef UNDER_CE
 	if (m_hCoreDll) {
 		m_pfnGetIdleTime = NULL;
@@ -3955,6 +3956,7 @@ void CMapApp::HttpThreadRoutine()
 
 	std::string request;
 	int request_source = 0;
+	int ErrorWaitingTime = 1; // beginning with 1 second
 
 	while (!m_fStopHttpThread)
 	{
@@ -4085,6 +4087,7 @@ void CMapApp::HttpThreadRoutine()
 				m_monDataTotal += req.GetIncoming() + req.GetOutgoing();
 				if (!m_fStopHttpThread && req.IsGood())
 				{
+					ErrorWaitingTime = 1;
 					{
 						AutoLock l;
 						m_wstrHttpStatus = L"Ok";
@@ -4131,8 +4134,10 @@ void CMapApp::HttpThreadRoutine()
 						m_searchurl = "";
 						MessageBox(m_hWnd, L("Search failed"), L("Search"), MB_OK | MB_ICONERROR);
 					}
-					for (int i = 0; i < 60 && !m_fStopHttpThread; ++i )
+					for (int i = 0; i < ErrorWaitingTime && !m_fStopHttpThread; ++i )
 						Sleep(1000);
+					ErrorWaitingTime = ErrorWaitingTime << 1; // If error next time then wait twice as long
+					ErrorWaitingTime = (ErrorWaitingTime>60)?60:ErrorWaitingTime; // but max 60 seconds
 				}
 			}
 			else if (!m_fStopHttpThread)
