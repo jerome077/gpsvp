@@ -319,7 +319,22 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 					HDC srcdc = CreateCompatibleDC(dc);
 					HBITMAP srcoldbm = (HBITMAP) SelectObject(srcdc, hbm);
 					HDC dstdc = CreateCompatibleDC(dc);
-					HBITMAP dstbm = CreateBitmap(gfr.width, gfr.heigth, 1, 32, NULL);
+					//HBITMAP dstbm = CreateBitmap(gfr.width, gfr.heigth, 1, 32, NULL);
+					//HBITMAP dstbm = CreateCompatibleBitmap(dc, gfr.width, gfr.heigth);
+					BITMAPINFOHEADER bmih;
+					void* pBits;
+					bmih.biSize = sizeof(BITMAPINFOHEADER);
+					bmih.biWidth = gfr.width;
+					bmih.biHeight = gfr.heigth;
+					bmih.biPlanes = 1;
+					bmih.biBitCount = 32;
+					bmih.biCompression = BI_RGB;
+					bmih.biSizeImage = 0;
+					bmih.biXPelsPerMeter = 0;
+					bmih.biYPelsPerMeter = 0;
+					bmih.biClrUsed = 0;
+					bmih.biClrImportant = 0;
+					HBITMAP dstbm = CreateDIBSection(dc, (BITMAPINFO *)&bmih, 0, &pBits, NULL, 0);			
 					HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
 
 					// Здесь можно использовать любой алгоритм стретча, можно медленный
