@@ -2228,6 +2228,7 @@ void CMapApp::Paint()
 							m_atlas.PaintMapPlaceholders(&m_painter);
 					}
 
+					m_pRasterMapPainter->SetKeepMemoryLow(fLowMemory);
 					m_pRasterMapPainter->Paint(hdc.Get(), m_painter.GetScreenRect(), m_painter.GetCenter(), m_painter.GetXScale(), enumGMapType(m_riGMapType()), fLargeFonts);
 
 					if (fShowGarminMaps)

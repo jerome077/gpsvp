@@ -66,8 +66,8 @@ public:
 	void SetMaxCacheSize(long nBitmapsCount) 
 	{
 		m_nMaxCacheSize = nBitmapsCount;
-		if (m_mapCachedFiles.size() > m_nMaxCacheSize) {
-		}
+		for(int i=m_mapCachedFiles.size(); i>m_nMaxCacheSize; i--)
+			DeleteFrontElementFromCache();
 	};
 
 	void ProcessWMHIBERNATE();
@@ -94,12 +94,15 @@ public:
 	long GetWMSMapCount() const { return m_GMFH.GetWMSMapCount(); };
 	std::wstring GetWMSMapName(long indexWMS) const { return m_GMFH.GetWMSMapName(indexWMS); };
     GeoPoint GetDemoPoint(enumGMapType type, double &scale) const { return m_GMFH.GetDemoPoint(type, scale); };
+	void SetKeepMemoryLow(bool value);
 
 protected:
 	int DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
 	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
 		long *pnInCacheCount, bool bJustCount);
+	void DeleteFrontElementFromCache();
+
 private:
 	// Открытые файлы
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS > m_mapCachedFiles;
@@ -125,4 +128,6 @@ private:
 	long m_nLevelToDownload;
 	// Тип картинки, который выкачивать. Берём в момент, когда отмечают зум
 	enumGMapType m_enTypeToDownload;
+
+	bool m_KeepMemoryLow;
 };

@@ -29,11 +29,8 @@ std::wstring m_wstrMapFolder;
 
 CGMPainter::CGMPainter(void)
 {
-#ifndef UNDER_CE
+	m_KeepMemoryLow = false;
 	m_nMaxCacheSize = 256;
-#else // UNDER_CE
-	m_nMaxCacheSize = 16;
-#endif // UNDER_CE
 
 #ifndef UNDER_CE
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
@@ -233,11 +230,12 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		rop = SRCINVERT;
 	}
 
-	// Смотрим, есть ли в кэше
+	// Смотрим, есть ли в кэше [tr: Look if it is in tha cache?]
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
-	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел
+	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел [tr: 4 bytes per pixel]
 	if (nNewBMSize > 2200*1024) {
 		// Такие большие картинки не кешируем, будем хранить только оригинал
+		// [tr: Such large pictures ???, will retain only the original?]
 		gfr.width = gfr.heigth = 256;
 		nNewBMSize = 256*256*4;
 	}
@@ -245,6 +243,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(gfr);
 	if (it != m_mapCachedFiles.end()) {
 		// Круть! Заодно ещё перетащить в голову списка использованных
+		// [tr: Cool! ??????]
 		hbm = it->second.h;
 
 		std::list< GEOFILE_RASTERIZED >::iterator it2 = m_lstLastUsed.begin();
@@ -286,34 +285,24 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			if (hbm == NULL) {
-				// Картинка, видимо, битая... Удалить файл.
+				// Картинка, видимо, битая... Удалить файл. [tr: The picture seems to ???... Delete the file.]
 				DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
 
-				// Подчищаем кеш
+				// Подчищаем кеш [tr: Erase the cache?]
 				while (!m_lstLastUsed.empty()) {
 					MEMORYSTATUS ms;
 					ms.dwLength = sizeof(ms);
 					GlobalMemoryStatus(&ms);
 
-					if (((ms.dwAvailPhys - nNewBMSize) < 2*1024*1024) || (m_mapCachedFiles.size() > 256)) {
-						GEOFILE_RASTERIZED g(m_lstLastUsed.front());
-						m_lstLastUsed.pop_front();
-
-						std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(g);
-						if (it != m_mapCachedFiles.end()) {
-							DeleteObject(it->second.h);
-							m_mapCachedFiles.erase(it);
-						} else {
-							// Нифига себе...
-						}
-					} else {
+					if (((ms.dwAvailPhys - nNewBMSize) < 2*1024*1024) || (m_mapCachedFiles.size() > m_nMaxCacheSize))
+						DeleteFrontElementFromCache();
+					else
 						break;
-					}
 				}
 
-				// Отресайзить и положить в кеш
+				// Отресайзить и положить в кеш [tr: ??? and put it in the cache?]
 				if ((gfr.width == gfr.heigth) && (gfr.width == 256)) {
 				} else {
 					HDC srcdc = CreateCompatibleDC(dc);
@@ -321,13 +310,14 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 					HDC dstdc = CreateCompatibleDC(dc);
 					//HBITMAP dstbm = CreateBitmap(gfr.width, gfr.heigth, 1, 32, NULL);
 					//HBITMAP dstbm = CreateCompatibleBitmap(dc, gfr.width, gfr.heigth);
+
 					BITMAPINFOHEADER bmih;
 					void* pBits;
 					bmih.biSize = sizeof(BITMAPINFOHEADER);
 					bmih.biWidth = gfr.width;
 					bmih.biHeight = gfr.heigth;
 					bmih.biPlanes = 1;
-					bmih.biBitCount = 32;
+					bmih.biBitCount = GetDeviceCaps(dc, BITSPIXEL);
 					bmih.biCompression = BI_RGB;
 					bmih.biSizeImage = 0;
 					bmih.biXPelsPerMeter = 0;
@@ -338,6 +328,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 					HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
 
 					// Здесь можно использовать любой алгоритм стретча, можно медленный
+					// [tr: ??? stretch algorithm can be slow ???]
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
 					SetStretchBltMode(dstdc, BILINEAR);
@@ -579,4 +570,29 @@ void CGMPainter::RelocateFiles()
 bool CGMPainter::NeedRelocateFiles()
 {
 	return m_GMFH.NeedRelocateFiles();
+}
+
+void CGMPainter::SetKeepMemoryLow(bool value)
+{
+	if (m_KeepMemoryLow != value)
+	{
+		m_KeepMemoryLow = value;
+		if (m_KeepMemoryLow)
+			SetMaxCacheSize(16);
+		else
+			SetMaxCacheSize(256);
+	}
+}
+
+void CGMPainter::DeleteFrontElementFromCache()
+{
+	GEOFILE_RASTERIZED g(m_lstLastUsed.front());
+	m_lstLastUsed.pop_front();
+
+	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(g);
+	if (it != m_mapCachedFiles.end())
+	{
+		DeleteObject(it->second.h);
+		m_mapCachedFiles.erase(it);
+	}
 }

@@ -85,7 +85,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ALIGN:4096 /subsystem:$(CESubsystem) /MACHINE:ARM "
-				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib Oleaut32.lib Commdlg.lib secchk.lib ccrtrtti.lib bthutil.lib"
+				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib Oleaut32.lib Commdlg.lib secchk.lib ccrtrtti.lib bthutil.lib ws2.lib cellcore.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/VisualPainterSP.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
