@@ -136,6 +136,9 @@ enum enumMenuCommands
 	mcFirstWMSMapType = mcGMapType + 9,
 	// ...reserved for Map Types...
 	mcLastGMapType = 0x2FFF,
+	mcDownlRasterRefreshInRect,
+	mcoRasterValidityBase,
+	mcoRasterValidityEnd = mcoRasterValidityBase+256,
 };
 
 #endif // COMMANDS_H

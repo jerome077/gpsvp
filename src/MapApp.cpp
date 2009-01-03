@@ -2618,10 +2618,26 @@ void CMapApp::InitMenu()
 				mmDownloadMaps.CreateItem(L("Add current view"), mcDownlRasterAddCurrentView);
 				mmDownloadMaps.CreateItem(L("Start with current zoom"), mcDownlRasterStartWithCurZoom);
 				mmDownloadMaps.CreateItem(L("By track"), mcDownlRasterByTrack);
+				mmDownloadMaps.CreateItem(L("Refresh tiles in current view"), mcDownlRasterRefreshInRect);
+				
 				mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
 				mmDownloadMaps.CreateBreak();
 				mmDownloadMaps.CreateItem(L("Download all lower levels"), mcoDownloadLowerLevels);
+				mmDownloadMaps.CreateItem(L("Refresh tiles in current view"), mcoRefreshTiles);
 				// mmDownloadMaps.EnableMenuItem(mcoDownloadLowerLevels, false);
+			}
+			{
+				CMenu & mmRefreshMaps = mmGoogleMaps.CreateSubMenu(L("Tiles validity"));
+				enumGMapType types[] = { gtOsm, gtMap, gtSatellite, gtTopo, gtMSMap, gtMSSat, gtMSHyb };
+				int cur = 0;
+				for (int i=0 ;i<sizeof(types)/sizeof(types[0]); i++) {
+					CMenu & mmType = mmRefreshMaps.CreateSubMenu(GetGMapTypeString(types[i]));
+					mmType.CreateItem(L("One day"), mcoRasterValidityBase + cur++);
+					mmType.CreateItem(L("One week"), mcoRasterValidityBase + cur++);
+					mmType.CreateItem(L("One month"), mcoRasterValidityBase + cur++);
+					mmType.CreateItem(L("One year"), mcoRasterValidityBase + cur++);
+					mmType.CreateItem(L("Never"), mcoRasterValidityBase + cur++);
+				}
 			}
 			{
 				CMenu & mmMaintMaps = mmGoogleMaps.CreateSubMenu(L("Cache maintenance"));
