@@ -282,7 +282,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ALIGN:4096 /subsystem:$(CESubsystem)  "
-				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib bthutil.lib ws2.lib"
+				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib bthutil.lib ws2.lib cellcore.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/VisualPainterSPDebug.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"

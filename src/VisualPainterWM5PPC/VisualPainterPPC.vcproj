@@ -286,7 +286,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ALIGN:4096 /subsystem:$(CESubsystem)  "
-				AdditionalDependencies="commctrl.lib coredll.lib aygshell.lib Oleaut32.lib"
+				AdditionalDependencies="commctrl.lib coredll.lib aygshell.lib Oleaut32.lib ws2.lib cellcore.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/VisualPainterPPC.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
