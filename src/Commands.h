@@ -98,6 +98,7 @@ enum enumMenuCommands
 	mcAboutMaps,
 	mcCheckLatestVersion,
 	mcoShowPolygonLabels,
+	mcoShowAreaAsOutline,
 	mcoShowTrafficNodes,
 	mcSetGoogleMapsFolder,
 	mcoDownloadGoogleMaps,

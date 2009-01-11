@@ -178,6 +178,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	Buttons m_buttons;
 	bool m_fShowUnknownTypes;
 	bool m_fShowPolygonLabels;
+	bool m_fShowAreaAsOutline;
 	int m_iStatusLineOffset;
 public:
 	virtual ~CGDIPainter();
@@ -268,6 +269,7 @@ public:
 	void PaintCompass();
 	void SetShowUnknownTypes(bool f) {m_fShowUnknownTypes = f;}
 	void SetShowPolygonLabels(bool f) {m_fShowPolygonLabels = f;}
+	void SetShowAreaAsOutline(bool f) {m_fShowAreaAsOutline = f;}
 	double GetXScale();
 	void SetXScale(double scale);
 	void PrepareScales();

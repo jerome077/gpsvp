@@ -1740,6 +1740,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Show POIs"), L"ShowPOIs", true, mcoShowPOIs);
 	m_Options.AddOption(L("Show waypoints"), L"ShowWaypoints", true, mcoShowWaypoints);
 	m_Options.AddOption(L("Show area labels"), L"ShowPolygonLabels", true, mcoShowPolygonLabels);
+	m_Options.AddOption(L("Show outline only"), L"ShowAreaAsOutline", false, mcoShowAreaAsOutline);
 	m_Options.AddOption(L("Show unknown types"), L"ShowUnknownTypes", true, mcoShowUnknownTypes);
 	m_Options.AddOption(L("Rotate map by course"), L"RotateMap", false, mcoRotateMap);
 	m_Options.AddOption(L("Show road name"), L"ShowRoadName", true, mcoShowRoadName);
@@ -2132,6 +2133,7 @@ void CMapApp::Paint()
 		bool fRotateMap;
 		bool fShowUnknownTypes;
 		bool fShowPolygonLabels;
+		bool fShowAreaAsOutline;
 		bool fShowCurrentTrack;
 		bool fShowGarminMaps;
 		bool fLargeMonitors;
@@ -2153,6 +2155,7 @@ void CMapApp::Paint()
 			fDirectPaint = m_Options[mcoDirectPaint];
 			fRotateMap = m_Options[mcoRotateMap] && m_riGMapType() == gtNone;
 			fShowPolygonLabels = m_Options[mcoShowPolygonLabels];
+			fShowAreaAsOutline = m_Options[mcoShowAreaAsOutline];
 			fShowCurrentTrack = m_Options[mcoShowCurrentTrack];
 			fLargeMonitors = m_Options[mcoLargeMonitors];
 			fLargeFonts = m_Options[mcoLargeFonts];
@@ -2214,6 +2217,7 @@ void CMapApp::Paint()
 				m_painter.BeginPaint(m_hWnd, hdc, m_painter.GetScreenRect(), degree, fLowCenter);
 				m_painter.SetShowUnknownTypes(fShowUnknownTypes);
 				m_painter.SetShowPolygonLabels(fShowPolygonLabels);
+				m_painter.SetShowAreaAsOutline(fShowAreaAsOutline);
 			}
 
 			if (!fOnlyMonitors)
@@ -2593,6 +2597,7 @@ void CMapApp::InitMenu()
 			mmGarminMaps.CreateItem(L("Show area labels"), mcoShowPolygonLabels);
 			mmGarminMaps.CreateItem(L("Show road name"), mcoShowRoadName);
 			mmGarminMaps.CreateItem(L("Show area name"), mcoShowAreaName);
+			mmGarminMaps.CreateItem(L("Show only outline"), mcoShowAreaAsOutline);
 		}
 		{
 			CMenu & mmGoogleMaps = mmMaps.CreateSubMenu(L("Raster maps"));
@@ -2824,6 +2829,7 @@ void CMapApp::CheckMenu()
 	menu.EnableMenuItem(mcoShowDetailMaps, fGarminMaps);
 	menu.EnableMenuItem(mcoShowUnknownTypes, fGarminMaps);
 	menu.EnableMenuItem(mcoShowPolygonLabels, fGarminMaps);
+	menu.EnableMenuItem(mcoShowAreaAsOutline, fGarminMaps);
 	menu.EnableMenuItem(mcoShowRoadName, fGarminMaps);
 	menu.EnableMenuItem(mcoShowAreaName, fGarminMaps);
 	menu.EnableMenuItem(mcCloseAllMaps, fGarminMaps);

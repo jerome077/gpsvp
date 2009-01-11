@@ -112,7 +112,18 @@ void CGDIPainter::FinishObject()
 			m_hdc.SelectObject(m_hDefaultBrush);
 		}
 		// GDI function for painting polygons
-		m_hdc.Polygon(&m_pointList[0], m_pointList.size());
+		if (m_fShowAreaAsOutline)
+		{
+			// Polygons implicitely draw the closing line, for 
+			// Polylines, the closing needs to be done explicit
+			m_pointList[m_pointList.size()]=m_pointList[0];
+			m_hdc.Polyline(&m_pointList[0], m_pointList.size()+1);
+			// (not sure if I should have declared the array as 1 larger....)
+		}
+		else
+		{
+			m_hdc.Polygon(&m_pointList[0], m_pointList.size());
+		}
 		if (m_fShowPolygonLabels && m_wcName && m_wcName[0])
 		{
 			m_hdc.SelectObject(m_FontCache.GetFont(2, 0));
@@ -368,6 +379,7 @@ void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree36
 	m_iCurrentButton = m_srWindow.bottom - 20;
 	m_fShowUnknownTypes = true;
 	m_fShowPolygonLabels = true;
+	m_fShowAreaAsOutline = true;
 	m_iStatusLineOffset = 0;
 }
 void CGDIPainter::SetView(const GeoPoint & gp, bool fManual)
