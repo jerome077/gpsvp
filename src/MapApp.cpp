@@ -664,11 +664,11 @@ class CSettingsDlg : public CMADialog
 		m_trackstep.AddItem(100, app.m_riTrackStep());
 
 		m_coordformat.Create(hDlg, false);
-		m_coordformat.AddItem(L"N37 27'35\"");
-		m_coordformat.AddItem(L"N37 27.8743'");
-		m_coordformat.AddItem(L"N37.278742 ");
+		m_coordformat.AddItem(L"N37°27'35\"");
+		m_coordformat.AddItem(L"N37°27.8743'");
+		m_coordformat.AddItem(L"N37.278742°");
 		m_coordformat.AddItem(L"+37.278742");
-		m_coordformat.AddItem(L"N37 27'35.64\"");
+		m_coordformat.AddItem(L"N37°27'35.64\"");
 		m_coordformat.Select(app.m_riCoordFormat());
 
 		m_metrics.Create(hDlg, false);
@@ -1262,7 +1262,7 @@ CMapApp::~CMapApp()
 		FreeLibrary(m_hCoreDll);
 	}
 #endif // UNDER_CE
-	// Д   ю  ,                       ю     m_pRasterMapPainter                  ...
+	// Надеюсь, в этот момент никто не юзает m_pRasterMapPainter из другого потока...
 	delete m_pRasterMapPainter;
 	Exit();
 }
@@ -2429,7 +2429,7 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 		m_fCoursePointPresent = true;
 		m_gpCoursePoint = gp;
 	}
-	//    ~                  ю, ~  б               
+	// Сначала проверяем опцию, чтобы не искать зря
 #ifdef UNDER_CE
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
 		PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
