@@ -132,12 +132,12 @@ void CStringSchema::assign(const std::wstring& strSchema)
 		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"LAT1")))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CLatitudeSchema(1) ); // north
+			m_SchemaParts.push_back( new CLatitudeSchema(1) ); // south
 		}
 		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"LAT2")))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CLatitudeSchema(0) ); // south
+			m_SchemaParts.push_back( new CLatitudeSchema(0) ); // north
 		}
 		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"X")))
 		{
