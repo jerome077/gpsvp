@@ -66,7 +66,7 @@ public:
 	void SetMaxCacheSize(long nBitmapsCount) 
 	{
 		m_nMaxCacheSize = nBitmapsCount;
-		for(int i=m_mapCachedFiles.size(); i>m_nMaxCacheSize; i--)
+		for(size_t i=m_mapCachedFiles.size(); i>m_nMaxCacheSize; i--)
 			DeleteFrontElementFromCache();
 	};
 

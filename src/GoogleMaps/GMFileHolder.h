@@ -57,7 +57,7 @@ public:
 
 	const CRasterMapSource *GetRMS(enum enumGMapType t) const
 	{
-		if (t < m_vecRMS.size())
+		if ((size_t)t < m_vecRMS.size())
 			return m_vecRMS[t];
 		else 
 			return NULL;
