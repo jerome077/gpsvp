@@ -45,12 +45,12 @@ void Test_CStringSchema()
 	S1.assign(L"http://a.X.b/%TMSX/%TMSY");
 	assert(!S1.empty());
 	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/8734/10673");	
-	S1.assign(L"http://a.X.b/%QRST/%5QRST");
+	S1.assign(L"http://a.X.b/%QRST/%5QRST/%4,6QRST/%5,13QRST/%2,17QRST/");
 	assert(!S1.empty());
-	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/trtqtsqqtqrsssq/trtqt");	
-	S1.assign(L"http://a.X.b/%5QKEY/%QKEY/");
+	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/trtqtsqqtqrsssq/trtqt/sqqt/ssq//");	
+	S1.assign(L"http://a.X.b/%5QKEY/%QKEY/%4,7QKEY");
 	assert(!S1.empty());
-	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/12023/12023002013330/");	
+	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/12023/12023002013330/0201");	
 }
 
 // ---------------------------------------------------------------
@@ -67,31 +67,60 @@ size_t CheckVariableAndGetLength(const std::wstring& strSchema, size_t pos, cons
 
 // ---------------------------------------------------------------
 
-// Like 'CheckVariableAndGetLength' but for variables where you can limit the char count: %5QRST
-size_t CheckExtendedVariable(const std::wstring& strSchema, size_t pos, const std::wstring& varName, int& maxCharCount)
+int GetIntegerAndIncPos(const std::wstring& strSchema, size_t& pos)
+{
+	// Works only between 1 and 99...
+	int result = _wtoi(strSchema.c_str()+pos);
+	if (result >= 1) ++pos;
+	if (result >= 10) ++pos;
+	return result;
+}
+
+bool GetSeparatorAndIncPos(const std::wstring& strSchema, size_t& pos)
+{
+	if (L',' == strSchema[pos])
+	{
+		++pos;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool GetVarNameAndIncPos(const std::wstring& strSchema, size_t& pos, const std::wstring& varName)
 {
 	size_t varLen = varName.length();
 	if (0 == strSchema.compare(pos, varLen, varName))
 	{
-		maxCharCount = 0; // 0 means no length limit
-		return varLen;
+		pos += varLen;
+		return true;
 	}
-	else if ( (pos+1<strSchema.length()) && (0 == strSchema.compare(pos+1, varLen, varName)) )
+	else
+		return false;
+}
+
+// Like 'CheckVariableAndGetLength' but for variables where you can limit the char count: %5QRST
+// an also give a start position like %5,7QRST
+size_t CheckExtendedVariable(const std::wstring& strSchema, size_t pos, const std::wstring& varName,
+							 int& maxCharCount, int& firstChar)
+{
+	size_t currentPos = pos;
+
+	// Max character count:
+	maxCharCount = GetIntegerAndIncPos(strSchema, currentPos);
+
+	// First position:
+	if (GetSeparatorAndIncPos(strSchema, currentPos))
 	{
-		maxCharCount = _wtoi(strSchema.substr(pos, 1).c_str());
-		if (maxCharCount > 0)
-			return varLen+1;
-		else
-			return 0;
+		firstChar = GetIntegerAndIncPos(strSchema, currentPos);
+		if (firstChar > 0) --firstChar;  // C++ begins to count with 0
 	}
-	else if ( (pos+2<strSchema.length()) && (0 == strSchema.compare(pos+2, varLen, varName)) )
-	{
-		maxCharCount = _wtoi(strSchema.substr(pos, 2).c_str());
-		if (maxCharCount > 0)
-			return varLen+2;
-		else
-			return 0;
-	}
+	else
+		firstChar = 0;
+
+	// Variable present:
+	if (GetVarNameAndIncPos(strSchema, currentPos, varName))
+		return (currentPos-pos);
 	else
 		return 0;
 }
@@ -118,7 +147,7 @@ void CStringSchema::assign(const std::wstring& strSchema)
 	while (std::wstring::npos != found)
 	{
 		size_t varlen;
-		int maxCharCount;
+		int maxCharCount, firstChar;
 		if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"LONG1")))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
@@ -174,15 +203,15 @@ void CStringSchema::assign(const std::wstring& strSchema)
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
 			m_SchemaParts.push_back( new CTMSYSchema() );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QRST", maxCharCount)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QRST", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CQRSTSchema(maxCharCount) );
+			m_SchemaParts.push_back( new CQRSTSchema(maxCharCount, firstChar) );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QKEY", maxCharCount)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QKEY", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CQKeySchema(maxCharCount) );
+			m_SchemaParts.push_back( new CQKeySchema(maxCharCount, firstChar) );
 		}
 		else
 		{

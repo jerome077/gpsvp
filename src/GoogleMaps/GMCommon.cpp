@@ -32,7 +32,7 @@ double GoogleYZ17toLat(unsigned long y, unsigned char zoom17)
 // ---------------------------------------------------------------
 
 // ... a quadtree reference like for Google satellite:
-std::string GoogleXYZ1toQRST(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar)
+std::string GoogleXYZ1toQRST(unsigned long x, unsigned long y, unsigned char zoom1, int maxCharCount, int firstChar)
 {
 	long NumX = x;
 	long NumY = y;
@@ -68,14 +68,21 @@ std::string GoogleXYZ1toQRST(unsigned long x, unsigned long y, unsigned char zoo
 		}
 	}
 	buf[zoom1] = '\0';
-	if ((maxChar > 0) && (maxChar < 24))
-		buf[maxChar] = L'\0';
-	return buf;
+	if ((firstChar > 0) || (maxCharCount > 0))
+	{
+		std::string strBuf = buf;
+		if (firstChar >= strBuf.length())
+			return "";
+		else
+			return strBuf.substr(firstChar, maxCharCount);
+	}
+	else
+		return buf;
 }
 
 // ---------------------------------------------------------------
 
-std::wstring GoogleXYZ1toQRSTW(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar)
+std::wstring GoogleXYZ1toQRSTW(unsigned long x, unsigned long y, unsigned char zoom1, int maxCharCount, int firstChar)
 {
 	long NumX = x;
 	long NumY = y;
@@ -111,15 +118,22 @@ std::wstring GoogleXYZ1toQRSTW(unsigned long x, unsigned long y, unsigned char z
 		}
 	}
 	buf[zoom1] = L'\0';
-	if ((maxChar > 0) && (maxChar < 24))
-		buf[maxChar] = L'\0';
-	return buf;
+	if ((firstChar > 0) || (maxCharCount > 0))
+	{
+		std::wstring strBuf = buf;
+		if (firstChar >= strBuf.length())
+			return L"";
+		else
+			return strBuf.substr(firstChar, maxCharCount);
+	}
+	else
+		return buf;
 }
 
 // ---------------------------------------------------------------
 
 // ... a quadtree reference like for Live maps:
-std::string GoogleXYZ1toQKey(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar)
+std::string GoogleXYZ1toQKey(unsigned long x, unsigned long y, unsigned char zoom1, int maxCharCount, int firstChar)
 {
 	long NumX = x;
 	long NumY = y;
@@ -154,14 +168,21 @@ std::string GoogleXYZ1toQKey(unsigned long x, unsigned long y, unsigned char zoo
 		}
 	}
 	buf[zoom1-1] = '\0';
-	if ((maxChar > 0) && (maxChar < 24))
-		buf[maxChar] = L'\0';
-	return buf;
+	if ((firstChar > 0) || (maxCharCount > 0))
+	{
+		std::string strBuf = buf;
+		if (firstChar >= strBuf.length())
+			return "";
+		else
+			return strBuf.substr(firstChar, maxCharCount);
+	}
+	else
+		return buf;
 }
 
 // ---------------------------------------------------------------
 
-std::wstring GoogleXYZ1toQKeyW(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar)
+std::wstring GoogleXYZ1toQKeyW(unsigned long x, unsigned long y, unsigned char zoom1, int maxCharCount, int firstChar)
 {
 	long NumX = x;
 	long NumY = y;
@@ -196,9 +217,16 @@ std::wstring GoogleXYZ1toQKeyW(unsigned long x, unsigned long y, unsigned char z
 		}
 	}
 	buf[zoom1-1] = L'\0';
-	if ((maxChar > 0) && (maxChar < 24))
-		buf[maxChar] = L'\0';
-	return buf;
+	if ((firstChar > 0) || (maxCharCount > 0))
+	{
+		std::wstring strBuf = buf;
+		if (firstChar >= strBuf.length())
+			return L"";
+		else
+			return strBuf.substr(firstChar, maxCharCount);
+	}
+	else
+		return buf;
 }
 
 // ---------------------------------------------------------------

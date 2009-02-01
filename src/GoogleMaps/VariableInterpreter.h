@@ -154,15 +154,17 @@ public:
 class CQRSTSchema: public CSchema
 {
 public:
-	CQRSTSchema(int maxChar) : m_MaxChar(maxChar)	{};
+	CQRSTSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
-		return GoogleXYZ17toQRSTW(x, y, l, m_MaxChar);
+		return GoogleXYZ17toQRSTW(x, y, l, m_MaxChar, m_firstChar);
 	};
 
 protected:
 	// Maximal length of the interpreted value (0 for the whole value):
 	int m_MaxChar;
+	// First char to use (0 to start at the beginning):
+	int m_firstChar;
 };
 
 // ---------------------------------------------------------------
@@ -171,15 +173,17 @@ protected:
 class CQKeySchema: public CSchema
 {
 public:
-	CQKeySchema(int maxChar) : m_MaxChar(maxChar)	{};
+	CQKeySchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
-		return GoogleXYZ17toQKeyW(x, y, l, m_MaxChar);
+		return GoogleXYZ17toQKeyW(x, y, l, m_MaxChar, m_firstChar);
 	};
 
 protected:
 	// Maximal length of the interpreted value (0 for the whole value):
 	int m_MaxChar;
+	// First char to use (0 to start at the beginning):
+	int m_firstChar;
 };
 
 // ---------------------------------------------------------------

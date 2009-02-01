@@ -34,27 +34,35 @@ double	GoogleYZ17toLat		(unsigned long y, unsigned char zoom17);
 
 // To convert a "google" tile reference 'x', 'y' at a given zoom level
 // to a quadtree reference like for Google satellite:
-std::string		GoogleXYZ1toQRST	(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar = 0);
-std::wstring	GoogleXYZ1toQRSTW	(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar = 0);
+std::string		GoogleXYZ1toQRST	(unsigned long x, unsigned long y, unsigned char zoom1,
+									 int maxCharCount = 0, int firstChar = 0);
+std::wstring	GoogleXYZ1toQRSTW	(unsigned long x, unsigned long y, unsigned char zoom1,
+									 int maxCharCount = 0, int firstChar = 0);
 
-inline std::string	GoogleXYZ17toQRST	(unsigned long x, unsigned long y, unsigned char zoom17, int maxChar = 0)
-{ return GoogleXYZ1toQRST(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxChar); }
+inline std::string	GoogleXYZ17toQRST	(unsigned long x, unsigned long y, unsigned char zoom17,
+										 int maxCharCount = 0, int firstChar = 0)
+{ return GoogleXYZ1toQRST(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxCharCount, firstChar); }
 
-inline std::wstring	GoogleXYZ17toQRSTW	(unsigned long x, unsigned long y, unsigned char zoom17, int maxChar = 0)
-{ return GoogleXYZ1toQRSTW(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxChar); }
+inline std::wstring	GoogleXYZ17toQRSTW	(unsigned long x, unsigned long y, unsigned char zoom17,
+										 int maxCharCount = 0, int firstChar = 0)
+{ return GoogleXYZ1toQRSTW(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxCharCount, firstChar); }
 
 // ---------------------------------------------------------------
 
 // To convert a "google" tile reference 'x', 'y' at a given zoom level
 // to a quadtree reference like for Live maps:
-std::string		GoogleXYZ1toQKey	(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar = 0);
-std::wstring	GoogleXYZ1toQKeyW	(unsigned long x, unsigned long y, unsigned char zoom1, int maxChar = 0);
+std::string		GoogleXYZ1toQKey	(unsigned long x, unsigned long y, unsigned char zoom1,
+									 int maxCharCount = 0, int firstChar = 0);
+std::wstring	GoogleXYZ1toQKeyW	(unsigned long x, unsigned long y, unsigned char zoom1,
+									 int maxCharCount = 0, int firstChar = 0);
 
-inline std::string	GoogleXYZ17toQKey	(unsigned long x, unsigned long y, unsigned char zoom17, int maxChar = 0)
-{ return GoogleXYZ1toQKey(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxChar); }
+inline std::string	GoogleXYZ17toQKey	(unsigned long x, unsigned long y, unsigned char zoom17,
+										 int maxCharCount = 0, int firstChar = 0)
+{ return GoogleXYZ1toQKey(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxCharCount, firstChar); }
 
-inline std::wstring	GoogleXYZ17toQKeyW	(unsigned long x, unsigned long y, unsigned char zoom17, int maxChar = 0)
-{ return GoogleXYZ1toQKeyW(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxChar); }
+inline std::wstring	GoogleXYZ17toQKeyW	(unsigned long x, unsigned long y, unsigned char zoom17,
+										 int maxCharCount = 0, int firstChar = 0)
+{ return GoogleXYZ1toQKeyW(x, y, LEVEL_REVERSE_OFFSET-zoom17, maxCharCount, firstChar); }
 
 // ---------------------------------------------------------------
 
