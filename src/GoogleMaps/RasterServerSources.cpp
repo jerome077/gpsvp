@@ -17,12 +17,30 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../Lock.h"
 #include "../SimpleIniExt.h"
 #include "RasterServerSources.h"
+#include <sstream>
 
 #ifndef UNDER_CE
 #	define WMKDIR(x) _wmkdir(x)
 #else // UNDER_CE
 #	define WMKDIR(x) CreateDirectory(x, NULL)
 #endif // UNDER_CE
+
+void CreateDirectoryRecursively(const std::wstring& wstrRoot, const std::wstring& wstrSubpath)
+{
+    if (!wstrRoot.empty())
+	{
+		std::wstring wstrSubpathSlash = wstrSubpath;
+		std::replace(wstrSubpathSlash.begin(), wstrSubpathSlash.end(), L'\\', L'/');
+		std::wstringstream wssSubPath(wstrSubpathSlash);
+		std::wstring wstrSubPathItem;
+		std::wstring wstrPath = wstrRoot;
+		while (std::getline(wssSubPath, wstrSubPathItem, L'/'))
+		{
+			wstrPath += L"/" + wstrSubPathItem;
+			WMKDIR(wstrPath.c_str());
+		}
+	}
+}
 
 bool CRasterMapSource::GetDiskGenericFileName(const GEOFILE_DATA& gfdata, const std::wstring& root, 
 	std::wstring &path, const wchar_t *pwszMapType)
@@ -371,7 +389,10 @@ bool CUserWMSMapSource::GetDiskFileName(
 		path = zoomProps.SubpathSchema.interpret(gfdata.level, gfdata.X, gfdata.Y);
 		path = m_MapName + L"/" + path;
 		if (!root.empty())
+		{
+			CreateDirectoryRecursively(root, path);
 			path = root + L"/" + path;
+		}
 		return true;
 	}
 	else
