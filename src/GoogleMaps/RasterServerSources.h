@@ -80,7 +80,7 @@ public:
 	enumGMapType GetType() const { return m_enMyType; };
 	void SetType(enumGMapType en) { m_enMyType = en; };
 
-	// Возвращает URL для заданного data
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ URL РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ data
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data) = 0;
 
 	virtual bool GetDiskFileName(

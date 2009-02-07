@@ -47,7 +47,7 @@ class CFileDlg : public CMADialog
 		m_filename.SetText(L"");
 		m_list.Clear();
 		{
-			// Здесь мы просто проверяем наличие директории
+			// Р—РґРµСЃСЊ РјС‹ РїСЂРѕСЃС‚Рѕ РїСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РґРёСЂРµРєС‚РѕСЂРёРё
 			WIN32_FIND_DATA wwd;
 			HANDLE h = FindFirstFile((app.m_rsCurrentFolder()).c_str(), &wwd);
 			if (!h || h == INVALID_HANDLE_VALUE || 
@@ -64,7 +64,7 @@ class CFileDlg : public CMADialog
 			++iItem;
 		}
 		{
-			// Здесь мы формируем список директорий
+			// Р—РґРµСЃСЊ РјС‹ С„РѕСЂРјРёСЂСѓРµРј СЃРїРёСЃРѕРє РґРёСЂРµРєС‚РѕСЂРёР№
 			WIN32_FIND_DATA wwd;
 			std::set<std::wstring> setDirectories;
 			std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\*.*";
@@ -92,7 +92,7 @@ class CFileDlg : public CMADialog
 			}
 		}
 		{
-			// А здесь - список файлов
+			// Рђ Р·РґРµСЃСЊ - СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ
 			WIN32_FIND_DATA wwd;
 			std::set<std::wstring> setFiles;
 			std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\" + m_wstrMask;

@@ -37,9 +37,9 @@ public:
 	void Deinit();
 
 	const long GetFileName(std::wstring& name, const GEOFILE_DATA& data) const;
-	// Метод для получения запроса для отрисовщика, которому не хватило фрагментов
+	// РњРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ Р·Р°РїСЂРѕСЃР° РґР»СЏ РѕС‚СЂРёСЃРѕРІС‰РёРєР°, РєРѕС‚РѕСЂРѕРјСѓ РЅРµ С…РІР°С‚РёР»Рѕ С„СЂР°РіРјРµРЅС‚РѕРІ
 	std::string GetRequestURL(const GEOFILE_DATA& data);
-	// Получить запрос
+	// РџРѕР»СѓС‡РёС‚СЊ Р·Р°РїСЂРѕСЃ
 	bool GetQueuedData(GEOFILE_DATA* pData);
 	long OnRequestProcessed(const std::string request, GEOFILE_DATA& gfdata, const char * data, int size);
 	long ProcessPrefixes(const std::string &s);
@@ -79,20 +79,20 @@ protected:
     void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
 
 private:
-	// Здесь - общий префикс для всех директорий
+	// Р—РґРµСЃСЊ - РѕР±С‰РёР№ РїСЂРµС„РёРєСЃ РґР»СЏ РІСЃРµС… РґРёСЂРµРєС‚РѕСЂРёР№
 	std::wstring m_strMapsRoot;
 	// Inited
 	bool m_bInitialized;
 
 	std::set< GEOFILE_DATA > m_setToDownload;
 
-	// Имя файла, которое возвращается в случае отсутствия в базе необходимого фрагмента
+	// РРјСЏ С„Р°Р№Р»Р°, РєРѕС‚РѕСЂРѕРµ РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РІ СЃР»СѓС‡Р°Рµ РѕС‚СЃСѓС‚СЃС‚РІРёСЏ РІ Р±Р°Р·Рµ РЅРµРѕР±С…РѕРґРёРјРѕРіРѕ С„СЂР°РіРјРµРЅС‚Р°
 	std::wstring m_strDefaultFileName;
 
-	// Минимальный и максимальный доступный уровень (0..18 для карт)
+	// РњРёРЅРёРјР°Р»СЊРЅС‹Р№ Рё РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РґРѕСЃС‚СѓРїРЅС‹Р№ СѓСЂРѕРІРµРЅСЊ (0..18 РґР»СЏ РєР°СЂС‚)
 	long m_nMinLevel, m_nMaxLevel; 
 
-	// Текущий номер сервера
+	// РўРµРєСѓС‰РёР№ РЅРѕРјРµСЂ СЃРµСЂРІРµСЂР°
 	std::vector<PRasterMapSource> m_vecRMS;
 	bool m_WMSMapsListed;
 

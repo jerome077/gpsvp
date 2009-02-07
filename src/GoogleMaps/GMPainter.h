@@ -72,7 +72,7 @@ public:
 
 	void ProcessWMHIBERNATE();
 	// Level - 0 .. 18
-	// DC, rect - где рисовать
+	// DC, rect - РіРґРµ СЂРёСЃРѕРІР°С‚СЊ
 	int Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
 	bool RotationAllowed();
 
@@ -104,7 +104,7 @@ protected:
 	void DeleteFrontElementFromCache();
 
 private:
-	// Открытые файлы
+	// РћС‚РєСЂС‹С‚С‹Рµ С„Р°Р№Р»С‹
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS > m_mapCachedFiles;
 	std::list< GEOFILE_RASTERIZED > m_lstLastUsed;
 
@@ -116,17 +116,17 @@ private:
 
 	unsigned long m_nGDIPlusToken;
 
-	// Флаг, что получили с сервера номера версий карты
+	// Р¤Р»Р°Рі, С‡С‚Рѕ РїРѕР»СѓС‡РёР»Рё СЃ СЃРµСЂРІРµСЂР° РЅРѕРјРµСЂР° РІРµСЂСЃРёР№ РєР°СЂС‚С‹
 	bool m_bGotMapVersions;
 
-	// GeoRect, с которым последний раз рисовали карту
+	// GeoRect, СЃ РєРѕС‚РѕСЂС‹Рј РїРѕСЃР»РµРґРЅРёР№ СЂР°Р· СЂРёСЃРѕРІР°Р»Рё РєР°СЂС‚Сѓ
 	GeoRect m_grectLastViewed;
-	// GeoRect, который выбрал пользователь
+	// GeoRect, РєРѕС‚РѕСЂС‹Р№ РІС‹Р±СЂР°Р» РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
 	GeoRect m_grectToDownload;
 	bool m_bGeoRectToDownload;
-	// Level, с которым последний раз рисовали карту
+	// Level, СЃ РєРѕС‚РѕСЂС‹Рј РїРѕСЃР»РµРґРЅРёР№ СЂР°Р· СЂРёСЃРѕРІР°Р»Рё РєР°СЂС‚Сѓ
 	long m_nLevelToDownload;
-	// Тип картинки, который выкачивать. Берём в момент, когда отмечают зум
+	// РўРёРї РєР°СЂС‚РёРЅРєРё, РєРѕС‚РѕСЂС‹Р№ РІС‹РєР°С‡РёРІР°С‚СЊ. Р‘РµСЂС‘Рј РІ РјРѕРјРµРЅС‚, РєРѕРіРґР° РѕС‚РјРµС‡Р°СЋС‚ Р·СѓРј
 	enumGMapType m_enTypeToDownload;
 
 	bool m_KeepMemoryLow;

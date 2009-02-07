@@ -373,21 +373,21 @@ wstring DegreeToText(double dDegree, bool fLat)
 	default:
 		n1 = 60;
 		n2 = 60;
-		fmt = L"%c%d°%d'%d\"";
+		fmt = L"%c%dÂ°%d'%d\"";
 		break;
 	case 1:
 		n1 = 60;
 		n2 = 10000;
-		fmt = L"%c%d°%d.%04d\'";
+		fmt = L"%c%dÂ°%d.%04d\'";
 		break;
 	case 2:
 		n1 = 100000;
-		fmt = L"%c%d.%05d°";
+		fmt = L"%c%d.%05dÂ°";
 		break;
 	case 3:
 		n1 = 100000;
 		n2 = 1;
-		fmt = L"%c%d.%05d°";
+		fmt = L"%c%d.%05dÂ°";
 		N = E = L'+';
 		S = W = L'-';
 		break;
@@ -395,7 +395,7 @@ wstring DegreeToText(double dDegree, bool fLat)
 		n1 = 60;
 		n2 = 60;
 		n3 = 100;
-		fmt = L"%c%d°%d'%d.%02d\"";
+		fmt = L"%c%dÂ°%d'%d.%02d\"";
 		break;
 	};
 	bool fNeg = false;
@@ -455,7 +455,7 @@ double TextToDergee(wchar_t * wcText)
 			base = 1;
 			fPoint = true;
 		}
-		if (*wcText == L'°')
+		if (*wcText == L'Â°')
 		{
 			dDegree += dCurrent;
 			dCurrent = 0;

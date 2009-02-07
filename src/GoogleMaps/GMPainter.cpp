@@ -91,7 +91,7 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 {
 	if (r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
 		return false;
-	// Найдём пересечение по горизонтали
+	// РќР°Р№РґС‘Рј РїРµСЂРµСЃРµС‡РµРЅРёРµ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё
 	pr->left = max(r1.left, r2.left);
 	pr->right = min(r1.right, r2.right);
 	pr->top = max(r1.top, r2.top);
@@ -105,7 +105,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 		return 0;
 	double dLatCenter = Degree(gpCenter.lat);
 	double dLonCenter = Degree(gpCenter.lon);
-	// Рисуем картинку уровня level с центром в dLonCenter/dLatCenter
+	// Р РёСЃСѓРµРј РєР°СЂС‚РёРЅРєСѓ СѓСЂРѕРІРЅСЏ level СЃ С†РµРЅС‚СЂРѕРј РІ dLonCenter/dLatCenter
 
 	int level = LEVEL_REVERSE_OFFSET;
 
@@ -126,15 +126,15 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	if (scale > 16)
 		return 0;
 
-	// количество блоков вдоль стороны Битмапа уровня Level
+	// РєРѕР»РёС‡РµСЃС‚РІРѕ Р±Р»РѕРєРѕРІ РІРґРѕР»СЊ СЃС‚РѕСЂРѕРЅС‹ Р‘РёС‚РјР°РїР° СѓСЂРѕРІРЅСЏ Level
 	long nNumTiles = 1 << (level-1);
-	// координаты (в пикселах) середины Битмапа уровня Level
+	// РєРѕРѕСЂРґРёРЅР°С‚С‹ (РІ РїРёРєСЃРµР»Р°С…) СЃРµСЂРµРґРёРЅС‹ Р‘РёС‚РјР°РїР° СѓСЂРѕРІРЅСЏ Level
 	long nBitmapOrigo = nNumTiles << 7; 
 
 	double nPixelsPerLonDegree = ((double) (nNumTiles << 8)) / 360;
 	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*3.14159265358979);
 
-	// Здесь заполняем координаты для скачивания CurrentView
+	// Р—РґРµСЃСЊ Р·Р°РїРѕР»РЅСЏРµРј РєРѕРѕСЂРґРёРЅР°С‚С‹ РґР»СЏ СЃРєР°С‡РёРІР°РЅРёСЏ CurrentView
 	m_nLevelToDownload = level;
 	m_enTypeToDownload = type;
 	double dHalfWidthDeg = rect.right - rect.left;
@@ -143,7 +143,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	m_grectLastViewed.Init  (GeoPoint(dLonCenter - dHalfWidthDeg, dLatCenter - dHalfHeightDeg));
 	m_grectLastViewed.Append(GeoPoint(dLonCenter + dHalfWidthDeg, dLatCenter + dHalfHeightDeg));
 
-	// Вычисляем X и Y (в пикселах) для центра картинки
+	// Р’С‹С‡РёСЃР»СЏРµРј X Рё Y (РІ РїРёРєСЃРµР»Р°С…) РґР»СЏ С†РµРЅС‚СЂР° РєР°СЂС‚РёРЅРєРё
 	long cntX = (long) floor(nBitmapOrigo + (dLonCenter * nPixelsPerLonDegree));
 	double z = sin(dLatCenter / 180 * 3.14159265358979);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
@@ -154,10 +154,10 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	long NumX = max(long(X / 256), long(0));
 	long NumY = max(long(Y / 256), long(0));
 
-	// Здесь будем складывать неотрисованные квадраты
+	// Р—РґРµСЃСЊ Р±СѓРґРµРј СЃРєР»Р°РґС‹РІР°С‚СЊ РЅРµРѕС‚СЂРёСЃРѕРІР°РЅРЅС‹Рµ РєРІР°РґСЂР°С‚С‹
 	std::map<long, GEOFILE_DATA> mapMissing;
 
-	// Начинаем рисовать
+	// РќР°С‡РёРЅР°РµРј СЂРёСЃРѕРІР°С‚СЊ
 	long nHalfWidth = (rect.right - rect.left) / 2;
 	long nHalfHeigth = (rect.bottom - rect.top) / 2;
 	long nHorizCenter = (rect.right + rect.left) / 2;
@@ -230,11 +230,11 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		rop = SRCINVERT;
 	}
 
-	// Смотрим, есть ли в кэше [tr: Look if it is in tha cache?]
+	// РЎРјРѕС‚СЂРёРј, РµСЃС‚СЊ Р»Рё РІ РєСЌС€Рµ [tr: Look if it is in tha cache?]
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
-	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел [tr: 4 bytes per pixel]
+	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 Р±Р°Р№С‚Р° РЅР° РїРёРєСЃРµР» [tr: 4 bytes per pixel]
 	if (nNewBMSize > 2200*1024) {
-		// Такие большие картинки не кешируем, будем хранить только оригинал
+		// РўР°РєРёРµ Р±РѕР»СЊС€РёРµ РєР°СЂС‚РёРЅРєРё РЅРµ РєРµС€РёСЂСѓРµРј, Р±СѓРґРµРј С…СЂР°РЅРёС‚СЊ С‚РѕР»СЊРєРѕ РѕСЂРёРіРёРЅР°Р»
 		// [tr: Such large pictures ???, will retain only the original?]
 		gfr.width = gfr.heigth = 256;
 		nNewBMSize = 256*256*4;
@@ -242,7 +242,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(gfr);
 	if (it != m_mapCachedFiles.end()) {
-		// Круть! Заодно ещё перетащить в голову списка использованных
+		// РљСЂСѓС‚СЊ! Р—Р°РѕРґРЅРѕ РµС‰С‘ РїРµСЂРµС‚Р°С‰РёС‚СЊ РІ РіРѕР»РѕРІСѓ СЃРїРёСЃРєР° РёСЃРїРѕР»СЊР·РѕРІР°РЅРЅС‹С…
 		// [tr: Cool! ??????]
 		hbm = it->second.h;
 
@@ -264,7 +264,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		if (nRes) {
 			m_Missing = data;
 			m_fMissing = true;
-			//// Просто закрасить чем-нибудь переданный rect
+			//// РџСЂРѕСЃС‚Рѕ Р·Р°РєСЂР°СЃРёС‚СЊ С‡РµРј-РЅРёР±СѓРґСЊ РїРµСЂРµРґР°РЅРЅС‹Р№ rect
 			//COLORREF clr = RGB(255, 192, 192);
 			//HBRUSH hBrush = CreateSolidBrush(clr);
 			//if (hBrush) {
@@ -285,12 +285,12 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			if (hbm == NULL) {
-				// Картинка, видимо, битая... Удалить файл. [tr: The picture seems to ???... Delete the file.]
+				// РљР°СЂС‚РёРЅРєР°, РІРёРґРёРјРѕ, Р±РёС‚Р°СЏ... РЈРґР°Р»РёС‚СЊ С„Р°Р№Р». [tr: The picture seems to ???... Delete the file.]
 				DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
 
-				// Подчищаем кеш [tr: Erase the cache?]
+				// РџРѕРґС‡РёС‰Р°РµРј РєРµС€ [tr: Erase the cache?]
 				while (!m_lstLastUsed.empty()) {
 					MEMORYSTATUS ms;
 					ms.dwLength = sizeof(ms);
@@ -302,7 +302,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 						break;
 				}
 
-				// Отресайзить и положить в кеш [tr: ??? and put it in the cache?]
+				// РћС‚СЂРµСЃР°Р№Р·РёС‚СЊ Рё РїРѕР»РѕР¶РёС‚СЊ РІ РєРµС€ [tr: ??? and put it in the cache?]
 				if ((gfr.width == gfr.heigth) && (gfr.width == 256)) {
 				} else {
 					HDC srcdc = CreateCompatibleDC(dc);
@@ -327,7 +327,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 					HBITMAP dstbm = CreateDIBSection(dc, (BITMAPINFO *)&bmih, 0, &pBits, NULL, 0);			
 					HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
 
-					// Здесь можно использовать любой алгоритм стретча, можно медленный
+					// Р—РґРµСЃСЊ РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ Р»СЋР±РѕР№ Р°Р»РіРѕСЂРёС‚Рј СЃС‚СЂРµС‚С‡Р°, РјРѕР¶РЅРѕ РјРµРґР»РµРЅРЅС‹Р№
 					// [tr: ??? stretch algorithm can be slow ???]
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
@@ -474,14 +474,14 @@ void CGMPainter::RequestProcessed(const std::string request, const char * data, 
 			m_fMissing = false;
 		m_mapRequestsSent.erase(it);
 	} else {
-		// Ну что уж тут поделаешь...
+		// РќСѓ С‡С‚Рѕ СѓР¶ С‚СѓС‚ РїРѕРґРµР»Р°РµС€СЊ...
 	}
 }
 
 void CGMPainter::DownloadAddCurrentView()
 {
 	m_grectToDownload = m_grectLastViewed;
-	// Помечаем, что больше не надо запоминать текущий GeoRect
+	// РџРѕРјРµС‡Р°РµРј, С‡С‚Рѕ Р±РѕР»СЊС€Рµ РЅРµ РЅР°РґРѕ Р·Р°РїРѕРјРёРЅР°С‚СЊ С‚РµРєСѓС‰РёР№ GeoRect
 	m_bGeoRectToDownload = true;
 }
 
@@ -517,7 +517,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enum
 				}
 			}
 		}
-		// Переходим от текущего слоя к менее детальному.
+		// РџРµСЂРµС…РѕРґРёРј РѕС‚ С‚РµРєСѓС‰РµРіРѕ СЃР»РѕСЏ Рє РјРµРЅРµРµ РґРµС‚Р°Р»СЊРЅРѕРјСѓ.
 		r.left /= 2; r.right /= 2; r.top /= 2; r.bottom /= 2;
 	}
 	if (pnInCacheCount)
@@ -547,7 +547,7 @@ long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadi
 
 void CGMPainter::ProcessWMHIBERNATE()
 {
-	// Грохнуть всё содержимое кеша картинок
+	// Р“СЂРѕС…РЅСѓС‚СЊ РІСЃС‘ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРµС€Р° РєР°СЂС‚РёРЅРѕРє
 	m_lstLastUsed.erase(m_lstLastUsed.begin(), m_lstLastUsed.end());
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.begin();

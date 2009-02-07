@@ -28,7 +28,7 @@ CGMFileHolder::CGMFileHolder(void)
 	m_bInitialized = false;
 	m_wdLastRequestTicks = 0;
 
-	// Создаём именаторы
+	// РЎРѕР·РґР°С‘Рј РёРјРµРЅР°С‚РѕСЂС‹
 	m_vecRMS.push_back(new CNullSource());  // gtNone
 	m_vecRMS.push_back(new COSMSource());   // gtOsm
 	m_vecRMS.push_back(new CGMapSource());  // gtMap
@@ -221,7 +221,7 @@ const long CGMFileHolder::GetFileName(std::wstring& name, const GEOFILE_DATA& da
 		name = filename;
 		return 0;
 	} else {
-		// Не найдено
+		// РќРµ РЅР°Р№РґРµРЅРѕ
 //		if (m_strDefaultFileName.empty()) {
 			return 1;
 //		} else {
@@ -237,7 +237,7 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 
 	m_strMapsRoot = pszRoot;
 
-	// Проверяем, лежит ли в этой директории файл 404.*
+	// РџСЂРѕРІРµСЂСЏРµРј, Р»РµР¶РёС‚ Р»Рё РІ СЌС‚РѕР№ РґРёСЂРµРєС‚РѕСЂРёРё С„Р°Р№Р» 404.*
 	FILE *f404 = wfopen((m_strMapsRoot + L"\\404.png").c_str(), L"r");
 	if (f404 && (m_strDefaultFileName.empty())) {
 		m_strDefaultFileName = m_strMapsRoot + L"\\404.png";
@@ -293,7 +293,7 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 	AutoLock l;
 	// No need to autolock here
 	if (size < 100) {
-		// Какой-то странный файл...
+		// РљР°РєРѕР№-С‚Рѕ СЃС‚СЂР°РЅРЅС‹Р№ С„Р°Р№Р»...
 		return 1;
 	}
 
@@ -307,9 +307,9 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		return 2;
 	}
 
-	// Сразу писать в правильное место НЕЛЬЗЯ!
-	// Иначе поток, который рисует, может наткнуться на файл нулевой длины 
-	// (который в текущий момент как раз записывается) и грохнет его.
+	// РЎСЂР°Р·Сѓ РїРёСЃР°С‚СЊ РІ РїСЂР°РІРёР»СЊРЅРѕРµ РјРµСЃС‚Рѕ РќР•Р›Р¬Р—РЇ!
+	// РРЅР°С‡Рµ РїРѕС‚РѕРє, РєРѕС‚РѕСЂС‹Р№ СЂРёСЃСѓРµС‚, РјРѕР¶РµС‚ РЅР°С‚РєРЅСѓС‚СЊСЃСЏ РЅР° С„Р°Р№Р» РЅСѓР»РµРІРѕР№ РґР»РёРЅС‹ 
+	// (РєРѕС‚РѕСЂС‹Р№ РІ С‚РµРєСѓС‰РёР№ РјРѕРјРµРЅС‚ РєР°Рє СЂР°Р· Р·Р°РїРёСЃС‹РІР°РµС‚СЃСЏ) Рё РіСЂРѕС…РЅРµС‚ РµРіРѕ.
 	std::wstring tmpfilename = m_strMapsRoot + L"/__tmpfile";
 
 	FILE * file = wfopen(tmpfilename.c_str(), L"wb");
@@ -318,7 +318,7 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		int nResult = IDRETRY;
 		while (nResult == IDRETRY) {
 			if (fwrite(data, size, 1, file) != 1) {
-				// Не получилось записать на диск
+				// РќРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ Р·Р°РїРёСЃР°С‚СЊ РЅР° РґРёСЃРє
 				fclose(file);
 				wchar_t buf[128+MAX_PATH];
 #ifdef UNDER_CE
@@ -339,7 +339,7 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		bool res = DeleteFile(filename.c_str());
 		res = MoveFile(tmpfilename.c_str(), filename.c_str());
 
-		// На всякий случай, вдруг поместили...
+		// РќР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РІРґСЂСѓРі РїРѕРјРµСЃС‚РёР»Рё...
 		m_setToDownload.erase(gfdata);
 	}
 
@@ -374,10 +374,10 @@ HANDLE CGMFileHolder::RelocateFiles(HANDLE h, long nMaxMSec)
 	// DWORD nStartTicks;
 	// nStartTicks = GetTickCount();
 
-	// Рекурсивно обойти директорию и перетащить файлы, которые не на своём месте.
+	// Р РµРєСѓСЂСЃРёРІРЅРѕ РѕР±РѕР№С‚Рё РґРёСЂРµРєС‚РѕСЂРёСЋ Рё РїРµСЂРµС‚Р°С‰РёС‚СЊ С„Р°Р№Р»С‹, РєРѕС‚РѕСЂС‹Рµ РЅРµ РЅР° СЃРІРѕС‘Рј РјРµСЃС‚Рµ.
 	RelocateFilesInDir(m_strMapsRoot, L"");
 
-	// Удалить пустые директории
+	// РЈРґР°Р»РёС‚СЊ РїСѓСЃС‚С‹Рµ РґРёСЂРµРєС‚РѕСЂРёРё
 	DeleteDirIfEmpty(m_strMapsRoot, false);
 
 	return NULL;
@@ -394,7 +394,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 
 	while ((hSearch != INVALID_HANDLE_VALUE) && (bNextFound)) {
 		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			// Добавить в дальнейший поиск. Проверяем, что не . или ..
+			// Р”РѕР±Р°РІРёС‚СЊ РІ РґР°Р»СЊРЅРµР№С€РёР№ РїРѕРёСЃРє. РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РЅРµ . РёР»Рё ..
 			std::wstring name = fd.cFileName;
 			if ((name != L".") && (name != L"..")) {
 				std::wstring newpath;
@@ -406,7 +406,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 				RelocateFilesInDir(wstrCurPath + L"/" + fd.cFileName, newpath);
 			}
 		} else {
-			// Файл - разобрать имя на фрагменты
+			// Р¤Р°Р№Р» - СЂР°Р·РѕР±СЂР°С‚СЊ РёРјСЏ РЅР° С„СЂР°РіРјРµРЅС‚С‹
 			bool bNameParsed = false;
 			for (long i=gtMap, iEnd=GetGMapCount(); i<iEnd; i++) {
 				if (m_vecRMS[i]->IsGoodFileName(data, fd.cFileName)) {
@@ -421,7 +421,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 					bNameParsed = false;
 				}
 			} else {
-				// Непонятное имя - оставляем файл на месте
+				// РќРµРїРѕРЅСЏС‚РЅРѕРµ РёРјСЏ - РѕСЃС‚Р°РІР»СЏРµРј С„Р°Р№Р» РЅР° РјРµСЃС‚Рµ
 			}
 
 			if (bNameParsed) {
@@ -432,7 +432,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 						bool bDeleteSource = false;
 						std::wstring name = (wstrCurPath + L"/" + fd.cFileName).c_str();
 						std::wstring atgoodname = (goodpath + L"/" + fd.cFileName).c_str();
-						// Сравнить даты модификации файлов и оставить самый новый
+						// РЎСЂР°РІРЅРёС‚СЊ РґР°С‚С‹ РјРѕРґРёС„РёРєР°С†РёРё С„Р°Р№Р»РѕРІ Рё РѕСЃС‚Р°РІРёС‚СЊ СЃР°РјС‹Р№ РЅРѕРІС‹Р№
 						HANDLE hAtGoodPath = CreateFile(atgoodname.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, 
 							OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -453,8 +453,8 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 								CloseHandle(hSrc);
 								hSrc = NULL;
 							} else {
-								// Похоже, нам не дали читать файл (прав нет?). 
-								// Вообще, непонятно, что здесь нужно делать... Оставить всё на своих местах?
+								// РџРѕС…РѕР¶Рµ, РЅР°Рј РЅРµ РґР°Р»Рё С‡РёС‚Р°С‚СЊ С„Р°Р№Р» (РїСЂР°РІ РЅРµС‚?). 
+								// Р’РѕРѕР±С‰Рµ, РЅРµРїРѕРЅСЏС‚РЅРѕ, С‡С‚Рѕ Р·РґРµСЃСЊ РЅСѓР¶РЅРѕ РґРµР»Р°С‚СЊ... РћСЃС‚Р°РІРёС‚СЊ РІСЃС‘ РЅР° СЃРІРѕРёС… РјРµСЃС‚Р°С…?
 							}
 							CloseHandle(hAtGoodPath);
 							hAtGoodPath = NULL;
@@ -531,9 +531,9 @@ bool CGMFileHolder::NeedRelocateFiles()
 {
 	bool bResult = false;
 
-	// Пока в бетах (0.4.4 и 0.4.5) было только "zoom=%d" в корне директории с картами.
-	// На всякий случай - и gmap/zoom тоже, мало ли, вдруг VShorin себе так наскачивал.
-	// Их и проверяем.
+	// РџРѕРєР° РІ Р±РµС‚Р°С… (0.4.4 Рё 0.4.5) Р±С‹Р»Рѕ С‚РѕР»СЊРєРѕ "zoom=%d" РІ РєРѕСЂРЅРµ РґРёСЂРµРєС‚РѕСЂРёРё СЃ РєР°СЂС‚Р°РјРё.
+	// РќР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№ - Рё gmap/zoom С‚РѕР¶Рµ, РјР°Р»Рѕ Р»Рё, РІРґСЂСѓРі VShorin СЃРµР±Рµ С‚Р°Рє РЅР°СЃРєР°С‡РёРІР°Р».
+	// РС… Рё РїСЂРѕРІРµСЂСЏРµРј.
 	wchar_t *pBadWildcards[] = {
 		L"\\zoom*", 
 		L"\\gmap\\zoom*"

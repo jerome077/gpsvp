@@ -54,7 +54,7 @@ class CTrack
 	bool m_fAltitude;
 	Int m_iColor;
 	bool m_fCompressable;
-	//! Время предыдущей точки
+	//! Р’СЂРµРјСЏ РїСЂРµРґС‹РґСѓС‰РµР№ С‚РѕС‡РєРё
 	double m_dLastTime;
 	unsigned long m_ulLastTime;
 	char m_writeBuffer[4096 + 1024];
