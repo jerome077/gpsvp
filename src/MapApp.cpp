@@ -206,6 +206,9 @@ public:
 	{
 		if (iCommand == IDOK)
 		{
+			// Block all writes until the end of this code block
+			CWaypoints::UpdateZone updateZone(app.GetWaypoints().UpdateZoneForCodeBlock()); 
+
 			const Int cnMaxStr = 1000;
 			wchar_t buff[cnMaxStr] = {0};
 			m_label.GetText(buff, cnMaxStr);

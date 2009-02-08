@@ -118,6 +118,11 @@ int CWaypoints::GetNearestPoint(GeoPoint gp, double dRadius)
 }
 void CWaypoints::Write()
 {
+	if (0 < m_BeginUpdateCount)
+	{
+		m_bWriteRequested = true;
+		return;
+	}
 	if (m_wstrFilename.empty())
 		return;
 	FILE * pFile = wfopen(m_wstrFilename.c_str(), L"wt");
@@ -313,3 +318,20 @@ CWaypoints::CPoint & CWaypoints::ById(int id)
 	static CPoint stub(0, 0, 0, L"");
 	return stub;
 }
+
+// ---------------------------------------------------------------
+void CWaypoints::BeginUpdate()
+{
+	if (0 == m_BeginUpdateCount)
+		m_bWriteRequested = false;
+	m_BeginUpdateCount++;
+}
+void CWaypoints::EndUpdate()
+{
+	m_BeginUpdateCount--;
+	if ((0 == m_BeginUpdateCount) && m_bWriteRequested)
+	{
+		Write();
+	}
+}
+// ---------------------------------------------------------------

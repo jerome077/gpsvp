@@ -74,7 +74,23 @@ public:
 protected:
 	list<CPoint> m_Points;
 	wstring m_wstrFilename;
+
+	// To avoid writing the file too much (to block 'write' until 'EndUpdate' is called):
+	int m_BeginUpdateCount;
+	bool m_bWriteRequested;
+	void BeginUpdate(); 
+	void EndUpdate();
 public:
+	class UpdateZone
+	{
+	protected:
+		CWaypoints* m_pCtrledObj;
+	public:
+		UpdateZone(CWaypoints* pCtrledObj) : m_pCtrledObj(pCtrledObj) { m_pCtrledObj->BeginUpdate(); };
+		~UpdateZone() { m_pCtrledObj->EndUpdate(); };
+	};
+public:
+	CWaypoints() : m_BeginUpdateCount(0), m_bWriteRequested(false) {};
 	Int AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int iRadius);
 	Int AddPoint(const CPoint & pt, int iRadius);
 	Int AddPoint(const CPoint & pt);
@@ -97,6 +113,7 @@ public:
 	void Import(const CWaypoints & from);
 	CPoint & ById(int id);
 	bool Empty() {return m_Points.empty();};
+	UpdateZone UpdateZoneForCodeBlock() { return UpdateZone(this); };
 };
 
 #endif // WAYPOINTS_H
