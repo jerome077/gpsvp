@@ -88,6 +88,13 @@ Int CWaypoints::AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int
 	Write();
 	return m_Points.back().GetID();
 }
+Int CWaypoints::AddPoint(const CPoint & pt, int iRadius)
+{
+	m_Points.push_back(pt);
+	m_Points.back().SetRadius(iRadius);
+	Write();
+	return m_Points.back().GetID();
+}
 Int CWaypoints::AddPoint(const CPoint & pt)
 {
 	m_Points.push_back(pt);
@@ -163,7 +170,7 @@ void CWaypoints::Read(const wchar_t * wcFilename)
 				MultiByteToWideChar(CP_ACP, 0, listParts[1].c_str(), -1, buff, 1000);
 				int iRadius = atoi(listParts[13].c_str());
 				int iAltitude = atoi(listParts[14].c_str());
-				AddPoint(GeoPoint(dLongitude, dLatitude), iAltitude, buff, iRadius);
+				AddPoint(CPoint(dLongitude, dLatitude, iAltitude, buff), iRadius);
 			}
 		}
 	}

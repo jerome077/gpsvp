@@ -76,6 +76,7 @@ protected:
 	wstring m_wstrFilename;
 public:
 	Int AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int iRadius);
+	Int AddPoint(const CPoint & pt, int iRadius);
 	Int AddPoint(const CPoint & pt);
 	int GetNearestPoint(GeoPoint gp, double dRadius);
 	void Write();
