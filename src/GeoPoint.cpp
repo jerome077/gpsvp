@@ -47,18 +47,17 @@ int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo)
 
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2)
 {
-	// p1, pnt2 - точки между которыми вычисляются расстояния
-	// pi - число pi, rad - радиус сферы (Земли), num - количество
-	// знаков после запятой
+	// llPoint1, llPoint2 - points to find the distance between
+	// pi = 3.1415...,  rad - sphere (Earth) radius
 	double rad = 6372795;
 
-	// получение координат точек в радианах
+	// Get coordinates in radians
 	double lat1 = Degree(llPoint1.lat)*pi/180;
 	double lat2 = Degree(llPoint2.lat)*pi/180;
 	double lng1 = Degree(llPoint1.lon)*pi/180;
 	double lng2 = Degree(llPoint2.lon)*pi/180;
 
-	// косинусы и синусы широт и разниц долгот
+	// Cosines and sines of latitudes and longitude differences
 	double cl1 = cos(lat1);
 	double cl2 = cos(lat2);
 	double sl1 = sin(lat1);
@@ -67,7 +66,7 @@ double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2)
 	double cdelta = cos(delta);
 	double sdelta = sin(delta);
 
-	// вычисления длины большого круга
+	// Calculate the length of the great circle arc
 	double p1 = Sqr((cl2*sdelta));
 	double p2 = Sqr((cl1*sl2) - (sl1*cl2*cdelta));
 	double p3 = sqrt(p1 + p2);
@@ -80,6 +79,6 @@ double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2)
 		anglerad += pi;
 	double dist = anglerad*rad;
 
-	// возврат значения длины большого круга
+	// Return the length of the great circle arc
 	return dist;
 }

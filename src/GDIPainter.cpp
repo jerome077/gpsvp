@@ -86,9 +86,9 @@ void CGDIPainter::FinishObject()
 	// It is background. We dont paint it
 	if (m_uiType == 75)
 		return;
-	// Эта проверка отключена, так как её теперь выполняет сам 
-	// объект до начала рисования. Это дешевле, так как он может
-	// закешировать свои границы
+	// The check is commented out because the object checks it
+	// itself before it starts to draw. This is cheaper as objects
+	// can cache its boundaries.
 //	if (!WillPaint(m_curRect))
 //		return;
 	if (m_fPolygon == true)

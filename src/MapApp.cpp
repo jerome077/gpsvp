@@ -1265,7 +1265,7 @@ CMapApp::~CMapApp()
 		FreeLibrary(m_hCoreDll);
 	}
 #endif // UNDER_CE
-	// Надеюсь, в этот момент никто не юзает m_pRasterMapPainter из другого потока...
+	// Hope, no one uses m_pRasterMapPainter from another thread now...
 	delete m_pRasterMapPainter;
 	Exit();
 }
@@ -2432,8 +2432,8 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 		m_fCoursePointPresent = true;
 		m_gpCoursePoint = gp;
 	}
-	// Сначала проверяем опцию, чтобы не искать зря
 #ifdef UNDER_CE
+	// We check the option first so that we don't make check in vain
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
 		PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
 #endif // UNDER_CE

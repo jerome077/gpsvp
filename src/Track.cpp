@@ -67,36 +67,35 @@ void CTrack::AddPoint(GeoPoint pt, double time, double dHDOP)
 		// Since a point was added, the track should continue
 	}
 	m_fBeginTrack = false;
-	// Если трек можно сжать
+	// If we can compress track
 	if (m_fCompressable)
 	{
-		// Пока надо сжимать
+		// While we need to compress some more
 		while (m_nPointCount > cnMaxPoints)
 		{
-			// Уберём пустые сегменты (хотя их не должно быть)
+			// Remove any empty segments (though there souldn't be)
 			while(m_Track.front().empty())
 				m_Track.pop_front();
-			// Перекинем одну точку
+			// Transfer one point
 			m_CompressedTrack.back().push_back(
 				m_Track.front().front());
-			// Флаг, не надо ли начать следующий сегмент
+			// Whether we sould start a new semgent:
 			bool fNextSegment = false;
-			// Убираем нужное количество точек
+			// Remove the required number of points
 			for (int i = 0; i < cnCompressRatio; ++i)
 			{
-				// Убираем одну точку
+				// Removing one point
 				m_Track.front().pop_front();
 				--m_nPointCount;
-				// Убираем пустые сегменты (мог появиться один)
+				// Removing empty segments (one could appear)
 				while(m_Track.front().empty())
 				{
 					m_Track.pop_front();
-					// И тогда в сжатом треке тоже надо начать новый сегмент
+					// In that case we should start a new segment in compressed track too
 					fNextSegment = true;
 				}
 			}
-			// Если надо начать, то начинаем. Есть гарантия, что предыдущий 
-			// сегмент не пустой
+			// Start if we should. We know that the last segment was not empty.
 			if (fNextSegment)
 				m_CompressedTrack.push_back(Segment());
 		}
