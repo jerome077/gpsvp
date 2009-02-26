@@ -225,7 +225,7 @@ void CGDIPainter::FinishObject()
 				int dx = x2 - x1;
 				int dy = y2 - y1;
 				double tan = - double(dy) / (dx);
-				int angle = int(atan(tan) * 1800 / 3.14159);
+				int angle = int(atan(tan) * 1800 / pi);
 				if (angle < 0)
 					angle += 3600;
 				double d = sqrt(double(dx * dx + dy * dy));

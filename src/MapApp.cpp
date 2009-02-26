@@ -2433,7 +2433,7 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 		m_gpCoursePoint = gp;
 	}
 #ifdef UNDER_CE
-	// We check the option first so that we don't make check in vain
+	// We check the option first not to check for proximity in vain
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
 		PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
 #endif // UNDER_CE

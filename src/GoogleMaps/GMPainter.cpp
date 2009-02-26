@@ -76,8 +76,8 @@ bool CGMPainter::GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, lo
 	pData->X = gp.lon / (1 << (24 - level + 1)) + (nNumTiles >> 1);
 	double dLat = Degree(gp.lat);
 	long nBitmapOrigo = nNumTiles << 7; 
-	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*3.14159265358979);
-	double z = sin(dLat / 180 * 3.14159265358979);
+	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
+	double z = sin(dLat / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
 	pData->Y = cntY / 256;
 
@@ -132,7 +132,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	long nBitmapOrigo = nNumTiles << 7; 
 
 	double nPixelsPerLonDegree = ((double) (nNumTiles << 8)) / 360;
-	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*3.14159265358979);
+	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
 
 	// Здесь заполняем координаты для скачивания CurrentView
 	m_nLevelToDownload = level;
@@ -145,7 +145,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 
 	// Вычисляем X и Y (в пикселах) для центра картинки
 	long cntX = (long) floor(nBitmapOrigo + (dLonCenter * nPixelsPerLonDegree));
-	double z = sin(dLatCenter / 180 * 3.14159265358979);
+	double z = sin(dLatCenter / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
 
 	long X = cntX - int(double(rect.right - rect.left) / 2 / scale);

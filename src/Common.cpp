@@ -331,7 +331,7 @@ public:
 	}
 	int Calculate(int intDegree)
 	{
-		int res = int(::cos(::Degree(intDegree) / 180 * 3.14159) * 100);
+		int res = int(::cos(::Degree(intDegree) / 180 * pi) * 100);
 		return res;
 	}
 	int Narrow(int intDegree)

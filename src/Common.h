@@ -116,11 +116,11 @@ inline int int_sqrt(int input)
 
 int cos100(int degree);
 int sin100(int degree);
-static const double cdNauticalMile = 1.8522;
-static const double cdLandMile = 1.609;
+static const double cdNauticalMile = 1.852;
+static const double cdLandMile = 1.609344;
 static const double cdFoot = 0.3048;
 static const double cdYard = 0.9144;
-static const double pi = 3.14159265358979;
+static const double pi = 3.1415926535897932;
 std::wstring MakeFilename(const std::wstring & name, const std::wstring & basename);
 
 #define L(x) (GetDict().Translate(L##x))
