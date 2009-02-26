@@ -91,9 +91,10 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 {
 	if (r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
 		return false;
-	// Найдём пересечение по горизонтали
+	// Intersect abscissa (longitude) intervals
 	pr->left = max(r1.left, r2.left);
 	pr->right = min(r1.right, r2.right);
+	// Intersect ordinate (latitude) intervals
 	pr->top = max(r1.top, r2.top);
 	pr->bottom = min(r1.bottom, r2.bottom);
 	return true;
@@ -105,7 +106,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 		return 0;
 	double dLatCenter = Degree(gpCenter.lat);
 	double dLonCenter = Degree(gpCenter.lon);
-	// Рисуем картинку уровня level с центром в dLonCenter/dLatCenter
+	// Paint image at zoom level level centered at (dLonCenter, dLatCenter)
 
 	int level = LEVEL_REVERSE_OFFSET;
 
@@ -126,15 +127,15 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	if (scale > 16)
 		return 0;
 
-	// количество блоков вдоль стороны Битмапа уровня Level
+	// Number of tiles along bitmap side at zoom level Level
 	long nNumTiles = 1 << (level-1);
-	// координаты (в пикселах) середины Битмапа уровня Level
+	// Coordinates of bitmap center (in pixels)
 	long nBitmapOrigo = nNumTiles << 7; 
 
 	double nPixelsPerLonDegree = ((double) (nNumTiles << 8)) / 360;
 	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
 
-	// Здесь заполняем координаты для скачивания CurrentView
+	// Here we fill in the coordinates to download CurrentView
 	m_nLevelToDownload = level;
 	m_enTypeToDownload = type;
 	double dHalfWidthDeg = rect.right - rect.left;
@@ -143,7 +144,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	m_grectLastViewed.Init  (GeoPoint(dLonCenter - dHalfWidthDeg, dLatCenter - dHalfHeightDeg));
 	m_grectLastViewed.Append(GeoPoint(dLonCenter + dHalfWidthDeg, dLatCenter + dHalfHeightDeg));
 
-	// Вычисляем X и Y (в пикселах) для центра картинки
+	// Calculate X and Y of the image center (in pixels)
 	long cntX = (long) floor(nBitmapOrigo + (dLonCenter * nPixelsPerLonDegree));
 	double z = sin(dLatCenter / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
@@ -154,10 +155,10 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	long NumX = max(long(X / 256), long(0));
 	long NumY = max(long(Y / 256), long(0));
 
-	// Здесь будем складывать неотрисованные квадраты
+	// We will collect non-painted tiles here
 	std::map<long, GEOFILE_DATA> mapMissing;
 
-	// Начинаем рисовать
+	// Start painting
 	long nHalfWidth = (rect.right - rect.left) / 2;
 	long nHalfHeigth = (rect.bottom - rect.top) / 2;
 	long nHorizCenter = (rect.right + rect.left) / 2;
@@ -232,10 +233,9 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 
 	// Смотрим, есть ли в кэше [tr: Look if it is in tha cache?]
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
-	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел [tr: 4 bytes per pixel]
+	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 bytes per pixel
 	if (nNewBMSize > 2200*1024) {
-		// Такие большие картинки не кешируем, будем хранить только оригинал
-		// [tr: Such large pictures ???, will retain only the original?]
+		// Do not cache such large images, retain only the original
 		gfr.width = gfr.heigth = 256;
 		nNewBMSize = 256*256*4;
 	}
@@ -264,7 +264,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		if (nRes) {
 			m_Missing = data;
 			m_fMissing = true;
-			//// Просто закрасить чем-нибудь переданный rect
+			//// Simply fill the given rect with some color
 			//COLORREF clr = RGB(255, 192, 192);
 			//HBRUSH hBrush = CreateSolidBrush(clr);
 			//if (hBrush) {
@@ -285,12 +285,12 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			if (hbm == NULL) {
-				// Картинка, видимо, битая... Удалить файл. [tr: The picture seems to ???... Delete the file.]
+				// It seems the image is broken... Delete the file.
 				DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
 
-				// Подчищаем кеш [tr: Erase the cache?]
+				// Clean up the cache
 				while (!m_lstLastUsed.empty()) {
 					MEMORYSTATUS ms;
 					ms.dwLength = sizeof(ms);
