@@ -88,7 +88,7 @@ void CGDIPainter::FinishObject()
 		return;
 	// The check is commented out because the object checks it
 	// itself before it starts to draw. This is cheaper as objects
-	// can cache its boundaries.
+	// can cache their boundaries.
 //	if (!WillPaint(m_curRect))
 //		return;
 	if (m_fPolygon == true)

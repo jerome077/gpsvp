@@ -72,7 +72,7 @@ public:
 
 	void ProcessWMHIBERNATE();
 	// Level - 0 .. 18
-	// DC, rect - где рисовать
+	// DC, rect - where to draw
 	int Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
 	bool RotationAllowed();
 
@@ -104,7 +104,7 @@ protected:
 	void DeleteFrontElementFromCache();
 
 private:
-	// Открытые файлы
+	// Opened files
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS > m_mapCachedFiles;
 	std::list< GEOFILE_RASTERIZED > m_lstLastUsed;
 
@@ -116,17 +116,17 @@ private:
 
 	unsigned long m_nGDIPlusToken;
 
-	// Флаг, что получили с сервера номера версий карты
+	// If we have obtained map version numbers from the server
 	bool m_bGotMapVersions;
 
-	// GeoRect, с которым последний раз рисовали карту
+	// GeoRect that was Paint()ed last
 	GeoRect m_grectLastViewed;
-	// GeoRect, который выбрал пользователь
+	// GeoRect user chose to download
 	GeoRect m_grectToDownload;
 	bool m_bGeoRectToDownload;
-	// Level, с которым последний раз рисовали карту
+	// Zoom level that was Paint()ed last
 	long m_nLevelToDownload;
-	// Тип картинки, который выкачивать. Берём в момент, когда отмечают зум
+	// Map type to download. Берём в момент, когда отмечают зум [??? Fixed at the moment when user ?marks? zoom]
 	enumGMapType m_enTypeToDownload;
 
 	bool m_KeepMemoryLow;

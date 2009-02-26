@@ -231,7 +231,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		rop = SRCINVERT;
 	}
 
-	// Смотрим, есть ли в кэше [tr: Look if it is in tha cache?]
+	// Checking if it is in the cache
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
 	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 bytes per pixel
 	if (nNewBMSize > 2200*1024) {
@@ -241,9 +241,9 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 	}
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(gfr);
+	// If in cache
 	if (it != m_mapCachedFiles.end()) {
-		// Круть! Заодно ещё перетащить в голову списка использованных
-		// [tr: Cool! ??????]
+		// Cool! Also move it to the head of the list of last used tiles
 		hbm = it->second.h;
 
 		std::list< GEOFILE_RASTERIZED >::iterator it2 = m_lstLastUsed.begin();
@@ -302,7 +302,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 						break;
 				}
 
-				// Отресайзить и положить в кеш [tr: ??? and put it in the cache?]
+				// Resize and put in the cache
 				if ((gfr.width == gfr.heigth) && (gfr.width == 256)) {
 				} else {
 					HDC srcdc = CreateCompatibleDC(dc);
@@ -327,8 +327,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 					HBITMAP dstbm = CreateDIBSection(dc, (BITMAPINFO *)&bmih, 0, &pBits, NULL, 0);			
 					HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
 
-					// Здесь можно использовать любой алгоритм стретча, можно медленный
-					// [tr: ??? stretch algorithm can be slow ???]
+					// We can use here any stretch algorithm, even a slow one
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
 					SetStretchBltMode(dstdc, BILINEAR);
@@ -482,6 +481,7 @@ void CGMPainter::DownloadAddCurrentView()
 {
 	m_grectToDownload = m_grectLastViewed;
 	// Помечаем, что больше не надо запоминать текущий GeoRect
+	// [??? Mark that we don't need to store current GeoRect any more]
 	m_bGeoRectToDownload = true;
 }
 
@@ -517,7 +517,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enum
 				}
 			}
 		}
-		// Переходим от текущего слоя к менее детальному.
+		// Proceed with the less detailed zoom level
 		r.left /= 2; r.right /= 2; r.top /= 2; r.bottom /= 2;
 	}
 	if (pnInCacheCount)
@@ -547,7 +547,7 @@ long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadi
 
 void CGMPainter::ProcessWMHIBERNATE()
 {
-	// Грохнуть всё содержимое кеша картинок
+	// Kill all contents of the image cache 
 	m_lstLastUsed.erase(m_lstLastUsed.begin(), m_lstLastUsed.end());
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.begin();

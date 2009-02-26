@@ -79,20 +79,20 @@ protected:
     void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
 
 private:
-	// Здесь - общий префикс для всех директорий
+	// Common prefix for all raster map folders
 	std::wstring m_strMapsRoot;
 	// Inited
 	bool m_bInitialized;
 
 	std::set< GEOFILE_DATA > m_setToDownload;
 
-	// Имя файла, которое возвращается в случае отсутствия в базе необходимого фрагмента
+	// File name returned in case the requested tile is absent
 	std::wstring m_strDefaultFileName;
 
-	// Минимальный и максимальный доступный уровень (0..18 для карт)
+	// Minimum and maximum zoom levels (0 and 18 for maps)
 	long m_nMinLevel, m_nMaxLevel; 
 
-	// Текущий номер сервера
+	// Current server number
 	std::vector<PRasterMapSource> m_vecRMS;
 	bool m_WMSMapsListed;
 

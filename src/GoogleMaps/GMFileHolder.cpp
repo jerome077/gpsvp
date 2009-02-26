@@ -28,7 +28,7 @@ CGMFileHolder::CGMFileHolder(void)
 	m_bInitialized = false;
 	m_wdLastRequestTicks = 0;
 
-	// Создаём именаторы
+	// Create map source namers
 	m_vecRMS.push_back(new CNullSource());  // gtNone
 	m_vecRMS.push_back(new COSMSource());   // gtOsm
 	m_vecRMS.push_back(new CGMapSource());  // gtMap
@@ -221,7 +221,7 @@ const long CGMFileHolder::GetFileName(std::wstring& name, const GEOFILE_DATA& da
 		name = filename;
 		return 0;
 	} else {
-		// Не найдено
+		// Not found
 //		if (m_strDefaultFileName.empty()) {
 			return 1;
 //		} else {
@@ -237,7 +237,7 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 
 	m_strMapsRoot = pszRoot;
 
-	// Проверяем, лежит ли в этой директории файл 404.*
+	// Checking if the folder contains file 404.*
 	FILE *f404 = wfopen((m_strMapsRoot + L"\\404.png").c_str(), L"r");
 	if (f404 && (m_strDefaultFileName.empty())) {
 		m_strDefaultFileName = m_strMapsRoot + L"\\404.png";
@@ -293,7 +293,7 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 	AutoLock l;
 	// No need to autolock here
 	if (size < 100) {
-		// Какой-то странный файл...
+		// Strange file...
 		return 1;
 	}
 
@@ -307,9 +307,8 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		return 2;
 	}
 
-	// Сразу писать в правильное место НЕЛЬЗЯ!
-	// Иначе поток, который рисует, может наткнуться на файл нулевой длины 
-	// (который в текущий момент как раз записывается) и грохнет его.
+	//   DO NOT WRITE to the right place right now, as the painting
+	// thread could find an empty file (being written to) and kill it.
 	std::wstring tmpfilename = m_strMapsRoot + L"/__tmpfile";
 
 	FILE * file = wfopen(tmpfilename.c_str(), L"wb");
@@ -318,7 +317,7 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		int nResult = IDRETRY;
 		while (nResult == IDRETRY) {
 			if (fwrite(data, size, 1, file) != 1) {
-				// Не получилось записать на диск
+				// Disk write unsuccessful
 				fclose(file);
 				wchar_t buf[128+MAX_PATH];
 #ifdef UNDER_CE
@@ -374,10 +373,10 @@ HANDLE CGMFileHolder::RelocateFiles(HANDLE h, long nMaxMSec)
 	// DWORD nStartTicks;
 	// nStartTicks = GetTickCount();
 
-	// Рекурсивно обойти директорию и перетащить файлы, которые не на своём месте.
+	// Recursively walk through the folders and move files not in place
 	RelocateFilesInDir(m_strMapsRoot, L"");
 
-	// Удалить пустые директории
+	// Remove empty folders
 	DeleteDirIfEmpty(m_strMapsRoot, false);
 
 	return NULL;
@@ -394,7 +393,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 
 	while ((hSearch != INVALID_HANDLE_VALUE) && (bNextFound)) {
 		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			// Добавить в дальнейший поиск. Проверяем, что не . или ..
+			// Folder: pass to the lower recursion level. Check it is not . or ..
 			std::wstring name = fd.cFileName;
 			if ((name != L".") && (name != L"..")) {
 				std::wstring newpath;
@@ -406,7 +405,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 				RelocateFilesInDir(wstrCurPath + L"/" + fd.cFileName, newpath);
 			}
 		} else {
-			// Файл - разобрать имя на фрагменты
+			// File: разобрать имя на фрагменты [??? parse file name into segments]
 			bool bNameParsed = false;
 			for (long i=gtMap, iEnd=GetGMapCount(); i<iEnd; i++) {
 				if (m_vecRMS[i]->IsGoodFileName(data, fd.cFileName)) {
@@ -421,7 +420,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 					bNameParsed = false;
 				}
 			} else {
-				// Непонятное имя - оставляем файл на месте
+				// Incomprehensible name--leave the file in place
 			}
 
 			if (bNameParsed) {
@@ -432,7 +431,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 						bool bDeleteSource = false;
 						std::wstring name = (wstrCurPath + L"/" + fd.cFileName).c_str();
 						std::wstring atgoodname = (goodpath + L"/" + fd.cFileName).c_str();
-						// Сравнить даты модификации файлов и оставить самый новый
+						// Compare modification dates and leave the newer file
 						HANDLE hAtGoodPath = CreateFile(atgoodname.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, 
 							OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -453,8 +452,8 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 								CloseHandle(hSrc);
 								hSrc = NULL;
 							} else {
-								// Похоже, нам не дали читать файл (прав нет?). 
-								// Вообще, непонятно, что здесь нужно делать... Оставить всё на своих местах?
+								// It seems we can't read the file (access rights?).
+								// Generally, it's hard to tell what to do... Just leave everything as is?
 							}
 							CloseHandle(hAtGoodPath);
 							hAtGoodPath = NULL;
