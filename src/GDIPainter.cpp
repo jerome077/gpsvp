@@ -390,8 +390,8 @@ void CGDIPainter::SetView(const GeoPoint & gp, bool fManual)
 	else if (m_iManualTimer > 0)
 		return;
 	GeoPoint actual = gp;
-	const int cnMaxLat = 0x360000;
-	const int cnMaxLon = 0x800000;
+	const int cnMaxLat = 0x1B << (GPWIDTH - 7); // ~75 degrees
+	const int cnMaxLon = 1 << (GPWIDTH - 1);
 	if (actual.lat > cnMaxLat)
 		actual.lat = cnMaxLat;
 	if (actual.lat < -cnMaxLat)
@@ -530,7 +530,7 @@ bool CGDIPainter::WillPaint(const ScreenPoint & pt)
 
 Int CGDIPainter::WillPaintEx(const ScreenPoint & pt)
 {
-	// Check if given rect intersects scree rect
+	// Check if given rect intersects screen rect
 	return m_srWindow.Side(pt);
 }
 
@@ -1007,16 +1007,21 @@ GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
 		dy2 = dy1;
 	}
 
-	res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
-	res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
+	//res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
+	//res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
+	res = GeoPoint24(
+		dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100,
+		-dy2 * m_ruiScale10() / 10);
+	res.lon += m_gpCenter().lon;
+	res.lat += m_gpCenter().lat;
 	return res;
 }
 ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 {
 	AutoLock l;
 	ScreenPoint res;
-	int dx1 = (pt.lon - m_gpCenterCache.lon) * m_lXScale100 / 10 /* * 10 / 100 */ / m_uiScale10Cache;
-	int dy1 = (m_gpCenterCache.lat - pt.lat) * 10 / m_uiScale10Cache;
+	int dx1 = (pt.lon24() - m_gpCenterCache.lon24()) * m_lXScale100 / 10 /* * 10 / 100 */ / m_uiScale10Cache;
+	int dy1 = (m_gpCenterCache.lat24() - pt.lat24()) * 10 / m_uiScale10Cache;
 
 	int dx2;
 	int dy2;

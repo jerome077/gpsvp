@@ -114,8 +114,8 @@ inline int int_sqrt(int input)
 	return nv;
 }
 
-int cos100(int degree);
-int sin100(int degree);
+int cos100(int degree);  // degree value must be in [-pi..pi]
+int sin100(int degree);  // degree value must be in [-pi/2..3pi/2]
 static const double cdNauticalMile = 1.852;
 static const double cdLandMile = 1.609344;
 static const double cdFoot = 0.3048;

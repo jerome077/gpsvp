@@ -42,10 +42,10 @@ void CSubdivision::Parse(Byte * data, bool fIsLast)
 	uiWidth &= 0x7FFF;
 	// Calculate area
 	m_grArea = GeoRect(
-		iLongitude - (uiWidth << (24 - m_uiBits)), 
-		iLongitude + (uiWidth << (24 - m_uiBits)), 
-		iLatitude - (uiHeight << (24 - m_uiBits)), 
-		iLatitude + (uiHeight << (24 - m_uiBits)));
+		iLongitude - (uiWidth << (GPWIDTH - m_uiBits)), 
+		iLongitude + (uiWidth << (GPWIDTH - m_uiBits)), 
+		iLatitude - (uiHeight << (GPWIDTH - m_uiBits)), 
+		iLatitude + (uiHeight << (GPWIDTH - m_uiBits)));
 
 	// If level is not last, get pointer to next level
 	if (!fIsLast)
@@ -381,8 +381,8 @@ UInt CPoint::Parse(Byte * data, UInt uiMaxSize, GeoPoint gpBase, UInt uiBits, CS
 	Int iLatitude = GetInt16(data + 6);
 
 	m_gpPoint = GeoPoint(
-		gpBase.lon + (iLongitude << (24 - uiBits)), 
-		gpBase.lat + (iLatitude << (24 - uiBits)));
+		gpBase.lon + (iLongitude << (GPWIDTH - uiBits)), 
+		gpBase.lat + (iLatitude << (GPWIDTH - uiBits)));
 
 	
 	m_uiType = m_uiType << 8;
@@ -416,8 +416,8 @@ UInt CPoint::Paint(Byte * data, UInt uiMaxSize, GeoPoint gpBase, UInt uiBits, CS
 	Int iLatitude = GetInt16(data + 6);
 
 	const GeoPoint & gpPoint = GeoPoint(
-		gpBase.lon + (iLongitude << (24 - uiBits)), 
-		gpBase.lat + (iLatitude << (24 - uiBits)));
+		gpBase.lon + (iLongitude << (GPWIDTH - uiBits)), 
+		gpBase.lat + (iLatitude << (GPWIDTH - uiBits)));
 
 	
 	uiType = uiType << 8;
@@ -525,8 +525,8 @@ UInt CPolyObject::Parse(Byte * data, UInt uiMaxSize)
 	bLonBaseBits = 2 + (bLonBaseBits > 9 ? 2 * bLonBaseBits - 9 : bLonBaseBits) + (fLonSameSigned ? 0 : 1);
 
 	m_points.push_back(GeoPoint(
-		m_gpBase.lon + (iLongitude << (24 - m_uiBits)), 
-		m_gpBase.lat + (iLatitude << (24 - m_uiBits))
+		m_gpBase.lon + (iLongitude << (GPWIDTH - m_uiBits)), 
+		m_gpBase.lat + (iLatitude << (GPWIDTH - m_uiBits))
 		));
 	m_grBound.Init(m_points.back());
 	// Parse all the stream
@@ -542,8 +542,8 @@ UInt CPolyObject::Parse(Byte * data, UInt uiMaxSize)
 			break;
 		// Extract two numbers and put them into list
 		m_points.push_back(GeoPoint(
-			m_gpBase.lon + (iLongitude << (24 - m_uiBits)), 
-			m_gpBase.lat + (iLatitude << (24 - m_uiBits))));
+			m_gpBase.lon + (iLongitude << (GPWIDTH - m_uiBits)), 
+			m_gpBase.lat + (iLatitude << (GPWIDTH - m_uiBits))));
 		m_grBound.Append(m_points.back());
 	}
 
@@ -633,8 +633,8 @@ UInt CPolyObject::Paint(enumObjTypes eType, CSubdivision * pOwner, const GeoPoin
 	bLonBaseBits = 2 + (bLonBaseBits > 9 ? 2 * bLonBaseBits - 9 : bLonBaseBits) + (fLonSameSigned ? 0 : 1);
 
 	pPainter->AddPoint(GeoPoint(
-		gpBase.lon + (iLongitude << (24 - uiBits)), 
-		gpBase.lat + (iLatitude << (24 - uiBits))
+		gpBase.lon + (iLongitude << (GPWIDTH - uiBits)), 
+		gpBase.lat + (iLatitude << (GPWIDTH - uiBits))
 		));
 	// Parse all the stream
 	while (!stream.AtEnd())
@@ -649,8 +649,8 @@ UInt CPolyObject::Paint(enumObjTypes eType, CSubdivision * pOwner, const GeoPoin
 			break;
 		// Extract two numbers and put them into list
 		pPainter->AddPoint(GeoPoint(
-			gpBase.lon + (iLongitude << (24 - uiBits)), 
-			gpBase.lat + (iLatitude << (24 - uiBits))));
+			gpBase.lon + (iLongitude << (GPWIDTH - uiBits)), 
+			gpBase.lat + (iLatitude << (GPWIDTH - uiBits))));
 	}
 
 	// Finally paint the polygon

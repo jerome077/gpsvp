@@ -39,13 +39,13 @@ void Check(bool fCondition)
 double Degree(Int iDegree)
 {
 	// Very simple formula. Nothing to change
-	return double(iDegree) / (1 << 24) * 360;
+	return double(iDegree) * (360. / (1 << GPWIDTH));
 }
 
 Int FromDegree(double dDegree)
 {
 	// Also very simple
-	return Int(dDegree / 360 * (1 << 24));
+	return Int(dDegree / (360. / (1 << GPWIDTH)));
 }
 
 // Make double from string
@@ -316,7 +316,7 @@ wstring MemoryToText(unsigned long ulMemory)
 
 class MyCos100
 {
-	enum {original_bits = 23, bits = 12};
+	enum {original_bits = GPWIDTH - 1, bits = 12};
 	signed char table[(1 << bits) + 1];
 public:
 	MyCos100()
@@ -355,7 +355,7 @@ int cos100(int degree)
 
 int sin100(int degree)
 {
-	return mycos100.Guess(degree - (1 << 22));
+	return mycos100.Guess(degree - (1 << (GPWIDTH - 2)));
 }
 
 wstring DegreeToText(double dDegree, bool fLat) 

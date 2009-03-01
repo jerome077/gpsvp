@@ -18,6 +18,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Common.h"
 #include <math.h>
 
+#define GPWIDTH (24)
+
 struct GeoPoint
 {
 	GeoPoint() {};
@@ -25,6 +27,16 @@ struct GeoPoint
 	GeoPoint(double dLongitude, double dLatitude) : lon (FromDegree(dLongitude)), lat(FromDegree(dLatitude)) {}
 	int lon;
 	int lat;
+	inline int lat24() const  // 24-bit values for interfaces
+	{
+		if(GPWIDTH > 24) return lat >> (GPWIDTH - 24);
+		else return lat << (24 - GPWIDTH);
+	}
+	inline int lon24() const
+	{
+		if(GPWIDTH > 24) return lon >> (GPWIDTH - 24);
+		else return lon << (24 - GPWIDTH);
+	}
 	bool operator == (const GeoPoint & pt) const
 	{
 		return (lon == pt.lon) && (lat == pt.lat);
@@ -34,6 +46,12 @@ struct GeoPoint
 		return !operator ==(pt);
 	}
 };
+
+#if GPWIDTH >= 24
+#define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) << (GPWIDTH - 24), (iLatitude24) << (GPWIDTH - 24))
+#else
+#define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) >> (24 - GPWIDTH), (iLatitude24) >> (24 - GPWIDTH))
+#endif
 
 struct GeoRect
 {
@@ -113,6 +131,7 @@ struct GeoRect
 	}
 };
 
+// Distance in meters between gp1 and gp2
 inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 {
 	int iLonScale100 = cos100((gp1.lat + gp2.lat) / 2);
@@ -121,20 +140,20 @@ inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 	int c = 1;
 	while (x > (1 << 15) || y > (1 << 15))
 	{
-		x /= 2;
-		y /= 2;
-		c *= 2;
+		x /= 4;
+		y /= 4;
+		c *= 4;
 	}
-	int res = int_sqrt(sqr(x) + sqr(y));
-	res *= 4000;
-	res /= (1 << 12);
-	res *= 10000;
-	res /= (1 << 12);
+	int res = int_sqrt(sqr(x) + sqr(y));  // res < 1.42*2^15
+	res *= 40000000 / (1 << 10);  // res < 0.85*2^31
+	// assert(GPWIDTH >= 10);
+	res /= 1 << (GPWIDTH - 10);
 	res *= c;
 	return res;
 }
 
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2);
+// Return azimuth in degrees
 int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo);
 
 #endif // GEOPOINT_H

@@ -73,7 +73,7 @@ double CGMPainter::GetPreferredScale(double scale)
 bool CGMPainter::GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const
 {
 	long nNumTiles = 1 << (level-1);
-	pData->X = gp.lon / (1 << (24 - level + 1)) + (nNumTiles >> 1);
+	pData->X = gp.lon / (1 << (GPWIDTH - level + 1)) + (nNumTiles >> 1);
 	double dLat = Degree(gp.lat);
 	long nBitmapOrigo = nNumTiles << 7; 
 	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
@@ -201,7 +201,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 					RECT rect_is;
 					if (GetIntersectionRECT(&rect_is, r, rect)) {
 						//sqrt((float) (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top));
-						// Use a distance between the drawing area center and a tile center to sort tiles
+						// Use the distance between the drawing area center and tile center to sort tiles
 						long nHC = (r.right + r.left) / 2;
 						long nVC = (r.bottom + r.top) / 2;
 						long nH = nHorizCenter - nHC;

@@ -3595,7 +3595,7 @@ public:
 						if (sign(lat_d1) * sign(lat_d2) < 0)
 						{
 							++m_iTotal;
-							if (abs(lat_d1) > 0x7fff || abs(lat_d2) > 0x7fff || abs(lon_d1) > 0x7fff || abs(lon_d2) > 0x7fff)
+							while (abs(lat_d1) > 0x7fff || abs(lat_d2) > 0x7fff || abs(lon_d1) > 0x7fff || abs(lon_d2) > 0x7fff)
 							{
 								lat_d1 /= 0x100;
 								lat_d2 /= 0x100;

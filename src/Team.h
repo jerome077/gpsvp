@@ -36,7 +36,8 @@ public:
 	{
 		if (update) {
 			char url[10000];
-			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%S&channel=%S&lat=%d&lng=%d", name.c_str(), channel.c_str(), gpCurrent.lat, gpCurrent.lon);
+			// Maybe, change coordinate format to signed decimal floats? (Possible locale problems.)
+			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%S&channel=%S&lat=%d&lng=%d", name.c_str(), channel.c_str(), gpCurrent.lat24(), gpCurrent.lon24());
 			return url;
 		}
 		return "";

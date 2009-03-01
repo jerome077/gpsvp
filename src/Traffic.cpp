@@ -313,7 +313,8 @@ bool TrafficNodes::Data::PaintFastestWay(const GeoPoint & gpFrom, const GeoPoint
 		const GeoPoint & gpCurrentFrom = it->first;
 		GeoRect r;
 		r.Init(gpCurrentFrom);
-		r.Expand((1 << 24) / (40000000 / 2500));
+		// assert(GPWIDTH<31);
+		r.Expand((1 << GPWIDTH) / (40000000 / 2500));
 		if (!r.Contain(gpFrom))
 			continue;
 		int iFrom = IntDistance(gpFrom, gpCurrentFrom);
@@ -323,7 +324,7 @@ bool TrafficNodes::Data::PaintFastestWay(const GeoPoint & gpFrom, const GeoPoint
 			const GeoPoint & gpCurrentTo = dit->_to;
 			r.Init(gpCurrentFrom);
 			r.Append(gpCurrentTo);
-			r.Expand((1 << 24) / (40000000 / 100));
+			r.Expand((1 << GPWIDTH) / (40000000 / 100));
 			if (!r.Contain(gpFrom))
 				continue;
 			int iTo = IntDistance(gpFrom, gpCurrentTo);
@@ -399,7 +400,7 @@ void TrafficNodes::Data::Fix(const GeoPoint & gp, unsigned long ulTime)
 {
 	m_Splitter.Fix(gp, ulTime);
 
-	//const NodeRegion & reg = std::make_pair(gp.lat / 10000, gp.lon / 10000);
+	//const NodeRegion & reg = std::make_pair(gp.lat24() / 10000 , gp.lon24() / 10000);
 	//if (m_LoadedRegions.find(reg) == m_LoadedRegions.end())
 	//	m_RegionsToLoad.insert(reg);
 	//if (IntDistance(gp, m_gpLastNode) < dTrafficRadius)
@@ -503,14 +504,14 @@ std::string TrafficNodes::GetRequest(const GeoPoint & gp)
 	char request[1000];
 	if (m_pData->m_fRefresh)
 	{
-		sprintf(request, "http://%s/GetTraffic2.php?lat=%d&lng=%d", app.GetServerName(), gp.lat, gp.lon);
+		sprintf(request, "http://%s/GetTraffic2.php?lat=%d&lng=%d", app.GetServerName(), gp.lat24(), gp.lon24());
 		return request;
 	}
 	if (m_pData->m_fTrafficLoaded && !m_pData->m_TrafficLegs.empty())
 	{
 		const TrafficLeg & leg = m_pData->m_TrafficLegs.front();
 		sprintf(request, "http://%s/TrafficLeg3.php?flat=%d&flng=%d&tlat=%d&tlng=%d&speed=%d", app.GetServerName(),
-			leg.gpFrom.lat, leg.gpFrom.lon, leg.gpTo.lat, leg.gpTo.lon, int(leg.dSpeed));
+			leg.gpFrom.lat24(), leg.gpFrom.lon24(), leg.gpTo.lat24(), leg.gpTo.lon24(), int(leg.dSpeed));
 		return request;
 	}
 	return "";
@@ -568,7 +569,7 @@ void TrafficNodes::TrafficData(const std::string & request, const char * data, i
 				&& std::getline(fields, lng, ',')
 				)
 			{
-				const GeoPoint & gp = GeoPoint(atoi(lng.c_str()), atoi(lat.c_str()));
+				const GeoPoint & gp = GeoPoint24(atoi(lng.c_str()), atoi(lat.c_str()));
 				AddNode(gp);
 			}
 		}
@@ -592,8 +593,8 @@ void TrafficNodes::TrafficData(const std::string & request, const char * data, i
 					&& std::getline(fields, speed, ',')
 					)
 				{
-					const GeoPoint & gp1 = GeoPoint(atoi(flng.c_str()), atoi(flat.c_str()));
-					const GeoPoint & gp2 = GeoPoint(atoi(tlng.c_str()), atoi(tlat.c_str()));
+					const GeoPoint & gp1 = GeoPoint24(atoi(flng.c_str()), atoi(flat.c_str()));
+					const GeoPoint & gp2 = GeoPoint24(atoi(tlng.c_str()), atoi(tlat.c_str()));
 					m_pData->AddTraffic(gp1, gp2, atoi(speed.c_str()));
 					m_pData->m_Splitter.AddExtTurn(gp1);
 					m_pData->m_Splitter.AddExtTurn(gp2);
