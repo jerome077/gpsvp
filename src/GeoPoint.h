@@ -18,24 +18,23 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Common.h"
 #include <math.h>
 
+// 24 <= GPWIDTH <= 30, now works only for 24 and almost works for 25
 #define GPWIDTH (24)
 
 struct GeoPoint
 {
 	GeoPoint() {};
-	GeoPoint(int iLongitude, int iLatitude) : lon(iLongitude), lat(iLatitude){}
+	GeoPoint(int igLongitude, int igLatitude) : lon(igLongitude), lat(igLatitude){}
 	GeoPoint(double dLongitude, double dLatitude) : lon (FromDegree(dLongitude)), lat(FromDegree(dLatitude)) {}
 	int lon;
 	int lat;
 	inline int lat24() const  // 24-bit values for interfaces
 	{
-		if(GPWIDTH > 24) return lat >> (GPWIDTH - 24);
-		else return lat << (24 - GPWIDTH);
+		return lat >> (GPWIDTH - 24);
 	}
 	inline int lon24() const
 	{
-		if(GPWIDTH > 24) return lon >> (GPWIDTH - 24);
-		else return lon << (24 - GPWIDTH);
+		return lon >> (GPWIDTH - 24);
 	}
 	bool operator == (const GeoPoint & pt) const
 	{
@@ -47,11 +46,7 @@ struct GeoPoint
 	}
 };
 
-#if GPWIDTH >= 24
 #define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) << (GPWIDTH - 24), (iLatitude24) << (GPWIDTH - 24))
-#else
-#define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) >> (24 - GPWIDTH), (iLatitude24) >> (24 - GPWIDTH))
-#endif
 
 struct GeoRect
 {

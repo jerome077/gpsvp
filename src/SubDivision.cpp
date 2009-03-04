@@ -31,9 +31,9 @@ void CSubdivision::Parse(Byte * data, bool fIsLast)
 	// Types of objects in this subdivision
 	m_bObjTypes = data[0x3];
 	// Longitude & latitude
-	Int iLongitude = GetInt24(data + 0x4);
-	Int iLatitude = GetInt24(data + 0x7);
-	m_gpCenter = GeoPoint(iLongitude, iLatitude);
+	Int igLongitude = GetInt24(data + 0x4) << (GPWIDTH - 24);
+	Int igLatitude = GetInt24(data + 0x7) << (GPWIDTH - 24);
+	m_gpCenter = GeoPoint(igLongitude, igLatitude);
 	// Width & height
 	UInt uiWidth = GetUInt16(data + 0xA);
 	UInt uiHeight = GetUInt16(data + 0xC);
@@ -42,10 +42,10 @@ void CSubdivision::Parse(Byte * data, bool fIsLast)
 	uiWidth &= 0x7FFF;
 	// Calculate area
 	m_grArea = GeoRect(
-		iLongitude - (uiWidth << (GPWIDTH - m_uiBits)), 
-		iLongitude + (uiWidth << (GPWIDTH - m_uiBits)), 
-		iLatitude - (uiHeight << (GPWIDTH - m_uiBits)), 
-		iLatitude + (uiHeight << (GPWIDTH - m_uiBits)));
+		igLongitude - (uiWidth << (GPWIDTH - m_uiBits)), 
+		igLongitude + (uiWidth << (GPWIDTH - m_uiBits)), 
+		igLatitude - (uiHeight << (GPWIDTH - m_uiBits)), 
+		igLatitude + (uiHeight << (GPWIDTH - m_uiBits)));
 
 	// If level is not last, get pointer to next level
 	if (!fIsLast)
@@ -60,8 +60,8 @@ void CSubdivision::Parse(Byte * data, bool fIsLast)
 //	dout << "\t\t""SubDivision\n";
 //	dout << "\t\t\t""m_uiRgnDataPtr = " << m_uiRgnDataPtr << "\n";
 //	dout << "\t\t\t""m_bObjTypes = " << UInt(m_bObjTypes) << "\n";
-////	dout << "\t\t\t""m_iLongitude = " << m_iLongitude << " (" << Degree(m_iLongitude) << ")\n";
-////	dout << "\t\t\t""m_iLatitude = " << m_iLatitude << " (" << Degree(m_iLatitude) << ")\n";
+////	dout << "\t\t\t""m_igLongitude = " << m_igLongitude << " (" << Degree(m_igLongitude) << ")\n";
+////	dout << "\t\t\t""m_igLatitude = " << m_igLatitude << " (" << Degree(m_igLatitude) << ")\n";
 ////	dout << "\t\t\t""m_uiWidth = " << m_uiWidth << "\n";
 ////	dout << "\t\t\t""m_uiHeight = " << m_uiHeight << "\n";
 //	dout << "\t\t\t""m_uiNextLevelSub = " << m_uiNextLevelSub << "\n";

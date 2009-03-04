@@ -37,13 +37,13 @@ void CTreSubfile::Parse(CSubFile * pSubFile)
 
 		// General data
 		// Read boundaries
-		Int iNorthBoundary = GetInt24(data + 0x15);
-		Int iEastBoundary = GetInt24(data + 0x18);
-		Int iSouthBoundary = GetInt24(data + 0x1B);
-		Int iWestBoundary = GetInt24(data + 0x1E);
-		if (iEastBoundary <= iWestBoundary)
-			iEastBoundary += (1 << 24);
-		m_grBound = GeoRect(iWestBoundary, iEastBoundary, iSouthBoundary, iNorthBoundary);
+		Int igNorthBoundary = GetInt24(data + 0x15) << (GPWIDTH - 24);
+		Int igEastBoundary = GetInt24(data + 0x18) << (GPWIDTH - 24);
+		Int igSouthBoundary = GetInt24(data + 0x1B) << (GPWIDTH - 24);
+		Int igWestBoundary = GetInt24(data + 0x1E) << (GPWIDTH - 24);
+		if (igEastBoundary <= igWestBoundary)
+			igEastBoundary += (1 << GPWIDTH);
+		m_grBound = GeoRect(igWestBoundary, igEastBoundary, igSouthBoundary, igNorthBoundary);
 
 		// Get levels block info
 		m_uiMapLevelsOffset = GetUInt32(data + 0x21);
@@ -168,10 +168,10 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 //	// Dump everything
 //	dout << "\t\t""m_uiHeaderLength = " << m_uiHeaderLength << "\n";
 //	dout << "\t\t""m_strType = " << m_strType.c_str() << "\n";
-////	dout << "\t\t""m_iNorthBoundary = " << m_iNorthBoundary << " (" << Degree(m_iNorthBoundary) << ")\n";
-////	dout << "\t\t""m_iSouthBoundary = " << m_iSouthBoundary << " (" << Degree(m_iSouthBoundary) << ")\n";
-////	dout << "\t\t""m_iEastBoundary = " << m_iEastBoundary << " (" << Degree(m_iEastBoundary) << ")\n";
-////	dout << "\t\t""m_iWestBoundary = " << m_iWestBoundary << " (" << Degree(m_iWestBoundary) << ")\n";
+////	dout << "\t\t""m_igNorthBoundary = " << m_igNorthBoundary << " (" << Degree(m_igNorthBoundary) << ")\n";
+////	dout << "\t\t""m_igSouthBoundary = " << m_igSouthBoundary << " (" << Degree(m_igSouthBoundary) << ")\n";
+////	dout << "\t\t""m_igEastBoundary = " << m_igEastBoundary << " (" << Degree(m_igEastBoundary) << ")\n";
+////	dout << "\t\t""m_igWestBoundary = " << m_igWestBoundary << " (" << Degree(m_igWestBoundary) << ")\n";
 //
 //	dout << "\t\t""m_uiMapLevelsOffset = " << m_uiMapLevelsOffset << "\n";
 //	dout << "\t\t""m_uiMapLevelsLen = " << m_uiMapLevelsLen << "\n";
