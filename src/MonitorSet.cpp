@@ -20,6 +20,13 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	map<int, wstring> mapMenu;
 	CMenu mmPopupMenu;
 	mmPopupMenu.Init();
+
+	// Note to other dev's: This menu seems to hard code resource numbers. I (maurits) 
+	// just picked the same as the hardcoded one in the other context menu. We may
+	// need to (maybe I will later) add proper menu action constants
+	// PS: other menu FullScreen is 4, here it is 0x4444
+
+	// Monitor specific submenu
 	CMenu & mmMonitors = mmPopupMenu.CreateSubMenu(L("Change"));
 	if (m_mapMonitors.find(m_vectMonitors[iMonitor]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[iMonitor]])
 		m_mapMonitors[m_vectMonitors[iMonitor]]->PrepareContextMenu(mmPopupMenu.GetListAcceptor());
@@ -32,11 +39,23 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 		mapMenu[i] = it->first;
 		++i;
 	}
+
+	// Other non monitor menu items
+	if (app.m_painter.IsFullScreen()) 
+		mmPopupMenu.CreateItem(L("Full screen off"), 0x4444);
+	else
+		mmPopupMenu.CreateItem(L("Full screen"), 0x4444);
+
+	// Menu processing
 	DWORD res = mmPopupMenu.Popup(pt.x, pt.y, hWnd);
 	if (res == 0xbadd)
 	{
 		m_vectMonitors[iMonitor] = L"";
 		Save();
+	}
+	else if (res == 0x4444) // Full Screen
+	{
+		app.m_painter.SetFullScreen(!app.m_painter.IsFullScreen());
 	}
 	else if (mapMenu.find(res) != mapMenu.end())
 	{
