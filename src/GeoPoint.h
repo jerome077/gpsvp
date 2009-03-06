@@ -18,7 +18,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Common.h"
 #include <math.h>
 
-// 24 <= GPWIDTH <= 30, now works only for 24 and almost works for 25
+// "Bit width" of fixed-point latitude in GeoPoint. 360 degrees corresponds to 2^GPWIDTH.
+// 24 <= GPWIDTH <= 30
 #define GPWIDTH (24)
 
 struct GeoPoint
@@ -130,7 +131,7 @@ struct GeoRect
 inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 {
 	int iLonScale100 = cos100((gp1.lat + gp2.lat) / 2);
-	int x = abs(iLonScale100 * (gp1.lon - gp2.lon) / 100);
+	int x = abs(int(iLonScale100 * __int64(gp1.lon - gp2.lon) / 100));
 	int y = abs(gp1.lat - gp2.lat);
 	int c = 1;
 	while (x > (1 << 15) || y > (1 << 15))

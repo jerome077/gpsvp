@@ -1009,9 +1009,9 @@ GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
 
 	//res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
 	//res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
-	res = GeoPoint24(
-		dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100,
-		-dy2 * m_ruiScale10() / 10);
+	res = GeoPoint(
+		int((__int64(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
+		int(-(__int64(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
 	res.lon += m_gpCenter().lon;
 	res.lat += m_gpCenter().lat;
 	return res;
@@ -1020,8 +1020,8 @@ ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 {
 	AutoLock l;
 	ScreenPoint res;
-	int dx1 = (pt.lon24() - m_gpCenterCache.lon24()) * m_lXScale100 / 10 /* * 10 / 100 */ / m_uiScale10Cache;
-	int dy1 = (m_gpCenterCache.lat24() - pt.lat24()) * 10 / m_uiScale10Cache;
+	int dx1 = int(__int64(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
+	int dy1 = int(__int64(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
 
 	int dx2;
 	int dy2;
