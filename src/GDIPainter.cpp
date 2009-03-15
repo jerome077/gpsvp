@@ -541,6 +541,19 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	m_hResourceInst = g_hInst;
 
 	m_gpCenter.Init(hRegKey, L"Center", GeoPoint(0, 0));
+	if(abs(m_gpCenter().lon) > 1 << (GPWIDTH - 1) || abs(m_gpCenter().lat) > 1 << (GPWIDTH - 2))
+	{
+		// If Center is out of bounds try to guess the rigth value 
+		// assuming the wrong value is due to smaller GPWIDTH
+		int lat = m_gpCenter().lat;
+		int lon = m_gpCenter().lon;
+		while(abs(lon) > 1 << (GPWIDTH - 1) || abs(lat) > 1 << (GPWIDTH - 2))
+		{
+			lat >>= 1;
+			lon >>= 1;
+		}
+		m_gpCenter.Set(GeoPoint(lon, lat));
+	}
 	m_fViewSet = false;
 	m_ruiScale10.Init(hRegKey, L"ScaleD", 500);
 	m_ruiScale10.Set(max((int)(ciMinZoom), m_ruiScale10()));

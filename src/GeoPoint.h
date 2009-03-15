@@ -20,7 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 // "Bit width" of fixed-point latitude in GeoPoint. 360 degrees corresponds to 2^GPWIDTH.
 // 24 <= GPWIDTH <= 30
-#define GPWIDTH (24)
+#define GPWIDTH (30)
 
 struct GeoPoint
 {
