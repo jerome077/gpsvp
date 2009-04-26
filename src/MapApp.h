@@ -82,6 +82,7 @@ public:
 	CRegString m_rsPort;
 	CRegString m_rsPortSpeed;
 	CRegString m_rsCurrentFolder;
+	CRegString m_rsProxy;
 	HANDLE m_hPortThread;
 	HANDLE m_hHttpThread;
 	CNMEAParser m_NMEAParser;

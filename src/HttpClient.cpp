@@ -84,6 +84,60 @@ void CHttpRequest::Request(const std::string & uri, const std::string & user_age
 	_data->Request(uri, user_agent);
 }
 
+bool CHttpRequest::m_useProxy;
+std::string CHttpRequest::m_proxyHost;
+std::string CHttpRequest::m_proxyPort;
+std::string CHttpRequest::m_proxyAuth;
+
+// assign proxy variables to static members of CHttpRequest
+void CHttpRequest::SetProxy(std::wstring prox) 
+{
+	const wchar_t* wbuf=prox.c_str();
+	char buf[101];
+	int i;
+	i=-1;
+	do {
+		i++;
+		buf[i]=(char) wbuf[i];
+	} while (buf[i]!=0 && i<100);
+	std::string proxy(buf); // wstring to string - conversion  may work bad for non-ascii characters!
+
+	std::string server;
+	std::string credentials;
+	int nauth = proxy.find("@", 0);
+	if (nauth!=std::string::npos && nauth!=0) { // there is xxxxx@ at the start
+		credentials = proxy.substr(0,nauth);
+		const char *s = credentials.c_str();
+		int k,v;
+		char  ans[100];
+		int l = strlen(s);
+		const char *cod="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		for (k=0;6*k<8*l;k++) // base64 encoding
+		{
+			v=s[6*k/8]*256+s[6*k/8+1];
+			ans[k]=cod[(v & (63 <<( 10-(6*k)%8)))>>(10-((6*k)%8))];
+		}
+		while (k%4!=0) {ans[k]='='; k++;}; // resulting length must be 4x
+		ans[k]=0;
+		m_proxyAuth = std::string(ans);
+	}
+	else {
+		m_proxyAuth=""; // no authentification on proxy
+		nauth=-1;
+	}
+
+	int p = proxy.find(":", nauth+1);
+	int finish = (int) proxy.length();
+	CHttpRequest::m_proxyPort = "8080";
+	if (p != std::string::npos && p < finish) {
+		CHttpRequest::m_proxyPort = proxy.substr(p + 1, finish - p - 1);
+		CHttpRequest::m_proxyHost = proxy.substr(nauth+1,p-nauth-1);
+	} else {
+		CHttpRequest::m_proxyHost = proxy.substr(nauth+1,finish-nauth-1);
+	}
+	
+}
+
 void CHttpRequest::Data::Request(const std::string & uri, const std::string & user_agent)
 {
 	_outgoing = 0;
@@ -113,9 +167,21 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 
 	int wsaRes;
 	addrinfo * pAddrInfo;
-	if (wsaRes = getaddrinfo(host.c_str(), port.c_str(), 0, &pAddrInfo)) {
-		Error("Cannot resolve name");
-		return;
+	std::string full_data;
+
+	if (!CHttpRequest::m_useProxy || CHttpRequest::m_proxyHost.length()==0) // if no proxy - use usual http query
+	{
+		full_data = std::string() + method + " " + uri.substr(finish) + " HTTP/1.0\r\nHost: " + host + "\r\nUser-Agent: " + user_agent + "\r\n";
+		if (wsaRes = getaddrinfo(host.c_str(), port.c_str(), 0, &pAddrInfo)) {
+			Error("Cannot resolve name");
+			return;
+		}
+	} else {
+		full_data = std::string() + method + " " + uri.c_str() + " HTTP/1.0\r\nHost: " + host + "\r\nUser-Agent: " + user_agent + "\r\n";
+		if (wsaRes = getaddrinfo(CHttpRequest::m_proxyHost.c_str(), CHttpRequest::m_proxyPort.c_str(), 0, &pAddrInfo)) {
+			Error("Cannot resolve proxy name");
+			return;
+		}
 	}
 
 	int s;
@@ -133,7 +199,15 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 		return;
 	}
 
-	std::string full_data = std::string() + method + " " + uri.substr(finish) + " HTTP/1.0\r\nHost: " + host + "\r\nUser-Agent: " + user_agent + "\r\n\r\n";
+	if (CHttpRequest::m_useProxy && CHttpRequest::m_proxyAuth.length()>0) // if proxy needs authorisation, add it to headers
+	{
+		// it works without Proxy-Connection: Keep-Alive too.
+		full_data=full_data+"Proxy-Authorization: Basic "+CHttpRequest::m_proxyAuth.c_str()+"\r\n\r\n";
+		//full_data=full_data+"Proxy-Authorization: Basic "+CHttpRequest::m_proxyAuth.c_str()+"\r\nProxy-Connection: Keep-Alive\r\n\r\n";
+	} else {
+		full_data+="\r\n";
+	}
+
 	r = send(s, full_data.c_str(), full_data.length(), 0);
 	_outgoing += r;
 	if (r != full_data.length()) {

@@ -129,6 +129,7 @@ enum enumMenuCommands
 	mcSearchOSM,
 	mcSearchResults,
 	mcoAllowInternet,
+	mcoUseProxy,
 	mcTeamSettings,
 	mcTeamUpdateNow,
 	mcTeamUpdatePeriodically,

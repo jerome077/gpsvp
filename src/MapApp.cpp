@@ -607,6 +607,7 @@ class CSettingsDlg : public CMADialog
 	CCombo m_trackstep;
 	CCombo m_coordformat;
 	CCombo m_metrics;
+	CEditText  m_proxy;
 	std::map<std::wstring, int> m_comboItems;
 	void AddComboItem(int iCombo, int iItem, wchar_t * wcString, int iToSelect)
 	{
@@ -680,24 +681,29 @@ class CSettingsDlg : public CMADialog
 		m_metrics.AddItem(L("Imperial"));
 		m_metrics.Select(app.m_riMetrics());
 
+		m_proxy.Create(hDlg);
+		m_proxy.SetText(app.m_rsProxy().c_str());
+		
 		AddItem(hDlg, CText(hDlg, L("Port:")));
 		AddItem(hDlg, m_port);
 		AddItem(hDlg, CText(hDlg, L("Port speed:")));
 		AddItem(hDlg, m_portSpeed);
 		AddItem(hDlg, CText(hDlg, L("Track step:")));
 		AddItem(hDlg, m_trackstep);
+		AddItem(hDlg, CText(hDlg, L("Proxy server (user:pass@host:port):")));
+		AddItem(hDlg, m_proxy);
 		AddItem(hDlg, CText(hDlg, L("Coordinates format:")));
 		AddItem(hDlg, m_coordformat);
 		AddItem(hDlg, CText(hDlg, L("Metric system:")));
 		AddItem(hDlg, m_metrics);
-
+		
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
 		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
 	}
 	void ApplySettings(HWND hDlg)
 	{
-		const Int cnMaxStr = 10;
+		const Int cnMaxStr = 100;
 		wchar_t buff[cnMaxStr] = {0};
 		bool fStartListening = false;
 
@@ -726,6 +732,14 @@ class CSettingsDlg : public CMADialog
 
 		index = m_metrics.GetCurSel();
 		app.m_riMetrics.Set(index);
+
+		m_proxy.GetText(buff,cnMaxStr);
+		if (app.m_rsPortSpeed() != buff)
+		{
+			app.m_rsProxy = buff;
+		}
+		CHttpRequest::SetProxy(app.m_rsProxy());
+		
 	}
 	virtual void Command(HWND hDlg, int iCommand)
 	{
@@ -1755,6 +1769,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Keep backlight"), L"KeepBacklight", false, mcoKeepBacklight);
 	m_Options.AddOption(L("Keep device on"), L"KeepDeviceOn", true, mcoKeepDeviceOn);
 	m_Options.AddOption(L("Allow internet connection"), L"AllowInternet", true, mcoAllowInternet);
+	m_Options.AddOption(L("Use proxy server"), L"EnableProxy", false, mcoUseProxy);
 	m_Options.AddOption(L("Connect"), L"Connect", true, mcoConnect);
 	m_Options.AddOption(L("Show center"), L"ShowCenter", true, mcoShowCenter);
 	m_Options.AddOption(L("Refresh traffic on startup"), L"TrafficOnStartup", false, mcoRefreshTrafficOnStartup);
@@ -1814,6 +1829,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	if (m_rsPortSpeed().empty())
 		m_rsPortSpeed = L"Default";
 	m_rsCurrentFolder.Init(hRegKey, L"");
+	m_rsProxy.Init(hRegKey,L"Proxy");
 	GetKeymap().Init(hRegKey);
 	GetButtons().Init(hRegKey);
 
@@ -2769,6 +2785,7 @@ void CMapApp::InitMenu()
 		mmSetup.CreateItem(L("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
 		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternet);
+		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);
 	}
 	{
 		CMenu & mmHelp = mMenu.CreateSubMenu(L("Help"));
@@ -3964,6 +3981,8 @@ void CMapApp::HttpThreadRoutine()
 		m_wstrHttpStatus = L"Idle";
 	}
 
+	
+	CHttpRequest::SetProxy(app.m_rsProxy());
 	std::string request;
 	int request_source = 0;
 	int ErrorWaitingTime = 1; // beginning with 1 second
@@ -4091,6 +4110,7 @@ void CMapApp::HttpThreadRoutine()
 					m_wstrHttpStatus = L"Requesting";
 				}
 				CHttpRequest req(0);
+				CHttpRequest::m_useProxy=m_Options[mcoUseProxy];
 				req.Request(request, std::string("gpsVP ") + g_gpsVPVersion.AsString());
 				m_monDataIn += req.GetIncoming();
 				m_monDataOut += req.GetOutgoing();
