@@ -81,6 +81,7 @@ protected:
 private:
 	// Common prefix for all raster map folders
 	std::wstring m_strMapsRoot;
+	DWORD m_dwMapsAttr;
 	// Inited
 	bool m_bInitialized;
 

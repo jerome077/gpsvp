@@ -247,6 +247,16 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 		f404 = NULL;
 	}
 
+	// Retrieve from 'attrib' file the attributes to apply to any new
+	// tile image file. Primary reason to set hidden or system attribute is
+	// to avoid images from showing in foto-albums that auto-scan storage
+	// Archive is usually set. Hidden will prevent most album scans. System even more
+    // m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+	m_dwMapsAttr = GetFileAttributes((m_strMapsRoot + L"\\attrib").c_str());
+	// I consider this a temporary workaround, it may be nicer and clearer for users
+	// to create a proper settigns in VP (also for the 404 above) rather than 
+	// non-intuitive non-documented "settings" like this
+
 	NeedRelocateFiles();
 
 	// Adding WMS-Maps to the list
@@ -335,6 +345,12 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		}
 		fclose(file);
 
+		// Apply attributes if needed (assume archive is default)
+		if (m_dwMapsAttr != FILE_ATTRIBUTE_ARCHIVE) {
+		    SetFileAttributes(tmpfilename.c_str(), m_dwMapsAttr);
+		}
+
+		// Move file from temporary to proper location
 		bool res = DeleteFile(filename.c_str());
 		res = MoveFile(tmpfilename.c_str(), filename.c_str());
 
