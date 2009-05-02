@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2009, Jerome077
 All rights reserved.
 
