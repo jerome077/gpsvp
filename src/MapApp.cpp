@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -871,6 +871,9 @@ class CSettingsDlg : public CMADialog
 		m_trackstep.AddItem(50, app.m_riTrackStep());
 		m_trackstep.AddItem(100, app.m_riTrackStep());
 
+		m_proxy.Create(hDlg);
+		m_proxy.SetText(app.m_rsProxy().c_str());
+
 		m_coordformat.Create(hDlg, false);
 		m_coordformat.AddItem(L"N37°27'35\"");
 		m_coordformat.AddItem(L"N37°27.8743'");
@@ -884,10 +887,7 @@ class CSettingsDlg : public CMADialog
 		m_metrics.AddItem(L("Nautical"));
 		m_metrics.AddItem(L("Imperial"));
 		m_metrics.Select(app.m_riMetrics());
-
-		m_proxy.Create(hDlg);
-		m_proxy.SetText(app.m_rsProxy().c_str());
-		
+	
 		AddItem(hDlg, CText(hDlg, L("Port:")));
 		AddItem(hDlg, m_port);
 		AddItem(hDlg, CText(hDlg, L("Port speed:")));
