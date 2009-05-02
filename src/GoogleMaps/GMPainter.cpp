@@ -285,8 +285,9 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			if (hbm == NULL) {
-				// It seems the image is broken... Delete the file.
-				DeleteFile(w.c_str());
+				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled
+				if (app.m_Options[mcoDownloadGoogleMaps] && app.m_Options[mcoAllowInternet])
+					DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
 
