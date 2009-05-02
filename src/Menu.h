@@ -115,7 +115,7 @@ protected:
 	{
 		CreateItem(wcLabel, iId);
 	}
-	virtual void UpdateCurrent(const wchar_t * wcLabel)
+	virtual void UpdateSelected(const wchar_t * wcLabel)
 	{
 	}
 public:

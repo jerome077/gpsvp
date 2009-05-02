@@ -134,6 +134,13 @@ enum enumMenuCommands
 	mcTeamUpdateNow,
 	mcTeamUpdatePeriodically,
 	mcoInvertSatelliteImages,
+	mcNewWaypointsWPT,
+	mcNewWaypointsGPX,
+	mcExportWaypointsWPT,
+	mcExportWaypointsGPX,
+	mcExportWaypointsOSM,
+	mcTrackFormatPLT,
+	mcTrackFormatGPX,
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,
 	// ...reserved for Map Types...

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -19,6 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Dialogs.h"
 #include "MapApp.h"
 #include <resource.h>
+#include <sstream>
 
 class CFileDlg : public CMADialog
 {
@@ -44,7 +45,7 @@ class CFileDlg : public CMADialog
 	}
 	void FillList()
 	{
-		m_filename.SetText(L"");
+		m_filename.SetText(m_wstrResult.c_str());
 		m_list.Clear();
 		{
 			// Here we just check if the folder exists
@@ -95,18 +96,24 @@ class CFileDlg : public CMADialog
 			// And here we make the list of files
 			WIN32_FIND_DATA wwd;
 			std::set<std::wstring> setFiles;
-			std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\" + m_wstrMask;
-			HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
-			if (h && h != INVALID_HANDLE_VALUE)
+			// m_wstrMask could contain several extensions separated with ";"
+			std::wstringstream wssMaskStream(m_wstrMask);
+			std::wstring wstrMaskItem;
+			while (std::getline(wssMaskStream, wstrMaskItem, L';'))
 			{
-				do
+				std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\" + wstrMaskItem;
+				HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
+				if (h && h != INVALID_HANDLE_VALUE)
 				{
-					if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+					do
 					{
-						setFiles.insert(wwd.cFileName);
-					}
-				} while (FindNextFile(h, &wwd));
-				FindClose(h);
+						if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+						{
+							setFiles.insert(wwd.cFileName);
+						}
+					} while (FindNextFile(h, &wwd));
+					FindClose(h);
+				}
 			}
 			for (std::set<std::wstring>::iterator it = setFiles.begin();
 				it != setFiles.end(); ++it)
@@ -116,6 +123,7 @@ class CFileDlg : public CMADialog
 			}
 		}
 		m_path.SetText((wstring(L"[") + app.m_rsCurrentFolder() + L"\\]").c_str());
+		m_filename.SetFocus();
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -134,6 +142,7 @@ class CFileDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddItem(hDlg, CText(hDlg, L("File name:")));
 		AddItem(hDlg, m_filename);
 		AddItem(hDlg, m_path);
@@ -276,7 +285,7 @@ wstring FileDialog(wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
 	static CFileDlg dlg;
 	g_pNextDialog = &dlg;
 	dlg.m_wstrMask = wstrMask;
-	dlg.m_wstrResult = L"";
+	dlg.m_wstrResult = pof->lpstrFile; // Default value
 	dlg.m_fFileMustExist = (pof->Flags & OFN_FILEMUSTEXIST) != 0;
 	dlg.m_fProject = (pof->Flags & OFN_PROJECT) != 0;
 	dlg.m_fSave = fSave;

@@ -19,16 +19,22 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif // USE_STDIO_H
 
 #include <string>
+#include <windows.h>
 #include "PlatformDef.h"
 
 
 class CVersionNumber
 {
 public:
+    // ---------------------------------------------------------------
 	CVersionNumber(int MainVersion, int SubVersion, int SubSubVersion)
 		: m_MainVersion(MainVersion), m_SubVersion(SubVersion), m_SubSubVersion(SubSubVersion) 
 	{};
-
+    // ---------------------------------------------------------------
+	CVersionNumber(const CVersionNumber& source)
+		: m_MainVersion(source.m_MainVersion), m_SubVersion(source.m_SubVersion), m_SubSubVersion(source.m_SubSubVersion) 
+	{};
+    // ---------------------------------------------------------------
 	CVersionNumber(const std::string& sVersion)
 		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
 	{
@@ -48,7 +54,7 @@ public:
 		else
 			m_MainVersion = atoi(sVersion.c_str());
 	};
-
+    // ---------------------------------------------------------------
 	CVersionNumber(const std::wstring& sVersion)
 		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
 	{
@@ -68,7 +74,7 @@ public:
 		else
 			m_MainVersion = _wtoi(sVersion.c_str());
 	};
-
+    // ---------------------------------------------------------------
 	int GetMainVersion()   const { return m_MainVersion;   };
 	int GetSubVersion()    const { return m_SubVersion;    };
 	int GetSubSubVersion() const { return m_SubSubVersion; };
@@ -80,6 +86,19 @@ public:
 		return buffer;
     }
 
+	std::string AsStringWithName() const
+	{
+		char buffer[64];
+	    sprintf(buffer, "gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		return buffer;
+    }
+	std::wstring AsWStringWithName() const
+	{
+		wchar_t buffer[128];
+	    wsprintf(buffer, L"gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		return buffer;
+    }
+	// ---------------------------------------------------------------
 	bool operator< (const CVersionNumber &other) const
 	{
 		if (m_MainVersion < other.m_MainVersion) 		return true;
@@ -94,6 +113,7 @@ public:
 	{
 		return ((m_MainVersion == other.m_MainVersion) && (m_SubVersion == other.m_SubVersion) && (m_SubSubVersion == other.m_SubSubVersion));
 	};
+    // ---------------------------------------------------------------
 
 protected:
 	int m_MainVersion, m_SubVersion, m_SubSubVersion;

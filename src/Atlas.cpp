@@ -194,7 +194,7 @@ void CAtlas::GetListUpdateCurrent(int iSelected, IListAcceptor * pAcceptor)
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
 		if (it->first.GetID() == iSelected)
-			pAcceptor->UpdateCurrent(((it->second ? L"+ " : L"- ") + it->first.GetFilename()).c_str());
+			pAcceptor->UpdateSelected(((it->second ? L"+ " : L"- ") + it->first.GetFilename()).c_str());
 	}
 }
 void CAtlas::CloseMapByID(int iMap)

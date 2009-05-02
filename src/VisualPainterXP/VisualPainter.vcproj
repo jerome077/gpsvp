@@ -1030,6 +1030,26 @@
 				RelativePath="..\WayPoints.cpp"
 				>
 			</File>
+			<Filter
+				Name="FileFormats"
+				>
+				<File
+					RelativePath="..\FileFormats\GPX.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\GPX.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Google Maps"

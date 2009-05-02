@@ -50,8 +50,9 @@ T sqr(T a)
 }
 
 wstring DoubleToText(double dDouble, int iDigits = 1);
+string DoubleToStr(double dDouble, int iDigits = 1);
 wstring DegreeToText(double dDegree, bool fLat);
-double TextToDergee(wchar_t * wcText);
+double TextToDegree(const wchar_t * wcText);
 wstring IntToText(int iInt);
 wstring IntToHex(int iInt);
 wstring DistanceToText(double dDistance);
@@ -68,13 +69,14 @@ inline wstring a2w(const char * s)
 struct IListAcceptor
 {
 	virtual void AddItem(const wchar_t * wcLabel, int iId) = 0;
-	virtual void UpdateCurrent(const wchar_t * wcLabel) = 0;
+	virtual void UpdateSelected(const wchar_t * wcLabel) = 0;
 };
 
 struct IListAcceptor2
 {
 	virtual int AddItem(const wchar_t * wcLabel, int iId, int iSubItem, int lParam) = 0;
 	virtual void UpdateCurrent(const wchar_t * wcLabel, int iSubItem) = 0;
+	virtual void UpdateSelected(const wchar_t * wcLabel, int iSubItem) = 0;
 };
 
 struct IListAcceptor2Acceptor
@@ -138,5 +140,8 @@ private:
 };
 
 extern Dict & GetDict();
+
+bool UTCVariantTimeToLocalVariantTime(double dUTCTime, double &dLocalTime);
+bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime);
 
 #endif // COMMON_H

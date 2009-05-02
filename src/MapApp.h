@@ -76,7 +76,7 @@ public:
 	int m_iPressedButton;
 	HWND m_hWnd;
 	wstring m_wstrHome;
-	list<CTrack> m_Tracks;
+	CTrackList m_Tracks;
 	CTrack m_CurTrack;
 	HANDLE m_hPortFile;
 	CRegString m_rsPort;
@@ -95,6 +95,7 @@ public:
 	CRegScalar<int, REG_BINARY> m_riWaypointsRadius;
 	CRegScalar<int, REG_BINARY> m_riDetail;
 	CRegScalar<int, REG_BINARY> m_riConnectPeriodMin;
+	CRegScalar<int, REG_BINARY> m_riTrackFormat;
 	CRegScalar<int, REG_BINARY> m_riGMapType;
 	bool volatile m_fExiting;
 	bool volatile m_fStopHttpThread;
@@ -132,7 +133,7 @@ public:
 	bool m_fCoursePointPresent;
 	GeoPoint m_gpCoursePoint;
 	void FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, wchar_t * wstrFilter, 
-							   wchar_t * strFile, bool fDirectory, bool fMustExist);
+							   wchar_t * strFile, bool fDirectory, bool fMustExist,  bool fOverwritePrompt = false);
 	void AddOdometer(double dDist);
 	wchar_t * m_wstrCmdLine;
 	wstring m_wstrProgName;
@@ -195,7 +196,12 @@ public:
 	void FileCloseAllMaps();
 	void FileOpenTrack();
 	void FileOpenWaypoints();
+	void FileNewWaypointsWPT();
+	void FileNewWaypointsGPX();
 	void FileImportWaypoints();
+	void FileExportWaypointsWPT();
+	void FileExportWaypointsGPX();
+	void FileExportWaypointsOSM();
 	void FileSaveWaypoints();
 	void FileNextColors();
 	void FileOpenColors();
@@ -278,8 +284,9 @@ public:
 		}
 		return uiScale10;
 	}
-	void GetTrackList(IListAcceptor * pAcceptor);
+	void GetTrackList(IListAcceptor * pAcceptor) { m_Tracks.GetTrackList(pAcceptor); };
 	void SetConnectPeriod(int nPeriod);
+	void SetTrackFormat(int nTrackFormat);
 	void OnTimer();
 	void ToggleConnect();
 	void ToggleShowCenter();
@@ -326,6 +333,7 @@ public:
 	void SetSearchURL(const char * url);
 	void ProcessOSMSearchResult(const char * data, int size);
 	void AddSearchResult(const std::string & name, const std::string & lat, const std::string & lon);
+	const CVersionNumber& GetGpsVPVersion();
 };
 
 extern CMapApp app;

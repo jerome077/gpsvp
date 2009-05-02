@@ -288,6 +288,13 @@ wstring DoubleToText(double dDouble, int iDigits)
 	return wcDouble;
 }
 
+string DoubleToStr(double dDouble, int iDigits)
+{
+	char cDouble[1000];
+	_snprintf(cDouble, 1000, "%.*f", iDigits, dDouble);
+	return cDouble;
+}
+
 wstring IntToText(int iInt)
 {
 	wchar_t wcInt[1000];
@@ -426,7 +433,7 @@ wstring DegreeToText(double dDegree, bool fLat)
 	return wcDegree;
 };
 
-double TextToDergee(wchar_t * wcText)
+double TextToDegree(const wchar_t * wcText)
 {
 	double dDegree = 0;
 	double dCurrent = 0;
@@ -541,4 +548,34 @@ void Dict::Read(const wchar_t * wcFilename)
 		wstring s = wstr.substr(sb, se - sb);
 		m_data->m_map[f] = s;
 	}
+}
+
+bool UTCVariantTimeToLocalVariantTime(double dUTCTime, double &dLocalTime)
+{
+	dLocalTime = 0;
+	SYSTEMTIME stUTCTime;
+	if (!VariantTimeToSystemTime(dUTCTime, &stUTCTime)) return false;
+	FILETIME ftUTCTime;
+	if (!SystemTimeToFileTime(&stUTCTime, &ftUTCTime)) return false;
+	FILETIME ftLocalTime;
+	if (!FileTimeToLocalFileTime(&ftUTCTime, &ftLocalTime)) return false;
+	SYSTEMTIME stLocalTime;
+	if (!FileTimeToSystemTime(&ftLocalTime, &stLocalTime)) return false;
+	if (!SystemTimeToVariantTime(&stLocalTime, &dLocalTime)) return false;
+	return true;
+}
+
+bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime)
+{
+	dUTCTime = 0;
+	SYSTEMTIME stLocalTime;
+	if (!VariantTimeToSystemTime(dLocalTime, &stLocalTime)) return false;
+	FILETIME ftLocalTime;
+	if (!SystemTimeToFileTime(&stLocalTime, &ftLocalTime)) return false;
+	FILETIME ftUTCTime;
+	if (!FileTimeToLocalFileTime(&ftLocalTime, &ftUTCTime)) return false;
+	SYSTEMTIME stUTCTime;
+	if (!FileTimeToSystemTime(&ftUTCTime, &stUTCTime)) return false;
+	if (!SystemTimeToVariantTime(&stUTCTime, &dUTCTime)) return false;
+	return true;
 }

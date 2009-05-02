@@ -23,6 +23,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GeoPoint.h"
 #include "IPainter.h"
 #include "Lock.h"
+#include "VersionNumber.h"
+#include "FileFormats\GPX.h"
 
 using namespace std;
 
@@ -30,12 +32,17 @@ using namespace std;
 class CTrack
 {
 	enum {cnMaxPoints = 600, cnCompressRatio = 10};
+	enum enumTrackFormat
+	{
+		tfPLT = 0,
+		tfGPX = 1
+	};
 	//! Type for list of track points
 	struct TrackPoint
 	{
-		TrackPoint(const GeoPoint & gp_, unsigned long time_) : gp(gp_), time(time_){}
+		TrackPoint(const GeoPoint & gp_, unsigned long time_) : gp(gp_), timeUTC(time_){}
 		GeoPoint gp;
-		unsigned long time;
+		unsigned long timeUTC;
 	};
 	typedef list<TrackPoint> Segment;
 	typedef list<Segment> Track;
@@ -48,6 +55,7 @@ class CTrack
 	wstring m_wstrFilenameExt;
 	//! The track will begin with next point
 	bool m_fBeginTrack;
+	bool m_fBeginFile;
 	bool m_fTrackPresent;
 	GeoPoint m_gpLastpoint;
 	double m_dAltitude;
@@ -55,20 +63,30 @@ class CTrack
 	Int m_iColor;
 	bool m_fCompressable;
 	//! Time of the last point
-	double m_dLastTime;
-	unsigned long m_ulLastTime;
+	double m_dLastTimeUTC;
 	char m_writeBuffer[4096 + 1024];
 	int m_iBufferPos;
 	bool m_fWriting;
 	int m_iId;
 	GeoPoint m_gpCompetition;
 	typedef std::list<unsigned long> StartTimes;
-	StartTimes m_startTimes;
+	StartTimes m_startTimesUTC;
 	unsigned long m_ulCompetitionTime;
+	enumTrackFormat m_CurrentTrackFormat;
+	string m_strGPXName;
+   fpos_t m_FilePosForAdding;
 
 	const wchar_t * GetFileName();
 	void CreateFile();
+	void CreateFilePLT();
+	void CreateFileGPX();
+	std::string GetCreator();
+	void FlushPLT(int iSize);
+	void FlushGPX(int iSize);
+	void WritePLT(GeoPoint pt, double dTimeUTC);
+	void WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP);
 public:
+
 	//! Constructor
 	CTrack() : 
 		m_fTrackPresent(false), 
@@ -76,12 +94,15 @@ public:
 		m_fAltitude(false), 
 		m_fCompressable(false), 
 		m_nPointCount(0),
-		m_dLastTime(0),
+		m_dLastTimeUTC(0),
 		m_fWriting(false)
 	{
-		CreateFile();
 		static int id = 0;
 		m_iId = ++id;
+	}
+	void Init()
+	{
+		CreateFile();
 	}
 	//! Destructor
 	~CTrack() 
@@ -91,12 +112,15 @@ public:
 	}
 	void SetColor(Int iColor) {m_iColor = iColor;}
 	//! Add point to the end of track
-	void AddPoint(GeoPoint pt, double time, double dHDOP = 1);
+	void AddPoint(GeoPoint pt, double timeUTC, double dHDOP = 1);
 	//! Paint track to painter
 	void PaintUnlocked(IPainter * pPainter, unsigned int uiType);
 	//! Tell the track that it is broken (missing points)
 	void Break();
-	void Read(const wchar_t * wcFilename);
+	void Read(const std::wstring& wstrFilename);
+	void ReadPLT(const std::wstring& wstrFilename);
+	void ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename);
+	void ReadFirstTrackFromGPX(const std::wstring& wstrFilename);
 	const wstring GetExtFilename();
 	bool IsPresent();
 	GeoPoint GetLastPoint();
@@ -118,14 +142,14 @@ public:
 	}
 	void Flush(int iSize)
 	{
-		if (m_fWriting && m_fTrackPresent)
+		switch (m_CurrentTrackFormat)
 		{
-			FILE * pFile = wfopen(GetFileName(), L"ab");
-			if (pFile)
-			{
-				fwrite(m_writeBuffer, 1, iSize, pFile);
-				fclose(pFile);
-			}
+		case tfPLT:
+			FlushPLT(iSize);
+			break;
+		case tfGPX:
+			FlushGPX(iSize);
+			break;
 		}
 	}
 	void StartNewTrack()
@@ -138,6 +162,23 @@ public:
 		return m_iId;
 	}
 	void SetCompetition(const GeoPoint & gp, unsigned long ulCompetitionTime);
+};
+
+class CTrackList
+{
+protected:
+	list<CTrack> m_Tracks;
+	bool OpenTrackPLT(const std::wstring& wstrFile);
+	bool OpenTracksGPX(const std::wstring& wstrFile);
+public:
+	typedef list<CTrack>::iterator iterator;
+	iterator begin() { return m_Tracks.begin(); };
+	iterator end() { return m_Tracks.end(); };
+	CTrack& Last() { return m_Tracks.back(); };
+
+	void GetTrackList(IListAcceptor * pAcceptor);
+	bool OpenTracks(const std::wstring& wstrFile);
+	void CloseTrack(Int iIndex);
 };
 
 #endif // TRACK_H
