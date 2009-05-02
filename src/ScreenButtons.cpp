@@ -29,7 +29,7 @@ struct CScreenButtons::Data
 		Action() : label(L""), command(0) {}
 		Action(const wchar_t * label_, int command_) : label(label_), command(command_) {};
 		bool operator == (int i) {return command == i;}
-		const wchar_t * label;
+		wstring label;
 		int command;
 	};
 	int selected;
@@ -53,7 +53,7 @@ CScreenButtons::~CScreenButtons()
 void CScreenButtons::Paint(IButtonPainter * pPainter)
 {
 	for (Data::Buttons::iterator it = m_data->buttons.begin(); it != m_data->buttons.end(); ++it)
-		pPainter->AddButton(it->second.label, it->first, it->first == m_data->selected);	
+		pPainter->AddButton(it->second.label.c_str(), it->first, it->first == m_data->selected);	
 }
 
 void CScreenButtons::SelectButton(int i)
@@ -79,7 +79,7 @@ bool CScreenButtons::ContextMenu(int iButton, const ScreenPoint & sp, HWND hwnd)
 	Data::Actions::iterator begin = m_data->actions.begin();
 	Data::Actions::iterator end = m_data->actions.end();
 	for (it = begin; it != end; ++it)
-		mmMenu.CreateItem(it->label, it->command);
+		mmMenu.CreateItem(it->label.c_str(), it->command);
 	DWORD dwRes = mmMenu.Popup(sp.x, sp.y, hwnd);
 	it = std::find(begin, end, dwRes);
 	if (it != end)
