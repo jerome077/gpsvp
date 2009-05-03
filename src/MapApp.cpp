@@ -860,6 +860,7 @@ class CSettingsDlg : public CMADialog
 		m_portSpeed.AddItem(L"14400", app.m_rsPortSpeed().c_str());
 		m_portSpeed.AddItem(L"19200", app.m_rsPortSpeed().c_str());
 		m_portSpeed.AddItem(L"38400", app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L"57600", app.m_rsPortSpeed().c_str());
 		m_portSpeed.SetText(app.m_rsPortSpeed().c_str());
 
 		m_trackstep.Create(hDlg, false);
@@ -1386,8 +1387,8 @@ void CMapApp::ThreadRoutine()
 		int iTimeOut = 0;
 		COMMTIMEOUTS ct;
 		ZeroMemory(&ct, sizeof(ct));
-		ct.ReadIntervalTimeout = MAXDWORD;
-		ct.ReadTotalTimeoutConstant = 300;	// 3000;
+		ct.ReadIntervalTimeout = 50;		// MAXDWORD;
+		ct.ReadTotalTimeoutConstant = 1000;
 		ct.ReadTotalTimeoutMultiplier = 0;	// MAXDWORD;
 		SetCommTimeouts(m_hPortFile, &ct);
 
@@ -1398,7 +1399,6 @@ void CMapApp::ThreadRoutine()
 			Sleep(500);
 			iTimeOut += 500;
 			if (!ReadFile(m_hPortFile, buff, sizeof(buff), &i, 0)) {
-				iTimeOut += 500;
 				break;
 			}
 			LG(fprintf(log, "Read %d bytes: ", i); for (unsigned long j = 0; j < i; ++j) fprintf(log, "%c", buff[j]); fprintf(log, "\n"))
@@ -2123,8 +2123,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Turn bluetooth on"), L"BluetoothOn", false, mcoBluetoothOn);
 #endif // SMARTPHONE
 	m_Options.AddOption(L("Full screen"), L"FullScreen", false, mcoFullScreen);
-	m_Options.AddOption(L("Debug mode"), L"DebugMode", false, mcoDebugMode);
-	m_Options.AddOption(L("Write connection log"), L"WriteConnectionLog", false, mcoWriteConnectionLog);
+	m_Options.AddOption(L("Debug mode"), L"DebugMode", true, mcoDebugMode);
+	m_Options.AddOption(L("Write connection log"), L"WriteConnectionLog", true, mcoWriteConnectionLog);
 	m_Options.AddOption(L("Keep memory low"), L"LowMemory", true, mcoLowMemory);
 	m_Options.AddOption(L("Write track"), L"WriteTrack", true, mcoWriteTrack);
 	m_Options.AddOption(L("Show current track"), L"ShowCurrentTrack", true, mcoShowCurrentTrack);
