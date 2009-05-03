@@ -1357,16 +1357,20 @@ void CMapApp::ThreadRoutine()
 					}
 					LG(fprintf(log, "m_hPortFile is %p\n", m_hPortFile))
 					if (m_hPortFile != INVALID_HANDLE_VALUE)
-						break;
-					long lSpeed = wcstol(m_rsPortSpeed().c_str(), 0, 10);
-					if (lSpeed > 0)
 					{
-						DCB dcb;
-						if (GetCommState(m_hPortFile, &dcb))
+						long lSpeed = wcstol(m_rsPortSpeed().c_str(), 0, 10);
+						if (lSpeed > 0)
 						{
-							dcb.BaudRate = lSpeed;
-							SetCommState(m_hPortFile, &dcb);
+							DCB dcb;
+							if (GetCommState(m_hPortFile, &dcb))
+							{
+								dcb.BaudRate = lSpeed;
+								SetCommState(m_hPortFile, &dcb);
+							}
 						}
+						break;
+						// Note this loop is build so it keeps trying to open the]
+						// port. You have to break if opening works.
 					}
 				}
 				for (iTime = 9; --iTime && !m_fExiting;)
