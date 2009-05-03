@@ -1383,11 +1383,12 @@ void CMapApp::ThreadRoutine()
 		LG(fprintf(log, "Configuring port\n"))
 		m_dwConnected = GetTickCount();
 		fWait = false;
+		int iTimeOut = 0;
 		COMMTIMEOUTS ct;
 		ZeroMemory(&ct, sizeof(ct));
 		ct.ReadIntervalTimeout = MAXDWORD;
-		ct.ReadTotalTimeoutConstant = 3000;
-		ct.ReadTotalTimeoutMultiplier = MAXDWORD;
+		ct.ReadTotalTimeoutConstant = 300;	// 3000;
+		ct.ReadTotalTimeoutMultiplier = 0;	// MAXDWORD;
 		SetCommTimeouts(m_hPortFile, &ct);
 
 		while(m_hPortFile && !m_fExiting)
@@ -1395,20 +1396,37 @@ void CMapApp::ThreadRoutine()
 			LG(fprintf(log, "Reading port\n"));
 			i = 0;
 			Sleep(500);
-			if (!ReadFile(m_hPortFile, buff, sizeof(buff), &i, 0))
+			iTimeOut += 500;
+			if (!ReadFile(m_hPortFile, buff, sizeof(buff), &i, 0)) {
+				iTimeOut += 500;
 				break;
+			}
 			LG(fprintf(log, "Read %d bytes: ", i); for (unsigned long j = 0; j < i; ++j) fprintf(log, "%c", buff[j]); fprintf(log, "\n"))
-			if ((i < 1) || (i > sizeof(buff)))
-				break;
+			if (i < 1) {
+				if ((iTimeOut > 9999)) {
+					LG(fprintf(log, "Reading underrun\n"));
+					break;
+				}
+				LG(fprintf(log, "Re-reading\n"));
+				continue;
+			}
+			if ((i > sizeof(buff))) {
+				LG(fprintf(log, "Reading overflow\n"));
+ 				break;
+			}
+			iTimeOut = 0;
 			m_NMEAParser.AddData(buff, i);
 			if (m_riConnectPeriodMin() > 0 && GetTickCount() > m_dwConnected + 5000)
 			{
 				fWait = true;
 				m_NMEAParser.Pause();
+				LG(fprintf(log, "Max GPS connect time\n"));
 				break;
 			}
-			if (!m_Options[mcoConnect])
+			if (!m_Options[mcoConnect]) {
+				LG(fprintf(log, "GPS disconnected\n"));
 				break;
+			}
 #ifdef SMARTPHONE
 			if ((!m_Options[mcoConnect] || !m_Options[mcoBluetoothOn]) && m_fBluetoothWasTurnedOn)
 			{
@@ -1440,6 +1458,7 @@ void CMapApp::ThreadRoutine()
 		m_monSleepCounter.Reset();
 		if (!fWait || !m_Options[mcoConnect])
 		{
+			LG(fprintf(log, "Starting new stream\n"));
 			m_NMEAParser.NewStream();
 		}
 #ifdef SMARTPHONE
