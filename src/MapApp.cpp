@@ -939,7 +939,7 @@ class CSettingsDlg : public CMADialog
 		app.m_riMetrics.Set(index);
 
 		m_proxy.GetText(buff,cnMaxStr);
-		if (app.m_rsPortSpeed() != buff)
+		if (app.m_rsProxy() != buff)
 		{
 			app.m_rsProxy = buff;
 		}
