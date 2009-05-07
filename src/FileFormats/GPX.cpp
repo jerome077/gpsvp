@@ -198,49 +198,60 @@ std::wstring CDOMGPXField::getAttribute(const std::wstring& AttrName)
 // ---------------------------------------------------------------
 
 CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode)
-	: CDOMGPXElem(pNode)
+	:	CDOMGPXElem(pNode),
+		mLongitude(0.0),
+		mLatitude(0.0),
+		mUTCTime(0.0)
 {
+	// Read longitude and latitude
 	try
 	{
 		XmlNamedNodeMap pAttrList = m_pNode->attributes;
-		XmlNode pAttr = pAttrList->getNamedItem(L"lon");
-		std::string sVal = (const char*)pAttr->text;
-		mLongitude = atof(sVal.c_str());
+		for(int i=0; i<pAttrList->length; i++)
+		{
+			XmlNode pAttr = pAttrList->item[i];
+			std::wstring nodeName = pAttr->nodeName;
+			if (L"lat" == nodeName)
+				mLatitude = myatof((const char*)pAttr->text);
+			else if (L"lon" == nodeName)
+				mLongitude = myatof((const char*)pAttr->text);
+		}
 	}
 	catch (_com_error e)
 	{
 		mLongitude = 0.0;
-	}
-	try
-	{
-		XmlNamedNodeMap pAttrList = m_pNode->attributes;
-		XmlNode pAttr = pAttrList->getNamedItem(L"lat");
-		std::string sVal = (const char*)pAttr->text;
-		mLatitude = atof(sVal.c_str());
-	}
-	catch (_com_error e)
-	{
 		mLatitude = 0.0;
 	}
+	// Read time
 	try
 	{
 		XmlNode pTimeNode = m_pNode->selectSingleNode(L"time");
 		if (pTimeNode)
 		{
-			// *** Use an xsd:dateTime-Parser
-			SYSTEMTIME st;
-			int nReadFields = swscanf((const wchar_t*)pTimeNode->text, L"%d-%d-%dT%d:%d:%dZ",
-				&st.wYear, &st.wMonth, &st.wDay, &st.wHour, &st.wMinute, &st.wSecond);
-			if (nReadFields == 6)
+			// I didn't find an xsd:dateTime-Parser, that why I just decode the most current
+			// time format (xsd:dateTime corresponds to ISO 8601, which allows other formats).
+			// The following code recognizes:
+			//  2009-05-01T12:00:00Z
+			//  2009-05-01T12:00:00.123Z (with milliseconds)
+			//  2009-05-01T12:00:00      (without Z, but still considered as UTC)
+			//  2009-05-01T12:00:00.123  (with milliseconds)
+			LONG lYear, lMonth, lDay, lHour, lMinute, lSecond, lMilliseconds;
+			int nReadFields = swscanf((const wchar_t*)pTimeNode->text, L"%d-%d-%dT%d:%d:%d.%dZ",
+				                      &lYear, &lMonth, &lDay, &lHour, &lMinute, &lSecond, &lMilliseconds);
+			if (nReadFields >= 6)
 			{
+				SYSTEMTIME st;
+				st.wYear = lYear;
+				st.wMonth = lMonth;
+				st.wDay = lDay;
+				st.wHour = lHour;
+				st.wMinute = lMinute;
+				st.wSecond = lSecond;
+				st.wMilliseconds = (7 == nReadFields) ? lMilliseconds : 0;
 				if (!SystemTimeToVariantTime(&st, &mUTCTime))
 					mUTCTime = 0.0;
 			}
-			else
-				mUTCTime = 0.0;
 		}
-		else
-			mUTCTime = 0.0;
 	}
 	catch (_com_error e)
 	{
