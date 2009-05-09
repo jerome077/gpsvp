@@ -141,6 +141,8 @@ enum enumMenuCommands
 	mcExportWaypointsOSM,
 	mcTrackFormatPLT,
 	mcTrackFormatGPX,
+	mcoQuickReadGPXTrack,
+
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,
 	// ...reserved for Map Types...

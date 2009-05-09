@@ -144,4 +144,12 @@ extern Dict & GetDict();
 bool UTCVariantTimeToLocalVariantTime(double dUTCTime, double &dLocalTime);
 bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime);
 
+// ---------------------------------------------------------------
+
+// test functions, see comment with the implementation
+void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int& utmZone);
+void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360);
+
+// ---------------------------------------------------------------
+
 #endif // COMMON_H

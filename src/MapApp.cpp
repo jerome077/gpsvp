@@ -2123,11 +2123,12 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Turn bluetooth on"), L"BluetoothOn", false, mcoBluetoothOn);
 #endif // SMARTPHONE
 	m_Options.AddOption(L("Full screen"), L"FullScreen", false, mcoFullScreen);
-	m_Options.AddOption(L("Debug mode"), L"DebugMode", true, mcoDebugMode);
-	m_Options.AddOption(L("Write connection log"), L"WriteConnectionLog", true, mcoWriteConnectionLog);
+	m_Options.AddOption(L("Debug mode"), L"DebugMode", false, mcoDebugMode);
+	m_Options.AddOption(L("Write connection log"), L"WriteConnectionLog", false, mcoWriteConnectionLog);
 	m_Options.AddOption(L("Keep memory low"), L"LowMemory", true, mcoLowMemory);
 	m_Options.AddOption(L("Write track"), L"WriteTrack", true, mcoWriteTrack);
 	m_Options.AddOption(L("Show current track"), L"ShowCurrentTrack", true, mcoShowCurrentTrack);
+	m_Options.AddOption(L("Quick read gpx (no time)"), L"QuickReadGPX", false, mcoQuickReadGPXTrack);	
 	m_Options.AddOption(L("Highlight maps"), L"ShowDetailMaps", true, mcoShowDetailMaps);
 	m_Options.AddOption(L("Direct paint"), L"DirectPaint", false, mcoDirectPaint);
 
@@ -3001,6 +3002,7 @@ void CMapApp::InitMenu()
 		mmTracks.CreateBreak();
 		mmTracks.CreateItem(L("Write track"), mcoWriteTrack);
 		mmTracks.CreateItem(L("Show current track"), mcoShowCurrentTrack);
+		mmTracks.CreateItem(L("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
 		{
 			CMenu & mmTrackFormat = mmTracks.CreateSubMenu(L("Track format"));
 			mmTrackFormat.CreateItem(L("plt"), mcTrackFormatPLT);

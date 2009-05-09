@@ -66,10 +66,5 @@ inline std::wstring	GoogleXYZ17toQKeyW	(unsigned long x, unsigned long y, unsign
 
 // ---------------------------------------------------------------
 
-// test function, see comment with the implementation
-void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int& utmZone);
-
-// ---------------------------------------------------------------
-
 
 #endif // GMCOMMON_H

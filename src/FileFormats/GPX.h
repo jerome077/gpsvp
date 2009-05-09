@@ -40,6 +40,10 @@ public:
 
 // ---------------------------------------------------------------
 
+class CGPXFileReader;
+
+// ---------------------------------------------------------------
+
 class CDOMGPXElem
 {
 protected:
@@ -144,8 +148,9 @@ class CGPXTrackPoint: public CDOMGPXElem
 protected:
 	double mLongitude, mLatitude;
 	double mUTCTime;
+	CGPXFileReader* m_pReader;
 	friend class CGPXTrackSeg;
-	CGPXTrackPoint(XmlNode pNode);
+	CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader);
 public:
 	virtual double getLongitude() { return mLongitude; };
 	virtual double getLatitude()  { return mLatitude; };
@@ -158,8 +163,9 @@ class CGPXTrackSeg: public CDOMGPXElem
 {
 protected:
 	XmlNodeList m_pXMLTrackPointNodeList;
+	CGPXFileReader* m_pReader;
 	friend class CGPXTrack;
-	CGPXTrackSeg(XmlNode pNode) : CDOMGPXElem(pNode) {};
+	CGPXTrackSeg(XmlNode pNode, CGPXFileReader* pReader) : CDOMGPXElem(pNode), m_pReader(pReader) {};
 public:
 	virtual std::auto_ptr<CGPXTrackPoint> firstTrackPoint();
 	virtual std::auto_ptr<CGPXTrackPoint> nextTrackPoint();
@@ -171,8 +177,9 @@ class CGPXTrack: public CDOMGPXElem
 {
 protected:
 	XmlNodeList m_pXMLTrackSegNodeList;
+	CGPXFileReader* m_pReader;
 	friend class CGPXFileReader;
-	CGPXTrack(XmlNode pNode) : CDOMGPXElem(pNode) {};
+	CGPXTrack(XmlNode pNode, CGPXFileReader* pReader) : CDOMGPXElem(pNode), m_pReader(pReader) {};
 public:
 	std::wstring getName();
 	virtual std::auto_ptr<CGPXTrackSeg> firstTrackSeg();
@@ -232,12 +239,18 @@ public:
 	virtual std::auto_ptr<CGPXTrack> firstTrack();
 	virtual std::auto_ptr<CGPXTrack> nextTrack();
 
+	// Option RaadTime: when false don't read the <time> form tracks. Reading times is
+	// quite long and only useful for the track competition feature.
+	bool getReadTime() { return m_bReadTime; };
+	void setReadTime(bool bValue) { m_bReadTime = bValue; };
+
 private:
 	std::wstring m_filename;
 	XmlDocument m_pXMLDoc;
 	XmlNode m_pElemGPX;
 	static WaypointIterator m_WaypointEnd;
 	XmlNodeList m_pXMLTrackNodeList;
+	bool m_bReadTime;
 };
 
 // ---------------------------------------------------------------

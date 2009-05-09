@@ -579,3 +579,121 @@ bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime)
 	if (!SystemTimeToVariantTime(&stUTCTime, &dUTCTime)) return false;
 	return true;
 }
+
+// ---------------------------------------------------------------
+
+// Test-function (Jerome: currently not use, I might remove it later) to see if it 
+// would be possible to display/enter UTM coordinates. The function works, but
+// I'm thinking about using the gdal DLL, which supports a lot of coordanites systems.
+// Calculation based on explaination from Steven Dutch on http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM
+void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int& utmZone)
+{
+    utmZone = floor(lon360/6.0) + 31;
+	double lon0_360 = utmZone*6.0 - 183.0;
+	
+	double lon628 = lon360 * pi / 180.0;
+    double lat628 = lat360 * pi / 180.0;
+	double cosLat = cos(lat628);
+	double sinLat = sin(lat628);
+	double tanLat = tan(lat628);
+	double cosLat_2 = cosLat*cosLat;
+	double cosLat_3 = cosLat*cosLat_2;
+	double cosLat_4 = cosLat_2*cosLat_2;
+	double sinLat_2 = sinLat*sinLat;
+	double tanLat_2 = tanLat*tanLat;
+
+	double a = 6378137;
+	double b = 6356752.3142;
+    double SinOneSecond = 4.8481368e-6;
+	double SinOneSecond_2 = SinOneSecond*SinOneSecond;
+	double SinOneSecond_3 = SinOneSecond*SinOneSecond_2;
+	double SinOneSecond_4 = SinOneSecond_2*SinOneSecond_2;
+	double k0 = 0.9996;
+	double e = sqrt(1-b*b/(a*a));
+	double e_2 = e*e;
+	double ei2 = e_2/(1-e_2);
+	double n = (a-b)/(a+b);
+	double n_2 = n*n;
+	double n_3 = n*n_2;
+	double n_4 = n_2*n_2;
+	double n_5 = n*n_4;
+	double nu = a / sqrt(1 - e_2*sinLat_2);
+	double p = (lon360-lon0_360)*3600/10000; // it's not explained, why it should in seconds and divided by 10000
+	double p_2 = p*p;
+
+	double Ai = a * (1.0 - n + (5.0/4.0)*(n_2 - n_3) + (81.0/64.0)*(n_4 - n_5));
+	double Bi = (1.5*a*n)*(1.0 - n + (7.0/8.0)*(n_2 - n_3) + (55.0/64.0)*(n_4 - n_5));
+	double Ci = (15.0*a*n_2/16.0)*(1.0 - n + 0.75*(n_2 - n_3));
+	double Di = (35.0*a*n_3/48.0)*(1.0 - n + (11.0/16.0)*(n_2 - n_3));
+	double Ei = (315.0*a*n_4/51.0)*(1 - n);
+	double S = Ai*lat628 - Bi*sin(2*lat628) + Ci*sin(4*lat628) - Di*sin(6*lat628) + Ei*sin(8*lat628);
+
+	double K1 = S * k0;
+	double K2 = 1e8* k0 * SinOneSecond_2 * nu * sinLat * cosLat * 0.5;
+	double K3 = 1e16* (k0 * SinOneSecond_4 * nu * sinLat * cosLat_3 / 24.0)
+               *(5 - tanLat_2 + 9.0 * ei2 * cosLat_2 + 4.0 * ei2*ei2 * cosLat_4);
+	double K4 = 1e4* k0 * SinOneSecond * nu * cosLat;
+	double K5 = 1e12* (k0 * SinOneSecond_3 * nu * cosLat_3 / 6.0) * (1 - tanLat_2 + ei2 * cosLat_2);
+
+    // Northing
+	utmY = K1 + K2*p_2 + K3*p_2*p_2;	
+	// Conventional UTM easting
+    utmX = K4*p + K5*p*p_2 + 500000;
+}
+
+void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360)
+{
+	double lon0_360 = utmZone*6.0 - 183.0;
+
+	double a = 6378137;
+	double b = 6356752.3142;
+	double k0 = 0.9996;
+	double e = sqrt(1-b*b/(a*a));
+	double e_2 = e*e;
+	double ei2 = e_2/(1-e_2);
+
+	double M = utmY / k0;
+	double mu = M / (a * (1.0 - e_2/4.0 - 3.0*e_2*e_2/64.0 - 5.0*e_2*e_2*e_2/256.0));
+	double s12 = sqrt(1.0 - e_2);
+	double e1 = (1.0 - s12) / (1.0 + s12);
+	double e1_2 = e1*e1;
+	double e1_3 = e1_2*e1;
+	double e1_4 = e1_3*e1;
+
+	// footprint latitude
+	double J1 = (3.0 * e1 / 2.0 - 27.0 * e1_3 / 32.0);
+	double J2 = (21.0 * e1_2 / 16.0 - 55.0 * e1_4 / 32.0);
+	double J3 = (151.0 * e1_3 / 96.0);
+	double J4 = (1097.0 * e1_4 / 512.0);
+	double fp628 = mu + J1*sin(2*mu) + J2*sin(4*mu) + J3*sin(6*mu) + J4*sin(8*mu);
+	double fp360 = fp628 * 180.0 / pi;
+
+	double sinFp = sin(fp628);
+	double sinFp_2 = sinFp*sinFp;
+	double cosFp = cos(fp628);
+	double tanFp = tan(fp628);
+	double C1 = ei2 * cosFp*cosFp;
+	double C1_2 = C1*C1;
+	double T1 = tanFp*tanFp;
+	double T1_2 = T1*T1;
+	double R1 = a * (1-e_2)/pow(1-e_2*sinFp_2, 1.5);
+	double N1 = a / sqrt(1 - e_2*sinFp_2);
+	double D = (500000-utmX) / (N1 * k0);
+	double D_2 = D*D;
+	double D_4 = D_2*D_2;
+	double D_6 = D_4*D_2;
+
+	double Q1 = N1 * tanFp / R1;
+	double Q2 = D_2*0.5;
+	double Q3 = (5.0 + 3.0*T1 + 10.0*C1 - 4.0*C1_2 - 9.0*ei2) * D_4 / 24.0;
+	double Q4 = (61.0 + 90.0*T1 + 298.0*C1 + 45.0*T1_2 - 3.0*C1_2 - 252.0*ei2) * D_6 / 720.0;
+	double Q5 = D;
+	double Q6 = (1.0 + 2.0*T1 + C1) * D_2*D / 6.0;
+	double Q7 = (5.0 - 2.0*C1 + 28.0*T1 - 3.0*C1_2 + 8.0*ei2 + 24.0*T1_2) * D_4*D / 120.0;
+
+	lat360 = fp360 - (Q1 * (Q2 - Q3 + Q4))*180.0/pi;
+	lon360 = lon0_360 - ((Q5 - Q6 + Q7)/cosFp)*180.0/pi;
+}
+
+// ---------------------------------------------------------------
+

@@ -502,6 +502,7 @@ bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 		ComInit MyObjectToInitCOM;
 		{
 			CGPXFileReader GpxReader(wstrFile);
+			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
 			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
 			while (!apTrack->eof())
 			{

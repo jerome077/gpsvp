@@ -197,8 +197,9 @@ std::wstring CDOMGPXField::getAttribute(const std::wstring& AttrName)
 // CGPXTrackPoint
 // ---------------------------------------------------------------
 
-CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode)
+CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader)
 	:	CDOMGPXElem(pNode),
+		m_pReader(pReader),
 		mLongitude(0.0),
 		mLatitude(0.0),
 		mUTCTime(0.0)
@@ -223,41 +224,43 @@ CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode)
 		mLatitude = 0.0;
 	}
 	// Read time
-	try
+	if (m_pReader->getReadTime()) // quite long => only if option set
 	{
-		XmlNode pTimeNode = m_pNode->selectSingleNode(L"time");
-		if (pTimeNode)
+		try
 		{
-			// I didn't find an xsd:dateTime-Parser, that why I just decode the most current
-			// time format (xsd:dateTime corresponds to ISO 8601, which allows other formats).
-			// The following code recognizes:
-			//  2009-05-01T12:00:00Z
-			//  2009-05-01T12:00:00.123Z (with milliseconds)
-			//  2009-05-01T12:00:00      (without Z, but still considered as UTC)
-			//  2009-05-01T12:00:00.123  (with milliseconds)
-			LONG lYear, lMonth, lDay, lHour, lMinute, lSecond, lMilliseconds;
-			int nReadFields = swscanf((const wchar_t*)pTimeNode->text, L"%d-%d-%dT%d:%d:%d.%dZ",
-				                      &lYear, &lMonth, &lDay, &lHour, &lMinute, &lSecond, &lMilliseconds);
-			if (nReadFields >= 6)
+			XmlNode pTimeNode = m_pNode->selectSingleNode(L"time");
+			if (pTimeNode)
 			{
-				SYSTEMTIME st;
-				st.wYear = lYear;
-				st.wMonth = lMonth;
-				st.wDay = lDay;
-				st.wHour = lHour;
-				st.wMinute = lMinute;
-				st.wSecond = lSecond;
-				st.wMilliseconds = (7 == nReadFields) ? lMilliseconds : 0;
-				if (!SystemTimeToVariantTime(&st, &mUTCTime))
-					mUTCTime = 0.0;
+				// I didn't find an xsd:dateTime-Parser, that why I just decode the most current
+				// time format (xsd:dateTime corresponds to ISO 8601, which allows other formats).
+				// The following code recognizes:
+				//  2009-05-01T12:00:00Z
+				//  2009-05-01T12:00:00.123Z (with milliseconds)
+				//  2009-05-01T12:00:00      (without Z, but still considered as UTC)
+				//  2009-05-01T12:00:00.123  (with milliseconds)
+				LONG lYear, lMonth, lDay, lHour, lMinute, lSecond, lMilliseconds;
+				int nReadFields = swscanf((const wchar_t*)pTimeNode->text, L"%d-%d-%dT%d:%d:%d.%dZ",
+										  &lYear, &lMonth, &lDay, &lHour, &lMinute, &lSecond, &lMilliseconds);
+				if (nReadFields >= 6)
+				{
+					SYSTEMTIME st;
+					st.wYear = lYear;
+					st.wMonth = lMonth;
+					st.wDay = lDay;
+					st.wHour = lHour;
+					st.wMinute = lMinute;
+					st.wSecond = lSecond;
+					st.wMilliseconds = (7 == nReadFields) ? lMilliseconds : 0;
+					if (!SystemTimeToVariantTime(&st, &mUTCTime))
+						mUTCTime = 0.0;
+				}
 			}
 		}
+		catch (_com_error e)
+		{
+			mUTCTime = 0.0;
+		}
 	}
-	catch (_com_error e)
-	{
-		mUTCTime = 0.0;
-	}
-
 }
 
 // ---------------------------------------------------------------
@@ -267,14 +270,14 @@ CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode)
 std::auto_ptr<CGPXTrackPoint> CGPXTrackSeg::firstTrackPoint()
 {
 	m_pXMLTrackPointNodeList = m_pNode->selectNodes(L"trkpt");
-	return std::auto_ptr<CGPXTrackPoint>(new CGPXTrackPoint(m_pXMLTrackPointNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrackPoint>(new CGPXTrackPoint(m_pXMLTrackPointNodeList->nextNode(), m_pReader));
 }
 
 // ---------------------------------------------------------------
 
 std::auto_ptr<CGPXTrackPoint> CGPXTrackSeg::nextTrackPoint()
 {
-	return std::auto_ptr<CGPXTrackPoint>(new CGPXTrackPoint(m_pXMLTrackPointNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrackPoint>(new CGPXTrackPoint(m_pXMLTrackPointNodeList->nextNode(), m_pReader));
 }
 
 // ---------------------------------------------------------------
@@ -293,14 +296,14 @@ std::wstring CGPXTrack::getName()
 std::auto_ptr<CGPXTrackSeg> CGPXTrack::firstTrackSeg()
 {
 	m_pXMLTrackSegNodeList = m_pNode->selectNodes(L"trkseg");
-	return std::auto_ptr<CGPXTrackSeg>(new CGPXTrackSeg(m_pXMLTrackSegNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrackSeg>(new CGPXTrackSeg(m_pXMLTrackSegNodeList->nextNode(), m_pReader));
 }
 
 // ---------------------------------------------------------------
 
 std::auto_ptr<CGPXTrackSeg> CGPXTrack::nextTrackSeg()
 {
-	return std::auto_ptr<CGPXTrackSeg>(new CGPXTrackSeg(m_pXMLTrackSegNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrackSeg>(new CGPXTrackSeg(m_pXMLTrackSegNodeList->nextNode(), m_pReader));
 }
 
 
@@ -314,7 +317,8 @@ CGPXFileReader::WaypointIterator CGPXFileReader::m_WaypointEnd(NULL);
 
 CGPXFileReader::CGPXFileReader(const std::wstring& wstrFilename)
 	: m_filename(wstrFilename),
-	  m_pXMLDoc(MSXML::CLSID_DOMDocument)
+	  m_pXMLDoc(MSXML::CLSID_DOMDocument),
+	  m_bReadTime(true)
 {
 	m_pXMLDoc->put_validateOnParse(VARIANT_FALSE);
 	m_pXMLDoc->put_resolveExternals(VARIANT_FALSE);
@@ -362,14 +366,14 @@ CGPXFileReader::WaypointIterator CGPXFileReader::WaypointBegin()
 std::auto_ptr<CGPXTrack> CGPXFileReader::firstTrack()
 {
 	m_pXMLTrackNodeList = m_pElemGPX->selectNodes(L"trk");
-	return std::auto_ptr<CGPXTrack>(new CGPXTrack(m_pXMLTrackNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrack>(new CGPXTrack(m_pXMLTrackNodeList->nextNode(), this));
 }
 
 // ---------------------------------------------------------------
 
 std::auto_ptr<CGPXTrack> CGPXFileReader::nextTrack()
 {
-	return std::auto_ptr<CGPXTrack>(new CGPXTrack(m_pXMLTrackNodeList->nextNode()));
+	return std::auto_ptr<CGPXTrack>(new CGPXTrack(m_pXMLTrackNodeList->nextNode(), this));
 }
 
 // ---------------------------------------------------------------
