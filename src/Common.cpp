@@ -669,37 +669,40 @@ void LongLatToUTM(double lon360, double lat360, int& utmZone, double& utmX, doub
 	double tanLat_2 = tanLat*tanLat;
 
 	double a = 6378137;
-	double b = 6356752.3142;
-    double SinOneSecond = 4.8481368e-6;
-	double SinOneSecond_2 = SinOneSecond*SinOneSecond;
-	double SinOneSecond_3 = SinOneSecond*SinOneSecond_2;
-	double SinOneSecond_4 = SinOneSecond_2*SinOneSecond_2;
+	//double b = 6356752.3142;
+    //double SinOneSecond = 4.8481368e-6;
+	//double SinOneSecond_2 = SinOneSecond*SinOneSecond;
+	//double SinOneSecond_3 = SinOneSecond*SinOneSecond_2;
+	//double SinOneSecond_4 = SinOneSecond_2*SinOneSecond_2;
 	double k0 = 0.9996;
-	double e = sqrt(1-b*b/(a*a));
-	double e_2 = e*e;
-	double ei2 = e_2/(1-e_2);
-	double n = (a-b)/(a+b);
-	double n_2 = n*n;
-	double n_3 = n*n_2;
-	double n_4 = n_2*n_2;
-	double n_5 = n*n_4;
+	//double e = sqrt(1-b*b/(a*a));
+	double e_2 = 0.0066943800042608137; //e*e;
+	double ei2 = 0.0067394967565868897; //e_2/(1-e_2);
+	//double n = (a-b)/(a+b);
+
 	double nu = a / sqrt(1 - e_2*sinLat_2);
-	double p = (lon360-lon0_360)*3600/10000; // it's not explained, why it should in seconds and divided by 10000
+	double p = (lon360-lon0_360)*3600/10000;
 	double p_2 = p*p;
 
-	double Ai = a * (1.0 - n + (5.0/4.0)*(n_2 - n_3) + (81.0/64.0)*(n_4 - n_5));
-	double Bi = (1.5*a*n)*(1.0 - n + (7.0/8.0)*(n_2 - n_3) + (55.0/64.0)*(n_4 - n_5));
-	double Ci = (15.0*a*n_2/16.0)*(1.0 - n + 0.75*(n_2 - n_3));
-	double Di = (35.0*a*n_3/48.0)*(1.0 - n + (11.0/16.0)*(n_2 - n_3));
-	double Ei = (315.0*a*n_4/51.0)*(1 - n);
+	double Ai = 6367449.1458008448;     //a * (1.0 - n + (5.0/4.0)*(n*n - n*n*n) + (81.0/64.0)*(n*n*n*n - n*n*n*n*n));
+	double Bi = 16038.508696860588;     //(1.5*a*n)*(1.0 - n + (7.0/8.0)*(n*n - n*n*n) + (55.0/64.0)*(n*n*n*n - n*n*n*n*n));
+	double Ci = 16.832613334334404;     //(15.0*a*n*n/16.0)*(1.0 - n + 0.75*(n*n - n*n*n));
+	double Di = 0.021984404202070495;   //(35.0*a*n*n*n/48.0)*(1.0 - n + (11.0/16.0)*(n*n - n*n*n));
+	double Ei = 0.00031270521795044842; //(315.0*a*n*n*n*n/51.0)*(1 - n);
 	double S = Ai*lat628 - Bi*sin(2*lat628) + Ci*sin(4*lat628) - Di*sin(6*lat628) + Ei*sin(8*lat628);
 
+	double P2 = 0.0011747514329670816;   //1e8* k0 * SinOneSecond_2 *0.5;
+	double P3 = 2.3009886108747026e-007; //1e16* k0 * SinOneSecond_4 / 24.0;
+	double P3b = 0.060655470809282006;   //9.0 * ei2;
+	double P3c = 0.00018168326612818083; //4.0 * ei2*ei2;
+	double P4 = 0.048461975452799996;    //1e4* k0 * SinOneSecond;
+	double P5 = 1.8984518843401473e-005; //1e12* k0 * SinOneSecond_3 / 6.0;
+
 	double K1 = S * k0;
-	double K2 = 1e8* k0 * SinOneSecond_2 * nu * sinLat * cosLat * 0.5;
-	double K3 = 1e16* (k0 * SinOneSecond_4 * nu * sinLat * cosLat_3 / 24.0)
-               *(5 - tanLat_2 + 9.0 * ei2 * cosLat_2 + 4.0 * ei2*ei2 * cosLat_4);
-	double K4 = 1e4* k0 * SinOneSecond * nu * cosLat;
-	double K5 = 1e12* (k0 * SinOneSecond_3 * nu * cosLat_3 / 6.0) * (1 - tanLat_2 + ei2 * cosLat_2);
+	double K2 = P2 * nu * sinLat * cosLat;
+	double K3 = P3 * nu * sinLat * cosLat_3 *(5 - tanLat_2 + P3b * cosLat_2 + P3c * cosLat_4);
+	double K4 = P4 * nu * cosLat;
+	double K5 = P5 * nu * cosLat_3 * (1 - tanLat_2 + ei2 * cosLat_2);
 
     // Northing
 	utmY = K1 + K2*p_2 + K3*p_2*p_2;	
@@ -727,23 +730,20 @@ void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double&
 	double a = 6378137;
 	double b = 6356752.3142;
 	double k0 = 0.9996;
-	double e = sqrt(1-b*b/(a*a));
-	double e_2 = e*e;
-	double ei2 = e_2/(1-e_2);
+	//double e = sqrt(1-b*b/(a*a));
+	double e_2 = 0.0066943800042608137; //e*e;
+	double ei2 = 0.0067394967565868897; //e_2/(1-e_2);
 
-	double M = utmY / k0;
-	double mu = M / (a * (1.0 - e_2/4.0 - 3.0*e_2*e_2/64.0 - 5.0*e_2*e_2*e_2/256.0));
-	double s12 = sqrt(1.0 - e_2);
-	double e1 = (1.0 - s12) / (1.0 + s12);
-	double e1_2 = e1*e1;
-	double e1_3 = e1_2*e1;
-	double e1_4 = e1_3*e1;
+	double P1 = 1.5711160578364014e-007; //1 / k0 / (a * (1.0 - e_2/4.0 - 3.0*e_2*e_2/64.0 - 5.0*e_2*e_2*e_2/256.0));
+	double mu = utmY * P1;
+	//double s12 = sqrt(1.0 - e_2);
+	//double e1 = (1.0 - s12) / (1.0 + s12);
 
 	// footprint latitude
-	double J1 = (3.0 * e1 / 2.0 - 27.0 * e1_3 / 32.0);
-	double J2 = (21.0 * e1_2 / 16.0 - 55.0 * e1_4 / 32.0);
-	double J3 = (151.0 * e1_3 / 96.0);
-	double J4 = (1097.0 * e1_4 / 512.0);
+	double J1 = 0.0025188265897211743;   //(3.0 * e1 / 2.0 - 27.0 * e1*e1*e1 / 32.0);
+	double J2 = 3.7009490512848485e-006; //(21.0 * e1*e1 / 16.0 - 55.0 * e1*e1*e1*e1 / 32.0);
+	double J3 = 7.4478138147885742e-009; //(151.0 * e1*e1*e1 / 96.0);
+	double J4 = 1.7035993382806964e-011; //(1097.0 * e1*e1*e1*e1 / 512.0);
 	double fp628 = mu + J1*sin(2*mu) + J2*sin(4*mu) + J3*sin(6*mu) + J4*sin(8*mu);
 	double fp360 = fp628 * 180.0 / pi;
 

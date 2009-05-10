@@ -954,7 +954,12 @@ class CSettingsDlg : public CMADialog
 		app.m_riTrackStep.Set(wcstol(buff, 0, 10));
 
 		int index = m_coordformat.GetCurSel();
-		app.m_riCoordFormat.Set(index);
+		if (app.m_riCoordFormat() != index)
+		{
+			app.m_riCoordFormat.Set(index);
+			app.m_monLongitude.SetIdL(L"Longitude", CoordLabelLon());
+			app.m_monLatitude.SetIdL(L"Latitude", CoordLabelLat());
+		}
 
 		index = m_utmZone.GetCurSel();
 		if (index>60) index = 60-index;

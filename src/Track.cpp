@@ -504,6 +504,8 @@ bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 			CGPXFileReader GpxReader(wstrFile);
 			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
 			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
+			if (apTrack->eof())
+				MessageBox(NULL, L("No track in this file"), L("GPX read error"), MB_ICONEXCLAMATION);
 			while (!apTrack->eof())
 			{
 				m_Tracks.push_back(CTrack());
