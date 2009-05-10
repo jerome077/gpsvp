@@ -244,13 +244,13 @@ CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader)
 				if (nReadFields >= 6)
 				{
 					SYSTEMTIME st;
-					st.wYear = lYear;
-					st.wMonth = lMonth;
-					st.wDay = lDay;
-					st.wHour = lHour;
-					st.wMinute = lMinute;
-					st.wSecond = lSecond;
-					st.wMilliseconds = (7 == nReadFields) ? lMilliseconds : 0;
+					st.wYear = (WORD)lYear;
+					st.wMonth = (WORD)lMonth;
+					st.wDay = (WORD)lDay;
+					st.wHour = (WORD)lHour;
+					st.wMinute = (WORD)lMinute;
+					st.wSecond = (WORD)lSecond;
+					st.wMilliseconds = (7 == nReadFields) ? (WORD)lMilliseconds : 0;
 					if (!SystemTimeToVariantTime(&st, &mUTCTime))
 						mUTCTime = 0.0;
 				}

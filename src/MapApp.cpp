@@ -2212,10 +2212,10 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_monAltitude.SetIdL(L"Altitude");
 	m_MonitorSet.AddMonitor(&m_monAltitude);
-	m_monLongitude.SetIdL(L"Longitude");
+	m_monLongitude.SetIdL(L"Longitude", CoordLabelLon());
 	m_monLongitude.SetLinkedLatitude(&m_monLatitude);
 	m_MonitorSet.AddMonitor(&m_monLongitude);
-	m_monLatitude.SetIdL(L"Latitude");
+	m_monLatitude.SetIdL(L"Latitude", CoordLabelLat());
 	m_monLatitude.SetLinkedLongitude(&m_monLongitude);
 	m_MonitorSet.AddMonitor(&m_monLatitude);
 

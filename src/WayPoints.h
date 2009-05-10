@@ -161,7 +161,7 @@ public:
 			CLongitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 			CLongitudeProp(const CLongitudeProp& source) : m_pt(source.m_pt), m_ptEditor(source.m_ptEditor) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return L("Longitude:"); };
+			virtual wstring Name() const { return CoordLabelLon()+L":"; };
 			virtual wstring Value() const
 			{
 				wstring wstrLon, wstrLat;
@@ -179,7 +179,7 @@ public:
 			CLatitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 //			CLatitudeProp(const CLatitudeProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return L("Latitude:"); };
+			virtual wstring Name() const { return CoordLabelLat()+L":"; };
 			virtual wstring Value() const
 			{
 				wstring wstrLon, wstrLat;

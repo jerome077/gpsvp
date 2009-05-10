@@ -57,6 +57,8 @@ double TextToDegree(const wchar_t * wcText);
 // Some coordinates must know WGS84-longitude and latitude at the same time.
 void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat);
 void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, double& dLat);
+wstring CoordLabelLon();
+wstring CoordLabelLat();
 
 wstring IntToText(int iInt);
 wstring IntToHex(int iInt);

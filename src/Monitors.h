@@ -29,10 +29,15 @@ protected:
 	enum {cnResetCmd = 1000, cnToggleCmd, cnSetTimeCmd, cnShowDateCmd, cnCopyText};
 public:
 	CMonitorBase() : m_fSet(false) {};
-	void SetIdL(wchar_t * wcLabel)
+	void SetIdL(wchar_t * wcName)
 	{
-		m_wstrLabel = GetDict().Translate(wcLabel);
-		m_wstrName = wcLabel;
+		m_wstrLabel = GetDict().Translate(wcName);
+		m_wstrName = wcName;
+	}
+	void SetIdL(const wstring& wstrName, const wstring& wstrLabel)
+	{
+		m_wstrLabel = wstrLabel;
+		m_wstrName = wstrName;
 	}
 	virtual const wchar_t * GetId()
 	{

@@ -19,6 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "MapApp.h"
 #include <fstream>
 // #include <windows.h>
+#include <cassert>
 
 void Check(bool fCondition)
 {
@@ -500,8 +501,8 @@ void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat)
 		int iUtmX, iUtmY, iUtmZone;
 		iUtmZone = app.m_riUTMZone();
 		LongLatToUTM(dLon, dLat, iUtmZone, iUtmX, iUtmY);
-		wstrLon = L"x="+IntToText(iUtmX)+L" z="+IntToText(iUtmZone)+L" utm";
-		wstrLat = L"y="+IntToText(iUtmY)+L" utm";
+		wstrLon = IntToText(iUtmX)+L" z"+IntToText(iUtmZone);
+		wstrLat = IntToText(iUtmY);
 	}
 }
 
@@ -516,8 +517,8 @@ void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, d
 	else if (5 == iCoordFormat) // UTM
 	{
 		int iUtmX, iUtmY, iUtmZone;
-		int nReadFields1 = swscanf(wstrLon.c_str(), L"x=%d z=%d utm", &iUtmX, &iUtmZone);
-		int nReadFields2 = swscanf(wstrLat.c_str(), L"y=%d utm", &iUtmY);
+		int nReadFields1 = swscanf(wstrLon.c_str(), L"%d z%d", &iUtmX, &iUtmZone);
+		int nReadFields2 = swscanf(wstrLat.c_str(), L"%d", &iUtmY);
 		if ((2 == nReadFields1) && (1 == nReadFields2))
 		{
 			UTMToLongLat(iUtmX, iUtmY, iUtmZone, dLon, dLat);
@@ -529,6 +530,25 @@ void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, d
 		}
 	}
 }
+
+wstring CoordLabelLon()
+{
+	int iCoordFormat = app.m_riCoordFormat();
+	if (5 == iCoordFormat) // UTM
+		return L("UTM Easting, Zone");
+	else
+		return L("Longitude");
+}
+
+wstring CoordLabelLat()
+{
+	int iCoordFormat = app.m_riCoordFormat();
+	if (5 == iCoordFormat) // UTM
+		return L("UTM Northing");
+	else
+		return L("Latitude");
+}
+
 
 std::wstring MakeFilename(const std::wstring & name, const std::wstring & basename)
 {
@@ -632,7 +652,7 @@ void LongLatToUTM(double lon360, double lat360, int& utmZone, double& utmX, doub
 {
 	if (0 == utmZone)  // 0 => automatic
 	{
-		utmZone = floor(lon360/6.0) + 31;
+		utmZone = (int)floor(lon360/6.0) + 31;
 		if (lat360 < 0) utmZone = -utmZone; // south hemisphere
 	}
 	double lon0_360 = abs(utmZone)*6.0 - 183.0;
@@ -694,8 +714,8 @@ void LongLatToUTM(double lon360, double lat360, int& utmZone, int& utmX, int& ut
 {
 	double dUtmX, dUtmY;
 	LongLatToUTM(lon360, lat360, utmZone, dUtmX, dUtmY);
-	utmX = floor(dUtmX + 0.5);
-	utmY = floor(dUtmY + 0.5);
+	utmX = (int)floor(dUtmX + 0.5);
+	utmY = (int)floor(dUtmY + 0.5);
 }
 
 void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360)
