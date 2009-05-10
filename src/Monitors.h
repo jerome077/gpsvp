@@ -339,19 +339,29 @@ public:
 
 class CDegreeMonitorLat : public CDoubleMonitor
 {
+protected:
+	CDoubleMonitor* m_monLinkedLongitude;
 public:
+	void SetLinkedLongitude(CDoubleMonitor* mon) { m_monLinkedLongitude = mon; };
 	void Paint(IMonitorPainter * pPainter)
 	{
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DegreeToText(m_dValue, true).c_str() : L"-");
+		wstring wstrLon, wstrLat;
+		CoordToText(m_monLinkedLongitude->Get(), m_dValue, wstrLon, wstrLat);
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLat.c_str() : L"-");
 	}
 };
 
 class CDegreeMonitorLon : public CDoubleMonitor
 {
+protected:
+	CDoubleMonitor* m_monLinkedLatitude;
 public:
+	void SetLinkedLatitude(CDoubleMonitor* mon) { m_monLinkedLatitude = mon; };
 	void Paint(IMonitorPainter * pPainter)
 	{
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DegreeToText(m_dValue, false).c_str() : L"-");
+		wstring wstrLon, wstrLat;
+		CoordToText(m_dValue, m_monLinkedLatitude->Get(), wstrLon, wstrLat);
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLon.c_str() : L"-");
 	}
 };
 

@@ -91,6 +91,7 @@ public:
 	COptionSet m_Options;
 	CRegScalar<int, REG_BINARY> m_riTrackStep;
 	CRegScalar<int, REG_BINARY> m_riCoordFormat;
+	CRegScalar<int, REG_BINARY> m_riUTMZone;
 	CRegScalar<int, REG_BINARY> m_riMetrics;
 	CRegScalar<int, REG_BINARY> m_riWaypointsRadius;
 	CRegScalar<int, REG_BINARY> m_riDetail;

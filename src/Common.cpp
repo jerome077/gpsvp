@@ -365,7 +365,7 @@ int sin100(int degree)
 	return mycos100.Guess(degree - (1 << (GPWIDTH - 2)));
 }
 
-wstring DegreeToText(double dDegree, bool fLat) 
+wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat) 
 {
 	int n1, n2, n3;
 	n1 = n2 = n3 = 1;
@@ -374,7 +374,7 @@ wstring DegreeToText(double dDegree, bool fLat)
 	wchar_t N = L'N';
 	wchar_t E = L'E';
 	wchar_t W = L'W';
-	switch (app.m_riCoordFormat())
+	switch (iCoordFormat)
 	{
 	case 0:
 	default:
@@ -487,6 +487,49 @@ double TextToDegree(const wchar_t * wcText)
 	return dDegree * sign;
 }
 
+void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat)
+{
+	int iCoordFormat = app.m_riCoordFormat();
+	if (iCoordFormat <= 4)
+	{
+		wstrLon = DegreeToText(dLon, false, iCoordFormat);
+		wstrLat = DegreeToText(dLat, true, iCoordFormat);
+	}
+	else if (5 == iCoordFormat) // UTM
+	{
+		int iUtmX, iUtmY, iUtmZone;
+		iUtmZone = app.m_riUTMZone();
+		LongLatToUTM(dLon, dLat, iUtmZone, iUtmX, iUtmY);
+		wstrLon = L"x="+IntToText(iUtmX)+L" z="+IntToText(iUtmZone)+L" utm";
+		wstrLat = L"y="+IntToText(iUtmY)+L" utm";
+	}
+}
+
+void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, double& dLat)
+{
+	int iCoordFormat = app.m_riCoordFormat();
+	if (iCoordFormat <= 4)
+	{
+		dLon = TextToDegree(wstrLon.c_str());
+		dLat = TextToDegree(wstrLat.c_str());
+	}
+	else if (5 == iCoordFormat) // UTM
+	{
+		int iUtmX, iUtmY, iUtmZone;
+		int nReadFields1 = swscanf(wstrLon.c_str(), L"x=%d z=%d utm", &iUtmX, &iUtmZone);
+		int nReadFields2 = swscanf(wstrLat.c_str(), L"y=%d utm", &iUtmY);
+		if ((2 == nReadFields1) && (1 == nReadFields2))
+		{
+			UTMToLongLat(iUtmX, iUtmY, iUtmZone, dLon, dLat);
+		}
+		else
+		{
+			dLon = 0.0;
+			dLat = 0.0;
+		}
+	}
+}
+
 std::wstring MakeFilename(const std::wstring & name, const std::wstring & basename)
 {
 	if (name[0] == L'/' || name[0] == L'\\')
@@ -582,14 +625,17 @@ bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime)
 
 // ---------------------------------------------------------------
 
-// Test-function (Jerome: currently not use, I might remove it later) to see if it 
-// would be possible to display/enter UTM coordinates. The function works, but
-// I'm thinking about using the gdal DLL, which supports a lot of coordanites systems.
 // Calculation based on explaination from Steven Dutch on http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM
-void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int& utmZone)
+// The function should work, but it could be a good idea to replace it throug
+// the gdal DLL, which supports a lot of other coordanites systems.
+void LongLatToUTM(double lon360, double lat360, int& utmZone, double& utmX, double& utmY)
 {
-    utmZone = floor(lon360/6.0) + 31;
-	double lon0_360 = utmZone*6.0 - 183.0;
+	if (0 == utmZone)  // 0 => automatic
+	{
+		utmZone = floor(lon360/6.0) + 31;
+		if (lat360 < 0) utmZone = -utmZone; // south hemisphere
+	}
+	double lon0_360 = abs(utmZone)*6.0 - 183.0;
 	
 	double lon628 = lon360 * pi / 180.0;
     double lat628 = lat360 * pi / 180.0;
@@ -637,13 +683,26 @@ void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int&
 
     // Northing
 	utmY = K1 + K2*p_2 + K3*p_2*p_2;	
+	if (utmZone < 0)
+		utmY = 10000000 + utmY; 	// south hemisphere
 	// Conventional UTM easting
     utmX = K4*p + K5*p*p_2 + 500000;
+
+}
+
+void LongLatToUTM(double lon360, double lat360, int& utmZone, int& utmX, int& utmY)
+{
+	double dUtmX, dUtmY;
+	LongLatToUTM(lon360, lat360, utmZone, dUtmX, dUtmY);
+	utmX = floor(dUtmX + 0.5);
+	utmY = floor(dUtmY + 0.5);
 }
 
 void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360)
 {
-	double lon0_360 = utmZone*6.0 - 183.0;
+	if (utmZone < 0)
+		utmY = utmY - 10000000;
+	double lon0_360 = abs(utmZone)*6.0 - 183.0;
 
 	double a = 6378137;
 	double b = 6356752.3142;
@@ -695,5 +754,95 @@ void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double&
 	lon360 = lon0_360 - ((Q5 - Q6 + Q7)/cosFp)*180.0/pi;
 }
 
+void TestUTM()
+{
+	int iUtmX, iUtmY, iUtmZone = 0;
+	double lon, lat;
+	
+	iUtmZone = 0;
+	LongLatToUTM(11, 48, iUtmZone, iUtmX, iUtmY);
+	assert(32 == iUtmZone);
+	assert(649188 == iUtmX);
+	assert(5318236 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11) < 0.00001);
+	assert(fabs(lat-48) < 0.00001);
+
+	iUtmZone = 32;
+	LongLatToUTM(11, 48, iUtmZone, iUtmX, iUtmY);
+	assert(32 == iUtmZone);
+	assert(649188 == iUtmX);
+	assert(5318236 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11) < 0.00001);
+	assert(fabs(lat-48) < 0.00001);
+
+	iUtmZone = 0;
+	LongLatToUTM(-11, 48, iUtmZone, iUtmX, iUtmY);
+	assert(29 == iUtmZone);
+	assert(350812 == iUtmX);
+	assert(5318236 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-(-11)) < 0.00001);
+	assert(fabs(lat-48) < 0.00001);
+
+	iUtmZone = 0;
+	LongLatToUTM(11, -48, iUtmZone, iUtmX, iUtmY);
+	assert(-32 == iUtmZone);
+	assert(649188 == iUtmX);
+	assert(4681764 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11) < 0.00001);
+	assert(fabs(lat-(-48)) < 0.00001);
+
+	iUtmZone = -32;
+	LongLatToUTM(11, -48, iUtmZone, iUtmX, iUtmY);
+	assert(-32 == iUtmZone);
+	assert(649188 == iUtmX);
+	assert(4681764 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11) < 0.00001);
+	assert(fabs(lat-(-48)) < 0.00001);
+
+	iUtmZone = 32;
+	LongLatToUTM(11, -48, iUtmZone, iUtmX, iUtmY);
+	assert(32 == iUtmZone); // forced to north hemisphere although it is in the south
+	assert(649188 == iUtmX);
+	assert(-5318236 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11) < 0.00001);
+	assert(fabs(lat-(-48)) < 0.00001);
+
+	iUtmZone = 0;
+	LongLatToUTM(-11, -48, iUtmZone, iUtmX, iUtmY);
+	assert(-29 == iUtmZone);
+	assert(350812 == iUtmX);
+	assert(4681764 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-(-11)) < 0.00001);
+	assert(fabs(lat-(-48)) < 0.00001);
+
+	iUtmZone = 0;
+	LongLatToUTM(11.5, 48.5, iUtmZone, iUtmX, iUtmY);
+	assert(32 == iUtmZone);
+	assert(684673 == iUtmX);
+	assert(5374894 == iUtmY);
+	UTMToLongLat(iUtmX, iUtmY, iUtmZone, lon, lat);
+	assert(fabs(lon-11.5) < 0.00001);
+	assert(fabs(lat-48.5) < 0.00001);
+}
+
 // ---------------------------------------------------------------
+
+wstring UTMZoneToLongText(int utmZone)
+{
+	int lon0_360 = abs(utmZone)*6 - 183;
+	wchar_t bufDegrees[128];
+	wsprintf(bufDegrees, L("%d° to %d°"), lon0_360-3, lon0_360+3);
+	wstring sHemisphere = (utmZone > 0) ? L("north hemisphere") : L("south hemisphere");
+	return IntToText(utmZone) + L" (" + bufDegrees + L", " + sHemisphere + L")";
+}
+
+// ---------------------------------------------------------------
+
 

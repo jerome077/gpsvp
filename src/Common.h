@@ -51,8 +51,13 @@ T sqr(T a)
 
 wstring DoubleToText(double dDouble, int iDigits = 1);
 string DoubleToStr(double dDouble, int iDigits = 1);
-wstring DegreeToText(double dDegree, bool fLat);
+
+wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
 double TextToDegree(const wchar_t * wcText);
+// Some coordinates must know WGS84-longitude and latitude at the same time.
+void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat);
+void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, double& dLat);
+
 wstring IntToText(int iInt);
 wstring IntToHex(int iInt);
 wstring DistanceToText(double dDistance);
@@ -146,9 +151,38 @@ bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime);
 
 // ---------------------------------------------------------------
 
-// test functions, see comment with the implementation
-void LongLatToUTM(double lon360, double lat360, double& utmX, double& utmY, int& utmZone);
+// Functions to work with UTM coordinates:
+// - utmZone between 1 and 60 for the north hemisphere and between -1 and -60 for the south hemisphere.
+// - Some functions accept utmZone = 0 for "automatic" but don't care of exceptions
+//   (like in Norway where a zone is locally bigger).
+
+void TestUTM(); // Test cases, only used for debug
+
+// LongLatToUTM
+// input:
+//  - longitude and latitude in degrees
+//  - utmZone = wanted zone (or 0 for automatic)
+// ouput:
+//  - utmZone = used zone (if it was 0 in input, don't take care of exceptions)
+//  - utmX = UTM easting in meters
+//  - utmY = UTM northing in meters
+void LongLatToUTM(double lon360, double lat360, int& utmZone, double& utmX, double& utmY);
+void LongLatToUTM(double lon360, double lat360, int& utmZone, int& utmX, int& utmY);
+
+// UTMToLongLat
+// input:
+//  - UTM easting and northing in meters
+//  - utmZone = used zone (should NOT be 0!)
+// ouput:
+//  - longitude and latitude in degrees
 void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360);
+
+// UTMToLongLat
+// input:
+//  - utmZone = used zone (should NOT be 0!)
+// ouput:
+//  - a text describing the zone
+wstring UTMZoneToLongText(int utmZone);
 
 // ---------------------------------------------------------------
 

@@ -31,9 +31,11 @@ using namespace std;
 const std::wstring WPT_MODEL_PREFIX = L"~";
 bool isWptModel(const std::wstring& WaypointName);
 
+
 class CWaypoints
 {
 public:
+	class CPointEditor;
 	static std::wstring GetCreator();
 	
 	// ---------------------------------------------
@@ -43,6 +45,7 @@ public:
 		nsVP,  // gpsVP specific
 		nsOSM  // Open Street Map
 	};
+	// ---------------------------------------------
 	class CPointProp
 	{
 	public:
@@ -52,19 +55,6 @@ public:
 		virtual bool DeleteAllowed() const { return false; };
 		virtual void SetValue(const wstring& aValue) {};
 		virtual void SetName(const wstring& aValue) {};
-	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-    class CPropProxy : public CPointProp
-	{
-		CPointProp* m_RefProp;
-	public:
-		CPropProxy(CPointProp* ARefProp) : m_RefProp(ARefProp) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return m_RefProp->Namespace(); };
-		virtual wstring Name() const { return m_RefProp->Name(); };
-		virtual wstring Value() const { return m_RefProp->Value(); };
-		virtual bool DeleteAllowed() const { return m_RefProp->DeleteAllowed(); };
-		virtual void SetValue(const wstring& aValue) { m_RefProp->SetValue(aValue); };
-		virtual void SetName(const wstring& aValue) { m_RefProp->SetName(aValue); };
 	};
 	// - - - - - - - - - - - - - - - - - - - - - - -
     class CStringProp : public CPointProp
@@ -85,11 +75,11 @@ public:
 		virtual void SetName(const wstring& aValue) { m_name = aValue; };
 	};
 	// ---------------------------------------------
-
 	class CPoint
 	{
 	protected:
 		friend class CWaypoints;
+		friend class CPointEditor;
 		void Cache()
 		{
 			m_poscache = GeoPoint(m_dLongitude, m_dLatitude);
@@ -133,84 +123,123 @@ public:
 		bool CheckProximity(GeoPoint gp);
 		bool operator == (const CPoint & to) const;
 		bool operator == (int to) const;
-		// List of all properties of the waypoint:
-		void GetPropertiesList(IListAcceptor2 * pAcceptor);
-		int GetPropertyCount() const;
-		std::auto_ptr<CPointProp> GetPropertyByIndex(int iId);
-		CPointProp& AddOSMProp();
-		bool RemovePropertyByIndex(int iId);
+		CWaypoints::CPointEditor GetEditor();
 		// copy and merge (to make a backup before editing):
 		void Assign(const CPoint& source);
 		// copy and merge the complementary properties (not long, lat, alt...)
 		void AssignOSM(const CPoint& source);
 	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-	class CLongitudeProp : public CPointProp
+	// ---------------------------------------------
+	// To access to the properties of a waypoint and be able to apply changes
+	// in a single step (because for utm or other coordinates you need x and y
+	// to be able to change longitude and latitude)
+	class CPointEditor
 	{
+	protected:
 		CPoint& m_pt;
+		wstring m_wstrLon, m_wstrLat; // Editing lon and lat postponed until commit
 	public:
-		CLongitudeProp(CPoint& aPt) : m_pt(aPt) {};
-		CLongitudeProp(const CLongitudeProp& source) : m_pt(source.m_pt) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual wstring Name() const { return L("Longitude:"); };
-		virtual wstring Value() const { return DegreeToText(m_pt.Longitude(), false); };
-		virtual void SetValue(const wstring& aValue) { m_pt.Longitude(TextToDegree(aValue.c_str())); };
-	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-	class CLatitudeProp : public CPointProp
-	{
-		CPoint& m_pt;
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CPropProxy : public CPointProp
+		{
+			CPointProp* m_RefProp;
+		public:
+			CPropProxy(CPointProp* ARefProp) : m_RefProp(ARefProp) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return m_RefProp->Namespace(); };
+			virtual wstring Name() const { return m_RefProp->Name(); };
+			virtual wstring Value() const { return m_RefProp->Value(); };
+			virtual bool DeleteAllowed() const { return m_RefProp->DeleteAllowed(); };
+			virtual void SetValue(const wstring& aValue) { m_RefProp->SetValue(aValue); };
+			virtual void SetName(const wstring& aValue) { m_RefProp->SetName(aValue); };
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CLongitudeProp : public CPointProp
+		{
+			CPoint& m_pt;
+			CPointEditor& m_ptEditor;
+		public:
+			CLongitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
+			CLongitudeProp(const CLongitudeProp& source) : m_pt(source.m_pt), m_ptEditor(source.m_ptEditor) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
+			virtual wstring Name() const { return L("Longitude:"); };
+			virtual wstring Value() const
+			{
+				wstring wstrLon, wstrLat;
+				CoordToText(m_pt.Longitude(), m_pt.Latitude(), wstrLon, wstrLat);
+				return wstrLon;
+			};
+			virtual void SetValue(const wstring& aValue) { m_ptEditor.m_wstrLon = aValue; };
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CLatitudeProp : public CPointProp
+		{
+			CPoint& m_pt;
+			CPointEditor& m_ptEditor;
+		public:
+			CLatitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
+//			CLatitudeProp(const CLatitudeProp& source) : m_pt(source.m_pt) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
+			virtual wstring Name() const { return L("Latitude:"); };
+			virtual wstring Value() const
+			{
+				wstring wstrLon, wstrLat;
+				CoordToText(m_pt.Longitude(), m_pt.Latitude(), wstrLon, wstrLat);
+				return wstrLat;
+			};
+			virtual void SetValue(const wstring& aValue) { m_ptEditor.m_wstrLat = aValue; };
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CNameProp : public CPointProp
+		{
+			CPoint& m_pt;
+		public:
+			CNameProp(CPoint& aPt) : m_pt(aPt) {};
+			CNameProp(const CNameProp& source) : m_pt(source.m_pt) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
+			virtual wstring Name() const { return L("Label:"); };
+			virtual wstring Value() const { return m_pt.GetLabel(); };
+			virtual void SetValue(const wstring& aValue) { m_pt.SetLabel(aValue.c_str()); };
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CAltitudeProp : public CPointProp
+		{
+			CPoint& m_pt;
+		public:
+			CAltitudeProp(CPoint& aPt) : m_pt(aPt) {};
+			CAltitudeProp(const CAltitudeProp& source) : m_pt(source.m_pt) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
+			virtual wstring Name() const { return L("Altitude:"); };
+			virtual wstring Value() const { return IntToText(m_pt.GetAltitude()); };
+			virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
+															int i = wcstol(aValue.c_str(), &end, 10);
+															if (*end == 0) m_pt.Altitude(i);
+														};
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
+		class CRadiusProp : public CPointProp
+		{
+			CPoint& m_pt;
+		public:
+			CRadiusProp(CPoint& aPt) : m_pt(aPt) {};
+			CRadiusProp(const CRadiusProp& source) : m_pt(source.m_pt) {};
+			virtual enumWaypointPropNameSpace Namespace() const { return nsVP; };
+			virtual wstring Name() const { return L("Radius:"); };
+			virtual wstring Value() const { return IntToText(m_pt.GetRadius()); };
+			virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
+															int i = wcstol(aValue.c_str(), &end, 10);
+															if (*end == 0) m_pt.SetRadius(i);
+														};
+		};
+		// - - - - - - - - - - - - - - - - - - - - - - -
 	public:
-		CLatitudeProp(CPoint& aPt) : m_pt(aPt) {};
-		CLatitudeProp(const CLatitudeProp& source) : m_pt(source.m_pt) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual wstring Name() const { return L("Latitude:"); };
-		virtual wstring Value() const { return DegreeToText(m_pt.Latitude(), true); };
-		virtual void SetValue(const wstring& aValue) { m_pt.Latitude(TextToDegree(aValue.c_str())); };
+		CPointEditor(CPoint& aPt) : m_pt(aPt) {};
+		int GetPropertyCount() const;
+		std::auto_ptr<CPointProp> GetPropertyByIndex(int iId);
+		CPointProp& AddOSMProp();
+		bool RemovePropertyByIndex(int iId);
+		void Commit();
 	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-	class CNameProp : public CPointProp
-	{
-		CPoint& m_pt;
-	public:
-		CNameProp(CPoint& aPt) : m_pt(aPt) {};
-		CNameProp(const CNameProp& source) : m_pt(source.m_pt) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual wstring Name() const { return L("Label:"); };
-		virtual wstring Value() const { return m_pt.GetLabel(); };
-		virtual void SetValue(const wstring& aValue) { m_pt.SetLabel(aValue.c_str()); };
-	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-	class CAltitudeProp : public CPointProp
-	{
-		CPoint& m_pt;
-	public:
-		CAltitudeProp(CPoint& aPt) : m_pt(aPt) {};
-		CAltitudeProp(const CAltitudeProp& source) : m_pt(source.m_pt) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual wstring Name() const { return L("Altitude:"); };
-		virtual wstring Value() const { return IntToText(m_pt.GetAltitude()); };
-		virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
-														int i = wcstol(aValue.c_str(), &end, 10);
-														if (*end == 0) m_pt.Altitude(i);
-													};
-	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
-	class CRadiusProp : public CPointProp
-	{
-		CPoint& m_pt;
-	public:
-		CRadiusProp(CPoint& aPt) : m_pt(aPt) {};
-		CRadiusProp(const CRadiusProp& source) : m_pt(source.m_pt) {};
-		virtual enumWaypointPropNameSpace Namespace() const { return nsVP; };
-		virtual wstring Name() const { return L("Radius:"); };
-		virtual wstring Value() const { return IntToText(m_pt.GetRadius()); };
-		virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
-														int i = wcstol(aValue.c_str(), &end, 10);
-														if (*end == 0) m_pt.SetRadius(i);
-													};
-	};
-	// - - - - - - - - - - - - - - - - - - - - - - -
+	// ---------------------------------------------
 protected:
 	list<CPoint> m_Points;
 	wstring m_wstrFilename;
@@ -270,5 +299,8 @@ public:
 	wstring GetFilename() { return m_wstrFilename; };
 	bool IsGPX();
 };
+
+// ---------------------------------------------------------------
+
 
 #endif // WAYPOINTS_H

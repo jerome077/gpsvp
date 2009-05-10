@@ -131,98 +131,6 @@ bool CWaypoints::CPoint::operator == (int to) const
 	return m_iId == to;
 }
 
-// ---------------------------------------------------------------
-
-void CWaypoints::CPoint::GetPropertiesList(IListAcceptor2 * pAcceptor)
-{
-	int index = 0;
-	pAcceptor->AddItem(L("Label:"), index, 0, 0);
-	pAcceptor->AddItem(m_wstrName.c_str(), index, 1, 0);
-
-    index++;
-	std::wstring m_wstrLatitude = DegreeToText(m_dLatitude, true);
-	pAcceptor->AddItem(L("Latitude:"), index, 0, 0);
-	pAcceptor->AddItem(m_wstrLatitude.c_str(), index, 1, 0);
-
-    index++;
-	std::wstring m_wstrLongitude = DegreeToText(m_dLongitude, false);
-	pAcceptor->AddItem(L("Longitude:"), index, 0, 0);
-	pAcceptor->AddItem(m_wstrLongitude.c_str(), index, 1, 0);
-
-    index++;
-	pAcceptor->AddItem(L("Radius:"), index, 0, 0);
-	pAcceptor->AddItem(IntToText(m_iRadius).c_str(), index, 1, 0);
-
-    index++;
-	pAcceptor->AddItem(L("Altitude:"), index, 0, 0);
-	pAcceptor->AddItem(IntToText(m_iAltitude).c_str(), index, 1, 0);
-
-	for(std::vector<CStringProp>::iterator iter = m_OSMPropList.begin();
-	    iter != m_OSMPropList.end();
-		iter++)
-	{
-        index++;
-		pAcceptor->AddItem(iter->Name().c_str(), index, 0, 0);
-		pAcceptor->AddItem(iter->Value().c_str(), index, 1, 0);
-	}
-}
-
-// ---------------------------------------------------------------
-
-int CWaypoints::CPoint::GetPropertyCount() const
-{
-	return 5+m_OSMPropList.size();
-}
-
-// ---------------------------------------------------------------
-
-std::auto_ptr<CWaypoints::CPointProp> CWaypoints::CPoint::GetPropertyByIndex(int iId)
-{
-	switch (iId) 
-	{
-	case 0:
-		return std::auto_ptr<CWaypoints::CPointProp>(new CNameProp(*this));
-	case 1:
-		return std::auto_ptr<CWaypoints::CPointProp>(new CLatitudeProp(*this));
-	case 2:
-		return std::auto_ptr<CWaypoints::CPointProp>(new CLongitudeProp(*this));
-	case 3:
-		return std::auto_ptr<CWaypoints::CPointProp>(new CRadiusProp(*this));
-	case 4:
-		return std::auto_ptr<CWaypoints::CPointProp>(new CAltitudeProp(*this));
-	default:
-		if (iId-5 < (int)m_OSMPropList.size())
-			return std::auto_ptr<CWaypoints::CPointProp>(new CPropProxy(&m_OSMPropList[iId-5]));
-		else
-			return std::auto_ptr<CWaypoints::CPointProp>(NULL);
-	}
-}
-
-// ---------------------------------------------------------------
-
-// Returns false if the property can't be removed
-bool CWaypoints::CPoint::RemovePropertyByIndex(int iId)
-{	
-	if (iId <5) return false;
-	int iOsmId = iId-5;
-	if ((iOsmId < (int)m_OSMPropList.size()) && m_OSMPropList[iOsmId].DeleteAllowed())
-	{
-		 m_OSMPropList.erase(m_OSMPropList.begin()+iOsmId);
-		 return true;
-	}
-	return false;
-}
-
-// ---------------------------------------------------------------
-
-CWaypoints::CPointProp& CWaypoints::CPoint::AddOSMProp()
-{
-	m_OSMPropList.push_back(CStringProp(nsOSM, L"", L""));
-	return m_OSMPropList.back();
-}
-
-// ---------------------------------------------------------------
-
 Int CWaypoints::AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int iRadius)
 {
 	m_Points.push_back(CPoint(Degree(gp.lon), Degree(gp.lat), iAltitude, wcName));
@@ -434,6 +342,7 @@ void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
 				int iAltitude = int(iterWpt->getAltitude());
 
 				CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, L""), iRadius));
+				CWaypoints::CPointEditor wptEditor = wpt.GetEditor();
 				std::auto_ptr<CGPXField> apField = iterWpt->firstField();
 				while (!apField->eof())
 				{
@@ -444,12 +353,13 @@ void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
 					}
 					else if (L"gpsVP:osm" == fieldName)
 					{
-						CWaypoints::CPointProp& prop = wpt.AddOSMProp();
+						CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
 						prop.SetName(apField->getOSMKey());
 						prop.SetValue(apField->getOSMValue());
 					}
 					apField = iterWpt->nextField();
 				}
+				wptEditor.Commit();
 
 				++iterWpt;
 			}
@@ -698,4 +608,77 @@ bool CWaypoints::IsGPX()
 	std::wstring wstrExt = m_wstrFilename.substr(m_wstrFilename.length()-4, 4);
 	return (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4));
 }
+// ---------------------------------------------------------------
+
+CWaypoints::CPointEditor CWaypoints::CPoint::GetEditor()
+{
+	return CWaypoints::CPointEditor(*this);
+}
+
+// ---------------------------------------------------------------
+int CWaypoints::CPointEditor::GetPropertyCount() const
+{
+	return 5+m_pt.m_OSMPropList.size();
+}
+
+// ---------------------------------------------------------------
+
+std::auto_ptr<CWaypoints::CPointProp> CWaypoints::CPointEditor::GetPropertyByIndex(int iId)
+{
+	switch (iId) 
+	{
+	case 0:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CNameProp(m_pt));
+	case 1:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CLatitudeProp(m_pt, *this));
+	case 2:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CLongitudeProp(m_pt, *this));
+	case 3:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CRadiusProp(m_pt));
+	case 4:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CAltitudeProp(m_pt));
+	default:
+		if (iId-5 < (int)m_pt.m_OSMPropList.size())
+			return std::auto_ptr<CWaypoints::CPointProp>(new CPropProxy(&m_pt.m_OSMPropList[iId-5]));
+		else
+			return std::auto_ptr<CWaypoints::CPointProp>(NULL);
+	}
+}
+
+// ---------------------------------------------------------------
+
+// Returns false if the property can't be removed
+bool CWaypoints::CPointEditor::RemovePropertyByIndex(int iId)
+{	
+	if (iId <5) return false;
+	int iOsmId = iId-5;
+	if ((iOsmId < (int)m_pt.m_OSMPropList.size()) && m_pt.m_OSMPropList[iOsmId].DeleteAllowed())
+	{
+		 m_pt.m_OSMPropList.erase(m_pt.m_OSMPropList.begin()+iOsmId);
+		 return true;
+	}
+	return false;
+}
+
+// ---------------------------------------------------------------
+
+CWaypoints::CPointProp& CWaypoints::CPointEditor::AddOSMProp()
+{
+	m_pt.m_OSMPropList.push_back(CStringProp(nsOSM, L"", L""));
+	return m_pt.m_OSMPropList.back();
+}
+
+// ---------------------------------------------------------------
+
+void CWaypoints::CPointEditor::Commit()
+{
+	if (!m_wstrLon.empty() && !m_wstrLat.empty())
+	{
+		double dLon, dLat;
+		TextToCoord(m_wstrLon, m_wstrLat, dLon, dLat);
+		m_pt.Longitude(dLon);
+		m_pt.Latitude(dLat);
+	}
+}
+
 // ---------------------------------------------------------------

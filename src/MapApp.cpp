@@ -234,14 +234,16 @@ public:
 
 	void SaveControlsToPoint(CWaypoints::CPoint& point)
 	{
-		for(int i=0, iEnd=point.GetPropertyCount(); i<iEnd; i++)
+		CWaypoints::CPointEditor wptEditor = point.GetEditor();
+		for(int i=0, iEnd=wptEditor.GetPropertyCount(); i<iEnd; i++)
 		{
-			std::auto_ptr<CWaypoints::CPointProp> prop (point.GetPropertyByIndex(i));
+			std::auto_ptr<CWaypoints::CPointProp> prop (wptEditor.GetPropertyByIndex(i));
 			const Int cnMaxStr = 1000;
 			wchar_t buff[cnMaxStr] = {0};
 			m_EditTextControls[i].GetText(buff, cnMaxStr);
 			prop->SetValue(buff);
 		}
+		wptEditor.Commit();
 	}
 	void ClearControls()
 	{
@@ -264,9 +266,10 @@ public:
 	void RecreateControls(HWND hDlg, CWaypoints::CPoint& point, bool bScrollToBottom)
 	{
 		ClearControls();
-		for(int i=0, iEnd=point.GetPropertyCount(); i<iEnd; i++)
+		CWaypoints::CPointEditor wptEditor = point.GetEditor();
+		for(int i=0, iEnd=wptEditor.GetPropertyCount(); i<iEnd; i++)
 		{
-			std::auto_ptr<CWaypoints::CPointProp> prop (point.GetPropertyByIndex(i));
+			std::auto_ptr<CWaypoints::CPointProp> prop (wptEditor.GetPropertyByIndex(i));
 			std::wstring name = (CWaypoints::nsOSM == prop->Namespace()) ? L"osm:"+prop->Name() : prop->Name();
 			m_TextControls.push_back(CText(m_hDialog, name.c_str()));
 			AddItem(m_hDialog, m_TextControls.back());
@@ -411,8 +414,10 @@ public:
 				if (idx >= 0)
 				{
 					SaveControlsToPoint(m_ClonedPoint);
-					if (!m_ClonedPoint.RemovePropertyByIndex(idx))
+					CWaypoints::CPointEditor wptEditor = m_ClonedPoint.GetEditor();
+					if (!wptEditor.RemovePropertyByIndex(idx))
 						MessageBox(0, L("Only OSM Tags can be deleted"), L("Delete Tag"), MB_ICONINFORMATION);
+					wptEditor.Commit();
 					RecreateControls(hDlg, m_ClonedPoint, false);
 				}
 				return;
@@ -420,9 +425,10 @@ public:
 		case dmcWaypointNewOSMTag:
 			{
 				SaveControlsToPoint(m_ClonedPoint);
+				CWaypoints::CPointEditor wptEditor = m_ClonedPoint.GetEditor();
 				static CWaypointPropertyDlg dlg;
 				g_pNextDialog = &dlg;
-				CWaypoints::CPointProp& prop = m_ClonedPoint.AddOSMProp();
+				CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
 				dlg.m_iType = prop.Namespace();
 				dlg.m_strName = prop.Name();
 				dlg.m_strValue = prop.Value();
@@ -432,6 +438,7 @@ public:
 					prop.SetValue(dlg.m_strValue);
 					prop.SetName(dlg.m_strName);
 				}
+				wptEditor.Commit();
 				RecreateControls(hDlg, m_ClonedPoint, true);
 				return;
 			}
@@ -810,6 +817,7 @@ class CSettingsDlg : public CMADialog
 	CCombo m_portSpeed;
 	CCombo m_trackstep;
 	CCombo m_coordformat;
+	CCombo m_utmZone;
 	CCombo m_metrics;
 	CEditText  m_proxy;
 	std::map<std::wstring, int> m_comboItems;
@@ -881,7 +889,18 @@ class CSettingsDlg : public CMADialog
 		m_coordformat.AddItem(L"N37.278742°");
 		m_coordformat.AddItem(L"+37.278742");
 		m_coordformat.AddItem(L"N37°27'35.64\"");
+		m_coordformat.AddItem(L"UTM (experimental)");
 		m_coordformat.Select(app.m_riCoordFormat());
+
+		m_utmZone.Create(hDlg, false);
+		m_utmZone.AddItem(L"Automatic");
+		for(int i=1;i<=60;i++)
+			m_utmZone.AddItem((wchar_t *)UTMZoneToLongText(i).c_str());
+		for(int i=-1;i>=-60;i--)
+			m_utmZone.AddItem((wchar_t *)UTMZoneToLongText(i).c_str());
+		int utmZoneIndex = app.m_riUTMZone();
+		if (utmZoneIndex < 0) utmZoneIndex = 60-utmZoneIndex;
+		m_utmZone.Select(utmZoneIndex);
 
 		m_metrics.Create(hDlg, false);
 		m_metrics.AddItem(L("Metric"));
@@ -899,6 +918,8 @@ class CSettingsDlg : public CMADialog
 		AddItem(hDlg, m_proxy);
 		AddItem(hDlg, CText(hDlg, L("Coordinates format:")));
 		AddItem(hDlg, m_coordformat);
+		AddItem(hDlg, CText(hDlg, L("UTM Zone:")));
+		AddItem(hDlg, m_utmZone);
 		AddItem(hDlg, CText(hDlg, L("Metric system:")));
 		AddItem(hDlg, m_metrics);
 		
@@ -934,6 +955,10 @@ class CSettingsDlg : public CMADialog
 
 		int index = m_coordformat.GetCurSel();
 		app.m_riCoordFormat.Set(index);
+
+		index = m_utmZone.GetCurSel();
+		if (index>60) index = 60-index;
+		app.m_riUTMZone.Set(index);
 
 		index = m_metrics.GetCurSel();
 		app.m_riMetrics.Set(index);
@@ -2139,6 +2164,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_riTrackStep.Init(hRegKey, L"TrackStep", 1);
 	m_riCoordFormat.Init(hRegKey, L"CoordinateFormat", 0);
+	m_riUTMZone.Init(hRegKey, L"UTMZone", 0);
 	m_riMetrics.Init(hRegKey, L"MetricSystem", 0);
 	m_riWaypointsRadius.Init(hRegKey, L"WaypointsRadius", 40000000);
 	m_riDetail.Init(hRegKey, L"Detail", 0);
@@ -2187,8 +2213,10 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_monAltitude.SetIdL(L"Altitude");
 	m_MonitorSet.AddMonitor(&m_monAltitude);
 	m_monLongitude.SetIdL(L"Longitude");
+	m_monLongitude.SetLinkedLatitude(&m_monLatitude);
 	m_MonitorSet.AddMonitor(&m_monLongitude);
 	m_monLatitude.SetIdL(L"Latitude");
+	m_monLatitude.SetLinkedLongitude(&m_monLongitude);
 	m_MonitorSet.AddMonitor(&m_monLatitude);
 
 	m_monMemory.SetIdL(L"Memory");
@@ -3707,6 +3735,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		
 //		RECT rect = m_painter.GetScreenRect();
 		DWORD res = mmMenu.Popup(sp.x, sp.y, m_hWnd);
+		wstring wstrLon, wstrLat;
 
 		switch(res)
 		{
@@ -3780,10 +3809,11 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		case 14:
 			{
 				CWaypoints::CPoint & p = m_Waypoints.ById(nPointID);
+				CoordToText(p.Longitude(), p.Latitude(), wstrLon, wstrLat);
 				MessageBox(0, (wstring(L"")
 					+ L("Name: ") + p.GetLabel()
-					+ L"\n" + L("Latitude: ") + DegreeToText(p.Latitude(), true)
-					+ L"\n" + L("Longitude: ") + DegreeToText(p.Longitude(), false)
+					+ L"\n" + L("Latitude: ") + wstrLat
+					+ L"\n" + L("Longitude: ") + wstrLon
 					+ L"\n" + L("Altitude: ") + DoubleToText(p.GetAltitude())
 					).c_str(),
 					L("Waypoint info"),MB_ICONINFORMATION);
@@ -3805,12 +3835,13 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			m_painter.Redraw();
 			break;
 		case 24:
+			CoordToText(Degree(pinfo.gp.lon), Degree(pinfo.gp.lat), wstrLon, wstrLat);
 			MessageBox(0, (wstring(L"")
 				+ L("Name: ") + pinfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PointType(pinfo.uiType)
 				+ L"\n" + L("Code: ") + IntToHex(pinfo.uiType)
-				+ L"\n" + L("Latitude: ") + DegreeToText(Degree(pinfo.gp.lat), true)
-				+ L"\n" + L("Longitude: ") + DegreeToText(Degree(pinfo.gp.lon), false)
+				+ L"\n" + L("Latitude: ") + wstrLat
+				+ L"\n" + L("Longitude: ") + wstrLon
 				).c_str(),
 				L("Point info"),MB_ICONINFORMATION);
 			break;
