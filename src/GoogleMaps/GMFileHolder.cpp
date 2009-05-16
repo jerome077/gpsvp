@@ -253,6 +253,8 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 	// Archive is usually set. Hidden will prevent most album scans. System even more
     // m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
 	m_dwMapsAttr = GetFileAttributes((m_strMapsRoot + L"\\attrib").c_str());
+	if (INVALID_FILE_ATTRIBUTES == m_dwMapsAttr)
+		m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE;
 	// I consider this a temporary workaround, it may be nicer and clearer for users
 	// to create a proper settigns in VP (also for the 404 above) rather than 
 	// non-intuitive non-documented "settings" like this
