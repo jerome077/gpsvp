@@ -444,7 +444,7 @@ void CPoint::Paint(IPainter * pPainter, CSubdivision * pOwner)
 	}
 	const wchar_t *label = NULL;
 	if(labelOffset != 0){
-		label = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(labelOffset);
+		label = pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(labelOffset & 0x3FFFFF);
 	}
 	pPainter->PaintPoint(m_uiType, m_gpPoint, label);
 }
