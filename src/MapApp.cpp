@@ -61,7 +61,7 @@ extern HINSTANCE g_hInst;
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 
-const CVersionNumber g_gpsVPVersion(0, 4, 18);
+const CVersionNumber g_gpsVPVersion(0, 4, 19);
 
 class CNmeaCommandsDlg : public CMADialog
 {
