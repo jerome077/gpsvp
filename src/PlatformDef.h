@@ -98,4 +98,8 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 #	define wfopen _wfopen
 #endif
 
+#ifndef INVALID_FILE_ATTRIBUTES
+#	define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
+
 #endif // PLATFORMDEF_H
