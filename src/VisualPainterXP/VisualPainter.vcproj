@@ -364,10 +364,6 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="..\EGM96Geoid.h"
-				>
-			</File>
-			<File
 				RelativePath="..\GDIPainter.h"
 				>
 			</File>
@@ -502,6 +498,10 @@
 			</File>
 			<File
 				RelativePath="..\EGM96Geoid.c"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.h"
 				>
 			</File>
 			<File

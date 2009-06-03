@@ -1828,7 +1828,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\EGM96Geoid.c"
+				RelativePath="..\EGM96Geoid.h"
 				>
 			</File>
 			<File
@@ -2373,6 +2373,10 @@
 							BrowseInformation="1"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\EGM96Geoid.c"
+					>
 				</File>
 				<File
 					RelativePath="..\FATBlock.cpp"

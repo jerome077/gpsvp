@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="VisualPainterSP"
 	ProjectGUID="{720A2BD9-32EA-47B3-9F01-333690934EEE}"
 	RootNamespace="VisualPainterSP"
@@ -1975,6 +1975,14 @@
 			</File>
 			<File
 				RelativePath="..\Dialogs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.c"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.h"
 				>
 			</File>
 			<File
