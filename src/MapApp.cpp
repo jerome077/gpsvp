@@ -816,10 +816,12 @@ class CSettingsDlg : public CMADialog
 	CCombo m_port;
 	CCombo m_portSpeed;
 	CCombo m_trackstep;
+	CEditText  m_proxy;
 	CCombo m_coordformat;
 	CCombo m_utmZone;
 	CCombo m_metrics;
-	CEditText  m_proxy;
+	CCombo m_GeoidMode;
+
 	std::map<std::wstring, int> m_comboItems;
 	void AddComboItem(int iCombo, int iItem, wchar_t * wcString, int iToSelect)
 	{
@@ -907,7 +909,15 @@ class CSettingsDlg : public CMADialog
 		m_metrics.AddItem(L("Nautical"));
 		m_metrics.AddItem(L("Imperial"));
 		m_metrics.Select(app.m_riMetrics());
-	
+
+		m_GeoidMode.Create(hDlg, false);
+		m_GeoidMode.AddItem(L"Auto", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Always", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Never", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"User", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Sirf", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
+
 		AddItem(hDlg, CText(hDlg, L("Port:")));
 		AddItem(hDlg, m_port);
 		AddItem(hDlg, CText(hDlg, L("Port speed:")));
@@ -922,6 +932,8 @@ class CSettingsDlg : public CMADialog
 		AddItem(hDlg, m_utmZone);
 		AddItem(hDlg, CText(hDlg, L("Metric system:")));
 		AddItem(hDlg, m_metrics);
+		AddItem(hDlg, CText(hDlg, L("Geoid Separation mode:")));
+		AddItem(hDlg, m_GeoidMode);
 		
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
@@ -974,6 +986,14 @@ class CSettingsDlg : public CMADialog
 			app.m_rsProxy = buff;
 		}
 		CHttpRequest::SetProxy(app.m_rsProxy());
+
+		m_GeoidMode.GetText(buff, cnMaxStr);
+		if (app.m_rsGeoidMode() != buff)
+		{
+			app.m_rsGeoidMode = buff;
+			fStartListening = true;
+		}
+
 		
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -2184,6 +2204,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 		m_rsPortSpeed = L"Default";
 	m_rsCurrentFolder.Init(hRegKey, L"");
 	m_rsProxy.Init(hRegKey,L"Proxy");
+	m_rsGeoidMode.Init(hRegKey, L"GeoidMode");
 	GetKeymap().Init(hRegKey);
 	GetButtons().Init(hRegKey);
 
@@ -2217,6 +2238,10 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_monAltitude.SetIdL(L"Altitude");
 	m_MonitorSet.AddMonitor(&m_monAltitude);
+	m_monSeparation.SetIdL(L"Geoid Separation");
+	//m_monSeparation.SetRegistry(hRegKey, L"GeoidSeparation");
+	m_MonitorSet.AddMonitor(&m_monSeparation);
+	
 	m_monLongitude.SetIdL(L"Longitude", CoordLabelLon());
 	m_monLongitude.SetLinkedLatitude(&m_monLatitude);
 	m_MonitorSet.AddMonitor(&m_monLongitude);
@@ -2817,10 +2842,11 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 	m_team.Fix(gp, GetTickCount());
 }
 
-void CMapApp::VFix(double dAltitude)
+void CMapApp::VFix(double dAltitude, double dSeparation)
 {
 	m_CurTrack.SetAltitude(dAltitude);
 	(CDoubleMonitor &)m_monAltitude = dAltitude;
+	(CDoubleMonitor &)m_monSeparation = dSeparation;
 }	
 
 void CMapApp::UpdateMonitors()

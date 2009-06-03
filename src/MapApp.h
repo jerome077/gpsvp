@@ -85,6 +85,7 @@ public:
 	CRegString m_rsProxy;
 	HANDLE m_hPortThread;
 	HANDLE m_hHttpThread;
+	CRegString m_rsGeoidMode;
 	CNMEAParser m_NMEAParser;
 	CWaypoints m_Waypoints;
 	CWaypoints m_Found;
@@ -104,6 +105,7 @@ public:
 	CAzimuthMonitor m_monAzimuth;
 	CAzimuthMonitor m_monCourse;
 	CHeightMonitor m_monAltitude;
+	CHeightMonitor m_monSeparation;
 	CDegreeMonitorLon m_monLongitude;
 	CDegreeMonitorLat m_monLatitude;
 	CDistanceMonitor m_monOdometerTotal;
@@ -180,7 +182,7 @@ public:
 	virtual void NoFix();
 	virtual void Fix(GeoPoint gp, double dHDOP);
 	virtual void NoVFix();
-	virtual void VFix(double dAltitude);
+	virtual void VFix(double dAltitude, double dSeparation);
 	void OnLButtonDown(ScreenPoint pt);
 	void OnLButtonUp(ScreenPoint pt);
 	int AddPointScreen(ScreenPoint pt, wchar_t * wcName);

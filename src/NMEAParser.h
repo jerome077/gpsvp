@@ -42,7 +42,7 @@ struct IGPSClient
 	virtual void NoFix() = 0;
 	virtual void Fix(GeoPoint gp, double dHDOP) = 0;
 	virtual void NoVFix() = 0;
-	virtual void VFix(double dAltitude) = 0;
+	virtual void VFix(double dAltitude, double dSeparation) = 0;
 	virtual void SetConnectionStatus(enumConnectionStatus iStatus) = 0;
 };
 class CTrack;

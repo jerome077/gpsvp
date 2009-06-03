@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "NMEAParser.h"
 #include "DebugOutput.h"
+#include "EGM96Geoid.h"
 
 //! Constructor
 CNMEAParser::CNMEAParser() : 
@@ -72,15 +73,6 @@ void CNMEAParser::CommandComplete()
 		else
 		{
 			// Else get coordinates
-			if (listParts[9].size() != 0)
-			{
-				double dAltitude = myatof(listParts[9].c_str());
-				m_pClient->VFix(dAltitude);
-			}
-			else
-			{
-				m_pClient->NoVFix();
-			}
 			double dLatitude = myatof(listParts[2].substr(2).c_str()) / 60 + atof(listParts[2].substr(0, 2).c_str());
 			if (listParts[3] == "S")
 				dLatitude = -dLatitude;
@@ -88,6 +80,17 @@ void CNMEAParser::CommandComplete()
 			if (listParts[5] == "W")
 				dLongitude = -dLongitude;
 			double dHDOP = myatof(listParts[8].c_str());
+			if (listParts[9].size() != 0)
+			{
+				double dAltitude = myatof(listParts[9].c_str());
+				double dSeparation = myatof(listParts[11].c_str());
+				EGM96Geoid(dLatitude, dLongitude, &dAltitude, &dSeparation);
+				m_pClient->VFix(dAltitude, dSeparation);
+			}
+			else
+			{
+				m_pClient->NoVFix();
+			}
 			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dHDOP);
 			m_monStatus = L("Fix");
 			m_pClient->SetConnectionStatus(IGPSClient::csFix);

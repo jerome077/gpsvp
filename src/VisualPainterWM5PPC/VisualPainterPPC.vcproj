@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="VisualPainterPPC"
 	ProjectGUID="{B2FEF60F-5FB2-4D91-95DA-2D73C40F0872}"
 	RootNamespace="VisualPainterPPC"
@@ -1825,6 +1825,10 @@
 			</File>
 			<File
 				RelativePath="..\Dialogs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.c"
 				>
 			</File>
 			<File
