@@ -1878,7 +1878,9 @@ void CMapApp::FileNewWaypointsGPX()
 		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".gpx"))
 			wcscpy(strFile + iLen, L".gpx");
 		CWaypoints newPoints;
+#ifndef UNDER_WINE
 		newPoints.WriteGPX(strFile);
+#endif // UNDER_WINE
 		m_Waypoints.Read(strFile);
 		m_rsWaypointsFile = strFile;
 		m_painter.Redraw();
@@ -1948,7 +1950,9 @@ void CMapApp::FileExportWaypointsOSM()
 		int iLen = wcslen(strFile);
 		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".osm"))
 			wcscpy(strFile + iLen, L".osm");
+#ifndef UNDER_WINE
 		m_Waypoints.WriteOSM(strFile);
+#endif // UNDER_WINE
 	}
 }
 

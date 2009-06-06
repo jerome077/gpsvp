@@ -187,9 +187,11 @@ void CWaypoints::Write(const std::wstring& wstrFilename)
 	if (wstrFilename.empty())
 		return;
 	std::wstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
+#ifndef UNDER_WINE
 	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
 		WriteGPX(wstrFilename);
 	else
+#endif // UNDER_WINE
 		WriteWPT(wstrFilename);
 }
 
@@ -322,9 +324,11 @@ void CWaypoints::Read(const wchar_t * wcFilename)
 
 	std::wstring wstrName = wcFilename;
 	std::wstring wstrExt = wstrName.substr(wstrName.length()-4, 4);
+#ifndef UNDER_WINE
 	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
 		ReadGPX(wstrName);
 	else
+#endif // UNDER_WINE
 		ReadWPT(wcFilename);
 
 	m_wstrFilename = wcFilename;

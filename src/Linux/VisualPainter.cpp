@@ -34,7 +34,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 
 CMapApp app;
 
-int APIENTRY wWinMain(HINSTANCE hInstance,
+extern "C" int APIENTRY wWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPWSTR     lpCmdLine,
                      int       nCmdShow)

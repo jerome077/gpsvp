@@ -262,9 +262,11 @@ void CTrack::Read(const std::wstring& wstrFilename)
 {
 	AutoLock l;
 	std::wstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
+#ifndef UNDER_WINE
 	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
 		ReadFirstTrackFromGPX(wstrFilename);
 	else
+#endif // UNDER_WINE
 		ReadPLT(wstrFilename);
 }
 
@@ -481,9 +483,11 @@ void CTrackList::GetTrackList(IListAcceptor * pAcceptor)
 bool CTrackList::OpenTracks(const std::wstring& wstrFile)
 {
 	std::wstring wstrExt = wstrFile.substr(wstrFile.length()-4, 4);
+#ifndef UNDER_WINE
 	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
 		return OpenTracksGPX(wstrFile);
 	else
+#endif // UNDER_WINE
 		return OpenTrackPLT(wstrFile);
 }
 

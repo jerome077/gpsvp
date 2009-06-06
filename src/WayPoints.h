@@ -277,7 +277,9 @@ public:
 	void SetNameGPX(const std::wstring& wstrFilename) { m_wstrFilename = wstrFilename; };
 	void Read(const wchar_t * wcFilename);
 	void ReadWPT(const wchar_t * wcFilename);
+#ifndef UNDER_WINE
 	void ReadGPX(const std::wstring& wstrFilename);
+#endif // UNDER_WINE
 	void Paint(IPainter * pPainter, const GeoPoint * pgp);
 	void GetList(IListAcceptor * pAcceptor, GeoPoint gpCenter, int iRadius);
 	void GetList(IListAcceptor2 * pAcceptor);

@@ -109,8 +109,12 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 		wchar_t* t;
 		return wcstol(w, &t, 10);
 	}
-	FILE* _wfopen(const wchar_t*, const wchar_t*);
-	void _wmkdir(const wchar_t*);
+	inline FILE* _wfopen(const wchar_t*, const wchar_t*) {
+		return 0;
+	}
+	inline void _wmkdir(const wchar_t*) {
+		return;
+	}
 #	define _snprintf snprintf
 #	define _wcsnicmp wcsncasecmp 
 #	define _wcsicmp wcscasecmp
