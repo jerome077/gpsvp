@@ -16,7 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define DIALOGS_H
 
 #include <windows.h>
-#include <Commctrl.h>
+#include <commctrl.h>
 #if defined(UNDER_CE) && !defined(BARECE)
 #	include <aygshell.h>
 #	include <tpcshell.h>
@@ -25,7 +25,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Common.h"
 
 #include "Lock.h"
-#include "MenuBar.h"
+#include "menubar.h"
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 extern HINSTANCE g_hInst;
@@ -36,7 +36,7 @@ LRESULT CALLBACK MASubWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 class CMADialog;
 typedef CMADialog * PMADialog;
 extern volatile PMADialog g_pNextDialog;
-extern map<HWND, CMADialog *> g_Dialogs;
+extern std::map<HWND, CMADialog *> g_Dialogs;
 
 class CControl
 {
@@ -294,9 +294,10 @@ public:
 	{
 		 AddItem(hDlg, GetDlgItem(hDlg, IDC));
 	}
-	void AddItem(HWND hDlg, CControl & control)
+	void AddItem(HWND hDlg, const CControl & ctrl)
 	{
 		RECT rectItem;
+		CControl& control(const_cast<CControl&>(ctrl));
 		control.GetWindowRect(&rectItem);
 		control.SetWindowPos(m_iPadding, m_itemY, 
 			m_rectWin.right - m_rectWin.left - m_iPadding * 2, 

@@ -17,8 +17,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <list>
 
-using namespace std;
-
 #include "PlatformDef.h"
 #include "GeoPoint.h"
 
@@ -32,7 +30,7 @@ class CPolyObject
 {
 	enumObjTypes m_eType;
 	//! List of point deltas in the stream
-	list<GeoPoint> m_points;
+	std::list<GeoPoint> m_points;
 	//! Object label
 	UInt m_uiLabel;
 	//! Object owner
@@ -96,9 +94,9 @@ class CSubdivision
 	UInt PaintPoint(Byte * data, UInt uiMaxSize, IPainter * pPainter);
 	//! Paint object to painter
 	void Paint(IPainter * pPainter, UInt uiObjects, bool fDirectPaint);
-	list<CPolyObject> m_listPolylines;
-	list<CPolyObject> m_listPolygons;
-	list<CPoint> m_listPoints;
+	std::list<CPolyObject> m_listPolylines;
+	std::list<CPolyObject> m_listPolygons;
+	std::list<CPoint> m_listPoints;
 public:
 	CSubdivision() : m_fLoaded(false), m_pData(0) {};
 	~CSubdivision() { if (m_pData) delete m_pData; }

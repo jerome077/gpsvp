@@ -15,7 +15,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #pragma once
 
 #include <windows.h>
-#ifndef UNDER_CE
+#include "GMCommon.h"
+#ifdef USE_GDI_PLUS
 #include <gdiplus.h>
 #endif // UNDER_CE
 

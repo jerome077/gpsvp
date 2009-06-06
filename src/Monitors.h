@@ -23,8 +23,8 @@ class CNMEAParser;
 class CMonitorBase : public IMonitor
 {
 protected:
-	wstring m_wstrLabel;
-	wstring m_wstrName;
+	std::wstring m_wstrLabel;
+	std::wstring m_wstrName;
 	bool m_fSet;
 	enum {cnResetCmd = 1000, cnToggleCmd, cnSetTimeCmd, cnShowDateCmd, cnCopyText};
 public:
@@ -34,7 +34,7 @@ public:
 		m_wstrLabel = GetDict().Translate(wcName);
 		m_wstrName = wcName;
 	}
-	void SetIdL(const wstring& wstrName, const wstring& wstrLabel)
+	void SetIdL(const std::wstring& wstrName, const std::wstring& wstrLabel)
 	{
 		m_wstrLabel = wstrLabel;
 		m_wstrName = wstrName;
@@ -206,7 +206,7 @@ public:
 	};
 
 private:
-	wstring m_wstrValue;
+	std::wstring m_wstrValue;
 	TEXTCOPY_SOURCES m_enTCSrc;
 	std::string m_strURL;
 public:
@@ -350,7 +350,7 @@ public:
 	void SetLinkedLongitude(CDoubleMonitor* mon) { m_monLinkedLongitude = mon; };
 	void Paint(IMonitorPainter * pPainter)
 	{
-		wstring wstrLon, wstrLat;
+		std::wstring wstrLon, wstrLat;
 		CoordToText(m_monLinkedLongitude->Get(), m_dValue, wstrLon, wstrLat);
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLat.c_str() : L"-");
 	}
@@ -364,7 +364,7 @@ public:
 	void SetLinkedLatitude(CDoubleMonitor* mon) { m_monLinkedLatitude = mon; };
 	void Paint(IMonitorPainter * pPainter)
 	{
-		wstring wstrLon, wstrLat;
+		std::wstring wstrLon, wstrLat;
 		CoordToText(m_dValue, m_monLinkedLatitude->Get(), wstrLon, wstrLat);
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLon.c_str() : L"-");
 	}

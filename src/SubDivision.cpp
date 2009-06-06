@@ -14,7 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "PlatformDef.h"
 #include "DebugOutput.h"
-#include "Subdivision.h"
+#include "SubDivision.h"
 #include "Common.h"
 #include "SubFile.h"
 #include "TreSubfile.h"
@@ -106,7 +106,7 @@ void CSubdivision::Paint(IPainter * pPainter, UInt uiObjects, bool fDirectPaint)
 		Check(uiSegmentCount > 0);
 		Byte * data = m_pData;
 		// Read pointers
-		list<UInt> pointers;
+		std::list<UInt> pointers;
 		for (UInt i = 0; i < uiSegmentCount - 1; ++i)
 		{
 			pointers.push_back(GetUInt16(data + uiPointerOffset));
@@ -195,7 +195,7 @@ void CSubdivision::Paint(IPainter * pPainter, UInt uiObjects, bool fDirectPaint)
 		Check(uiSegmentCount > 0);
 		Byte * data = m_pData;
 		// Read pointers
-		list<UInt> pointers;
+		std::list<UInt> pointers;
 		for (UInt i = 0; i < uiSegmentCount - 1; ++i)
 		{
 			pointers.push_back(GetUInt16(data + uiPointerOffset));
@@ -277,7 +277,7 @@ void CSubdivision::Paint(IPainter * pPainter, UInt uiObjects, bool fDirectPaint)
 	else
 	{
 		{
-			list<CPolyObject>::iterator it;
+			std::list<CPolyObject>::iterator it;
 			if (uiObjects & maskPolylines)
 			{
 				for (it = m_listPolylines.begin(); it != m_listPolylines.end(); ++it)
@@ -290,7 +290,7 @@ void CSubdivision::Paint(IPainter * pPainter, UInt uiObjects, bool fDirectPaint)
 			}	
 		}
 		{
-			list<CPoint>::iterator it;
+			std::list<CPoint>::iterator it;
 			if (uiObjects & maskPoints)
 			{
 				for (it = m_listPoints.begin(); it != m_listPoints.end(); ++it)
@@ -672,7 +672,7 @@ void CPolyObject::Paint(IPainter * pPainter, CSubdivision * pOwner)
 		pPainter->StartPolyline(m_uiType, m_uiLabel ? pOwner->GetTreSubfile()->GetLblSubfile()->GetLabel(m_uiLabel) : 0);
 
 	// Iterate through point list
-	for (list<GeoPoint>::iterator it = m_points.begin(); it != m_points.end(); ++it)
+	for (std::list<GeoPoint>::iterator it = m_points.begin(); it != m_points.end(); ++it)
 	{
 		// Add next point
 		pPainter->AddPoint(*it);

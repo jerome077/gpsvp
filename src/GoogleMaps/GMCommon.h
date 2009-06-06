@@ -18,6 +18,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../PlatformDef.h"
 #include <string>
 
+#if !defined(UNDER_CE) && !defined(UNDER_WINE)
+#	define USE_GDI_PLUS
+#endif // !defined(UNDER_CE) && !defined(UNDER_WINE)
+
+
 // ---------------------------------------------------------------
 
 // To convert between Zoom17 and Zoom1 or Zoom0:

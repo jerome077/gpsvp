@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -12,36 +12,26 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 */
 
 
-#ifndef DEBUGOUTPUT_H
-#define DEBUGOUTPUT_H
+//{{NO_DEPENDENCIES}}
+// Microsoft Developer Studio generated include file.
+// Used by GPSVP.rc
+//
+#include "ResourceCommon.h"
 
-#include <string>
-#include <ostream>
+#define IDC_MYICON                      2
+#define IDI_GPSVP               107
+#define IDI_SMALL                       108
+#define IDC_GPSVP               109
 
-#include "PlatformDef.h"
-#include "GeoPoint.h"
+#define IDC_STATIC                      -1
 
-class DebugOutput
-{
-public:
-	DebugOutput & operator << (char * a);
-	DebugOutput & operator << (Int a);
-	DebugOutput & operator << (UInt a);
-	DebugOutput & operator << (std::string a);
-	DebugOutput & operator << (double a);
-	DebugOutput & operator << (GeoPoint gp);
-	// void Dump(Byte * data, UInt uiSize);
-};
-
-#ifndef NO_DEBUG_OUTPUT
-
-inline std::ostream & operator << (std::ostream & ostr, GeoPoint gp)
-{
-	return ostr << gp.lon << ", " << gp.lat;
-}
-
-#endif // NO_DEBUG_OUTPUT
-
-extern DebugOutput dout;
-
-#endif // DEBUGOUTPUT_H
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        144
+#define _APS_NEXT_COMMAND_VALUE         32900
+#define _APS_NEXT_CONTROL_VALUE         1100
+#define _APS_NEXT_SYMED_VALUE           110
+#endif
+#endif

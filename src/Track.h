@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef TRACK_H
 #define TRACK_H
 
-#include <Ole2.h>
+#include <ole2.h>
 #include "Common.h"
 #include <list>
 #include <vector>
@@ -24,9 +24,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "IPainter.h"
 #include "Lock.h"
 #include "VersionNumber.h"
-#include "FileFormats\GPX.h"
-
-using namespace std;
+#ifndef UNDER_WINE
+#	include "FileFormats/GPX.h"
+#endif // UNDER_WINE
 
 //! Track representation, both active and loaded
 class CTrack
@@ -44,15 +44,15 @@ class CTrack
 		GeoPoint gp;
 		unsigned long timeUTC;
 	};
-	typedef list<TrackPoint> Segment;
-	typedef list<Segment> Track;
+	typedef std::list<TrackPoint> Segment;
+	typedef std::list<Segment> Track;
 	//! List of track points
 	Track m_Track;
 	Track m_CompressedTrack;
 	int m_nPointCount;
 	//! Name for file
-	wstring m_wstrFilenameInt;
-	wstring m_wstrFilenameExt;
+	std::wstring m_wstrFilenameInt;
+	std::wstring m_wstrFilenameExt;
 	//! The track will begin with next point
 	bool m_fBeginTrack;
 	bool m_fBeginFile;
@@ -73,8 +73,8 @@ class CTrack
 	StartTimes m_startTimesUTC;
 	unsigned long m_ulCompetitionTime;
 	enumTrackFormat m_CurrentTrackFormat;
-	string m_strGPXName;
-   fpos_t m_FilePosForAdding;
+	std::string m_strGPXName;
+	fpos_t m_FilePosForAdding;
 
 	const wchar_t * GetFileName();
 	void CreateFile();
@@ -119,9 +119,11 @@ public:
 	void Break();
 	void Read(const std::wstring& wstrFilename);
 	void ReadPLT(const std::wstring& wstrFilename);
+#ifndef UNDER_WINE
 	void ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename);
+#endif // UNDER_WINE
 	void ReadFirstTrackFromGPX(const std::wstring& wstrFilename);
-	const wstring GetExtFilename();
+	const std::wstring GetExtFilename();
 	bool IsPresent();
 	GeoPoint GetLastPoint();
 	void SetAltitude(double dAltitude);
@@ -167,11 +169,11 @@ public:
 class CTrackList
 {
 protected:
-	list<CTrack> m_Tracks;
+	std::list<CTrack> m_Tracks;
 	bool OpenTrackPLT(const std::wstring& wstrFile);
 	bool OpenTracksGPX(const std::wstring& wstrFile);
 public:
-	typedef list<CTrack>::iterator iterator;
+	typedef std::list<CTrack>::iterator iterator;
 	iterator begin() { return m_Tracks.begin(); };
 	iterator end() { return m_Tracks.end(); };
 	CTrack& Last() { return m_Tracks.back(); };

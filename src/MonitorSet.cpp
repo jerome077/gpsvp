@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 {
-	map<int, wstring> mapMenu;
+	std::map<int, std::wstring> mapMenu;
 	CMenu mmPopupMenu;
 	mmPopupMenu.Init();
 
@@ -28,7 +28,7 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	int i = 1;
 	mmMonitors.CreateItem(L("None"), 0xbadd);
 	mmMonitors.CreateBreak();
-	for (map<wstring, IMonitor *>::iterator it = m_mapMonitors.begin(); it != m_mapMonitors.end(); ++it)
+	for (std::map<std::wstring, IMonitor *>::iterator it = m_mapMonitors.begin(); it != m_mapMonitors.end(); ++it)
 	{
 		mmMonitors.CreateItem(GetDict().Translate(it->first.c_str()), (it->first == m_vectMonitors[iMonitor]) ? -1 : i);
 		mapMenu[i] = it->first;
@@ -107,7 +107,7 @@ void CMonitorSet::PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool 
 		srCurrentMonitor.Append(ScreenPoint(srCurrentMonitor.right + ssr.Width() / colleft, ssr.bottom));
 		ssr.left = srCurrentMonitor.right;
 		pPainter->SetCurrentMonitor(srCurrentMonitor, i == m_iActiveMonitor && fMonitorsMode);
-		m_listMonitorRects.push_back(make_pair(srCurrentMonitor, i));
+		m_listMonitorRects.push_back(std::make_pair(srCurrentMonitor, i));
 		if (m_mapMonitors.find(m_vectMonitors[i]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[i]])
 			m_mapMonitors[m_vectMonitors[i]]->Paint(pPainter);
 		if (!--colleft)

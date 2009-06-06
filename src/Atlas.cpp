@@ -13,7 +13,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #include "Atlas.h"
-#include "ipainter.h"
+#include "IPainter.h"
 #include "MapApp.h"
 #include <algorithm>
 
@@ -29,7 +29,7 @@ void CAtlas::Add(const wchar_t * wcFilename, IPainter * pPainter)
 		if (it->first.GetFilename() == wcFilename)
 			return;
 	}
-	m_imgFiles.push_back(make_pair(CIMGFile(), true));
+	m_imgFiles.push_back(std::make_pair(CIMGFile(), true));
 	if (!m_imgFiles.back().first.Parse(wcFilename))
 	{
 		m_imgFiles.pop_back();
@@ -114,7 +114,7 @@ void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPain
 			continue;
 		}
 		bool fAdd = true;
-		for (list<CIMGFile*>::iterator it2 = m_listToPaint.begin(); it2 != m_listToPaint.end(); )
+		for (std::list<CIMGFile*>::iterator it2 = m_listToPaint.begin(); it2 != m_listToPaint.end(); )
 		{
 			bool fMoved = false;
 			while (it2 != m_listToPaint.end() && it->first.GetRect().Contain((*it2)->GetRect()))
@@ -124,7 +124,7 @@ void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPain
 					fAdd = false;
 					break;
 				}
-				list<CIMGFile*>::iterator it3 = it2;
+				std::list<CIMGFile*>::iterator it3 = it2;
 				++it2;
 				fMoved = true;
 				m_listToPaint.erase(it3);
@@ -145,8 +145,8 @@ void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 			continue;
 		if (!pPainter->WillPaint(it->first.GetRect()))
 			continue;
-		list<UInt> levels = it->first.GetLevels(pPainter);
-		list<UInt>::iterator l = levels.begin();
+		std::list<UInt> levels = it->first.GetLevels(pPainter);
+		std::list<UInt>::iterator l = levels.begin();
 		if (l == levels.end())
 			continue;
 		if (*l > m_uiBestBits)				
@@ -168,7 +168,7 @@ void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 }
 void CAtlas::Paint(UInt uiObjectTypes, bool fDirectPaint)
 {
-	list<CIMGFile *>::iterator it;
+	std::list<CIMGFile *>::iterator it;
 	for (it = m_listToPaint.begin(); it != m_listToPaint.end(); ++it)
 	{
 		if (!m_pPainter->WillPaint((*it)->GetRect()))
@@ -224,10 +224,10 @@ void CAtlas::ToggleActiveByID(int iMap)
 }
 void CAtlas::Load()
 {
-	vector<Byte> data;
-	unsigned long ulTotalLen = 0;
+	std::vector<Byte> data;
+	unsigned int ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
-	wstring wstrKey = L"Atlas";
+	std::wstring wstrKey = L"Atlas";
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	if (!ulTotalLen)
 	{
@@ -246,7 +246,7 @@ void CAtlas::Load()
 		while (uiPos < ulTotalLen)
 		{
 			int iLen, iSize;
-			wstring wstr;
+			std::wstring wstr;
 			bool fFlag = true;
 			memcpy(&iSize, &data[uiPos], sizeof(iLen));
 			iLen = iSize;
@@ -258,7 +258,7 @@ void CAtlas::Load()
 			}
 			wstr.assign((wchar_t *)&data[uiPos], iLen);
 			uiPos += sizeof(wchar_t) * iSize;
-			m_imgFiles.push_back(make_pair(CIMGFile(), fFlag));
+			m_imgFiles.push_back(std::make_pair(CIMGFile(), fFlag));
 			if (!m_imgFiles.back().first.Parse(wstr.c_str()))
 				m_imgFiles.pop_back();
 		}
@@ -266,10 +266,10 @@ void CAtlas::Load()
 }
 void CAtlas::Save()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
-		wstring wstrFilename = it->first.GetFilename();
+		std::wstring wstrFilename = it->first.GetFilename();
 		int len = wstrFilename.length();
 		int len2 = len + 2;
 		data.insert(data.end(), (const Byte*)&len2, (const Byte*)&len2 + sizeof(len2));

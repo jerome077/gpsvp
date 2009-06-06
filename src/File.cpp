@@ -14,7 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #ifdef USE_STDIO_H
 #	include <stdio.h>
-#else if USE_IO_H
+#else // USE_IO_H
 #	include <io.h>
 #	include <fcntl.h>
 #endif // USE_STDIO_H
@@ -22,14 +22,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "File.h"
 #include "Common.h"
 
-void CFile::Open(const wstring & filename)
+void CFile::Open(const std::wstring & filename)
 {
 #ifdef USE_STDIO_H
 	// Open file
 	m_pFile = wfopen(filename.c_str(), L"rb");
 	// Check if we succeeded
 	Check(0 != m_pFile);
-#else USE_IO_H
+#else // USE_IO_H
 	// Open file
 	m_iFD = _wopen(filename.c_str(), O_BINARY | O_RDONLY);
 	// Check if we succeeded
@@ -48,7 +48,7 @@ void CFile::Read(Byte * buffer, UInt nStart, UInt nCount)
     // And read
 	UInt uiHaveRead = fread(buffer, 1, nCount, m_pFile);
 	Check(nCount == uiHaveRead);
-#else if USE_IO_H
+#else // USE_IO_H
 	// Check if file is open
 	Check(-1 != m_iFD);
 	// Seek
@@ -68,7 +68,7 @@ CFile::operator bool()
 {
 #ifdef USE_STDIO_H
 	return 0 != m_pFile;
-#else if USE_IO_H
+#else // USE_IO_H
 	return -1 != m_iFD;
 #endif // USE_STDIO_H
 }
@@ -78,7 +78,7 @@ CFile::~CFile()
 #ifdef USE_STDIO_H
 	if (0 != m_pFile)
 		fclose(m_pFile);
-#else if USE_IO_H
+#else // USE_IO_H
 	if (-1 != m_iFD)
 		_close(m_iFD);
 #endif // USE_STDIO_H

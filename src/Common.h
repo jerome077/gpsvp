@@ -19,15 +19,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ctype.h>
 #include <string>
 
-using namespace std;
-
 //! Translate to double degrees for output
 double Degree(Int iDegree);
 //! Translate to Int degrees for internal usage
 Int FromDegree(double dDegree);
 //! Check condition and throw exception if false
 void Check(bool fCondition);
-//! Make double from string
+//! Make double from std::string
 double myatof(const char * str);
 double myatof(const wchar_t * str);
 
@@ -49,28 +47,28 @@ T sqr(T a)
 	return a * a;
 }
 
-wstring DoubleToText(double dDouble, int iDigits = 1);
-string DoubleToStr(double dDouble, int iDigits = 1);
+std::wstring DoubleToText(double dDouble, int iDigits = 1);
+std::string DoubleToStr(double dDouble, int iDigits = 1);
 
-wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
+std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
 double TextToDegree(const wchar_t * wcText);
 // Some coordinates must know WGS84-longitude and latitude at the same time.
-void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat);
-void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, double& dLat);
-wstring CoordLabelLon();
-wstring CoordLabelLat();
+void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& wstrLat);
+void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, double& dLon, double& dLat);
+std::wstring CoordLabelLon();
+std::wstring CoordLabelLat();
 
-wstring IntToText(int iInt);
-wstring IntToHex(int iInt);
-wstring DistanceToText(double dDistance);
-wstring HeightToText(double dDistance);
-wstring SpeedToText(double dDistance);
-wstring MemoryToText(unsigned long ulMemory);
-inline wstring a2w(const char * s)
+std::wstring IntToText(int iInt);
+std::wstring IntToHex(int iInt);
+std::wstring DistanceToText(double dDistance);
+std::wstring HeightToText(double dDistance);
+std::wstring SpeedToText(double dDistance);
+std::wstring MemoryToText(unsigned long ulMemory);
+inline std::wstring a2w(const char * s)
 {
 	wchar_t buff[1000];
 	swprintf(buff, 1000, L"%S", s);
-	return wstring(buff);
+	return std::wstring(buff);
 }
 
 struct IListAcceptor
@@ -184,7 +182,7 @@ void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double&
 //  - utmZone = used zone (should NOT be 0!)
 // ouput:
 //  - a text describing the zone
-wstring UTMZoneToLongText(int utmZone);
+std::wstring UTMZoneToLongText(int utmZone);
 
 // ---------------------------------------------------------------
 

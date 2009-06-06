@@ -17,8 +17,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <vector>
 #include <memory>
 #include <iostream>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <string.h>
+#ifndef UNDER_WINE
+#	include <winsock2.h>
+#	include <ws2tcpip.h>
+#else
+#	include <netdb.h>
+	typedef int HANDLE;
+#	define closesocket close
+#endif
 
 const char * method = "GET";
 
@@ -45,7 +52,9 @@ void CHttpRequest::Data::Error(const char * descr)
 	if (_pwstrHttpStatus)
 	{
 		wchar_t buffer[1000];
+#ifndef UNDER_WINE
 		wsprintf(buffer, L"%S (%d)", descr, WSAGetLastError());
+#endif // UNDER_WINE
 		*_pwstrHttpStatus = buffer;
 	}
 }
@@ -56,9 +65,11 @@ void CHttpRequest::InitSocketsIfNecessary()
 {
 	if (!bSocketsInitialized)
 	{
+#ifndef UNDER_WINE
 		WSADATA wsaData;
 		int wsaRes = WSAStartup(MAKEWORD(1, 1), &wsaData);
 		bSocketsInitialized = (0 == wsaRes);
+#endif // UNDER_WINE
 	}
 }
 
@@ -66,7 +77,9 @@ void CHttpRequest::CleanupSocketsIfNecessary()
 {
 	if (bSocketsInitialized)
 	{
+#ifndef UNDER_WINE
 		WSACleanup();
+#endif // UNDER_WINE
 	}
 }
 
@@ -100,7 +113,7 @@ void CHttpRequest::SetProxy(std::wstring prox)
 		i++;
 		buf[i]=(char) wbuf[i];
 	} while (buf[i]!=0 && i<100);
-	std::string proxy(buf); // wstring to string - conversion  may work bad for non-ascii characters!
+	std::string proxy(buf); // std::wstring to std::string - conversion  may work bad for non-ascii characters!
 
 	std::string server;
 	std::string credentials;

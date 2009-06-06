@@ -342,7 +342,7 @@ public:
     /** map sections to key/value map */
     typedef std::map<Entry,TKeyVal,typename Entry::KeyOrder> TSection;
 
-    /** set of dependent string pointers. Note that these pointers are
+    /** set of dependent std::string pointers. Note that these pointers are
         dependent on memory owned by CSimpleIni.
     */
     typedef std::list<Entry> TNamesDepend;
@@ -373,7 +373,7 @@ public:
         FileWriter & operator=(const FileWriter &); // disable
     };
 
-    /** OutputWriter class to write the INI data to a string */
+    /** OutputWriter class to write the INI data to a std::string */
     class StringWriter : public OutputWriter {
         std::string & m_string;
     public:
@@ -702,14 +702,14 @@ public:
     }
 #endif // SI_SUPPORT_IOSTREAMS
 
-    /** Append the INI data to a string. See Save() for details.
+    /** Append the INI data to a std::string. See Save() for details.
 
         @param a_sBuffer    String to have the INI data appended to.
 
         @param a_bAddSignature  Prepend the UTF-8 BOM if the output data is in
                             UTF-8 format. If it is not UTF-8 then this value is
                             ignored. Do not set this to true if anything has
-                            already been written to the string.
+                            already been written to the std::string.
 
         @return SI_Error    See error definitions
      */
@@ -731,7 +731,7 @@ public:
         collation order of the returned strings is NOT DEFINED.
 
         NOTE! This structure contains only pointers to strings. The actual
-        string data is stored in memory owned by CSimpleIni. Ensure that the
+        std::string data is stored in memory owned by CSimpleIni. Ensure that the
         CSimpleIni object is not destroyed or Reset() while these pointers
         are in use!
 
@@ -746,7 +746,7 @@ public:
         returned strings is NOT DEFINED. Only unique key names are returned.
 
         NOTE! This structure contains only pointers to strings. The actual
-        string data is stored in memory owned by CSimpleIni. Ensure that the
+        std::string data is stored in memory owned by CSimpleIni. Ensure that the
         CSimpleIni object is not destroyed or Reset() while these strings
         are in use!
 
@@ -765,7 +765,7 @@ public:
     /** Retrieve all values for a specific key. This method can be used when
         multiple keys are both enabled and disabled.
 
-        NOTE! The returned values are pointers to string data stored in memory
+        NOTE! The returned values are pointers to std::string data stored in memory
         owned by CSimpleIni. Ensure that the CSimpleIni object is not destroyed
         or Reset while you are using this pointer!
 
@@ -801,7 +801,7 @@ public:
         multiple keys have been enabled.
 
         NOTE! This structure contains only pointers to strings. The actual
-        string data is stored in memory owned by CSimpleIni. Ensure that the
+        std::string data is stored in memory owned by CSimpleIni. Ensure that the
         CSimpleIni object is not destroyed or Reset() while these strings
         are in use!
 
@@ -817,7 +817,7 @@ public:
         (see SetMultiKey) then only the first value associated with that key
         will be returned, see GetAllValues for getting all values with multikey.
 
-        NOTE! The returned value is a pointer to string data stored in memory
+        NOTE! The returned value is a pointer to std::string data stored in memory
         owned by CSimpleIni. Ensure that the CSimpleIni object is not destroyed
         or Reset while you are using this pointer!
 
@@ -897,7 +897,7 @@ public:
                             first created (i.e. when this function returns the
                             value SI_INSERTED). If you wish to create a section
                             with a comment then you need to create the section
-                            separately to the key. The comment string must be
+                            separately to the key. The comment std::string must be
                             in full comment form already (have a comment
                             character starting every line).
 
@@ -1034,7 +1034,7 @@ private:
         @param a_pComment   Comment to be associated with the section or the
                             key. If a_pKey is NULL then it will be associated
                             with the section, otherwise the key. This must be
-                            a string in full comment form already (have a
+                            a std::string in full comment form already (have a
                             comment character starting every line).
         @param a_bCopyStrings   Should copies of the strings be made or not.
                             If false then the pointers will be used as is.
@@ -1063,13 +1063,13 @@ private:
         a_pData += (*a_pData == '\r' && *(a_pData+1) == '\n') ? 2 : 1;
     }
 
-    /** Make a copy of the supplied string, replacing the original pointer */
+    /** Make a copy of the supplied std::string, replacing the original pointer */
     SI_Error CopyString(const SI_CHAR *& a_pString);
 
-    /** Delete a string from the copied strings buffer if necessary */
+    /** Delete a std::string from the copied strings buffer if necessary */
     void DeleteString(const SI_CHAR * a_pString);
 
-    /** Internal use of our string comparison function */
+    /** Internal use of our std::string comparison function */
     bool IsLess(const SI_CHAR * a_pLeft, const SI_CHAR * a_pRight) const {
         const static SI_STRLESS isLess = SI_STRLESS();
         return isLess(a_pLeft, a_pRight);
@@ -1094,13 +1094,13 @@ private:
 private:
     /** Copy of the INI file data in our character format. This will be
         modified when parsed to have NULL characters added after all
-        interesting string entries. All of the string pointers to sections,
+        interesting std::string entries. All of the std::string pointers to sections,
         keys and values point into this block of memory.
      */
     SI_CHAR * m_pData;
 
     /** Length of the data that we have stored. Used when deleting strings
-        to determine if the string is stored here or in the allocated string
+        to determine if the std::string is stored here or in the allocated std::string
         buffer.
      */
     size_t m_uDataLen;
@@ -1373,7 +1373,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::FindFileComment(
         return SI_OK;
     }
 
-    // copy the string if necessary
+    // copy the std::string if necessary
     if (a_bCopyStrings) {
         SI_Error rc = CopyString(m_pFileComment);
         if (rc < 0) return rc;
@@ -1539,7 +1539,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::IsMultiLineData(
     //  * embedded newlines
     //  * whitespace suffix
 
-    // empty string
+    // empty std::string
     if (!*a_pData) {
         return false;
     }
@@ -1747,13 +1747,13 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::AddEntry(
         if (rc < 0) return rc;
     }
 
-    // check for existence of the section first if we need string copies
+    // check for existence of the section first if we need std::string copies
     typename TSection::iterator iSection = m_data.end();
     if (a_bCopyStrings) {
         iSection = m_data.find(a_pSection);
         if (iSection == m_data.end()) {
             // if the section doesn't exist then we need a copy as the
-            // string needs to last beyond the end of this function
+            // std::string needs to last beyond the end of this function
             // because we will be inserting the section next
             rc = CopyString(a_pSection);
             if (rc < 0) return rc;
@@ -1782,11 +1782,11 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::AddEntry(
     TKeyVal & keyval = iSection->second;
     typename TKeyVal::iterator iKey = keyval.find(a_pKey);
 
-    // make string copies if necessary
+    // make std::string copies if necessary
     if (a_bCopyStrings) {
         if (m_bAllowMultiKey || iKey == keyval.end()) {
             // if the key doesn't exist then we need a copy as the
-            // string needs to last beyond the end of this function
+            // std::string needs to last beyond the end of this function
             // because we will be inserting the key next
             rc = CopyString(a_pKey);
             if (rc < 0) return rc;
@@ -1900,7 +1900,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SetLongValue(
     // use SetValue to create sections
     if (!a_pSection || !a_pKey) return SI_FAIL;
 
-    // convert to an ASCII string
+    // convert to an ASCII std::string
     char szInput[64];
     sprintf(szInput, a_bUseHex ? "0x%lx" : "%ld", a_nValue);
 
@@ -1961,7 +1961,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SetBoolValue(
     // use SetValue to create sections
     if (!a_pSection || !a_pKey) return SI_FAIL;
 
-    // convert to an ASCII string
+    // convert to an ASCII std::string
     const char * pszInput = a_bValue ? "true" : "false";
 
     // convert to output text
@@ -2473,10 +2473,10 @@ public:
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
-     * @return              Number of SI_CHAR required by the string when
+     *                      NULL byte if NULL terminated std::string is required.
+     * @return              Number of SI_CHAR required by the std::string when
      *                      converted. If there are embedded NULL bytes in the
-     *                      input data, only the string up and not including
+     *                      input data, only the std::string up and not including
      *                      the NULL byte will be converted.
      * @return              -1 cast to size_t on a conversion error.
      */
@@ -2491,13 +2491,13 @@ public:
         return a_uInputDataLen;
     }
 
-    /** Convert the input string from the storage format to SI_CHAR.
+    /** Convert the input std::string from the storage format to SI_CHAR.
      * The storage format is always UTF-8 or MBCS.
      *
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
+     *                      NULL byte if NULL terminated std::string is required.
      * @param a_pOutputData Pointer to the output buffer to received the
      *                      converted data.
      * @param a_uOutputDataSize Size of the output buffer in SI_CHAR.
@@ -2521,9 +2521,9 @@ public:
     /** Calculate the number of char required by the storage format of this
      * data. The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated string to calculate the number of
+     * @param a_pInputData  NULL terminated std::string to calculate the number of
      *                      bytes required to be converted to storage format.
-     * @return              Number of bytes required by the string when
+     * @return              Number of bytes required by the std::string when
      *                      converted to storage format. This size always
      *                      includes space for the terminating NULL character.
      * @return              -1 cast to size_t on a conversion error.
@@ -2535,14 +2535,14 @@ public:
         return strlen((const char *)a_pInputData) + 1;
     }
 
-    /** Convert the input string to the storage format of this data.
+    /** Convert the input std::string to the storage format of this data.
      * The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated source string to convert. All of
+     * @param a_pInputData  NULL terminated source std::string to convert. All of
      *                      the data will be converted including the
      *                      terminating NULL character.
      * @param a_pOutputData Pointer to the buffer to receive the converted
-     *                      string.
+     *                      std::string.
      * @param a_uOutputDataSize Size of the output buffer in char.
      * @return              true if all of the input data, including the
      *                      terminating NULL character was successfully
@@ -2553,7 +2553,7 @@ public:
         char *          a_pOutputData,
         size_t          a_uOutputDataSize)
     {
-        // calc input string length (SI_CHAR type and size independent)
+        // calc input std::string length (SI_CHAR type and size independent)
         size_t uInputLen = strlen((const char *)a_pInputData) + 1;
         if (uInputLen > a_uOutputDataSize) {
             return false;
@@ -2602,10 +2602,10 @@ public:
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
-     * @return              Number of SI_CHAR required by the string when
+     *                      NULL byte if NULL terminated std::string is required.
+     * @return              Number of SI_CHAR required by the std::string when
      *                      converted. If there are embedded NULL bytes in the
-     *                      input data, only the string up and not including
+     *                      input data, only the std::string up and not including
      *                      the NULL byte will be converted.
      * @return              -1 cast to size_t on a conversion error.
      */
@@ -2626,13 +2626,13 @@ public:
         }
     }
 
-    /** Convert the input string from the storage format to SI_CHAR.
+    /** Convert the input std::string from the storage format to SI_CHAR.
      * The storage format is always UTF-8 or MBCS.
      *
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                       must be the actual length of the data, including
-     *                       NULL byte if NULL terminated string is required.
+     *                       NULL byte if NULL terminated std::string is required.
      * @param a_pOutputData Pointer to the output buffer to received the
      *                       converted data.
      * @param a_uOutputDataSize Size of the output buffer in SI_CHAR.
@@ -2679,9 +2679,9 @@ public:
     /** Calculate the number of char required by the storage format of this
      * data. The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated string to calculate the number of
+     * @param a_pInputData  NULL terminated std::string to calculate the number of
      *                       bytes required to be converted to storage format.
-     * @return              Number of bytes required by the string when
+     * @return              Number of bytes required by the std::string when
      *                       converted to storage format. This size always
      *                       includes space for the terminating NULL character.
      * @return              -1 cast to size_t on a conversion error.
@@ -2706,14 +2706,14 @@ public:
         }
     }
 
-    /** Convert the input string to the storage format of this data.
+    /** Convert the input std::string to the storage format of this data.
      * The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated source string to convert. All of
+     * @param a_pInputData  NULL terminated source std::string to convert. All of
      *                       the data will be converted including the
      *                       terminating NULL character.
      * @param a_pOutputData Pointer to the buffer to receive the converted
-     *                       string.
+     *                       std::string.
      * @param a_uOutputDataSize Size of the output buffer in char.
      * @return              true if all of the input data, including the
      *                       terminating NULL character was successfully
@@ -2726,7 +2726,7 @@ public:
         )
     {
         if (m_bStoreIsUtf8) {
-            // calc input string length (SI_CHAR type and size independent)
+            // calc input std::string length (SI_CHAR type and size independent)
             size_t uInputLen = 0;
             while (a_pInputData[uInputLen]) {
                 ++uInputLen;
@@ -2806,10 +2806,10 @@ public:
      * @param a_pInputData  Data in storage format to be converted to UChar.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
-     * @return              Number of UChar required by the string when
+     *                      NULL byte if NULL terminated std::string is required.
+     * @return              Number of UChar required by the std::string when
      *                      converted. If there are embedded NULL bytes in the
-     *                      input data, only the string up and not including
+     *                      input data, only the std::string up and not including
      *                      the NULL byte will be converted.
      * @return              -1 cast to size_t on a conversion error.
      */
@@ -2840,13 +2840,13 @@ public:
         return (size_t) nLen;
     }
 
-    /** Convert the input string from the storage format to UChar.
+    /** Convert the input std::string from the storage format to UChar.
      * The storage format is always UTF-8 or MBCS.
      *
      * @param a_pInputData  Data in storage format to be converted to UChar.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
+     *                      NULL byte if NULL terminated std::string is required.
      * @param a_pOutputData Pointer to the output buffer to received the
      *                      converted data.
      * @param a_uOutputDataSize Size of the output buffer in UChar.
@@ -2884,9 +2884,9 @@ public:
     /** Calculate the number of char required by the storage format of this
      * data. The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated string to calculate the number of
+     * @param a_pInputData  NULL terminated std::string to calculate the number of
      *                      bytes required to be converted to storage format.
-     * @return              Number of bytes required by the string when
+     * @return              Number of bytes required by the std::string when
      *                      converted to storage format. This size always
      *                      includes space for the terminating NULL character.
      * @return              -1 cast to size_t on a conversion error.
@@ -2915,14 +2915,14 @@ public:
         return (size_t) nLen + 1;
     }
 
-    /** Convert the input string to the storage format of this data.
+    /** Convert the input std::string to the storage format of this data.
      * The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated source string to convert. All of
+     * @param a_pInputData  NULL terminated source std::string to convert. All of
      *                      the data will be converted including the
      *                      terminating NULL character.
      * @param a_pOutputData Pointer to the buffer to receive the converted
-     *                      string.
+     *                      std::string.
      * @param a_pOutputDataSize Size of the output buffer in char.
      * @return              true if all of the input data, including the
      *                      terminating NULL character was successfully
@@ -2968,6 +2968,13 @@ public:
 
 // Windows CE doesn't have errno or MBCS libraries
 #ifdef _WIN32_WCE
+# ifndef SI_NO_MBCS
+#  define SI_NO_MBCS
+# endif
+#endif
+
+// And wine also
+#ifdef UNDER_WINE
 # ifndef SI_NO_MBCS
 #  define SI_NO_MBCS
 # endif
@@ -3031,10 +3038,10 @@ public:
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
-     * @return              Number of SI_CHAR required by the string when
+     *                      NULL byte if NULL terminated std::string is required.
+     * @return              Number of SI_CHAR required by the std::string when
      *                      converted. If there are embedded NULL bytes in the
-     *                      input data, only the string up and not including
+     *                      input data, only the std::string up and not including
      *                      the NULL byte will be converted.
      * @return              -1 cast to size_t on a conversion error.
      */
@@ -3051,13 +3058,13 @@ public:
         return (size_t)(retval > 0 ? retval : -1);
     }
 
-    /** Convert the input string from the storage format to SI_CHAR.
+    /** Convert the input std::string from the storage format to SI_CHAR.
      * The storage format is always UTF-8 or MBCS.
      *
      * @param a_pInputData  Data in storage format to be converted to SI_CHAR.
      * @param a_uInputDataLen Length of storage format data in bytes. This
      *                      must be the actual length of the data, including
-     *                      NULL byte if NULL terminated string is required.
+     *                      NULL byte if NULL terminated std::string is required.
      * @param a_pOutputData Pointer to the output buffer to received the
      *                      converted data.
      * @param a_uOutputDataSize Size of the output buffer in SI_CHAR.
@@ -3080,9 +3087,9 @@ public:
     /** Calculate the number of char required by the storage format of this
      * data. The storage format is always UTF-8.
      *
-     * @param a_pInputData  NULL terminated string to calculate the number of
+     * @param a_pInputData  NULL terminated std::string to calculate the number of
      *                      bytes required to be converted to storage format.
-     * @return              Number of bytes required by the string when
+     * @return              Number of bytes required by the std::string when
      *                      converted to storage format. This size always
      *                      includes space for the terminating NULL character.
      * @return              -1 cast to size_t on a conversion error.
@@ -3097,14 +3104,14 @@ public:
         return (size_t) (retval > 0 ? retval : -1);
     }
 
-    /** Convert the input string to the storage format of this data.
+    /** Convert the input std::string to the storage format of this data.
      * The storage format is always UTF-8 or MBCS.
      *
-     * @param a_pInputData  NULL terminated source string to convert. All of
+     * @param a_pInputData  NULL terminated source std::string to convert. All of
      *                      the data will be converted including the
      *                      terminating NULL character.
      * @param a_pOutputData Pointer to the buffer to receive the converted
-     *                      string.
+     *                      std::string.
      * @param a_pOutputDataSize Size of the output buffer in char.
      * @return              true if all of the input data, including the
      *                      terminating NULL character was successfully

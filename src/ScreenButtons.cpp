@@ -29,7 +29,7 @@ struct CScreenButtons::Data
 		Action() : label(L""), command(0) {}
 		Action(const wchar_t * label_, int command_) : label(label_), command(command_) {};
 		bool operator == (int i) {return command == i;}
-		wstring label;
+		std::wstring label;
 		int command;
 	};
 	int selected;
@@ -113,9 +113,9 @@ void CScreenButtons::Init(HKEY hKey)
 
 void CScreenButtons::Load()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	bool fSuccess = false;
-	unsigned long ulTotalLen = 0;
+	unsigned int ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
 	RegQueryValueEx(m_data->key, L"ScreenButtons", 0, &dwType, 0, &ulTotalLen);
 	if (ulTotalLen > 0)
@@ -145,7 +145,7 @@ void CScreenButtons::Load()
 
 void CScreenButtons::Save()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	for (Data::Buttons::iterator it = m_data->buttons.begin(); it != m_data->buttons.end(); ++it)
 	{
 		WORD wCommand = it->second.command;

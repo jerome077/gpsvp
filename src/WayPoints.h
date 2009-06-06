@@ -20,12 +20,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <memory>
 #include "IPainter.h"
 #include "GeoPoint.h"
 #include "VersionNumber.h"
-#include "FileFormats\GPX.h"
-
-using namespace std;
+#ifndef UNDER_WINE
+#include "FileFormats/GPX.h"
+#endif // UNDER_WINE
 
 // Waypoints with a name beginning with this prefix are considered as models for other waypoints
 const std::wstring WPT_MODEL_PREFIX = L"~";
@@ -50,29 +51,29 @@ public:
 	{
 	public:
 		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual wstring Name() const { return L""; };
-		virtual wstring Value() const { return L""; };
+		virtual std::wstring Name() const { return L""; };
+		virtual std::wstring Value() const { return L""; };
 		virtual bool DeleteAllowed() const { return false; };
-		virtual void SetValue(const wstring& aValue) {};
-		virtual void SetName(const wstring& aValue) {};
+		virtual void SetValue(const std::wstring& aValue) {};
+		virtual void SetName(const std::wstring& aValue) {};
 	};
 	// - - - - - - - - - - - - - - - - - - - - - - -
     class CStringProp : public CPointProp
 	{
 		enumWaypointPropNameSpace m_namespace;
-		wstring m_name;
-		wstring m_value;
+		std::wstring m_name;
+		std::wstring m_value;
 	public:
 		CStringProp(const enumWaypointPropNameSpace& aNamespace,
-			        const wstring& aName,
-					const wstring& aValue) : m_namespace(aNamespace), m_name(aName), m_value(aValue) {};
+			        const std::wstring& aName,
+					const std::wstring& aValue) : m_namespace(aNamespace), m_name(aName), m_value(aValue) {};
 		CStringProp(const CStringProp& source) : m_namespace(source.m_namespace), m_name(source.m_name), m_value(source.m_value) {};
 		virtual enumWaypointPropNameSpace Namespace() const { return m_namespace; };
-		virtual wstring Name() const { return m_name; };
-		virtual wstring Value() const { return m_value; };
+		virtual std::wstring Name() const { return m_name; };
+		virtual std::wstring Value() const { return m_value; };
 		virtual bool DeleteAllowed() const { return true; };
-		virtual void SetValue(const wstring& aValue) { m_value = aValue; };
-		virtual void SetName(const wstring& aValue) { m_name = aValue; };
+		virtual void SetValue(const std::wstring& aValue) { m_value = aValue; };
+		virtual void SetName(const std::wstring& aValue) { m_name = aValue; };
 	};
 	// ---------------------------------------------
 	class CPoint
@@ -88,7 +89,7 @@ public:
 		double m_dLongitude;
 		double m_dLatitude;
 		GeoPoint m_poscache;
-		wstring m_wstrName;
+		std::wstring m_wstrName;
 		Int m_iId;
 		double m_dLastUsed;
 		int m_iRadius;
@@ -104,7 +105,7 @@ public:
 		void AddToList(IListAcceptor * pAcceptor);
 		void AddToList(IListAcceptor2 * pAcceptor);
 		Int GetID() {return m_iId;}
-		wstring GetLabel() {return m_wstrName;}
+		std::wstring GetLabel() {return m_wstrName;}
 		void SetLabel(const wchar_t * wcLabel) {
 			m_wstrName = wcLabel; 
 			std::replace(m_wstrName.begin(), m_wstrName.end(), L',', L'.');
@@ -137,7 +138,7 @@ public:
 	{
 	protected:
 		CPoint& m_pt;
-		wstring m_wstrLon, m_wstrLat; // Editing lon and lat postponed until commit
+		std::wstring m_wstrLon, m_wstrLat; // Editing lon and lat postponed until commit
 	public:
 		// - - - - - - - - - - - - - - - - - - - - - - -
 		class CPropProxy : public CPointProp
@@ -146,11 +147,11 @@ public:
 		public:
 			CPropProxy(CPointProp* ARefProp) : m_RefProp(ARefProp) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return m_RefProp->Namespace(); };
-			virtual wstring Name() const { return m_RefProp->Name(); };
-			virtual wstring Value() const { return m_RefProp->Value(); };
+			virtual std::wstring Name() const { return m_RefProp->Name(); };
+			virtual std::wstring Value() const { return m_RefProp->Value(); };
 			virtual bool DeleteAllowed() const { return m_RefProp->DeleteAllowed(); };
-			virtual void SetValue(const wstring& aValue) { m_RefProp->SetValue(aValue); };
-			virtual void SetName(const wstring& aValue) { m_RefProp->SetName(aValue); };
+			virtual void SetValue(const std::wstring& aValue) { m_RefProp->SetValue(aValue); };
+			virtual void SetName(const std::wstring& aValue) { m_RefProp->SetName(aValue); };
 		};
 		// - - - - - - - - - - - - - - - - - - - - - - -
 		class CLongitudeProp : public CPointProp
@@ -161,14 +162,14 @@ public:
 			CLongitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 			CLongitudeProp(const CLongitudeProp& source) : m_pt(source.m_pt), m_ptEditor(source.m_ptEditor) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return CoordLabelLon()+L":"; };
-			virtual wstring Value() const
+			virtual std::wstring Name() const { return CoordLabelLon()+L":"; };
+			virtual std::wstring Value() const
 			{
-				wstring wstrLon, wstrLat;
+				std::wstring wstrLon, wstrLat;
 				CoordToText(m_pt.Longitude(), m_pt.Latitude(), wstrLon, wstrLat);
 				return wstrLon;
 			};
-			virtual void SetValue(const wstring& aValue) { m_ptEditor.m_wstrLon = aValue; };
+			virtual void SetValue(const std::wstring& aValue) { m_ptEditor.m_wstrLon = aValue; };
 		};
 		// - - - - - - - - - - - - - - - - - - - - - - -
 		class CLatitudeProp : public CPointProp
@@ -179,14 +180,14 @@ public:
 			CLatitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 //			CLatitudeProp(const CLatitudeProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return CoordLabelLat()+L":"; };
-			virtual wstring Value() const
+			virtual std::wstring Name() const { return CoordLabelLat()+L":"; };
+			virtual std::wstring Value() const
 			{
-				wstring wstrLon, wstrLat;
+				std::wstring wstrLon, wstrLat;
 				CoordToText(m_pt.Longitude(), m_pt.Latitude(), wstrLon, wstrLat);
 				return wstrLat;
 			};
-			virtual void SetValue(const wstring& aValue) { m_ptEditor.m_wstrLat = aValue; };
+			virtual void SetValue(const std::wstring& aValue) { m_ptEditor.m_wstrLat = aValue; };
 		};
 		// - - - - - - - - - - - - - - - - - - - - - - -
 		class CNameProp : public CPointProp
@@ -196,9 +197,9 @@ public:
 			CNameProp(CPoint& aPt) : m_pt(aPt) {};
 			CNameProp(const CNameProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return L("Label:"); };
-			virtual wstring Value() const { return m_pt.GetLabel(); };
-			virtual void SetValue(const wstring& aValue) { m_pt.SetLabel(aValue.c_str()); };
+			virtual std::wstring Name() const { return L("Label:"); };
+			virtual std::wstring Value() const { return m_pt.GetLabel(); };
+			virtual void SetValue(const std::wstring& aValue) { m_pt.SetLabel(aValue.c_str()); };
 		};
 		// - - - - - - - - - - - - - - - - - - - - - - -
 		class CAltitudeProp : public CPointProp
@@ -208,9 +209,9 @@ public:
 			CAltitudeProp(CPoint& aPt) : m_pt(aPt) {};
 			CAltitudeProp(const CAltitudeProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual wstring Name() const { return L("Altitude:"); };
-			virtual wstring Value() const { return IntToText(m_pt.GetAltitude()); };
-			virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
+			virtual std::wstring Name() const { return L("Altitude:"); };
+			virtual std::wstring Value() const { return IntToText(m_pt.GetAltitude()); };
+			virtual void SetValue(const std::wstring& aValue) { 	wchar_t *end;
 															int i = wcstol(aValue.c_str(), &end, 10);
 															if (*end == 0) m_pt.Altitude(i);
 														};
@@ -223,9 +224,9 @@ public:
 			CRadiusProp(CPoint& aPt) : m_pt(aPt) {};
 			CRadiusProp(const CRadiusProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsVP; };
-			virtual wstring Name() const { return L("Radius:"); };
-			virtual wstring Value() const { return IntToText(m_pt.GetRadius()); };
-			virtual void SetValue(const wstring& aValue) { 	wchar_t *end;
+			virtual std::wstring Name() const { return L("Radius:"); };
+			virtual std::wstring Value() const { return IntToText(m_pt.GetRadius()); };
+			virtual void SetValue(const std::wstring& aValue) { 	wchar_t *end;
 															int i = wcstol(aValue.c_str(), &end, 10);
 															if (*end == 0) m_pt.SetRadius(i);
 														};
@@ -241,14 +242,14 @@ public:
 	};
 	// ---------------------------------------------
 protected:
-	list<CPoint> m_Points;
-	wstring m_wstrFilename;
+	std::list<CPoint> m_Points;
+	std::wstring m_wstrFilename;
 	// If it was a GPX files with tracks, we can't write it without losing the tracks => False to avoid overwrite:
 	bool m_bCanWrite; 
 	// To avoid writing the file too much (to block 'write' until 'EndUpdate' is called):
 	int m_BeginUpdateCount;
 	bool m_bWriteRequested;
-	vector<int> m_ModelsIdList;
+	std::vector<int> m_ModelsIdList;
 	void BeginUpdate(); 
 	void EndUpdate();
 public:
@@ -280,7 +281,7 @@ public:
 	void Paint(IPainter * pPainter, const GeoPoint * pgp);
 	void GetList(IListAcceptor * pAcceptor, GeoPoint gpCenter, int iRadius);
 	void GetList(IListAcceptor2 * pAcceptor);
-	wstring GetLabelByID(int iId);
+	std::wstring GetLabelByID(int iId);
 	int GetRadiusByID(int iId);
 	int GetAltitudeByID(int iId);
 	void SetLabelByID(int iId, const wchar_t * wcLabel);
@@ -296,7 +297,7 @@ public:
 	UpdateZone UpdateZoneForCodeBlock() { return UpdateZone(this); };
 	int GetWaypointModelCount();
 	CPoint & GetWaypointModel(int modelIndex);
-	wstring GetFilename() { return m_wstrFilename; };
+	std::wstring GetFilename() { return m_wstrFilename; };
 	bool IsGPX();
 };
 

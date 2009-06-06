@@ -29,7 +29,7 @@ public:
 	static bool m_useProxy; //use proxy flag, is syncronized with Use Proxy menu option
 	static std::string m_proxyHost;
 	static std::string m_proxyPort;
-	static std::string m_proxyAuth; // base64-encoded string "user:password"
+	static std::string m_proxyAuth; // base64-encoded std::string "user:password"
 	
 	CHttpRequest(std::wstring * pwstrHttpStatus);
 	~CHttpRequest();
@@ -47,4 +47,4 @@ public:
 
 // ---------------------------------------------------------------
 
-#endif HTTPCLIENT_H
+#endif // HTTPCLIENT_H

@@ -30,7 +30,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif
 
 volatile PMADialog g_pNextDialog = 0;
-map<HWND, CMADialog *> g_Dialogs;
+std::map<HWND, CMADialog *> g_Dialogs;
 
 LRESULT CMADialog::ProcessSubWindowMessage(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

@@ -27,8 +27,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Lock.h"
 #include "MonitorSet.h"
 
-using namespace std;
-
 struct IGPSClient
 {
 	enum enumConnectionStatus 
@@ -59,12 +57,12 @@ private:
 		cnMaxCommand = 100 //!< Max command length
 	};
 	//! Current command
-	string m_strCommand;
+	std::string m_strCommand;
 	//! Is command started
 	bool m_fCommandStarted;
-	map<string, string> m_mapCommands;
+	std::map<std::string, std::string> m_mapCommands;
 	int m_iSatNum;
-	map<int, int> m_mapSats;
+	std::map<int, int> m_mapSats;
 	CSpeedMonitor m_dSpeed;
 	CSpeedMonitor m_dMaxSpeed;
 	CTextMonitor m_monStatus;

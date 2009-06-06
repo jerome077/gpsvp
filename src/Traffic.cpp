@@ -247,7 +247,7 @@ struct TrafficNodes::Data : public ILegSender
 	std::wstring m_wstrFilename;
 	bool m_fRefresh;
 	bool m_fTrafficLoaded;
-	typedef std::list< std::pair< std::pair<GeoPoint, GeoPoint>, int > > Traffic;
+	typedef std::list<std::pair<std::pair<GeoPoint, GeoPoint>, int > > Traffic;
 	Traffic m_Traffic;
 	typedef std::pair<int, int> NodeRegion;
 	typedef std::set<NodeRegion> NodeRegions;
@@ -279,31 +279,32 @@ bool TrafficNodes::PaintFastestWay(const GeoPoint & gpFrom, const GeoPoint & gpT
 	return m_pData->PaintFastestWay(gpFrom, gpTo, p);
 }
 
+struct QueueNode
+{
+	double _time;
+	GeoPoint _gp;
+	bool operator < (const QueueNode & than) const
+	{
+		if (_time != than._time)
+			return _time < than._time;
+		return _gp < than._gp;
+	}
+	QueueNode(double time, const GeoPoint & gp) : _time(time), _gp(gp) {}
+};
+typedef std::set<QueueNode> Queue;
+struct WayNode
+{
+	WayNode(const GeoPoint & from, double time) : _from(from), _time(time) {}
+	WayNode() : _time(0) {}
+	GeoPoint _from;
+	double _time;
+};
+typedef std::map<GeoPoint, WayNode> Way;
+
 bool TrafficNodes::Data::PaintFastestWay(const GeoPoint & gpFrom, const GeoPoint & gpTo, IPainter * p) const
 {
 	if (m_RoutingGraph.empty())
 		return false;
-	struct QueueNode
-	{
-		double _time;
-		GeoPoint _gp;
-		bool operator < (const QueueNode & than) const
-		{
-			if (_time != than._time)
-				return _time < than._time;
-			return _gp < than._gp;
-		}
-		QueueNode(double time, const GeoPoint & gp) : _time(time), _gp(gp) {}
-	};
-	typedef std::set<QueueNode> Queue;
-	struct WayNode
-	{
-		WayNode(const GeoPoint & from, double time) : _from(from), _time(time) {}
-		WayNode() : _time(0) {}
-		GeoPoint _from;
-		double _time;
-	};
-	typedef std::map<GeoPoint, WayNode> Way;
 
 	Queue queue;
 	Way way;

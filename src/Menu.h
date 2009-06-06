@@ -25,7 +25,7 @@ private:
 	CMenu & operator = (const CMenu &);
 	HMENU m_hMenu;
 	bool m_fCreated;
-	list<CMenu*> m_listSubMenus;
+	std::list<CMenu*> m_listSubMenus;
 	CKeymap m_Keymap;
 	CScreenButtons m_buttons;
 	CMenu * m_pOwner;

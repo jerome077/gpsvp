@@ -49,7 +49,7 @@ Int FromDegree(double dDegree)
 	return Int(dDegree / (360. / (1 << GPWIDTH)));
 }
 
-// Make double from string
+// Make double from std::string
 double myatof(const char * str)
 {
 	// Start from tabula rasa
@@ -70,7 +70,7 @@ double myatof(const char * str)
 	case '+':
 		++str;
 	}
-	// Parse string to end
+	// Parse std::string to end
 	while (*str)
 	{
 		// For digits
@@ -115,7 +115,7 @@ double myatof(const char * str)
 	return res * sign;
 }
 
-// Make double from string
+// Make double from std::string
 double myatof(const wchar_t * str)
 {
 	// Start from tabula rasa
@@ -136,7 +136,7 @@ double myatof(const wchar_t * str)
 	case L'+':
 		++str;
 	}
-	// Parse string to end
+	// Parse std::string to end
 	while (*str)
 	{
 		// For digits
@@ -181,7 +181,7 @@ double myatof(const wchar_t * str)
 	return res * sign;
 }
 
-wstring DistanceToText(double dDistance)
+std::wstring DistanceToText(double dDistance)
 {
 	wchar_t wcDistance[1000] = {0};
 	switch (app.m_riMetrics())
@@ -236,7 +236,7 @@ wstring DistanceToText(double dDistance)
 	return wcDistance;
 }
 
-wstring SpeedToText(double dSpeed)
+std::wstring SpeedToText(double dSpeed)
 {
 	wchar_t wcSpeed[1000] = {0};
 	switch (app.m_riMetrics())
@@ -265,7 +265,7 @@ wstring SpeedToText(double dSpeed)
 	return wcSpeed;
 }
 
-wstring HeightToText(double dDistance)
+std::wstring HeightToText(double dDistance)
 {
 	wchar_t wcDistance[1000] = {0};
 	switch (app.m_riMetrics())
@@ -282,35 +282,35 @@ wstring HeightToText(double dDistance)
 	return wcDistance;
 }
 
-wstring DoubleToText(double dDouble, int iDigits)
+std::wstring DoubleToText(double dDouble, int iDigits)
 {
 	wchar_t wcDouble[1000];
 	swprintf(wcDouble, 1000, L"%.*f", iDigits, dDouble);
 	return wcDouble;
 }
 
-string DoubleToStr(double dDouble, int iDigits)
+std::string DoubleToStr(double dDouble, int iDigits)
 {
 	char cDouble[1000];
 	_snprintf(cDouble, 1000, "%.*f", iDigits, dDouble);
 	return cDouble;
 }
 
-wstring IntToText(int iInt)
+std::wstring IntToText(int iInt)
 {
 	wchar_t wcInt[1000];
 	swprintf(wcInt, 1000, L"%d", iInt);
 	return wcInt;
 }
 
-wstring IntToHex(int iInt)
+std::wstring IntToHex(int iInt)
 {
 	wchar_t wcInt[1000];
 	swprintf(wcInt, 1000, L"%x", iInt);
 	return wcInt;
 }
 
-wstring MemoryToText(unsigned long ulMemory)
+std::wstring MemoryToText(unsigned long ulMemory)
 {
 	wchar_t wcMemory[1000];
 	if (ulMemory < 1 * 1024)
@@ -366,7 +366,7 @@ int sin100(int degree)
 	return mycos100.Guess(degree - (1 << (GPWIDTH - 2)));
 }
 
-wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat) 
+std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat) 
 {
 	int n1, n2, n3;
 	n1 = n2 = n3 = 1;
@@ -488,7 +488,7 @@ double TextToDegree(const wchar_t * wcText)
 	return dDegree * sign;
 }
 
-void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat)
+void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& wstrLat)
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (iCoordFormat <= 4)
@@ -506,7 +506,7 @@ void CoordToText(double dLon, double dLat, wstring& wstrLon, wstring& wstrLat)
 	}
 }
 
-void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, double& dLat)
+void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, double& dLon, double& dLat)
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (iCoordFormat <= 4)
@@ -531,7 +531,7 @@ void TextToCoord(const wstring& wstrLon, const wstring& wstrLat, double& dLon, d
 	}
 }
 
-wstring CoordLabelLon()
+std::wstring CoordLabelLon()
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
@@ -540,7 +540,7 @@ wstring CoordLabelLon()
 		return L("Longitude");
 }
 
-wstring CoordLabelLat()
+std::wstring CoordLabelLat()
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
@@ -598,7 +598,7 @@ void Dict::Read(const wchar_t * wcFilename)
 		wchar_t * next = wcschr(curr + 1, L'\n');
 		if (!next)
 			return;
-		wstring wstr(curr, next - curr);
+		std::wstring wstr(curr, next - curr);
 		curr = next;
 		std::wstring::size_type fb, fe, sb, se;
 		if (std::wstring::npos == (fb = wstr.find(L'['))) continue;
@@ -607,8 +607,8 @@ void Dict::Read(const wchar_t * wcFilename)
 		if (std::wstring::npos == (sb = wstr.find(L'[', fe))) continue;
 		++sb;
 		if (std::wstring::npos == (se = wstr.find(L']', sb))) continue;
-		wstring f = wstr.substr(fb, fe - fb);
-		wstring s = wstr.substr(sb, se - sb);
+		std::wstring f = wstr.substr(fb, fe - fb);
+		std::wstring s = wstr.substr(sb, se - sb);
 		m_data->m_map[f] = s;
 	}
 }
@@ -854,12 +854,12 @@ void TestUTM()
 
 // ---------------------------------------------------------------
 
-wstring UTMZoneToLongText(int utmZone)
+std::wstring UTMZoneToLongText(int utmZone)
 {
 	int lon0_360 = abs(utmZone)*6 - 183;
 	wchar_t bufDegrees[128];
 	wsprintf(bufDegrees, L("%d° to %d°"), lon0_360-3, lon0_360+3);
-	wstring sHemisphere = (utmZone > 0) ? L("north hemisphere") : L("south hemisphere");
+	std::wstring sHemisphere = (utmZone > 0) ? L("north hemisphere") : L("south hemisphere");
 	return IntToText(utmZone) + L" (" + bufDegrees + L", " + sHemisphere + L")";
 }
 

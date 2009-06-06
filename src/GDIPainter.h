@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef GDIPAINTER_H
 #define GDIPAINTER_H
 
-#include "ScreenPoint.h"
+#include "screenpoint.h"
 #include <map>
 #include <hash_map>
 #include <set>
@@ -164,9 +164,9 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	
 
 	HINSTANCE m_hResourceInst;
-	set<int> m_setUnknownTypes;
+	std::set<int> m_setUnknownTypes;
 	ScreenRect m_srActiveMonitor;
-	map<int, HICON> m_mapIcons;
+	std::map<int, HICON> m_mapIcons;
 	int m_iCurrentStatusIcon;
 	CGDIPainter & operator = (const CGDIPainter &);
 	bool m_fFullScreen;

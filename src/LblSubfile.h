@@ -19,8 +19,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include <hash_map>
 
-using namespace std;
-
 class CSubFile;
 
 //! Subfile containing all labels

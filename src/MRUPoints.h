@@ -26,7 +26,7 @@ private:
 	struct Point
 	{
 		GeoPoint gp;
-		wstring wstrName;
+		std::wstring wstrName;
 	};
 	typedef std::list<Point> Points;
 	Points m_points;
@@ -43,7 +43,7 @@ public:
 	}
 	void Save()
 	{
-		vector<Byte> data;
+		std::vector<Byte> data;
 		for (Points::iterator it = m_points.begin(); it != m_points.end(); ++it)
 		{
 			int len = it->wstrName.length();
@@ -57,8 +57,8 @@ public:
 	}
 	void Load()
 	{
-		vector<Byte> data;
-		unsigned long ulTotalLen = 0;
+		std::vector<Byte> data;
+		unsigned int ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
 		RegQueryValueEx(m_hRegKey, L"MRUPoints", 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)
@@ -74,7 +74,7 @@ public:
 			{
 				GeoPoint gp;
 				int iLen;
-				wstring wstr;
+				std::wstring wstr;
 				memcpy(&gp, &data[uiPos], sizeof(gp));
 				uiPos += sizeof(gp);
 				memcpy(&iLen, &data[uiPos], sizeof(iLen));

@@ -65,7 +65,7 @@ void CGDIPainter::StartPolyline(UInt uiType, const wchar_t * wcName)
 	// Elevation can be specified for POI objects like summit (Type 0x6616) and depth / height
 	// points (Types 0x6200 & 0x6300) as well as for polyline objects like land / depth contours
 	// (Types=0x20 to 0x25).
-	static wstring wstrReplace;
+	static std::wstring wstrReplace;
 	if (wcName && (uiType >= 0x20 && uiType <= 0x25))
 	{
 		wstrReplace = app.HeightFromFeet(wcName);
@@ -219,8 +219,8 @@ void CGDIPainter::FinishObject()
 				int y2 = m_pointList[m_iWriteSegment + 1].y;
 				if (x1 > x2)
 				{
-					swap(x1, x2);
-					swap(y1, y2);
+					std::swap(x1, x2);
+					std::swap(y1, y2);
 				}
 				int dx = x2 - x1;
 				int dy = y2 - y1;
@@ -478,7 +478,7 @@ void CGDIPainter::ZoomIn()
 		return;
 	// Decrease scale twice
 	// Correct if minimum reached
-	m_ruiScale10.Set(max((int)(ciMinZoom), m_ruiScale10() / 2));
+	m_ruiScale10.Set(std::max((int)(ciMinZoom), m_ruiScale10() / 2));
 	Redraw();
 }
 void CGDIPainter::ZoomOut()
@@ -487,7 +487,7 @@ void CGDIPainter::ZoomOut()
 		return;
 	// Increase scale twice
 	// Correct if maximum reached
-	m_ruiScale10.Set(min((int)(ciMaxZoom), m_ruiScale10() * 2));
+	m_ruiScale10.Set(std::min((int)(ciMaxZoom), m_ruiScale10() * 2));
 	Redraw();
 }
 void CGDIPainter::Left()
@@ -556,8 +556,8 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	}
 	m_fViewSet = false;
 	m_ruiScale10.Init(hRegKey, L"ScaleD", 500);
-	m_ruiScale10.Set(max((int)(ciMinZoom), m_ruiScale10()));
-	m_ruiScale10.Set(min((int)(ciMaxZoom), m_ruiScale10()));
+	m_ruiScale10.Set(std::max((int)(ciMinZoom), m_ruiScale10()));
+	m_ruiScale10.Set(std::min((int)(ciMaxZoom), m_ruiScale10()));
 
 	m_lXScale100 = cos100(m_gpCenter().lat);
 	m_fBottomBar = false;
@@ -653,7 +653,7 @@ void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * w
 		// Elevation can be specified for POI objects like summit (Type 0x6616) and depth / height
 		// points (Types 0x6200 & 0x6300) as well as for polyline objects like land / depth contours
 		// (Types=0x20 to 0x25).
-		wstring wstrNameReplace;
+		std::wstring wstrNameReplace;
 		if (uiType == 0x6616 || uiType == 0x6200 || uiType == 0x6300)
 		{
 			wstrNameReplace = app.HeightFromFeet(wcName);
@@ -693,7 +693,7 @@ void CGDIPainter::PaintStatusIcon(int iIcon)
 void CGDIPainter::ParseString(const char * buff, const std::wstring & wstrBase)
 {
 	std::vector<long> vRecord;
-	wstring wstrRecord;
+	std::wstring wstrRecord;
 	const char * pos = buff;
 	while ((*pos != 0) && (*pos != '\n') && (*pos != '\r'))
 	{
@@ -1023,8 +1023,8 @@ GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
 	//res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
 	//res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
 	res = GeoPoint(
-		int((__int64(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
-		int(-(__int64(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
+		int(((__int64)(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
+		int(-((__int64)(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
 	res.lon += m_gpCenter().lon;
 	res.lat += m_gpCenter().lat;
 	return res;
@@ -1033,8 +1033,8 @@ ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 {
 	AutoLock l;
 	ScreenPoint res;
-	int dx1 = int(__int64(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
-	int dy1 = int(__int64(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
+	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
+	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
 
 	int dx2;
 	int dy2;
@@ -1077,10 +1077,10 @@ GeoRect CGDIPainter::ScreenToGeo(const ScreenRect & rect)
 	GeoPoint gp2 = ScreenToGeo(ScreenPoint(rect.left, rect.bottom));
 	GeoPoint gp3 = ScreenToGeo(ScreenPoint(rect.right, rect.top));
 	GeoPoint gp4 = ScreenToGeo(ScreenPoint(rect.right, rect.bottom));
-	res.minLat = min(min(gp1.lat, gp2.lat), min(gp3.lat, gp4.lat));
-	res.minLon = min(min(gp1.lon, gp2.lon), min(gp3.lon, gp4.lon));
-	res.maxLat = max(max(gp1.lat, gp2.lat), max(gp3.lat, gp4.lat));
-	res.maxLon = max(max(gp1.lon, gp2.lon), max(gp3.lon, gp4.lon));
+	res.minLat = std::min(std::min(gp1.lat, gp2.lat), std::min(gp3.lat, gp4.lat));
+	res.minLon = std::min(std::min(gp1.lon, gp2.lon), std::min(gp3.lon, gp4.lon));
+	res.maxLat = std::max(std::max(gp1.lat, gp2.lat), std::max(gp3.lat, gp4.lat));
+	res.maxLon = std::max(std::max(gp1.lon, gp2.lon), std::max(gp3.lon, gp4.lon));
 	return res;
 }
 const GeoPoint CGDIPainter::GetCenter() 
@@ -1104,7 +1104,7 @@ void CGDIPainter::PaintScale()
 		finish.x = length;
 		if (finish.x > sr.right)
 			break;
-		const wstring & label = DistanceToText(*l);
+		const std::wstring & label = DistanceToText(*l);
 		StartPolyline(type, label.c_str());
 		AddPoint(start);
 		AddPoint(finish);
@@ -1120,7 +1120,7 @@ void CGDIPainter::PaintScale()
 	double dDist = IntDistance(m_gpCenter(), ScreenToGeo(GeoToScreen(m_gpCenter()) + ScreenDiff(2000,0))) / 50;
 	ScreenPoint pt1 = ScreenPoint(m_srWindow.left, m_srWindow.bottom) + ScreenDiff(10, -10);
 	ScreenPoint pt2 = pt1 + ScreenDiff(iWidth,0);
-	wstring wcScale = DistanceToText(dDist);
+	std::wstring wcScale = DistanceToText(dDist);
 	StartPolyline(0xFD, wcScale.c_str());
 	SetLabelMandatory();
 	AddPoint(pt1 + ScreenDiff(0, -2));
@@ -1145,7 +1145,7 @@ void CGDIPainter::AddButton(const wchar_t * wcLabel, int iCommand, bool fSelecte
 	m_hdc.ExtTextOut(m_srWindow.right - size.cx - 3, m_iCurrentButton + 3, 0, 0, wcLabel, 0);
 
 	m_buttons.push_back(
-		make_pair(
+		std::make_pair(
 			ScreenRect(ScreenPoint(m_srWindow.right - size.cx - 3, m_iCurrentButton + 3), size),
 			iCommand
 		));
@@ -1168,7 +1168,7 @@ int CGDIPainter::CheckButton(const ScreenPoint & sp)
 
 void CGDIPainter::GetUnknownTypes(IListAcceptor * pAcceptor)
 {
-	for (set<int>::iterator it = m_setUnknownTypes.begin(); 
+	for (std::set<int>::iterator it = m_setUnknownTypes.begin(); 
 			it != m_setUnknownTypes.end(); ++it)
 	{
 		wchar_t wstrType[100];
@@ -1207,7 +1207,7 @@ void CGDIPainter::SetXScale(double scale)
 {
 	AutoLock l;
 	unsigned int new_scale = (unsigned int)(scale / 10 * m_lXScale100);
-	new_scale = max(ciMinZoom, min(ciMaxZoom, new_scale));
+	new_scale = std::max((unsigned)ciMinZoom, std::min((unsigned)ciMaxZoom, new_scale));
 	if (m_ruiScale10() != new_scale)
 		m_ruiScale10.Set(new_scale);
 }

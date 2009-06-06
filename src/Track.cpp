@@ -112,7 +112,7 @@ void CTrack::WritePLT(GeoPoint pt, double dTimeUTC)
 {
 	double dLocalTime;
 	UTCVariantTimeToLocalVariantTime(dTimeUTC, dLocalTime);
-	// Output string to file
+	// Output std::string to file
 	m_iBufferPos += _snprintf(m_writeBuffer + m_iBufferPos, 1024, "%2.8f,%2.8f,%d,%.1f,%6.8f,,\r\n",
 		                      Degree(pt.lat), Degree(pt.lon), m_fBeginTrack ? 1 : 0,
 							  (m_fAltitude ? m_dAltitude / cdFoot : -777), dLocalTime);
@@ -122,7 +122,7 @@ void CTrack::WritePLT(GeoPoint pt, double dTimeUTC)
 
 void CTrack::WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP)
 {
-	// Output string to file
+	// Output std::string to file
 	if (m_fBeginTrack && !m_fBeginFile)
 		m_iBufferPos += _snprintf(m_writeBuffer + m_iBufferPos, 1024, "</trkseg><trkseg>\r\n");
 	std::string strEle;
@@ -191,7 +191,7 @@ void CTrack::CreateFilePLT()
 		"WGS 84\r\n"
 		"Altitude is in Feet\r\n"
 		"Reserved\r\n"
-		"0,2,%ld,,0,0,2,0\r\n"
+		"0,2,%d,,0,0,2,0\r\n"
 		"1\r\n", m_iColor);
 }
 
@@ -203,7 +203,9 @@ std::string CTrack::GetCreator()
 void CTrack::CreateFileGPX()
 {
 	m_CurrentTrackFormat = tfGPX;
+#ifndef UNDER_WINE
 	m_FilePosForAdding = 0;
+#endif // UNDER_WINE
 	// Write file header
 	GetFileName(); // initialisiert m_strGPXName
 	m_iBufferPos = _snprintf(m_writeBuffer, 4096,
@@ -266,6 +268,7 @@ void CTrack::Read(const std::wstring& wstrFilename)
 		ReadPLT(wstrFilename);
 }
 
+#ifndef UNDER_WINE
 void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename)
 {
 	m_wstrFilenameExt = apTrack->getName() + L" - " + wstrFilename; 
@@ -285,7 +288,9 @@ void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring
 			Break();
 	}
 }
+#endif
 
+#ifndef UNDER_WINE
 void CTrack::ReadFirstTrackFromGPX(const std::wstring& wstrFilename)
 {
 	try
@@ -304,12 +309,15 @@ void CTrack::ReadFirstTrackFromGPX(const std::wstring& wstrFilename)
 	{
 		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
 	}
+#ifndef UNDER_WINE
 	catch (_com_error e)
 	{
 		MessageBox(NULL, (std::wstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
 			       L("GPX read error"), MB_ICONEXCLAMATION);
 	}
+#endif // UNDER_WINE
 }
+#endif // UNDER_WINE
 
 void CTrack::ReadPLT(const std::wstring& wstrFilename)
 {
@@ -324,14 +332,14 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 		if (!fgets(buff, sizeof(buff), pFile))
 			break;
 	}
-	vector<string> listParts;
+	std::vector<std::string> listParts;
 	while(fgets(buff, sizeof(buff), pFile))
 	{
-		string strCommand = buff;
+		std::string strCommand = buff;
 		listParts.resize(0);
-		string::size_type pos = 0;
-		string::size_type nextpos = 0;
-		while ((nextpos = strCommand.find(',', pos)) != string::npos)
+		std::string::size_type pos = 0;
+		std::string::size_type nextpos = 0;
+		while ((nextpos = strCommand.find(',', pos)) != std::string::npos)
 		{
 			listParts.push_back(strCommand.substr(pos, nextpos - pos));
 			pos = nextpos + 1;
@@ -357,7 +365,7 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 		}
 	}
 }
-const wstring CTrack::GetExtFilename()
+const std::wstring CTrack::GetExtFilename()
 {
 	AutoLock l;
 	return m_wstrFilenameExt;
@@ -466,7 +474,7 @@ void CTrack::SetCompetition(const GeoPoint & gp, unsigned long ulCompetitionTime
 void CTrackList::GetTrackList(IListAcceptor * pAcceptor)
 {
 	int iIndex = 0;
-	for (list<CTrack>::iterator it = m_Tracks.begin(); it != m_Tracks.end();++it, ++iIndex)
+	for (std::list<CTrack>::iterator it = m_Tracks.begin(); it != m_Tracks.end();++it, ++iIndex)
 		pAcceptor->AddItem(it->GetExtFilename().c_str(), iIndex);
 }
 
@@ -494,6 +502,7 @@ bool CTrackList::OpenTrackPLT(const std::wstring& wstrFile)
 	}
 }
 
+#ifndef UNDER_WINE
 bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 {
 	bool Result = false;
@@ -524,17 +533,20 @@ bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 	{
 		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
 	}
+#ifndef UNDER_WINE
 	catch (_com_error e)
 	{
 		MessageBox(NULL, (std::wstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
 			       L("GPX read error"), MB_ICONEXCLAMATION);
 	}
+#endif // UNDER_WINE
 	return Result;
 }
+#endif // UNDER_WINE
 
 void CTrackList::CloseTrack(Int iIndex)
 {
-	list<CTrack>::iterator it;
+	std::list<CTrack>::iterator it;
 	for (it = m_Tracks.begin(); it != m_Tracks.end(); ++it)
 	{
 		if (!iIndex)

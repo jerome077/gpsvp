@@ -122,7 +122,7 @@ class CFileDlg : public CMADialog
 				++iItem;
 			}
 		}
-		m_path.SetText((wstring(L"[") + app.m_rsCurrentFolder() + L"\\]").c_str());
+		m_path.SetText((std::wstring(L"[") + app.m_rsCurrentFolder() + L"\\]").c_str());
 		m_filename.SetFocus();
 	}
 	virtual void InitDialog(HWND hDlg)
@@ -202,13 +202,13 @@ class CFileDlg : public CMADialog
 							*ch = 0;
 						if (!wcscmp(buff + 1, L".."))
 						{
-							wstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							std::wstring wstrCurrentFolder = app.m_rsCurrentFolder();
 							wstrCurrentFolder.erase(wstrCurrentFolder.find_last_of(L"\\"));
 							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
 						}
 						else
 						{
-							wstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							std::wstring wstrCurrentFolder = app.m_rsCurrentFolder();
 							wstrCurrentFolder += L"\\";
 							wstrCurrentFolder += buff + 1;
 							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
@@ -235,7 +235,7 @@ class CFileDlg : public CMADialog
 					m_filename.GetText(buff, MAX_PATH);
 					if (buff[0])
 					{
-						wstring wstrResult = app.m_rsCurrentFolder() + L"\\" + buff;
+						std::wstring wstrResult = app.m_rsCurrentFolder() + L"\\" + buff;
 
 						if (m_fFileMustExist)
 						{
@@ -273,14 +273,14 @@ class CFileDlg : public CMADialog
 		}
 	}
 public:
-	wstring m_wstrMask;
-	wstring m_wstrResult;
+	std::wstring m_wstrMask;
+	std::wstring m_wstrResult;
 	bool m_fFileMustExist;
 	bool m_fProject;
 	bool m_fSave;
 };
 
-wstring FileDialog(wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
+std::wstring FileDialog(std::wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
 {
 	static CFileDlg dlg;
 	g_pNextDialog = &dlg;
@@ -296,7 +296,7 @@ wstring FileDialog(wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
 bool MyGetOpenFileName(MyOPENFILENAME * pof)
 {
 	wchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
-	wstring wstrResult = FileDialog(wcFilter, pof, false);
+	std::wstring wstrResult = FileDialog(wcFilter, pof, false);
 	if (wstrResult == L"")
 		return false;
 	wcsncpy(pof->lpstrFile, wstrResult.c_str(), pof->nMaxFile);
@@ -306,7 +306,7 @@ bool MyGetOpenFileName(MyOPENFILENAME * pof)
 bool MyGetSaveFileName(MyOPENFILENAME * pof)
 {
 	wchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
-	wstring wstrResult = FileDialog(wcFilter, pof, true);
+	std::wstring wstrResult = FileDialog(wcFilter, pof, true);
 	if (wstrResult == L"")
 		return false;
 	wcsncpy(pof->lpstrFile, wstrResult.c_str(), pof->nMaxFile);

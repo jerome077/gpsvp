@@ -16,7 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define FILEDIALOGS_H
 
 #include <windows.h>
-#include <Commdlg.h>
+#include <commdlg.h>
 
 #if defined(OWNFILEDIALOGS)
 

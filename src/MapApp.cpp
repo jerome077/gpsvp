@@ -13,8 +13,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #define INITGUID
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#ifndef UNDER_WINE
+#	include <winsock2.h>
+#	include <ws2tcpip.h>
+#endif // UNDEX_WINE
 #ifdef UNDER_CE
 #	ifndef BARECE
 #		include <connmgr.h>
@@ -42,7 +44,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Commands.h"
 #include "Dialogs.h"
 
-#include "MenuBar.h"
+#include "menubar.h"
 
 #include "HttpClient.h"
 #include "GoogleMaps/GMPainter.h"
@@ -164,14 +166,14 @@ class CWaypointPropertyDlg : public CMADialog
 	{
 		dmcCancel = 1000
 	};
-	wstring m_wstrLatitude;
-	wstring m_wstrLongitude;
+	std::wstring m_wstrLatitude;
+	std::wstring m_wstrLongitude;
 	CEditText m_name;
 	CEditText m_value;
 public:
 	CWaypoints::enumWaypointPropNameSpace m_iType;
-	wstring m_strName;
-	wstring m_strValue;
+	std::wstring m_strName;
+	std::wstring m_strValue;
 	virtual void InitDialog(HWND hDlg)
 	{
 		SetWindowText(hDlg, L("Property"));
@@ -224,8 +226,8 @@ public:
 // This Window list all the waypoint properties
 class CWaypointPropertiesDlg : public CMADialog
 {
-	wstring m_wstrLatitude;
-	wstring m_wstrLongitude;
+	std::wstring m_wstrLatitude;
+	std::wstring m_wstrLongitude;
 	CWaypoints::CPoint m_ClonedPoint;
 	std::vector<CText> m_TextControls;
 	std::vector<CEditText> m_EditTextControls;
@@ -1335,7 +1337,7 @@ void CMapApp::ThreadRoutine()
 	bool fWriteLog;
 	bool fWait = false;
 	Byte buff[4096];
-	unsigned long i;
+	unsigned i;
 	m_hPortFile = 0;
 	{
 		fWriteLog = m_Options[mcoWriteConnectionLog];
@@ -1354,7 +1356,8 @@ void CMapApp::ThreadRoutine()
 			}
 			if (fPresent)
 			{
-				m_ReplayTrack.PaintUnlocked(&TrackPlayer(this), 0);
+				TrackPlayer player(this);
+				m_ReplayTrack.PaintUnlocked(&player, 0);
 				m_ReplayTrack = CTrack();
 			}
 			FILE * fileReplayNMEA = 0;
@@ -1650,12 +1653,12 @@ class CIndex
 {
 	struct File
 	{
-		wstring m_wstrFilename;
+		std::wstring m_wstrFilename;
 		GeoRect m_grArea;
 	};
-	typedef list<File> ListFiles;
+	typedef std::list<File> ListFiles;
 	ListFiles m_listFiles;
-	wstring m_wstrFolder;
+	std::wstring m_wstrFolder;
 	int m_iNextNotification;
 	int m_iCount;
 public:
@@ -1714,7 +1717,7 @@ void CMapApp::FileIndexDirectory()
 	FillOpenFileName(&of, m_hWnd, L("All files\0*.*\0"), strFile, false, false);
 	if (GetOpenFileName(&of))
 	{
-		wstring dir = strFile;
+		std::wstring dir = strFile;
 		dir.resize(dir.find_last_of(L"/\\") + 1);
 
 		CIndex idx;
@@ -1787,10 +1790,10 @@ void CMapApp::FileOpenMapFolder()
 	{
 #endif
 		WIN32_FIND_DATA ffd;
-		HANDLE h = FindFirstFile((wstring(strFile) + L"\\*.img").c_str(), &ffd);
+		HANDLE h = FindFirstFile((std::wstring(strFile) + L"\\*.img").c_str(), &ffd);
 		while (h)
 		{
-			m_atlas.Add((wstring(strFile) + L"\\" + ffd.cFileName).c_str(), &m_painter);
+			m_atlas.Add((std::wstring(strFile) + L"\\" + ffd.cFileName).c_str(), &m_painter);
 			if (!FindNextFile(h, &ffd))
 				break;
 		}
@@ -2629,7 +2632,8 @@ void CMapApp::Paint()
 					UInt uiScale = PrepareScale(m_painter.GetScale());
 					if (fShowGarminMaps)
 					{
-						m_atlas.BeginPaint(uiScale, &m_painter, &CStatusPainter(m_hWnd, m_painter.GetFontCache()));
+						CStatusPainter statuspainter(m_hWnd, m_painter.GetFontCache());
+						m_atlas.BeginPaint(uiScale, &m_painter, &statuspainter);
 						if (fShowDetailMaps)
 							m_atlas.PaintMapPlaceholders(&m_painter);
 					}
@@ -2888,7 +2892,7 @@ void CMapApp::UpdateMonitors()
 		m_fMemoryVeryLow = (ms.dwAvailPhys < cnCriticalMemory);
 	}
 	{
-#if !defined(BARECE)
+#if !defined(BARECE) && !defined(UNDER_WINE)
 #if defined(UNDER_CE)
 		SYSTEM_POWER_STATUS_EX status;
 		GetSystemPowerStatusEx(&status, FALSE);
@@ -3766,7 +3770,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		
 //		RECT rect = m_painter.GetScreenRect();
 		DWORD res = mmMenu.Popup(sp.x, sp.y, m_hWnd);
-		wstring wstrLon, wstrLat;
+		std::wstring wstrLon, wstrLat;
 
 		switch(res)
 		{
@@ -3841,7 +3845,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			{
 				CWaypoints::CPoint & p = m_Waypoints.ById(nPointID);
 				CoordToText(p.Longitude(), p.Latitude(), wstrLon, wstrLat);
-				MessageBox(0, (wstring(L"")
+				MessageBox(0, (std::wstring(L"")
 					+ L("Name: ") + p.GetLabel()
 					+ L"\n" + L("Latitude: ") + wstrLat
 					+ L"\n" + L("Longitude: ") + wstrLon
@@ -3867,7 +3871,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			break;
 		case 24:
 			CoordToText(Degree(pinfo.gp.lon), Degree(pinfo.gp.lat), wstrLon, wstrLat);
-			MessageBox(0, (wstring(L"")
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + pinfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PointType(pinfo.uiType)
 				+ L"\n" + L("Code: ") + IntToHex(pinfo.uiType)
@@ -3877,14 +3881,14 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 				L("Point info"),MB_ICONINFORMATION);
 			break;
 		case 30:
-			MessageBox(0, (wstring(L"")
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + linfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PolylineType(linfo.uiType)
 				).c_str(),
 				L("Line info"),MB_ICONINFORMATION);
 			break;
 		case 40:
-			MessageBox(0, (wstring(L"")
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + pginfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PolygonType(pginfo.uiType)
 				).c_str(),
@@ -3916,7 +3920,7 @@ private:
 	bool m_fStarted;
 	double m_dDistance;
 	GeoPoint m_gpLast;
-	wstring m_wcName;
+	std::wstring m_wcName;
 	UInt m_uiType;
 	bool m_fPolygon;
 	bool m_fInside;
@@ -4008,7 +4012,7 @@ public:
 		if (m_fPolyline)
 		{
 			if (m_fStarted)
-				m_dDistance = min(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
+				m_dDistance = std::min(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
 			else
 				m_fStarted = true;
 			m_gpLast = gp;
@@ -4141,7 +4145,7 @@ public:
 		m_pt1 = pt1;
 		m_pt2 = pt2;
 		NewTrack();
-		m_dDelta = max(IntDistance(pt1, pt2) / 100, 50);
+		m_dDelta = std::max(IntDistance(pt1, pt2) / 100, 50);
 		m_dResult = 40000000;
 	}
 	void NewTrack()
@@ -4227,7 +4231,7 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 				const wchar_t * wcFinish = wcStart + 1;
 				while (*wcFinish && *wcFinish != '"')
 					++wcFinish;
-				wstring wstrElement;
+				std::wstring wstrElement;
 				wstrElement.assign(wcStart, wcFinish - wcStart);
 				ProcessCmdLineElement(wstrElement.c_str());
 				wcStart = wcFinish + 1;
@@ -4238,7 +4242,7 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 			const wchar_t * wcFinish = wcStart;
 			while (*wcFinish && !isspace(*wcFinish))
 				++wcFinish;
-			wstring wstrElement;
+			std::wstring wstrElement;
 			wstrElement.assign(wcStart, wcFinish - wcStart);
 			ProcessCmdLineElement(wstrElement.c_str());
 			wcStart = wcFinish + 1;
@@ -4248,9 +4252,9 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 
 void CMapApp::ProcessCmdLineElement(const wchar_t * wcCmdLine)
 {
-	wstring wstrCmdLine = wcCmdLine;
-	wstring wstrExtention = wstrCmdLine.substr(wstrCmdLine.length() - 4, 4);
-	for (wstring::iterator it = wstrExtention.begin(); it != wstrExtention.end(); ++it)
+	std::wstring wstrCmdLine = wcCmdLine;
+	std::wstring wstrExtention = wstrCmdLine.substr(wstrCmdLine.length() - 4, 4);
+	for (std::wstring::iterator it = wstrExtention.begin(); it != wstrExtention.end(); ++it)
 		*it = towlower(*it);
 	if (wstrExtention == L".img")
 		m_atlas.Add(wstrCmdLine.c_str(), &m_painter);
@@ -4349,7 +4353,7 @@ void CMapApp::About()
 	MessageBox(m_hWnd, buffer, L("About"), MB_ICONINFORMATION);
 }
 
-wstring CMapApp::HeightFromFeet(const wchar_t * wcOriginal)
+std::wstring CMapApp::HeightFromFeet(const wchar_t * wcOriginal)
 {
 	if (!wcOriginal || !wcOriginal[0])
 		return L"";

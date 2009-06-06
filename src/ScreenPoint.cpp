@@ -12,7 +12,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 */
 
 
-#include "ScreenPoint.h"
+#include "screenpoint.h"
 #include <list>
 
 struct ScreenRectSet::Data

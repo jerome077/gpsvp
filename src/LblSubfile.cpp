@@ -15,8 +15,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "LblSubfile.h"
 #include "SubFile.h"
 #include "DebugOutput.h"
-#include "Windows.h"
-#include "Winnls.h"
+#include <windows.h>
+#include "winnls.h"
 #include "BitStream.h"
 
 void CLblSubfile::Parse(CSubFile * pSubFile)
@@ -44,7 +44,7 @@ const wchar_t * CLblSubfile::GetLabel(UInt uiOffset)
 	LabelCache::iterator it = m_cache.find(uiOffset);
 	if (it != m_cache.end())
 		return it->second.c_str();
-	wstring res;
+	std::wstring res;
 	// Now for 8-bit coding only
 	if (m_bCoding == 9)
 	{

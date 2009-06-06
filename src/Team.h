@@ -57,4 +57,4 @@ private:
 	bool update;
 };
 
-#endif TEAM_H_INCLUDED
+#endif // TEAM_H_INCLUDED

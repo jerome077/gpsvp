@@ -19,6 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "RgnSubfile.h"
 #include <windows.h>
 #include "IPainter.h"
+#include <memory>
 
 void CTreSubfile::Parse(CSubFile * pSubFile)
 {
@@ -76,7 +77,7 @@ void CTreSubfile::ParseLevels()
 		return;
 	// Levels
 	// Read levels data
-	auto_ptr<Byte> pData(new Byte[m_uiMapLevelsLen]);
+	std::auto_ptr<Byte> pData(new Byte[m_uiMapLevelsLen]);
 	m_pSubFile->Read(pData.get(), m_uiMapLevelsOffset, m_uiMapLevelsLen);
 	// Parse the data from the beginning
 	UInt uiLevelOffset;
@@ -99,12 +100,12 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 	// Subdivisions are to be read by each level, because they need to be attached to
 	// level and they have different size depending on level
 	// Read subdivisions data
-	auto_ptr<Byte> pData(new Byte[m_uiSubdivisionLen]);
+	std::auto_ptr<Byte> pData(new Byte[m_uiSubdivisionLen]);
 	if (pStatusPainter)
 		pStatusPainter->SetProgressItems(iLevel, m_uiSubdivisionLen);
 	m_pSubFile->Read(pData.get(), m_uiSubdivisionOffset, m_uiSubdivisionLen);
 	// Start from the first level
-	list<CMapLevel>::iterator itLevel = m_Levels.begin();
+	std::list<CMapLevel>::iterator itLevel = m_Levels.begin();
 	UInt uiPos = 0;
 	UInt uiInCurrentLevel = 0;
 	UInt uiLevel = 0;
@@ -187,10 +188,10 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 //	dout << "\t\t""m_uiPointLen = " << m_uiPointLen << "\n";
 //	dout << "\t\t""m_uiPointRecSize = " << m_uiPointRecSize << "\n";
 //
-//	for (list<CMapLevel>::iterator itLevel = m_Levels.begin(); itLevel != m_Levels.end(); ++itLevel)
+//	for (std::list<CMapLevel>::iterator itLevel = m_Levels.begin(); itLevel != m_Levels.end(); ++itLevel)
 //		itLevel->Dump();
 //	
-//	for (list<CSubdivision>::iterator itSD = m_Subdivisions.begin(); itSD != m_Subdivisions.end(); ++itSD)
+//	for (std::list<CSubdivision>::iterator itSD = m_Subdivisions.begin(); itSD != m_Subdivisions.end(); ++itSD)
 //		itSD->Dump();
 //}
 
@@ -222,8 +223,8 @@ UInt CTreSubfile::GetLevelByScale(unsigned int uiScale10)
 	ParseSubdivisions();
 	UInt uiRes = 0;
 	// We iterate through all levels
-	list<UInt> levels = GetLevels();
-	list<UInt>::iterator it;
+	std::list<UInt> levels = GetLevels();
+	std::list<UInt>::iterator it;
 	for (it = levels.begin(); it != levels.end(); ++it)
 	{
 		// Looking for a level with appropriate detail
@@ -243,12 +244,12 @@ void CTreSubfile::Trim(const GeoRect &rect)
 		it->Trim(rect);
 }
 
-list<UInt> CTreSubfile::GetLevels() 
+std::list<UInt> CTreSubfile::GetLevels() 
 {
 	ParseLevels();
 	ParseSubdivisions();
-	list<UInt> result;
-	for (list<CMapLevel>::iterator it = m_Levels.begin(); it != m_Levels.end(); ++it)
+	std::list<UInt> result;
+	for (std::list<CMapLevel>::iterator it = m_Levels.begin(); it != m_Levels.end(); ++it)
 	{
 		if (!it->IsEmpty())
 			result.push_back(it->GetBits());

@@ -92,7 +92,7 @@ public:
 	    sprintf(buffer, "gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
 		return buffer;
     }
-	std::wstring AsWStringWithName() const
+	std::wstring AswstringWithName() const
 	{
 		wchar_t buffer[128];
 	    wsprintf(buffer, L"gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);

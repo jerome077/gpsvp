@@ -34,7 +34,7 @@ public:
                           const wchar_t * a_pKey,
                           const wchar_t * a_pDefault = NULL)
 	{
-		// _wtof is not available on Windows Mobile, that why I must first convert the wstring.
+		// _wtof is not available on Windows Mobile, that why I must first convert the std::wstring.
 		std::wstring wsVal = GetValue(a_pSection, a_pKey, a_pDefault);
 		std::string sVal;
 		sVal.assign(wsVal.begin(), wsVal.end());

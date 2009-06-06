@@ -15,17 +15,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "DebugOutput.h"
 #include "Header.h"
 #include "NetSubfile.h"
-#include "ipainter.h"
+#include "IPainter.h"
 
 #include <algorithm>
 #include <fstream>
+#include <memory>
 #include <windows.h>
 
 struct CIMGFile::Map
 {
 	Map(CIMGFile * pOwner) : m_pOwner(pOwner){};
 	//! Map of subfiles indexed by filenames
-	typedef map<string, CSubFile> SubFiles;
+	typedef std::map<std::string, CSubFile> SubFiles;
 	SubFiles m_SubFiles;
 	//! TRE subfile object
 	CTreSubfile m_TreSubfile;
@@ -44,9 +45,13 @@ struct CIMGFile::Map
 		{
 			wsprintf(buff, L".%S", it->first.c_str());
 			int size = it->second.GetSize();
-			auto_ptr<Byte> buffer(new Byte[size]);
+			std::auto_ptr<Byte> buffer(new Byte[size]);
 			it->second.Read(buffer.get(), 0, size);
+#ifndef UNDER_WINE
 			std::basic_ofstream<Byte> of((wstrFilename + buff).c_str());
+#else
+			std::basic_ofstream<Byte> of;
+#endif // UNDER_WINE
 			of.write(buffer.get(), size);
 		}
 	}
@@ -75,7 +80,7 @@ struct CIMGFile::Map
 	}
 	//void Dump()
 	//{
-	//	for (map<string, CSubFile>::iterator it = m_SubFiles.begin(); it != m_SubFiles.end(); ++it)
+	//	for (std::map<std::string, CSubFile>::iterator it = m_SubFiles.begin(); it != m_SubFiles.end(); ++it)
 	//	{
 	//		dout << "File " << it->first << "\n";
 	//		it->second.Dump();
@@ -173,7 +178,7 @@ void CIMGFile::Paint(IPainter * pPainter, UInt uiBits, UInt uiObjects, bool fDir
 	// For now just tell TRE subfile to paint
 	for (Maps::iterator it = m_maps.begin(); it != m_maps.end(); ++it)
 	{
-		list<UInt> levels = (*it)->m_TreSubfile.GetLevels();
+		std::list<UInt> levels = (*it)->m_TreSubfile.GetLevels();
 		if (find(levels.begin(), levels.end(), uiBits) == levels.end())
 			continue;
 		(*it)->m_TreSubfile.Paint(pPainter, uiBits, uiObjects, fDirectPaint);
@@ -226,9 +231,9 @@ UInt CIMGFile::GetLevelByScale(unsigned int uiScale10, IPainter * pPainter)
 	{
 		if (pPainter->WillPaint((*it)->m_TreSubfile.GetRect()))
 		{
-			list<UInt> levels = (*it)->m_TreSubfile.GetLevels();
+			std::list<UInt> levels = (*it)->m_TreSubfile.GetLevels();
 
-			list<UInt>::iterator it;
+			std::list<UInt>::iterator it;
 			for (it = levels.begin(); it != levels.end(); ++it)
 			{
 				// Looking for a level with appropriate detail
@@ -263,7 +268,7 @@ UInt CIMGFile::GetLevelByScale(unsigned int uiScale10, IPainter * pPainter)
 	return res;
 }
 
-list<UInt> CIMGFile::GetLevels(IPainter * pPainter)
+std::list<UInt> CIMGFile::GetLevels(IPainter * pPainter)
 {
 	for (Maps::const_iterator it = m_maps.begin(); it != m_maps.end(); ++it)
 	{

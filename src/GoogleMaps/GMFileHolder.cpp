@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GMFileHolder.h"
 #include "../PlatformDef.h"
 #include "../Lock.h"
+#include <errno.h>
 
 //const unsigned char MTSERVER_MAXID = 3;
 //const unsigned char KHSERVER_MAXID = 3;

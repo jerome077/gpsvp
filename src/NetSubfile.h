@@ -18,8 +18,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "PlatformDef.h"
 #include <string>
 
-using namespace std;
-
 class CSubFile;
 
 class CNetSubfile
@@ -53,4 +51,4 @@ public:
 	// void Dump();
 };
 
-#endif NETSUBFILE_H
+#endif // NETSUBFILE_H

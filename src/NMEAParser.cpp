@@ -36,14 +36,14 @@ void CNMEAParser::SetClient(IGPSClient * pClient)
 void CNMEAParser::CommandComplete()
 {
 	// Vector for parameters
-	vector<string> listParts;
+	std::vector<std::string> listParts;
 	// Reset command started flag
 	m_fCommandStarted = false;
 	// Start from the beginning
-	string::size_type pos = 0;
-	string::size_type nextpos = 0;
+	std::string::size_type pos = 0;
+	std::string::size_type nextpos = 0;
 	// Look for commas
-	while ((nextpos = m_strCommand.find(',', pos)) != string::npos)
+	while ((nextpos = m_strCommand.find(',', pos)) != std::string::npos)
 	{
 		// Add text between commas to list
 		listParts.push_back(m_strCommand.substr(pos, nextpos - pos));
@@ -172,10 +172,10 @@ void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 		// Command may be continued
 		if (m_fCommandStarted)
 		{
-			// Find length of string with good symbols
+			// Find length of std::string with good symbols
 			while ((uiPos < uiLen) && (data[uiPos] > 0x20) && (data[uiPos] < 0x80))
 				++uiPos;
-			// Append the string to command text
+			// Append the std::string to command text
 			m_strCommand.append((char*)data, uiPos);
 			// Command may have finished
 			if (uiPos < uiLen)
@@ -227,7 +227,7 @@ void CNMEAParser::ConnectionDisabled()
 void CNMEAParser::GetList(IListAcceptor * pAcceptor)
 {
 	AutoLock l;
-	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
+	for (std::map<std::string, std::string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 	{
 		wchar_t wstr[1000];
 		swprintf(wstr, 1000, L"%S", it->second.c_str());
@@ -240,7 +240,7 @@ void CNMEAParser::SaveCommands(const wchar_t * wstrFilename)
 	FILE * pFile = wfopen(wstrFilename, L"wt");
 	if (!pFile)
 		return;
-	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
+	for (std::map<std::string, std::string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 		fprintf(pFile, "%s\n", it->second.c_str());
 	fclose(pFile);
 }
@@ -267,7 +267,7 @@ void CNMEAParser::PaintSatellites(IMonitorPainter * pPainter)
 	ScreenPoint spSize = pPainter->GetMonitorSize();
 	spSize.x -= 2;
 	spSize.y -= 4;
-	int iCount = max(m_iSatNum, 12);
+	int iCount = std::max(m_iSatNum, 12);
 	for (int i = 0; i < m_iSatNum; ++i)
 	{
 		ScreenPoint spFrom = ScreenPoint(2 + spSize.x * i / iCount, 2 + spSize.y + 1);

@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <vector>
 
-extern wstring FormatKey(int nScancode);
+extern std::wstring FormatKey(int nScancode);
 
 CKeymap::CAction::CAction(WORD wKey, WORD wCommand, const wchar_t * wcsDescription)
 {
@@ -42,11 +42,11 @@ void CKeymap::CAction::UpdateCurrent(IListAcceptor2 * pAcceptor)
 
 void CKeymap::Load()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	bool fSuccess = false;
-	unsigned long ulTotalLen = 0;
+	unsigned int ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
-	wstring wstrKey = L"Keymap";
+	std::wstring wstrKey = L"Keymap";
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	if (!ulTotalLen)
 	{
@@ -85,8 +85,8 @@ void CKeymap::Load()
 
 void CKeymap::Save()
 {
-	vector<Byte> data;
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	std::vector<Byte> data;
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		WORD wCommand = it->m_wCommand;
 		int iScancode = it->m_wKey;
@@ -104,7 +104,7 @@ void CKeymap::Init(HKEY hRegKey)
 }
 void CKeymap::GetList(IListAcceptor2 * pAcceptor)
 {
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 		it->AddToList(pAcceptor);
 }
 CKeymap::CKeymap()
@@ -112,7 +112,7 @@ CKeymap::CKeymap()
 }
 void CKeymap::SetActionKey(int iAction, int nScancode)
 {
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		if (it->m_wKey == nScancode)
 			it->m_wKey = 0;
@@ -126,7 +126,7 @@ bool CKeymap::SetCommandKey(WORD wCommand, int nScancode)
 {
 	if (nScancode <= 0)
 		return false;
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		if (it->m_wCommand == wCommand)
 		{
@@ -138,7 +138,7 @@ bool CKeymap::SetCommandKey(WORD wCommand, int nScancode)
 }
 UINT CKeymap::Translate(int nScancode)
 {
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		if (it->m_wKey == nScancode)
 			return it->m_wCommand;
@@ -154,7 +154,7 @@ void CKeymap::AddAction(int iCommand, const wchar_t * wcCommand)
 
 void CKeymap::UpdateCurrent(int iId, IListAcceptor2 * pAcceptor)
 {
-	for (list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
+	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		if (it->m_wCommand == iId)
 			it->UpdateCurrent(pAcceptor);

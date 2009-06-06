@@ -146,7 +146,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%d&y=%d&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
 		return buffer;
 	};
 
@@ -173,7 +173,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%d&y=%d&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
 		return buffer;
 	};
 
@@ -326,7 +326,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "http://tile.openstreetmap.org/%d/%d/%d.png", 17 - data.level, data.X, data.Y);
+		sprintf(buffer, "http://tile.openstreetmap.org/%d/%ld/%ld.png", 17 - data.level, data.X, data.Y);
 		return buffer;
 	};
 

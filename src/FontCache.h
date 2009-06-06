@@ -32,4 +32,4 @@ public:
 	void SetLargeFonts(bool fLarge);
 };
 
-#endif FONTCACHE_H_INCLUDED
+#endif // FONTCACHE_H_INCLUDED

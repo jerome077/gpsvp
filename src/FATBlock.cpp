@@ -99,7 +99,7 @@ void CFATBlock::Read(Byte * buffer, UInt uiStart, UInt uiCount)
 //	dout << "\t\t""m_uiPart = 0x" << m_uiPart << "\n";
 //	
 //	dout << "\t\tBlocks: ";
-//	for (vector<UInt>::iterator it = m_Blocks.begin(); it != m_Blocks.end(); ++it)
+//	for (std::vector<UInt>::iterator it = m_Blocks.begin(); it != m_Blocks.end(); ++it)
 //		dout << "0x" << *it << " ";
 //	dout << "\n";
 //}

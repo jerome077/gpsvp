@@ -17,8 +17,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <list>
 
-using namespace std;
-
 #include "PlatformDef.h"
 
 class CFATBlock;
@@ -39,7 +37,7 @@ class CSubFile
 		UInt m_uiBlockLen;
 	};
 	//! List of blocks with info
-	list<BlockInfo> m_Blocks;
+	std::list<BlockInfo> m_Blocks;
 public:
 	//! Add FAT block with file data
 	void Add(CFATBlock * pBlock);

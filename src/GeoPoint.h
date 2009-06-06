@@ -131,7 +131,7 @@ struct GeoRect
 inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 {
 	int iLonScale100 = cos100((gp1.lat + gp2.lat) / 2);
-	int x = abs(int(iLonScale100 * __int64(gp1.lon - gp2.lon) / 100));
+	int x = abs(int(iLonScale100 * (__int64)(gp1.lon - gp2.lon) / 100));
 	int y = abs(gp1.lat - gp2.lat);
 	int c = 1;
 	while (x > (1 << 15) || y > (1 << 15))

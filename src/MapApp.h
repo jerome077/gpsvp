@@ -29,7 +29,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "MRUPoints.h"
 #ifdef UNDER_CE
 #	include <pm.h>
-#endif UNDER_CE
+#endif // UNDER_CE
 #include "Commands.h"
 #include "TypeInfo.h"
 #include "Lock.h"
@@ -42,12 +42,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 struct ObjectInfo
 {
-	wstring wstrName;
+	std::wstring wstrName;
 	GeoPoint gp;
 	UInt uiType;
 	bool fPresent;
 	ObjectInfo() : fPresent(false) {}
-	wstring GetDescription()
+	std::wstring GetDescription()
 	{
 		if (wstrName == L"")
 			return L("(No label)");
@@ -75,7 +75,7 @@ public:
 	bool m_fMoving;
 	int m_iPressedButton;
 	HWND m_hWnd;
-	wstring m_wstrHome;
+	std::wstring m_wstrHome;
 	CTrackList m_Tracks;
 	CTrack m_CurTrack;
 	HANDLE m_hPortFile;
@@ -139,7 +139,7 @@ public:
 							   wchar_t * strFile, bool fDirectory, bool fMustExist,  bool fOverwritePrompt = false);
 	void AddOdometer(double dDist);
 	wchar_t * m_wstrCmdLine;
-	wstring m_wstrProgName;
+	std::wstring m_wstrProgName;
 	DWORD m_dwConnected;
 	enumConnectionStatus m_iConnectionStatus;
 	bool m_fActive;
@@ -282,8 +282,8 @@ public:
 		case -2: return uiScale10 * 4;
 		case -1: return uiScale10 * 2;
 		case 0: return uiScale10;
-		case 1: return max(uiScale10 / 2, 1u);
-		case 2: return max(uiScale10 / 4, 1u);
+		case 1: return std::max(uiScale10 / 2, 1u);
+		case 2: return std::max(uiScale10 / 4, 1u);
 		}
 		return uiScale10;
 	}
@@ -310,7 +310,7 @@ public:
 	void RegisterFileTypes();
 	void About();
 	void Exit();
-	wstring FileDialog(wstring wstrMask);
+	std::wstring FileDialog(std::wstring wstrMask);
 	void SetActive(bool fActive)
 	{
 		m_fActive = fActive;
@@ -321,7 +321,7 @@ public:
 			m_painter.Redraw();
 		}
 	}
-	wstring HeightFromFeet(const wchar_t * wcOriginal);
+	std::wstring HeightFromFeet(const wchar_t * wcOriginal);
 	wchar_t * GetTitle() {return L"gpsVP";}
 	void ExportWaypoint(int id, HWND hWnd);
 	Dict & GetDict() {return m_dict;}

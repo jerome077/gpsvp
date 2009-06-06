@@ -32,7 +32,7 @@ CGMPainter::CGMPainter(void)
 	m_KeepMemoryLow = false;
 	m_nMaxCacheSize = 256;
 
-#ifndef UNDER_CE
+#ifdef USE_GDI_PLUS
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_nGDIPlusToken, &gdiplusStartupInput, NULL);
 #endif // UNDER_CE
@@ -42,7 +42,7 @@ CGMPainter::CGMPainter(void)
 
 CGMPainter::~CGMPainter(void)
 {
-#ifndef UNDER_CE
+#ifdef USE_GDI_PLUS
 	Gdiplus::GdiplusShutdown(m_nGDIPlusToken);
 #endif // UNDER_CE
 }
@@ -92,15 +92,15 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 	if (r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
 		return false;
 	// Intersect abscissa (longitude) intervals
-	pr->left = max(r1.left, r2.left);
-	pr->right = min(r1.right, r2.right);
+	pr->left = std::max(r1.left, r2.left);
+	pr->right = std::min(r1.right, r2.right);
 	// Intersect ordinate (latitude) intervals
-	pr->top = max(r1.top, r2.top);
-	pr->bottom = min(r1.bottom, r2.bottom);
+	pr->top = std::max(r1.top, r2.top);
+	pr->bottom = std::min(r1.bottom, r2.bottom);
 	return true;
 }
 
-int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize)
+int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize)
 {
 	if (type == gtNone)
 		return 0;
@@ -152,8 +152,8 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	long X = cntX - int(double(rect.right - rect.left) / 2 / scale);
 	long Y = cntY - int(double(rect.bottom - rect.top) / 2 / scale);
 
-	long NumX = max(long(X / 256), long(0));
-	long NumY = max(long(Y / 256), long(0));
+	long NumX = std::max(long(X / 256), long(0));
+	long NumY = std::max(long(Y / 256), long(0));
 
 	// We will collect non-painted tiles here
 	std::map<long, GEOFILE_DATA> mapMissing;
@@ -221,7 +221,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	return 0;
 }
 
-int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& data)
+int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data)
 {
 	HBITMAP hbm = NULL;
 	bool bHBITMAPInited = false;
@@ -273,8 +273,8 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 			//}
 			return 1;
 		} else {
-#ifdef UNDER_CE
-#  ifdef BARECE
+#ifndef USE_GDI_PLUS
+#  if defined(BARECE) || defined(UNDER_WINE)
 #  else
 			hbm = SHLoadImageFile(w.c_str());
 #  endif

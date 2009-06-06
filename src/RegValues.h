@@ -20,15 +20,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "Lock.h"
 
-using namespace std;
-
 class CRegBase
 {
 public:
 	virtual ~CRegBase();
 protected:
 	HKEY m_hKey;
-	wstring m_wstrKey;
+	std::wstring m_wstrKey;
 	void Init(HKEY hKey, const wchar_t * wcKey)
 	{
 		m_hKey = hKey;
@@ -50,8 +48,8 @@ public:
 		AutoLock l;
 		CRegBase::Init(hKey, wcKey);
 		T buff;
-		unsigned long lLen = sizeof(buff);
-		unsigned long lType;
+		unsigned int lLen = sizeof(buff);
+		unsigned int lType;
 		if (0 != RegQueryValueEx(m_hKey, m_wstrKey.c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
 		{
 			if (0 != RegQueryValueEx(m_hKey, (m_wstrKey + L"Def").c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
@@ -88,11 +86,11 @@ public:
 
 class CRegString : private CRegBase
 {
-	wstring m_wstrValue;
+	std::wstring m_wstrValue;
 public:
 	void Init(HKEY hKey, const wchar_t * wcKey);
 	void operator =(const wchar_t * wcValue);
-	const wstring operator()(void);
+	const std::wstring operator()(void);
 };
 
 inline void MyRegSetValueString(HKEY hKey, const wchar_t * wcName, const wchar_t * wcValue)
@@ -108,12 +106,12 @@ inline void RegisterFileType(const wchar_t * wcExtention, const wchar_t * wcDesc
 	MyRegSetValueString(hKey, NULL, wcFileType);
 	RegCreateKeyEx(HKEY_CLASSES_ROOT, wcFileType, 0, L"", 0, 0, 0, &hKey, 0);
 	MyRegSetValueString(hKey, NULL, wcDescription);
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, (wstring(wcFileType) + L"\\shell\\open\\command").c_str(), 
+	RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::wstring(wcFileType) + L"\\shell\\open\\command").c_str(), 
 		0, L"", 0, 0, 0, &hKey, 0);
-	MyRegSetValueString(hKey, NULL, (wstring(L"\"") + wcProgName + L"\" \"%1\"").c_str());
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, (wstring(wcFileType) + L"\\DefaultIcon").c_str(), 
+	MyRegSetValueString(hKey, NULL, (std::wstring(L"\"") + wcProgName + L"\" \"%1\"").c_str());
+	RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::wstring(wcFileType) + L"\\DefaultIcon").c_str(), 
 		0, L"", 0, 0, 0, &hKey,0);
-	MyRegSetValueString(hKey, NULL, (wstring(L"") + wcProgName + L",0").c_str());
+	MyRegSetValueString(hKey, NULL, (std::wstring(L"") + wcProgName + L",0").c_str());
 }
 
 #endif // REGVALUES_H

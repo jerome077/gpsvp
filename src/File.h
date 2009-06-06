@@ -24,8 +24,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include "PlatformDef.h"
 
-using namespace std;
-
 //! OS file abstraction
 class CFile
 {
@@ -52,7 +50,7 @@ public:
 	{}
 	~CFile();
 	//! Open file
-	void Open(const wstring & filename);
+	void Open(const std::wstring & filename);
 	//! Read data from file
 	void Read(Byte * buffer, UInt nStart, UInt nCount);
 	//! Set	mask for XORing file data

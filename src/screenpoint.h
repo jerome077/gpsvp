@@ -17,6 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <windows.h>
 #include "PlatformDef.h"
+#include <algorithm>
 
 //! Type for screen point position
 struct ScreenPoint : public POINT
@@ -105,18 +106,16 @@ struct ScreenRect : public RECT
 	{
 		return ScreenPoint((right + left) / 2, (top + bottom) / 2);
 	}
-	int mymax(int a, int b) { return (a>b)?a:b; }
-	int mymin(int a, int b) { return (a<b)?a:b; }
 	void Trim(const ScreenRect & r)
 	{
 		if (right > r.right)
-			right = mymax(left, r.right);
+			right = std::max(left, r.right);
 		if (left < r.left)
-			left = mymin(right, r.left);
+			left = std::min(right, r.left);
 		if (bottom > r.bottom)
-			bottom = mymax(top, r.bottom);
+			bottom = std::max(top, r.bottom);
 		if (top < r.top)
-			top = mymin(bottom, r.top);
+			top = std::min(bottom, r.top);
 	}
 };
 
