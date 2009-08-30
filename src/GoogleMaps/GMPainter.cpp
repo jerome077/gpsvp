@@ -92,11 +92,11 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 	if (r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
 		return false;
 	// Intersect abscissa (longitude) intervals
-	pr->left = std::max(r1.left, r2.left);
-	pr->right = std::min(r1.right, r2.right);
+	pr->left = (std::max)(r1.left, r2.left);
+	pr->right = (std::min)(r1.right, r2.right);
 	// Intersect ordinate (latitude) intervals
-	pr->top = std::max(r1.top, r2.top);
-	pr->bottom = std::min(r1.bottom, r2.bottom);
+	pr->top = (std::max)(r1.top, r2.top);
+	pr->bottom = (std::min)(r1.bottom, r2.bottom);
 	return true;
 }
 
@@ -152,8 +152,8 @@ int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, doubl
 	long X = cntX - int(double(rect.right - rect.left) / 2 / scale);
 	long Y = cntY - int(double(rect.bottom - rect.top) / 2 / scale);
 
-	long NumX = std::max(long(X / 256), long(0));
-	long NumY = std::max(long(Y / 256), long(0));
+	long NumX = (std::max)(long(X / 256), long(0));
+	long NumY = (std::max)(long(Y / 256), long(0));
 
 	// We will collect non-painted tiles here
 	std::map<long, GEOFILE_DATA> mapMissing;

@@ -282,8 +282,8 @@ public:
 		case -2: return uiScale10 * 4;
 		case -1: return uiScale10 * 2;
 		case 0: return uiScale10;
-		case 1: return std::max(uiScale10 / 2, 1u);
-		case 2: return std::max(uiScale10 / 4, 1u);
+		case 1: return (std::max)(uiScale10 / 2, 1u);
+		case 2: return (std::max)(uiScale10 / 4, 1u);
 		}
 		return uiScale10;
 	}

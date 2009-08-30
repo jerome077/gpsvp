@@ -241,7 +241,7 @@ void CTrack::FlushGPX(int iSize)
 		{
 			DWORD fileSize = GetFileSize(hFile, NULL);
 			if (fileSize >= iCloseLength)
-				SetFilePointer(hFile, -iCloseLength, 0, FILE_END);
+				SetFilePointer(hFile, -LONG(iCloseLength), 0, FILE_END);
 			DWORD dwWritten;
 			WriteFile(hFile, m_writeBuffer, iSize, &dwWritten, NULL);
 			WriteFile(hFile, sCloseXml, iCloseLength, &dwWritten, NULL);

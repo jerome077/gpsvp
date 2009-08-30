@@ -1337,7 +1337,7 @@ void CMapApp::ThreadRoutine()
 	bool fWriteLog;
 	bool fWait = false;
 	Byte buff[4096];
-	unsigned i;
+	DWORD i;
 	m_hPortFile = 0;
 	{
 		fWriteLog = m_Options[mcoWriteConnectionLog];
@@ -4016,7 +4016,7 @@ public:
 		if (m_fPolyline)
 		{
 			if (m_fStarted)
-				m_dDistance = std::min(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
+				m_dDistance = (std::min)(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
 			else
 				m_fStarted = true;
 			m_gpLast = gp;
@@ -4149,7 +4149,7 @@ public:
 		m_pt1 = pt1;
 		m_pt2 = pt2;
 		NewTrack();
-		m_dDelta = std::max(IntDistance(pt1, pt2) / 100, 50);
+		m_dDelta = (std::max)(IntDistance(pt1, pt2) / 100, 50);
 		m_dResult = 40000000;
 	}
 	void NewTrack()

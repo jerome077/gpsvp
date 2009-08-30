@@ -23,8 +23,8 @@ void CRegString::Init(HKEY hKey, const wchar_t * wcKey)
 	AutoLock l;
 	CRegBase::Init(hKey, wcKey);
 	wchar_t buff[1000] = {0};
-	unsigned int lLen = sizeof(buff);
-	unsigned int lType;
+	DWORD lLen = sizeof(buff);
+	DWORD lType;
 	if (ERROR_SUCCESS == RegQueryValueEx(m_hKey, m_wstrKey.c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
 	{
 		buff[lLen] = 0;

@@ -44,7 +44,7 @@ void CKeymap::Load()
 {
 	std::vector<Byte> data;
 	bool fSuccess = false;
-	unsigned int ulTotalLen = 0;
+	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
 	std::wstring wstrKey = L"Keymap";
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);

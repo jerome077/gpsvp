@@ -478,7 +478,7 @@ void CGDIPainter::ZoomIn()
 		return;
 	// Decrease scale twice
 	// Correct if minimum reached
-	m_ruiScale10.Set(std::max((int)(ciMinZoom), m_ruiScale10() / 2));
+	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10() / 2));
 	Redraw();
 }
 void CGDIPainter::ZoomOut()
@@ -487,7 +487,7 @@ void CGDIPainter::ZoomOut()
 		return;
 	// Increase scale twice
 	// Correct if maximum reached
-	m_ruiScale10.Set(std::min((int)(ciMaxZoom), m_ruiScale10() * 2));
+	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10() * 2));
 	Redraw();
 }
 void CGDIPainter::Left()
@@ -556,8 +556,8 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	}
 	m_fViewSet = false;
 	m_ruiScale10.Init(hRegKey, L"ScaleD", 500);
-	m_ruiScale10.Set(std::max((int)(ciMinZoom), m_ruiScale10()));
-	m_ruiScale10.Set(std::min((int)(ciMaxZoom), m_ruiScale10()));
+	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10()));
+	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10()));
 
 	m_lXScale100 = cos100(m_gpCenter().lat);
 	m_fBottomBar = false;
@@ -1077,10 +1077,10 @@ GeoRect CGDIPainter::ScreenToGeo(const ScreenRect & rect)
 	GeoPoint gp2 = ScreenToGeo(ScreenPoint(rect.left, rect.bottom));
 	GeoPoint gp3 = ScreenToGeo(ScreenPoint(rect.right, rect.top));
 	GeoPoint gp4 = ScreenToGeo(ScreenPoint(rect.right, rect.bottom));
-	res.minLat = std::min(std::min(gp1.lat, gp2.lat), std::min(gp3.lat, gp4.lat));
-	res.minLon = std::min(std::min(gp1.lon, gp2.lon), std::min(gp3.lon, gp4.lon));
-	res.maxLat = std::max(std::max(gp1.lat, gp2.lat), std::max(gp3.lat, gp4.lat));
-	res.maxLon = std::max(std::max(gp1.lon, gp2.lon), std::max(gp3.lon, gp4.lon));
+	res.minLat = (std::min)((std::min)(gp1.lat, gp2.lat), (std::min)(gp3.lat, gp4.lat));
+	res.minLon = (std::min)((std::min)(gp1.lon, gp2.lon), (std::min)(gp3.lon, gp4.lon));
+	res.maxLat = (std::max)((std::max)(gp1.lat, gp2.lat), (std::max)(gp3.lat, gp4.lat));
+	res.maxLon = (std::max)((std::max)(gp1.lon, gp2.lon), (std::max)(gp3.lon, gp4.lon));
 	return res;
 }
 const GeoPoint CGDIPainter::GetCenter() 
@@ -1207,7 +1207,7 @@ void CGDIPainter::SetXScale(double scale)
 {
 	AutoLock l;
 	unsigned int new_scale = (unsigned int)(scale / 10 * m_lXScale100);
-	new_scale = std::max((unsigned)ciMinZoom, std::min((unsigned)ciMaxZoom, new_scale));
+	new_scale = (std::max)((unsigned)ciMinZoom, (std::min)((unsigned)ciMaxZoom, new_scale));
 	if (m_ruiScale10() != new_scale)
 		m_ruiScale10.Set(new_scale);
 }

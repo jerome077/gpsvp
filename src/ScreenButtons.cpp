@@ -115,7 +115,7 @@ void CScreenButtons::Load()
 {
 	std::vector<Byte> data;
 	bool fSuccess = false;
-	unsigned int ulTotalLen = 0;
+	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
 	RegQueryValueEx(m_data->key, L"ScreenButtons", 0, &dwType, 0, &ulTotalLen);
 	if (ulTotalLen > 0)

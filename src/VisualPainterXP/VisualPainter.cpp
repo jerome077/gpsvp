@@ -144,7 +144,7 @@ int MakeScancode(WPARAM wParam, LPARAM lParam)
 	return wParam;
 }
 
-wstring FormatKey(int nScancode)
+std::wstring FormatKey(int nScancode)
 {
 	wchar_t buff[10];
 	if (isalnum(nScancode))

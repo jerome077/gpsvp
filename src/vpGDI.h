@@ -112,7 +112,7 @@ namespace VP
 		void Polygon(CONST POINT *apt, int cpt)
 		{
 			if (_data != NULL && _data->_hdc != NULL)
-				::Polygon(_data->_hdc, apt, std::min(cpt, 256));
+				::Polygon(_data->_hdc, apt, (std::min)(cpt, 256));
 		}
 		void Polyline(CONST POINT *apt, int cpt)
 		{
@@ -120,7 +120,7 @@ namespace VP
 			{
 				while (cpt > 1)
 				{
-					int cpt1 = std::min(cpt, 256);
+					int cpt1 = (std::min)(cpt, 256);
 					::Polyline(_data->_hdc, apt, cpt1);
 					apt += (cpt1 - 1);
 					cpt -= (cpt1 - 1);
@@ -194,8 +194,8 @@ namespace VP
 			{
 				if (x <= _x && y <= _y)
 					return _context;
-				x = std::max(x, _x);
-				y = std::max(y, _y);
+				x = (std::max)(x, _x);
+				y = (std::max)(y, _y);
 			}
 			_context = DC(original, x, y);
 			return _context;

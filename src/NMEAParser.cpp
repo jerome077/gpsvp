@@ -267,7 +267,7 @@ void CNMEAParser::PaintSatellites(IMonitorPainter * pPainter)
 	ScreenPoint spSize = pPainter->GetMonitorSize();
 	spSize.x -= 2;
 	spSize.y -= 4;
-	int iCount = std::max(m_iSatNum, 12);
+	int iCount = (std::max)(m_iSatNum, 12);
 	for (int i = 0; i < m_iSatNum; ++i)
 	{
 		ScreenPoint spFrom = ScreenPoint(2 + spSize.x * i / iCount, 2 + spSize.y + 1);

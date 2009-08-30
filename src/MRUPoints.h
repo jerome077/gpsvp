@@ -58,7 +58,7 @@ public:
 	void Load()
 	{
 		std::vector<Byte> data;
-		unsigned int ulTotalLen = 0;
+		DWORD ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
 		RegQueryValueEx(m_hRegKey, L"MRUPoints", 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)

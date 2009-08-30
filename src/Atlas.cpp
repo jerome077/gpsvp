@@ -225,7 +225,7 @@ void CAtlas::ToggleActiveByID(int iMap)
 void CAtlas::Load()
 {
 	std::vector<Byte> data;
-	unsigned int ulTotalLen = 0;
+	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
 	std::wstring wstrKey = L"Atlas";
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);

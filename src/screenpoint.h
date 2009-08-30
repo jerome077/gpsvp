@@ -109,13 +109,13 @@ struct ScreenRect : public RECT
 	void Trim(const ScreenRect & r)
 	{
 		if (right > r.right)
-			right = std::max(left, r.right);
+			right = (std::max)(left, r.right);
 		if (left < r.left)
-			left = std::min(right, r.left);
+			left = (std::min)(right, r.left);
 		if (bottom > r.bottom)
-			bottom = std::max(top, r.bottom);
+			bottom = (std::max)(top, r.bottom);
 		if (top < r.top)
-			top = std::min(bottom, r.top);
+			top = (std::min)(bottom, r.top);
 	}
 };
 
