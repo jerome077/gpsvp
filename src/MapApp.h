@@ -180,7 +180,7 @@ public:
 	CMapApp();
 	~CMapApp();
 	virtual void NoFix();
-	virtual void Fix(GeoPoint gp, double dHDOP);
+	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP);
 	virtual void NoVFix();
 	virtual void VFix(double dAltitude, double dSeparation);
 	void OnLButtonDown(ScreenPoint pt);
@@ -267,7 +267,7 @@ public:
 	void OptionsKeymap();
 	void DebugNmeaCommands();
 	void DebugUnknownPointTypes();
-	void DebugCursorHere() {Fix(m_painter.GetCenter(), 50.0);}
+	void DebugCursorHere() {Fix(m_painter.GetCenter(), 0.0, 50.0);}
 	void DebugNoFix() {NoFix();}
 	void DebugShowTime() {m_NMEAParser.DebugShowTime();}
 	CAtlas & GetAtlas() {return m_atlas;}

@@ -91,7 +91,35 @@ void CNMEAParser::CommandComplete()
 			{
 				m_pClient->NoVFix();
 			}
-			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dHDOP);
+			// Estimate date-time (GPGGA gives only time, get date from m_monTime or system time).
+			double dTimeUTC;
+			{
+				SYSTEMTIME stTime;
+				int iYear, iMonth, iDay, iHour, iMinute, iSecond;
+				double dPreTimeUTC, dGPSPreTime;
+				if (m_monTime.Get(iYear, iMonth, iDay, iHour, iMinute, iSecond)) {
+					stTime.wYear = iYear;
+					stTime.wMonth = iMonth;
+					stTime.wDay = iDay;
+					stTime.wHour = iHour;
+					stTime.wMinute = iMinute;
+					stTime.wSecond = iSecond;
+				}
+				else
+					GetSystemTime(&stTime);
+				SystemTimeToVariantTime(&stTime, &dPreTimeUTC);
+				// Get GPS time
+				dGPSPreTime = atof(listParts[1].substr(4).c_str()) / 60.0;
+				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(2, 2).c_str())) / 60.0;
+				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(0, 2).c_str())) / 24.0;
+				// Now combine GPS time with date this way:
+				//    dGPSTime = round(dPreTimeUTC - dGPSPreTime) + dGPSPreTime
+				// This works after the year 1900  (dPreTimeUTC > 0)
+				modf(dPreTimeUTC - dGPSPreTime + 0.5, &dTimeUTC);
+				dTimeUTC += dGPSPreTime;
+			}
+
+			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dTimeUTC, dHDOP);
 			m_monStatus = L("Fix");
 			m_pClient->SetConnectionStatus(IGPSClient::csFix);
 		}

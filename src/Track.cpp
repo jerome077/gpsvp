@@ -128,13 +128,15 @@ void CTrack::WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP)
 	std::string strEle;
 	if (m_fAltitude)
 		strEle = "<ele>"+DoubleToStr(m_dAltitude)+"</ele>";
+	double dTimeUTCint, dTimeUTCfrac;
+	dTimeUTCfrac = modf(dTimeUTC * (24*60*60), &dTimeUTCint);  // Assuming year>1900, i.e. dTimeUTC>0
 	SYSTEMTIME st;
-	VariantTimeToSystemTime(dTimeUTC, &st);
+	VariantTimeToSystemTime(dTimeUTCint / (24.0*60*60), &st);
 	m_iBufferPos += _snprintf(m_writeBuffer + m_iBufferPos, 1024,
-		                "<trkpt lat=\"%2.8f\" lon=\"%2.8f\">%s<time>%04d-%02d-%02dT%02d:%02d:%02dZ</time></trkpt>\r\n",
+		                "<trkpt lat=\"%2.8f\" lon=\"%2.8f\">%s<time>%04d-%02d-%02dT%02d:%02d:%06.3fZ</time></trkpt>\r\n",
 						Degree(pt.lat), Degree(pt.lon),
 						strEle.c_str(),
-						st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+						st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond + dTimeUTCfrac);
 
 	// Since a point was added, the track should continue
 	m_fBeginFile = false;
@@ -207,7 +209,7 @@ void CTrack::CreateFileGPX()
 	m_FilePosForAdding = 0;
 #endif // UNDER_WINE
 	// Write file header
-	GetFileName(); // initialisiert m_strGPXName
+	GetFileName(); // initializes m_strGPXName
 	m_iBufferPos = _snprintf(m_writeBuffer, 4096,
 		"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"
 		"<gpx version=\"1.1\" creator=\"%s\">\r\n"

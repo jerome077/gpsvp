@@ -1308,7 +1308,7 @@ struct TrackPlayer : public IPainter
 	}
 	virtual void AddPoint(const GeoPoint & gp)
 	{
-		m_pClient->Fix(gp, 1);
+		m_pClient->Fix(gp, 0, 1);
 		Sleep(50);
 		if (app.m_fExiting)
 			throw m_pClient;
@@ -2802,7 +2802,7 @@ void CMapApp::NoVFix()
 	m_CurTrack.ResetAltitude();
 }
 
-void CMapApp::Fix(GeoPoint gp, double dHDOP)
+void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 {
 	if (m_fFix)
 		AddOdometer(DoubleDistance(gp, m_gpCursor));
@@ -2812,7 +2812,7 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 	if (m_fMemoryVeryLow)
 		m_CurTrack.Break();
 	else
-		m_CurTrack.AddPoint(gp, 0, dHDOP); // TODO: GPS time
+		m_CurTrack.AddPoint(gp, dTimeUTC, dHDOP); // TODO: GPS time
 	// Move view to point if flag present
 	if (m_Options[mcoFollowCursor])
 		m_painter.SetView(gp, false); // SYNC
@@ -3795,7 +3795,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		case 3:
 			{
 				GeoPoint gp = m_painter.ScreenToGeo(sp);
-				Fix(gp, 100);
+				Fix(gp, 0, 100);
 				break;
 			}
 		case 4:
