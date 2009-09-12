@@ -26,6 +26,8 @@ struct CSun
 	void Fix(const CTimeMonitor & monTime, const GeoPoint & p);
 	bool m_fSet;
 	bool m_fLastSet;
+	double m_dSunAzimuth;
+	double m_dSunAltitude;
 };
 
 #endif // SUN_H_INCLUDED

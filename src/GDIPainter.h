@@ -79,6 +79,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	CRegScalar<GeoPoint, REG_BINARY> m_gpCenter;
 	GeoPoint m_gpCenterCache;
 	GeoPoint m_gpCenterView;
+	int m_rotate; // the map on screen is rotated m_rotate degrees CCW
 	int m_sin100;
 	int m_cos100;
 	bool m_fViewSet;
@@ -230,6 +231,7 @@ public:
 	ScreenPoint GeoToScreen(const GeoPoint & pt);
 	ScreenRect GeoToScreen(const GeoRect & rect);
 	GeoRect ScreenToGeo(const ScreenRect & rect);
+	int GetScreenRotationAngle() {return m_rotate;}
 	const GeoPoint GetCenter();
 	void PaintScale();
 

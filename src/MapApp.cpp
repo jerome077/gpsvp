@@ -2165,6 +2165,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Large monitors"), L"LargeMonitors", false, mcoLargeMonitors);
 	m_Options.AddOption(L("Automatic light"), L"AutomaticLight", false, mcoAutoLight);
 	m_Options.AddOption(L("Large fonts"), L"LargeFonts", hiRes, mcoLargeFonts);
+	m_Options.AddOption(L("Show Sun azimuth"), L"ShowSunAz", false, mcoShowSunAz);
 
 	m_fTrafficAgreement.Init(hRegKey, L"TrafficAgreement", false);
 	
@@ -3114,6 +3115,7 @@ void CMapApp::InitMenu()
 		}
 		mmNavigation.CreateItem(L("Navigate recent"), mcNavigateRecent);
 		mmNavigation.CreateItem(L("Stop navigating"), mcStopNavigating);
+		mmNavigation.CreateItem(L("Show Sun azimuth"), mcoShowSunAz);
 	}
 	{
 		CMenu & mmDisplay = mMenu.CreateSubMenu(L("Display"));
@@ -3279,6 +3281,22 @@ void CMapApp::PaintCursor(const GeoPoint & gp, bool fCursorVisible)
 {
 	if (fCursorVisible)
 	{
+		if (m_Options[mcoShowSunAz])
+		{
+			double az = (m_Sun.m_dSunAzimuth - m_painter.GetScreenRotationAngle()) * (pi/180.);
+			double sunradius = 16./60/180*pi;
+			ScreenPoint sp = m_painter.GeoToScreen(gp);
+			int iScrSize = (std::max)(m_painter.GetScreenRect().Width(), m_painter.GetScreenRect().Height());
+			iScrSize *= 10; // !!! fix this later
+			m_painter.StartPolyline(0x204, 0);
+			m_painter.AddPoint(sp);
+			m_painter.AddPoint(ScreenPoint(sp.x + int(iScrSize*sin(az+sunradius)), sp.y - int(iScrSize*cos(az+sunradius))));
+			m_painter.FinishObject();
+			m_painter.StartPolyline(0x204, 0);
+			m_painter.AddPoint(sp);
+			m_painter.AddPoint(ScreenPoint(sp.x + int(iScrSize*sin(az-sunradius)), sp.y - int(iScrSize*cos(az-sunradius))));
+			m_painter.FinishObject();
+		}
 		if (m_fNavigate())
 		{
 			if (!m_Options[mcoShowFastestWay] || !m_TrafficNodes.PaintFastestWay(gp, m_gpNavigate(), &m_painter))

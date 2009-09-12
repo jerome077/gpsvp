@@ -149,7 +149,7 @@ inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 }
 
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2);
-// Return azimuth in degrees
+// Return azimuth in degrees (to the right from the North)
 int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo);
 
 #endif // GEOPOINT_H

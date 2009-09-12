@@ -142,6 +142,7 @@ enum enumMenuCommands
 	mcTrackFormatPLT,
 	mcTrackFormatGPX,
 	mcoQuickReadGPXTrack,
+	mcoShowSunAz,
 
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,

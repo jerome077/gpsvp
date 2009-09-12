@@ -330,6 +330,7 @@ void CGDIPainter::PrepareScales()
 
 void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree360, bool fLowCenter)
 {
+	m_rotate = iDegree360;
 	m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
 	m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
 	if (m_fViewSet)

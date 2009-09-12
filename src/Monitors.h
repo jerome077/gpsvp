@@ -99,6 +99,7 @@ public:
 		int iSecond = int((dMinute - iMinute) * 60);
 		Set(0, 0, 0, iHour, iMinute, iSecond);
 	}
+	// UTC time
 	void Set(int iYear, int iMonth, int iDay, int iHour, int iMinute, int iSecond)
 	{
 		m_iYear = iYear;
@@ -109,6 +110,7 @@ public:
 		m_iSecond = iSecond;
 		m_fSet = true;
 	}
+	// UTC time
 	bool Get(int &iYear, int &iMonth, int &iDay, int &iHour, int &iMinute, int &iSecond) const
 	{
 		if (!m_fSet)

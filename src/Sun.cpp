@@ -610,12 +610,20 @@ double	star_time(double t)
 }
 
 /*********************************************************
+ * Перевод эклиптических координат в (вторые) экваториальные.
  * Получение видимого прямого восхождения и склонения
  * по широте и долготе
- * La - широта - станет прямым восхождением - в градусах
- * Lo - долгота - станет склонением  - в градусах
+ * La - эклиптическая широта - станет склонением - в градусах
+ * Lo - эклиптическая долгота - станет прямым восхождением  - в градусах
  * //t - юлианское время J2000
- * e - угол поворота( наклон эклиптики) - в градусах
+ * e=getE(t) - угол поворота (наклон эклиптики) - в градусах
+ *********************************************************
+ * Перевод (первых) экваториальных координат в горизонтальные.
+ * Получение высоты (без учёта рефракции) и азимута 
+ * по часовому углу и склонению
+ * La - склонение - станет высотой - в градусах
+ * Lo = 90-часовой угол - станет 90-азимут (от S вправо) - в градусах
+ * e = 90-широта места - угол поворота - в градусах
  *********************************************************/
 void get_LaLo(double& La,double& Lo,double e)
 {
@@ -623,8 +631,7 @@ void get_LaLo(double& La,double& Lo,double e)
 	double	f,// широта
 			t,// часовой угол
 			l,// склонение
-			A;// 
-			//a;// прям. восхождение
+			A;// прям. восхождение
 
 	f = 90-e;
 	t = 90-Lo;
@@ -639,15 +646,15 @@ void get_LaLo(double& La,double& Lo,double e)
 	double z1 = acos(z);
 	z1 = acos(z);// повтор, иначе не работает!!!
 	z1 = z1*(180.0/PI);
-	Lo = 90-z1;// склонение
-	Lo = fmod(Lo,360);
-	if (Lo<0)	Lo += 360;
+	La = 90-z1;// склонение
+	//La = fmod(La,360);
+	//if (La<0)	La += 360;
 
 	A = atan2((cos(l)*sin(t)),(-sin(l)*cos(f)+cos(l)*sin(f)*cos(t)));
 	A *= (180.0/PI);
-	La = 90-A;
-	La = fmod(La,360);
-	if (La<0)	La += 360;
+	Lo = 90-A;
+	Lo = fmod(Lo,360);
+	if (Lo<0)	Lo += 360;
 }
 
 // Calculate sunrise and sunset (all time is local)
@@ -658,15 +665,16 @@ void get_LaLo(double& La,double& Lo,double e)
 //  Output:
 // *t_rise : sunrise time (hours)
 // *t_set  : sunset time (hours)
+// *az, *alt : Sun azimuth (from South to the right) and altitude (degrees)
 //  Return: 
 // 1 : OK
 //-1 : No sunrise today (polar night = no Sun all day)
 //-2 : No sunset today (polar day = Sun all day)
 
-int sun_rise_set(struct tm *loc_time,double time_zone,double f, double l, double *t_rise,double *t_set)
+int sun_rise_set(struct tm *loc_time,double time_zone,double f, double l, double *t_rise,double *t_set, double *az, double *alt)
 {
 	double t0;// Юлианское время в гринвичскую полночь
-	double t;// текущее Юлианское время
+	double t, t_frac;// текущее Юлианское время
 	double lat,lon;// широта, долгота солнца
 	//double h,A;// высота, азимут
 	double e;// наклон эклиптики к экватору
@@ -678,6 +686,10 @@ int sun_rise_set(struct tm *loc_time,double time_zone,double f, double l, double
 	double cost;// значение косинуса (м.б. > 1!)
 	double	v = 1-0.0027304336;// для перевода из звездного в обычное время
 
+	// time of day (may not work with time_zone!=0)
+	t_frac = loc_time->tm_sec/60.0;
+	t_frac = (t_frac + loc_time->tm_min)/60.0;
+	t_frac = (t_frac + loc_time->tm_hour - time_zone)/24.0;
 	// переводим во время на середину дня
 	loc_time->tm_hour = 12-(int)time_zone;
 	loc_time->tm_min = 0;
@@ -705,23 +717,33 @@ int sun_rise_set(struct tm *loc_time,double time_zone,double f, double l, double
 	z = 90+dz;
 	
 	// поиск видимого прямого восхождения и склонения
-	// lat: широта  -> прямое восхождение (в градусах)
-	// lon: долгота -> склонение (в градусах)
+	// lat: широта  -> склонение (в градусах)
+	// lon: долгота -> прямое восхождение (в градусах)
 	get_LaLo(lat,lon,e);
-	lat/=15;// переводим прямое восхождение из градусов в часы
+
+	//  Ищем горизонтальные координаты Солнца
+	//вычисляем местное звездное время
+	s0 = star_time(t0+t_frac)*15 + l;
+	// часовой угол = звёздное время - прямое восхождение 
+	*alt = lat; *az = 90 + lon - s0;
+	get_LaLo(*alt, *az, 90-f);
+	*az = fmod(180 + 90 - *az, 360.);
+	// теперь *alt = высота, *az = азимут от N вправо
+
+	lon/=15;// переводим прямое восхождение из градусов в часы
 	
 
 	//вычисляем местное звездное время
-	s0 = star_time(t0)*15;
+	s0 = star_time(t0)*15; // ужЕ
 	s0 += l;//местное звездное время
 	if (s0<0)	s0+=360;
 	s0 = fmod(s0,360)/15.;// перевод в часы
 	
 	// перевод в радианы
-	lon *= (PI/180.0);
+	lat *= (PI/180.0);
 	z *= (PI/180.0);
 	f *= (PI/180.0);
-	cost = (cos(z)-sin(f)*sin(lon))/(cos(f)*cos(lon));
+	cost = (cos(z)-sin(f)*sin(lat))/(cos(f)*cos(lat));
 	if (cost>1)// солнце не всходит
 		return -1;
 	if (cost<-1)// солнце не заходит
@@ -732,13 +754,13 @@ int sun_rise_set(struct tm *loc_time,double time_zone,double f, double l, double
 	if (dt<0)	dt+=24;
 	if (dt<=12)
 	{
-		s1  = lat-dt;
-		s2 = lat+dt;
+		s1  = lon-dt;
+		s2 = lon+dt;
 	}
 	else
 	{
-		s1  = lat+dt;
-		s2 = lat-dt;
+		s1  = lon+dt;
+		s2 = lon-dt;
 	}
 	*t_rise  = (s1-s0)*v+time_zone;
 	*t_set = (s2-s0)*v+time_zone;
@@ -759,8 +781,11 @@ void CSun::Fix(const CTimeMonitor & monTime, const GeoPoint & p)
 		double rise;
 		double set;
 		double hour = stm.tm_hour + double(stm.tm_min) / 60 + double(stm.tm_sec) / 3600;
-		if (1 == sun_rise_set(&stm, 0 /* double(iBias) / 60 */, Degree(p.lat), Degree(p.lon), &rise, &set))
+		if (1 == sun_rise_set(&stm, 0 /* double(iBias) / 60 */, Degree(p.lat), Degree(p.lon), &rise, &set, &m_dSunAzimuth, &m_dSunAltitude))
 		{
+			//m_monSunrise.Set(24+m_dSunAzimuth/60.0);  // debug output: arc degree -> time minute
+			//m_monSunset.Set(24+m_dSunAltitude/60.0);
+
 			m_monSunrise.Set(rise);
 			m_monSunset.Set(set);
 			while (rise > set) 
