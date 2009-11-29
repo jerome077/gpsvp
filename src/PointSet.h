@@ -46,7 +46,7 @@ public:
 	find_iterator FindNearest(const Point & gp, int radius) const
 	{
 		find_iterator result(_list.end(), radius);
-		for (List::const_iterator it = _list.begin(); it != _list.end(); ++it)
+		for (const_iterator it = _list.begin(); it != _list.end(); ++it)
 		{
 			int distance = IntDistance(gp, *it);
 			if (distance < result._distance)
@@ -60,4 +60,4 @@ public:
 	}
 };
 
-#endif POINTSET_H_INCLUDED
+#endif // POINTSET_H_INCLUDED

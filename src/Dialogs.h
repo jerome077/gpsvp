@@ -16,7 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define DIALOGS_H
 
 #include <windows.h>
-#include <Commctrl.h>
+#include <commctrl.h>
 #if defined(UNDER_CE) && !defined(BARECE)
 #	include <aygshell.h>
 #	include <tpcshell.h>
@@ -25,7 +25,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Common.h"
 
 #include "Lock.h"
-#include "MenuBar.h"
+#include "menubar.h"
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 extern HINSTANCE g_hInst;
@@ -36,7 +36,7 @@ LRESULT CALLBACK MASubWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 class CMADialog;
 typedef CMADialog * PMADialog;
 extern volatile PMADialog g_pNextDialog;
-extern map<HWND, CMADialog *> g_Dialogs;
+extern std::map<HWND, CMADialog *> g_Dialogs;
 
 class CControl
 {
@@ -69,6 +69,7 @@ public:
 		return ::SetWindowPos(m_hControl, 0, x, y, dx, dy, 
 			SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	}
+	void Destroy() { ::DestroyWindow(m_hControl); };
 };
 
 class CCombo : public CControl
@@ -126,13 +127,18 @@ public:
 	{
 		AddItem(wcLabel, iId, 0, iId);
 	}
-	virtual void UpdateCurrent(const wchar_t * wcLabel)
+	virtual void UpdateSelected(const wchar_t * wcLabel)
+	{
+		UpdateSelected(wcLabel, 0);
+	}
+	virtual void UpdateSelected(const wchar_t * wcLabel, int iSubItem)
 	{
 		int iSelected = MySendMessage(LVM_GETSELECTIONMARK, 0, 0);
 		LVITEM item;
 		memset(&item, 0, sizeof(item));
 		item.mask = LVIF_TEXT;
 		item.iItem = iSelected;
+		item.iSubItem = iSubItem;
 		item.pszText = const_cast<wchar_t *>(wcLabel);
 		MySendMessage(LVM_SETITEMTEXT, iSelected, (LPARAM)&item);
 	}
@@ -220,9 +226,9 @@ public:
 class CMADialog
 {
 	RECT m_rectWin;
-	int m_buttonX;
-	int m_buttonY;
+protected:
 	int m_itemY;
+private:
 	enum {iHeight = 40, iWidth = 55};
 	int m_iPadding;
 	void AddItem(HWND hDlg, HWND hItem)
@@ -288,14 +294,16 @@ public:
 	{
 		 AddItem(hDlg, GetDlgItem(hDlg, IDC));
 	}
-	void AddItem(HWND hDlg, CControl & control)
+	void AddItem(HWND hDlg, const CControl & ctrl)
 	{
 		RECT rectItem;
+		CControl& control(const_cast<CControl&>(ctrl));
 		control.GetWindowRect(&rectItem);
 		control.SetWindowPos(m_iPadding, m_itemY, 
 			m_rectWin.right - m_rectWin.left - m_iPadding * 2, 
 			rectItem.bottom - rectItem.top);
 		m_itemY += rectItem.bottom - rectItem.top + m_iPadding;
+		ResetVScrollBar(m_hDialog);
 	}
 	void AddList(HWND hList)
 	{
@@ -305,8 +313,18 @@ public:
 			0);
 		SetFocus(hList);
 	}
+	void ReinitItemY()
+	{
+#ifdef UNDER_CE
+		m_itemY = 0;
+#else
+		m_itemY = 4;
+#endif // UNDER_CE
+		ResetVScrollBar(m_hDialog);
+	}
 	void CommonInit(HWND hDlg)
 	{
+		ReinitItemY();
 #ifdef UNDER_CE
 #if !defined(BARECE)
 		SHINITDLGINFO shidi;
@@ -316,13 +334,8 @@ public:
 		shidi.dwFlags = SHIDIF_DONEBUTTON | SHIDIF_SIZEDLGFULLSCREEN;
 		shidi.hDlg = hDlg;
 		SHInitDialog(&shidi);
-
-		m_itemY = 0;
 #endif
 #else
-		m_buttonX = 4;
-		m_buttonY = 4;
-		m_itemY = 4;
 		GetClientRect(hDlg, &m_rectWin);
 		WindowPosChanged(hDlg);
 #endif // UNDER_CE
@@ -335,6 +348,8 @@ public:
 	}
 	void ProcessUpDown(int iItem, int iCommand);
 	void ProcessUpDown(HWND hControl, int iCommand);
+	virtual void VScroll(HWND hDlg, int iScrollParam);
+	void ResetVScrollBar(HWND hDlg);
 };
 
 #endif // DIALOGS_H

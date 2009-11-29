@@ -17,8 +17,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <list>
 
-using namespace std;
-
 #include "PlatformDef.h"
 
 class CSubdivision;

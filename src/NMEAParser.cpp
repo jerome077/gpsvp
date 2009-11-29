@@ -15,6 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "NMEAParser.h"
 #include "DebugOutput.h"
 #include <string.h>
+#include "EGM96Geoid.h"
 
 //! Constructor
 CNMEAParser::CNMEAParser() : 
@@ -38,14 +39,14 @@ void CNMEAParser::SetClient(IGPSClient * pClient)
 void CNMEAParser::CommandComplete()
 {
 	// Vector for parameters
-	vector<string> listParts;
+	std::vector<std::string> listParts;
 	// Reset command started flag
 	m_fCommandStarted = false;
 	// Start from the beginning
-	string::size_type pos = 0;
-	string::size_type nextpos = 0;
+	std::string::size_type pos = 0;
+	std::string::size_type nextpos = 0;
 	// Look for commas
-	while ((nextpos = m_strCommand.find(',', pos)) != string::npos)
+	while ((nextpos = m_strCommand.find(',', pos)) != std::string::npos)
 	{
 		// Add text between commas to list
 		listParts.push_back(m_strCommand.substr(pos, nextpos - pos));
@@ -77,15 +78,6 @@ void CNMEAParser::CommandComplete()
 		else
 		{
 			// Else get coordinates
-			if (listParts[9].size() != 0)
-			{
-				double dAltitude = myatof(listParts[9].c_str());
-				m_pClient->VFix(dAltitude);
-			}
-			else
-			{
-				m_pClient->NoVFix();
-			}
 			double dLatitude = myatof(listParts[2].substr(2).c_str()) / 60 + atof(listParts[2].substr(0, 2).c_str());
 			if (listParts[3] == "S")
 				dLatitude = -dLatitude;
@@ -93,7 +85,49 @@ void CNMEAParser::CommandComplete()
 			if (listParts[5] == "W")
 				dLongitude = -dLongitude;
 			double dHDOP = myatof(listParts[8].c_str());
-			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dHDOP);
+			if (listParts[9].size() != 0)
+			{
+				double dAltitude = myatof(listParts[9].c_str());
+				double dSeparation = myatof(listParts[11].c_str());
+				EGM96Geoid(dLatitude, dLongitude, &dAltitude, &dSeparation);
+				m_pClient->VFix(dAltitude, dSeparation);
+			}
+			else
+			{
+				m_pClient->NoVFix();
+			}
+#ifndef LINUX
+			// Estimate date-time (GPGGA gives only time, get date from m_monTime or system time).
+			double dTimeUTC;
+			{
+				SYSTEMTIME stTime;
+				int iYear, iMonth, iDay, iHour, iMinute, iSecond;
+				double dPreTimeUTC, dGPSPreTime;
+				if (m_monTime.Get(iYear, iMonth, iDay, iHour, iMinute, iSecond)) {
+					stTime.wYear = iYear;
+					stTime.wMonth = iMonth;
+					stTime.wDay = iDay;
+					stTime.wHour = iHour;
+					stTime.wMinute = iMinute;
+					stTime.wSecond = iSecond;
+				}
+				else
+					GetSystemTime(&stTime);
+				SystemTimeToVariantTime(&stTime, &dPreTimeUTC);
+				// Get GPS time
+				dGPSPreTime = atof(listParts[1].substr(4).c_str()) / 60.0;
+				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(2, 2).c_str())) / 60.0;
+				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(0, 2).c_str())) / 24.0;
+				// Now combine GPS time with date this way:
+				//    dGPSTime = round(dPreTimeUTC - dGPSPreTime) + dGPSPreTime
+				// This works after the year 1900  (dPreTimeUTC > 0)
+				modf(dPreTimeUTC - dGPSPreTime + 0.5, &dTimeUTC);
+				dTimeUTC += dGPSPreTime;
+			}
+#else // LINUX
+
+			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), 0, dHDOP);
+#endif // LINUX
 #ifndef LINUX
 			m_monStatus = L("Fix");
 #endif
@@ -180,10 +214,10 @@ void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 		// Command may be continued
 		if (m_fCommandStarted)
 		{
-			// Find length of string with good symbols
+			// Find length of std::string with good symbols
 			while ((uiPos < uiLen) && (data[uiPos] > 0x20) && (data[uiPos] < 0x80))
 				++uiPos;
-			// Append the string to command text
+			// Append the std::string to command text
 			m_strCommand.append((char*)data, uiPos);
 			// Command may have finished
 			if (uiPos < uiLen)
@@ -241,7 +275,7 @@ void CNMEAParser::GetList(IListAcceptor * pAcceptor)
 #ifndef LINUX
 	AutoLock l;
 #endif
-	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
+	for (std::map<std::string, std::string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 	{
 #ifndef LINUX
 		tchar_t wstr[1000];
@@ -259,7 +293,7 @@ void CNMEAParser::SaveCommands(const wchar_t * wstrFilename)
 	FILE * pFile = wfopen(wstrFilename, L"wt");
 	if (!pFile)
 		return;
-	for (map<string, string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
+	for (std::map<std::string, std::string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
 		fprintf(pFile, "%s\n", it->second.c_str());
 	fclose(pFile);
 #endif
@@ -292,7 +326,7 @@ void CNMEAParser::PaintSatellites(IMonitorPainter * pPainter)
 	ScreenPoint spSize = pPainter->GetMonitorSize();
 	spSize.x -= 2;
 	spSize.y -= 4;
-	int iCount = max(m_iSatNum, 12);
+	int iCount = (std::max)(m_iSatNum, 12);
 	for (int i = 0; i < m_iSatNum; ++i)
 	{
 		ScreenPoint spFrom = ScreenPoint(2 + spSize.x * i / iCount, 2 + spSize.y + 1);

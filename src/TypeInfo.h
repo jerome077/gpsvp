@@ -15,31 +15,29 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef TYPEINFO_H
 #define TYPEINFO_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <map>
 #include <string>
 #include "Common.h"
 
-using namespace std;
-
 class CTypeInfo
 {
-	typedef map<int, wstring> GenericTypes;
+	typedef std::map<int, std::wstring> GenericTypes;
 	struct PointTypeElement
 	{
 		PointTypeElement(){}
-		wstring wstrLabel; 
+		std::wstring wstrLabel; 
 		GenericTypes subTypes; 
 	};
-	typedef map<byte, PointTypeElement> PointTypes;
+	typedef std::map<byte, PointTypeElement> PointTypes;
 	PointTypes m_PointTypes;
 	GenericTypes m_PolylineTypes;
 	GenericTypes m_PolygonTypes;
 public:
 	void Parse(HINSTANCE hInst);
-	wstring PointType(int iType);
-	wstring PolylineType(int iType);
-	wstring PolygonType(int iType);
+	std::wstring PointType(int iType);
+	std::wstring PolylineType(int iType);
+	std::wstring PolygonType(int iType);
 };
 
 #endif // TYPEINFO_H

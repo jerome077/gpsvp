@@ -17,12 +17,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 
+// ---------------------------------------------------------------
+
 class CHttpRequest
 {
 private:
+	static bool bSocketsInitialized;
 	struct Data;
 	Data * _data;
 public:
+	static bool m_useProxy; //use proxy flag, is syncronized with Use Proxy menu option
+	static std::string m_proxyHost;
+	static std::string m_proxyPort;
+	static std::string m_proxyAuth; // base64-encoded std::string "user:password"
+	
 	CHttpRequest(std::wstring * pwstrHttpStatus);
 	~CHttpRequest();
 	void Request(const std::string & uri, const std::string & user_agent);
@@ -32,6 +40,11 @@ public:
 	int GetSize() const;
 	int GetOutgoing() const;
 	int GetIncoming() const;
+	static void InitSocketsIfNecessary();
+	static void CleanupSocketsIfNecessary();
+	static void SetProxy(std::wstring proxy);
 };
 
-#endif HTTPCLIENT_H
+// ---------------------------------------------------------------
+
+#endif // HTTPCLIENT_H

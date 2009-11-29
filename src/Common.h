@@ -19,15 +19,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ctype.h>
 #include <string>
 
-using namespace std;
-
 //! Translate to double degrees for output
 double Degree(Int iDegree);
 //! Translate to Int degrees for internal usage
 Int FromDegree(double dDegree);
 //! Check condition and throw exception if false
 void Check(bool fCondition);
-//! Make double from string
+//! Make double from std::string
 double myatof(const char * str);
 double myatof(const wchar_t * str);
 
@@ -49,20 +47,28 @@ T sqr(T a)
 	return a * a;
 }
 
-wstring DoubleToText(double dDouble, int iDigits = 1);
-wstring DegreeToText(double dDegree, bool fLat);
-double TextToDergee(wchar_t * wcText);
-wstring IntToText(int iInt);
-wstring IntToHex(int iInt);
-wstring DistanceToText(double dDistance);
-wstring HeightToText(double dDistance);
-wstring SpeedToText(double dDistance);
-wstring MemoryToText(unsigned long ulMemory);
-inline wstring a2w(const char * s)
+std::wstring DoubleToText(double dDouble, int iDigits = 1);
+std::string DoubleToStr(double dDouble, int iDigits = 1);
+
+std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
+double TextToDegree(const wchar_t * wcText);
+// Some coordinates must know WGS84-longitude and latitude at the same time.
+void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& wstrLat);
+void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, double& dLon, double& dLat);
+std::wstring CoordLabelLon();
+std::wstring CoordLabelLat();
+
+std::wstring IntToText(int iInt);
+std::wstring IntToHex(int iInt);
+std::wstring DistanceToText(double dDistance);
+std::wstring HeightToText(double dDistance);
+std::wstring SpeedToText(double dDistance);
+std::wstring MemoryToText(unsigned long ulMemory);
+inline std::wstring a2w(const char * s)
 {
 	wchar_t buff[1000];
 	swprintf(buff, 1000, L"%S", s);
-	return wstring(buff);
+	return std::wstring(buff);
 }
 
 struct IListAcceptor
@@ -75,6 +81,7 @@ struct IListAcceptor2
 {
 	virtual int AddItem(const wchar_t * wcLabel, int iId, int iSubItem, int lParam) = 0;
 	virtual void UpdateCurrent(const wchar_t * wcLabel, int iSubItem) = 0;
+	virtual void UpdateSelected(const wchar_t * wcLabel, int iSubItem) = 0;
 };
 
 struct IListAcceptor2Acceptor
@@ -114,13 +121,13 @@ inline int int_sqrt(int input)
 	return nv;
 }
 
-int cos100(int degree);
-int sin100(int degree);
-static const double cdNauticalMile = 1.8522;
-static const double cdLandMile = 1.609;
+int cos100(int degree);  // degree value must be in [-pi..pi]
+int sin100(int degree);  // degree value must be in [-pi/2..3pi/2]
+static const double cdNauticalMile = 1.852;
+static const double cdLandMile = 1.609344;
 static const double cdFoot = 0.3048;
 static const double cdYard = 0.9144;
-static const double pi = 3.14159265358979;
+static const double pi = 3.1415926535897932;
 std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename);
 
 #define L(x) (GetDict().Translate(L##x))
@@ -138,5 +145,45 @@ private:
 };
 
 extern Dict & GetDict();
+
+bool UTCVariantTimeToLocalVariantTime(double dUTCTime, double &dLocalTime);
+bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime);
+
+// ---------------------------------------------------------------
+
+// Functions to work with UTM coordinates:
+// - utmZone between 1 and 60 for the north hemisphere and between -1 and -60 for the south hemisphere.
+// - Some functions accept utmZone = 0 for "automatic" but don't care of exceptions
+//   (like in Norway where a zone is locally bigger).
+
+void TestUTM(); // Test cases, only used for debug
+
+// LongLatToUTM
+// input:
+//  - longitude and latitude in degrees
+//  - utmZone = wanted zone (or 0 for automatic)
+// ouput:
+//  - utmZone = used zone (if it was 0 in input, don't take care of exceptions)
+//  - utmX = UTM easting in meters
+//  - utmY = UTM northing in meters
+void LongLatToUTM(double lon360, double lat360, int& utmZone, double& utmX, double& utmY);
+void LongLatToUTM(double lon360, double lat360, int& utmZone, int& utmX, int& utmY);
+
+// UTMToLongLat
+// input:
+//  - UTM easting and northing in meters
+//  - utmZone = used zone (should NOT be 0!)
+// ouput:
+//  - longitude and latitude in degrees
+void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double& lat360);
+
+// UTMToLongLat
+// input:
+//  - utmZone = used zone (should NOT be 0!)
+// ouput:
+//  - a text describing the zone
+std::wstring UTMZoneToLongText(int utmZone);
+
+// ---------------------------------------------------------------
 
 #endif // COMMON_H

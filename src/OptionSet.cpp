@@ -14,7 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "OptionSet.h"
 #include "Monitors.h"
-#include "MenuBar.h"
+#include "menubar.h"
 #include "Commands.h"
 
 struct COptionSet::Option

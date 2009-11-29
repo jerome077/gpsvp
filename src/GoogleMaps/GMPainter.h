@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -14,13 +14,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #pragma once
 
+#include "GMCommon.h"
 #include "GMFileHolder.h"
 #include "../GeoPoint.h"
 #include <windows.h>
-#ifndef UNDER_CE
-#include <gdiplus.h>
-#endif // UNDER_CE
+#ifdef USE_GDI_PLUS
+#	include <gdiplus.h>
+#endif // USE_GDI_PLUS
 #include <list>
+#include "../VersionNumber.h"
 
 struct GEOFILE_CONTENTS {
 	HBITMAP h;
@@ -60,19 +62,19 @@ class CGMPainter
 public:
 	CGMPainter(void);
 	virtual ~CGMPainter(void);
-	void SetMapFolder(const wchar_t * wcFolder);
+	void SetMapFolder(const wchar_t * wcFolder, const CVersionNumber& gpsVPVersion);
 
 	void SetMaxCacheSize(long nBitmapsCount) 
 	{
 		m_nMaxCacheSize = nBitmapsCount;
-		if (m_mapCachedFiles.size() > m_nMaxCacheSize) {
-		}
+		for(size_t i=m_mapCachedFiles.size(); i>m_nMaxCacheSize; i--)
+			DeleteFrontElementFromCache();
 	};
 
 	void ProcessWMHIBERNATE();
 	// Level - 0 .. 18
-	// DC, rect - где рисовать
-	int Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
+	// DC, rect - where to draw
+	int Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
 	bool RotationAllowed();
 
 	void PostponeVersionUpdate();
@@ -89,14 +91,21 @@ public:
 	long DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadius, long nDetailedLevel);
 	void RelocateFiles(); 
 	bool NeedRelocateFiles(); 
+	long GetGMapCount() const { return m_GMFH.GetGMapCount(); };
+	long GetWMSMapCount() const { return m_GMFH.GetWMSMapCount(); };
+	std::wstring GetWMSMapName(long indexWMS) const { return m_GMFH.GetWMSMapName(indexWMS); };
+    GeoPoint GetDemoPoint(enumGMapType type, double &scale) const { return m_GMFH.GetDemoPoint(type, scale); };
+	void SetKeepMemoryLow(bool value);
 
 protected:
-	int DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& data);
+	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
 	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
 		long *pnInCacheCount, bool bJustCount);
+	void DeleteFrontElementFromCache();
+
 private:
-	// Открытые файлы
+	// Opened files
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS > m_mapCachedFiles;
 	std::list< GEOFILE_RASTERIZED > m_lstLastUsed;
 
@@ -108,16 +117,18 @@ private:
 
 	unsigned long m_nGDIPlusToken;
 
-	// Флаг, что получили с сервера номера версий карты
+	// If we have obtained map version numbers from the server
 	bool m_bGotMapVersions;
 
-	// GeoRect, с которым последний раз рисовали карту
+	// GeoRect that was Paint()ed last
 	GeoRect m_grectLastViewed;
-	// GeoRect, который выбрал пользователь
+	// GeoRect user chose to download
 	GeoRect m_grectToDownload;
 	bool m_bGeoRectToDownload;
-	// Level, с которым последний раз рисовали карту
+	// Zoom level that was Paint()ed last
 	long m_nLevelToDownload;
-	// Тип картинки, который выкачивать. Берём в момент, когда отмечают зум
+	// Map type to download. Р‘РµСЂС‘Рј РІ РјРѕРјРµРЅС‚, РєРѕРіРґР° РѕС‚РјРµС‡Р°СЋС‚ Р·СѓРј [??? Fixed at the moment when user ?marks? zoom]
 	enumGMapType m_enTypeToDownload;
+
+	bool m_KeepMemoryLow;
 };

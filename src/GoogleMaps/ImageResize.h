@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -15,7 +15,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #pragma once
 
 #include <windows.h>
-#ifndef UNDER_CE
+#include "GMCommon.h"
+#ifdef USE_GDI_PLUS
 #include <gdiplus.h>
 #endif // UNDER_CE
 
@@ -93,7 +94,7 @@ HBITMAP ScaleBitmapInt(HDC dc, HBITMAP hBmp,
 	HBITMAP hOldBitmap1 = SelectObject(hDC1, hBmp);
 	HBITMAP hOldBitmap2 = SelectObject(hDC2, h);
 	BitBlt(hDC2, 0, 0, bmp.bmWidth, bmp.bmHeight, hDC1, 0, 0, SRCCOPY);
-	// Теперь из pBits аккуратно скопировать данные про картинку...
+	// РўРµРїРµСЂСЊ РёР· pBits Р°РєРєСѓСЂР°С‚РЅРѕ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РґР°РЅРЅС‹Рµ РїСЂРѕ РєР°СЂС‚РёРЅРєСѓ...
 
 	byte *pByteData = (byte*)pData;
 	int nPosition = 0;

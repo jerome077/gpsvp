@@ -282,7 +282,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ALIGN:4096 /subsystem:$(CESubsystem)  "
-				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib bthutil.lib ws2.lib"
+				AdditionalDependencies="aygshell.lib commctrl.lib coredll.lib bthutil.lib ws2.lib cellcore.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/VisualPainterSPDebug.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -1694,6 +1694,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\EGM96Geoid.c"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FATBlock.cpp"
 				>
 				<FileConfiguration
@@ -2770,6 +2778,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIniExt.h"
+				>
+			</File>
+			<File
 				RelativePath="..\StdAfx.cpp"
 				>
 				<FileConfiguration
@@ -3176,6 +3192,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\VersionNumber.h"
+				>
+			</File>
+			<File
 				RelativePath="..\WayPoints.cpp"
 				>
 			</File>
@@ -3183,10 +3203,38 @@
 				RelativePath="..\WayPoints.h"
 				>
 			</File>
+			<Filter
+				Name="FileFormats"
+				>
+				<File
+					RelativePath="..\FileFormats\GPX.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\GPX.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Google Maps"
 			>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.h"
+				>
+			</File>
 			<File
 				RelativePath="..\GoogleMaps\GMFileHolder.cpp"
 				>
@@ -3213,6 +3261,14 @@
 			</File>
 			<File
 				RelativePath="..\GoogleMaps\RasterServerSources.h"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.h"
 				>
 			</File>
 		</Filter>

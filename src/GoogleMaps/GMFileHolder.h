@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -20,6 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <set>
 #include "../Track.h"
 #include "RasterServerSources.h"
+#include "../VersionNumber.h"
 
 class CGMFileHolder
 {
@@ -32,13 +33,13 @@ public:
 		m_strDefaultFileName = pszDefaultFile;
 	};
 
-	long InitFromDir(const wchar_t *pszRoot, bool bCreateIndexIfNeeded = true);
+	long InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded = true);
 	void Deinit();
 
 	const long GetFileName(std::wstring& name, const GEOFILE_DATA& data) const;
-	// Метод для получения запроса для отрисовщика, которому не хватило фрагментов
+	// РњРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ Р·Р°РїСЂРѕСЃР° РґР»СЏ РѕС‚СЂРёСЃРѕРІС‰РёРєР°, РєРѕС‚РѕСЂРѕРјСѓ РЅРµ С…РІР°С‚РёР»Рѕ С„СЂР°РіРјРµРЅС‚РѕРІ
 	std::string GetRequestURL(const GEOFILE_DATA& data);
-	// Получить запрос
+	// РџРѕР»СѓС‡РёС‚СЊ Р·Р°РїСЂРѕСЃ
 	bool GetQueuedData(GEOFILE_DATA* pData);
 	long OnRequestProcessed(const std::string request, GEOFILE_DATA& gfdata, const char * data, int size);
 	long ProcessPrefixes(const std::string &s);
@@ -56,11 +57,16 @@ public:
 
 	const CRasterMapSource *GetRMS(enum enumGMapType t) const
 	{
-		if (t < gtCount)
+		if ((size_t)t < m_vecRMS.size())
 			return m_vecRMS[t];
 		else 
 			return NULL;
 	};
+
+	long GetGMapCount() const { return m_vecRMS.size(); };
+	long GetWMSMapCount() const { return m_vecRMS.size()-gtFirstWMSMapType; };
+	std::wstring GetWMSMapName(long indexWMS) const;
+	GeoPoint GetDemoPoint(enumGMapType type, double &scale) const;
 
 protected:
 	long BuildInternalIndex();
@@ -70,22 +76,26 @@ protected:
 
 	bool GetDiskFileName(const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root = L"") const;
 
+    void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
+
 private:
-	// Здесь - общий префикс для всех директорий
+	// Common prefix for all raster map folders
 	std::wstring m_strMapsRoot;
+	DWORD m_dwMapsAttr;
 	// Inited
 	bool m_bInitialized;
 
 	std::set< GEOFILE_DATA > m_setToDownload;
 
-	// Имя файла, которое возвращается в случае отсутствия в базе необходимого фрагмента
+	// File name returned in case the requested tile is absent
 	std::wstring m_strDefaultFileName;
 
-	// Минимальный и максимальный доступный уровень (0..18 для карт)
+	// Minimum and maximum zoom levels (0 and 18 for maps)
 	long m_nMinLevel, m_nMaxLevel; 
 
-	// Текущий номер сервера
-	CRasterMapSource * m_vecRMS[gtCount];
+	// Current server number
+	std::vector<PRasterMapSource> m_vecRMS;
+	bool m_WMSMapsListed;
 
 	unsigned char m_nMTServerId;
 	unsigned char m_nKHServerId;

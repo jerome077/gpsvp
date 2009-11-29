@@ -32,7 +32,7 @@ char * SkipToNextLine(char * pos)
 	return pos;
 }
 
-wstring GetLabel(char * pos)
+std::wstring GetLabel(char * pos)
 {
 	while (*pos && *pos != '\r' && *pos != '\n' && *pos != '\t') ++pos;
 	if (*pos != '\t')
@@ -72,7 +72,7 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 				{
 					if (eType == maskPoints)
 					{
-						wstring wstrLabel = GetLabel(data);
+						std::wstring wstrLabel = GetLabel(data);
 						byte bClass1 = Char22Byte(data + 2);
 						if (data[6] == '-')
 						{
@@ -90,13 +90,13 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 					}
 					if (eType == maskPolylines)
 					{
-						wstring wstrLabel = GetLabel(data);
+						std::wstring wstrLabel = GetLabel(data);
 						byte bClass = Char22Byte(data + 2);
 						m_PolylineTypes[bClass] = wstrLabel;
 					}
 					if (eType == maskPolygons)
 					{
-						wstring wstrLabel = GetLabel(data);
+						std::wstring wstrLabel = GetLabel(data);
 						byte bClass = Char22Byte(data + 2);
 						m_PolygonTypes[bClass] = wstrLabel;
 					}
@@ -108,7 +108,7 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 	}
 }
 
-wstring CTypeInfo::PointType(int iType)
+std::wstring CTypeInfo::PointType(int iType)
 {
 	byte bClass = (iType >> 8) & 0xff;
 	byte bSubClass = iType & 0xff;
@@ -120,21 +120,21 @@ wstring CTypeInfo::PointType(int iType)
 			return it2->second;
 		return it1->second.wstrLabel;
 	}
-	return wstring(L("Unknown type")) + L" (" + IntToText(iType) + L")";
+	return std::wstring(L("Unknown type")) + L" (" + IntToText(iType) + L")";
 }
 
-wstring CTypeInfo::PolylineType(int iType)
+std::wstring CTypeInfo::PolylineType(int iType)
 {
 	GenericTypes::iterator it = m_PolylineTypes.find(iType);
 	if (it != m_PolylineTypes.end())
 		return it->second;
-	return wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
+	return std::wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
 }
 
-wstring CTypeInfo::PolygonType(int iType)
+std::wstring CTypeInfo::PolygonType(int iType)
 {
 	GenericTypes::iterator it = m_PolygonTypes.find(iType);
 	if (it != m_PolygonTypes.end())
 		return it->second;
-	return wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
+	return std::wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
 }

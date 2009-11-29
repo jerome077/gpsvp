@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -29,13 +29,10 @@ std::wstring m_wstrMapFolder;
 
 CGMPainter::CGMPainter(void)
 {
-#ifndef UNDER_CE
+	m_KeepMemoryLow = false;
 	m_nMaxCacheSize = 256;
-#else // UNDER_CE
-	m_nMaxCacheSize = 16;
-#endif // UNDER_CE
 
-#ifndef UNDER_CE
+#ifdef USE_GDI_PLUS
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_nGDIPlusToken, &gdiplusStartupInput, NULL);
 #endif // UNDER_CE
@@ -45,7 +42,7 @@ CGMPainter::CGMPainter(void)
 
 CGMPainter::~CGMPainter(void)
 {
-#ifndef UNDER_CE
+#ifdef USE_GDI_PLUS
 	Gdiplus::GdiplusShutdown(m_nGDIPlusToken);
 #endif // UNDER_CE
 }
@@ -76,11 +73,11 @@ double CGMPainter::GetPreferredScale(double scale)
 bool CGMPainter::GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const
 {
 	long nNumTiles = 1 << (level-1);
-	pData->X = gp.lon / (1 << (24 - level + 1)) + (nNumTiles >> 1);
+	pData->X = gp.lon / (1 << (GPWIDTH - level + 1)) + (nNumTiles >> 1);
 	double dLat = Degree(gp.lat);
 	long nBitmapOrigo = nNumTiles << 7; 
-	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*3.14159265358979);
-	double z = sin(dLat / 180 * 3.14159265358979);
+	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
+	double z = sin(dLat / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
 	pData->Y = cntY / 256;
 
@@ -94,21 +91,22 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 {
 	if (r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
 		return false;
-	// Найдём пересечение по горизонтали
-	pr->left = max(r1.left, r2.left);
-	pr->right = min(r1.right, r2.right);
-	pr->top = max(r1.top, r2.top);
-	pr->bottom = min(r1.bottom, r2.bottom);
+	// Intersect abscissa (longitude) intervals
+	pr->left = (std::max)(r1.left, r2.left);
+	pr->right = (std::min)(r1.right, r2.right);
+	// Intersect ordinate (latitude) intervals
+	pr->top = (std::max)(r1.top, r2.top);
+	pr->bottom = (std::min)(r1.bottom, r2.bottom);
 	return true;
 }
 
-int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize)
+int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize)
 {
 	if (type == gtNone)
 		return 0;
 	double dLatCenter = Degree(gpCenter.lat);
 	double dLonCenter = Degree(gpCenter.lon);
-	// Рисуем картинку уровня level с центром в dLonCenter/dLatCenter
+	// Paint image at zoom level level centered at (dLonCenter, dLatCenter)
 
 	int level = LEVEL_REVERSE_OFFSET;
 
@@ -129,15 +127,15 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	if (scale > 16)
 		return 0;
 
-	// количество блоков вдоль стороны Битмапа уровня Level
+	// Number of tiles along bitmap side at zoom level Level
 	long nNumTiles = 1 << (level-1);
-	// координаты (в пикселах) середины Битмапа уровня Level
+	// Coordinates of bitmap center (in pixels)
 	long nBitmapOrigo = nNumTiles << 7; 
 
 	double nPixelsPerLonDegree = ((double) (nNumTiles << 8)) / 360;
-	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*3.14159265358979);
+	double nPixelsPerLonRadian = ((double) (nNumTiles << 8)) / (2*pi);
 
-	// Здесь заполняем координаты для скачивания CurrentView
+	// Here we fill in the coordinates to download CurrentView
 	m_nLevelToDownload = level;
 	m_enTypeToDownload = type;
 	double dHalfWidthDeg = rect.right - rect.left;
@@ -146,21 +144,21 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	m_grectLastViewed.Init  (GeoPoint(dLonCenter - dHalfWidthDeg, dLatCenter - dHalfHeightDeg));
 	m_grectLastViewed.Append(GeoPoint(dLonCenter + dHalfWidthDeg, dLatCenter + dHalfHeightDeg));
 
-	// Вычисляем X и Y (в пикселах) для центра картинки
+	// Calculate X and Y of the image center (in pixels)
 	long cntX = (long) floor(nBitmapOrigo + (dLonCenter * nPixelsPerLonDegree));
-	double z = sin(dLatCenter / 180 * 3.14159265358979);
+	double z = sin(dLatCenter / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
 
 	long X = cntX - int(double(rect.right - rect.left) / 2 / scale);
 	long Y = cntY - int(double(rect.bottom - rect.top) / 2 / scale);
 
-	long NumX = max(long(X / 256), long(0));
-	long NumY = max(long(Y / 256), long(0));
+	long NumX = (std::max)(long(X / 256), long(0));
+	long NumY = (std::max)(long(Y / 256), long(0));
 
-	// Здесь будем складывать неотрисованные квадраты
+	// We will collect non-painted tiles here
 	std::map<long, GEOFILE_DATA> mapMissing;
 
-	// Начинаем рисовать
+	// Start painting
 	long nHalfWidth = (rect.right - rect.left) / 2;
 	long nHalfHeigth = (rect.bottom - rect.top) / 2;
 	long nHorizCenter = (rect.right + rect.left) / 2;
@@ -203,7 +201,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 					RECT rect_is;
 					if (GetIntersectionRECT(&rect_is, r, rect)) {
 						//sqrt((float) (rect_is.right - rect_is.left) * (rect_is.bottom - rect_is.top));
-						// Use a distance between the drawing area center and a tile center to sort tiles
+						// Use the distance between the drawing area center and tile center to sort tiles
 						long nHC = (r.right + r.left) / 2;
 						long nVC = (r.bottom + r.top) / 2;
 						long nH = nHorizCenter - nHC;
@@ -223,7 +221,7 @@ int CGMPainter::Paint(HDC dc, RECT& rect, const GeoPoint & gpCenter, double scal
 	return 0;
 }
 
-int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& data)
+int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data)
 {
 	HBITMAP hbm = NULL;
 	bool bHBITMAPInited = false;
@@ -233,18 +231,19 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		rop = SRCINVERT;
 	}
 
-	// Смотрим, есть ли в кэше
+	// Checking if it is in the cache
 	GEOFILE_RASTERIZED gfr(data, dstrect.right - dstrect.left, dstrect.bottom - dstrect.top);
-	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 байта на пиксел
+	long nNewBMSize = gfr.width * gfr.heigth * 4; // 4 bytes per pixel
 	if (nNewBMSize > 2200*1024) {
-		// Такие большие картинки не кешируем, будем хранить только оригинал
+		// Do not cache such large images, retain only the original
 		gfr.width = gfr.heigth = 256;
 		nNewBMSize = 256*256*4;
 	}
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(gfr);
+	// If in cache
 	if (it != m_mapCachedFiles.end()) {
-		// Круть! Заодно ещё перетащить в голову списка использованных
+		// Cool! Also move it to the head of the list of last used tiles
 		hbm = it->second.h;
 
 		std::list< GEOFILE_RASTERIZED >::iterator it2 = m_lstLastUsed.begin();
@@ -265,7 +264,7 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 		if (nRes) {
 			m_Missing = data;
 			m_fMissing = true;
-			//// Просто закрасить чем-нибудь переданный rect
+			//// Simply fill the given rect with some color
 			//COLORREF clr = RGB(255, 192, 192);
 			//HBRUSH hBrush = CreateSolidBrush(clr);
 			//if (hBrush) {
@@ -274,8 +273,8 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 			//}
 			return 1;
 		} else {
-#ifdef UNDER_CE
-#  ifdef BARECE
+#ifndef USE_GDI_PLUS
+#  if defined(BARECE) || defined(UNDER_WINE)
 #  else
 			hbm = SHLoadImageFile(w.c_str());
 #  endif
@@ -286,43 +285,50 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 #endif // UNDER_CE
 
 			if (hbm == NULL) {
-				// Картинка, видимо, битая... Удалить файл.
-				DeleteFile(w.c_str());
+				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled
+				if (app.m_Options[mcoDownloadGoogleMaps] && app.m_Options[mcoAllowInternet])
+					DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
 
-				// Подчищаем кеш
+				// Clean up the cache
 				while (!m_lstLastUsed.empty()) {
 					MEMORYSTATUS ms;
 					ms.dwLength = sizeof(ms);
 					GlobalMemoryStatus(&ms);
 
-					if (((ms.dwAvailPhys - nNewBMSize) < 2*1024*1024) || (m_mapCachedFiles.size() > 256)) {
-						GEOFILE_RASTERIZED g(m_lstLastUsed.front());
-						m_lstLastUsed.pop_front();
-
-						std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(g);
-						if (it != m_mapCachedFiles.end()) {
-							DeleteObject(it->second.h);
-							m_mapCachedFiles.erase(it);
-						} else {
-							// Нифига себе...
-						}
-					} else {
+					if (((ms.dwAvailPhys - nNewBMSize) < 2*1024*1024) || (m_mapCachedFiles.size() > m_nMaxCacheSize))
+						DeleteFrontElementFromCache();
+					else
 						break;
-					}
 				}
 
-				// Отресайзить и положить в кеш
+				// Resize and put in the cache
 				if ((gfr.width == gfr.heigth) && (gfr.width == 256)) {
 				} else {
 					HDC srcdc = CreateCompatibleDC(dc);
 					HBITMAP srcoldbm = (HBITMAP) SelectObject(srcdc, hbm);
 					HDC dstdc = CreateCompatibleDC(dc);
-					HBITMAP dstbm = CreateBitmap(gfr.width, gfr.heigth, 1, 32, NULL);
+					//HBITMAP dstbm = CreateBitmap(gfr.width, gfr.heigth, 1, 32, NULL);
+					//HBITMAP dstbm = CreateCompatibleBitmap(dc, gfr.width, gfr.heigth);
+
+					BITMAPINFOHEADER bmih;
+					void* pBits;
+					bmih.biSize = sizeof(BITMAPINFOHEADER);
+					bmih.biWidth = gfr.width;
+					bmih.biHeight = gfr.heigth;
+					bmih.biPlanes = 1;
+					bmih.biBitCount = GetDeviceCaps(dc, BITSPIXEL);
+					bmih.biCompression = BI_RGB;
+					bmih.biSizeImage = 0;
+					bmih.biXPelsPerMeter = 0;
+					bmih.biYPelsPerMeter = 0;
+					bmih.biClrUsed = 0;
+					bmih.biClrImportant = 0;
+					HBITMAP dstbm = CreateDIBSection(dc, (BITMAPINFO *)&bmih, 0, &pBits, NULL, 0);			
 					HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
 
-					// Здесь можно использовать любой алгоритм стретча, можно медленный
+					// We can use here any stretch algorithm, even a slow one
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
 					SetStretchBltMode(dstdc, BILINEAR);
@@ -410,10 +416,10 @@ int CGMPainter::DrawSegment(HDC dc, RECT &srcrect, RECT &dstrect, GEOFILE_DATA& 
 	return 0;
 }
 
-void CGMPainter::SetMapFolder(const wchar_t * wcFolder)
+void CGMPainter::SetMapFolder(const wchar_t * wcFolder, const CVersionNumber& gpsVPVersion)
 {
 	m_wstrMapFolder = wcFolder;
-	m_GMFH.InitFromDir(wcFolder, false);
+	m_GMFH.InitFromDir(wcFolder, gpsVPVersion, false);
 }
 
 bool CGMPainter::RotationAllowed()
@@ -468,14 +474,15 @@ void CGMPainter::RequestProcessed(const std::string request, const char * data, 
 			m_fMissing = false;
 		m_mapRequestsSent.erase(it);
 	} else {
-		// Ну что уж тут поделаешь...
+		// РќСѓ С‡С‚Рѕ СѓР¶ С‚СѓС‚ РїРѕРґРµР»Р°РµС€СЊ...
 	}
 }
 
 void CGMPainter::DownloadAddCurrentView()
 {
 	m_grectToDownload = m_grectLastViewed;
-	// Помечаем, что больше не надо запоминать текущий GeoRect
+	// РџРѕРјРµС‡Р°РµРј, С‡С‚Рѕ Р±РѕР»СЊС€Рµ РЅРµ РЅР°РґРѕ Р·Р°РїРѕРјРёРЅР°С‚СЊ С‚РµРєСѓС‰РёР№ GeoRect
+	// [??? Mark that we don't need to store current GeoRect any more]
 	m_bGeoRectToDownload = true;
 }
 
@@ -511,7 +518,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enum
 				}
 			}
 		}
-		// Переходим от текущего слоя к менее детальному.
+		// Proceed with the less detailed zoom level
 		r.left /= 2; r.right /= 2; r.top /= 2; r.bottom /= 2;
 	}
 	if (pnInCacheCount)
@@ -541,7 +548,7 @@ long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadi
 
 void CGMPainter::ProcessWMHIBERNATE()
 {
-	// Грохнуть всё содержимое кеша картинок
+	// Kill all contents of the image cache 
 	m_lstLastUsed.erase(m_lstLastUsed.begin(), m_lstLastUsed.end());
 
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.begin();
@@ -564,4 +571,29 @@ void CGMPainter::RelocateFiles()
 bool CGMPainter::NeedRelocateFiles()
 {
 	return m_GMFH.NeedRelocateFiles();
+}
+
+void CGMPainter::SetKeepMemoryLow(bool value)
+{
+	if (m_KeepMemoryLow != value)
+	{
+		m_KeepMemoryLow = value;
+		if (m_KeepMemoryLow)
+			SetMaxCacheSize(16);
+		else
+			SetMaxCacheSize(256);
+	}
+}
+
+void CGMPainter::DeleteFrontElementFromCache()
+{
+	GEOFILE_RASTERIZED g(m_lstLastUsed.front());
+	m_lstLastUsed.pop_front();
+
+	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(g);
+	if (it != m_mapCachedFiles.end())
+	{
+		DeleteObject(it->second.h);
+		m_mapCachedFiles.erase(it);
+	}
 }

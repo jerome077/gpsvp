@@ -19,6 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "RgnSubfile.h"
 #include "IPainter.h"
 #include "PlatformDef.h"
+#include <memory>
 
 #include <memory>
 #include <iostream>
@@ -40,13 +41,13 @@ void CTreSubfile::Parse(CSubFile * pSubFile)
 
 		// General data
 		// Read boundaries
-		Int iNorthBoundary = GetInt24(data + 0x15);
-		Int iEastBoundary = GetInt24(data + 0x18);
-		Int iSouthBoundary = GetInt24(data + 0x1B);
-		Int iWestBoundary = GetInt24(data + 0x1E);
-		if (iEastBoundary <= iWestBoundary)
-			iEastBoundary += (1 << 24);
-		m_grBound = GeoRect(iWestBoundary, iEastBoundary, iSouthBoundary, iNorthBoundary);
+		Int igNorthBoundary = GetInt24(data + 0x15) << (GPWIDTH - 24);
+		Int igEastBoundary = GetInt24(data + 0x18) << (GPWIDTH - 24);
+		Int igSouthBoundary = GetInt24(data + 0x1B) << (GPWIDTH - 24);
+		Int igWestBoundary = GetInt24(data + 0x1E) << (GPWIDTH - 24);
+		if (igEastBoundary <= igWestBoundary)
+			igEastBoundary += (1 << GPWIDTH);
+		m_grBound = GeoRect(igWestBoundary, igEastBoundary, igSouthBoundary, igNorthBoundary);
 
 		// Get levels block info
 		m_uiMapLevelsOffset = GetUInt32(data + 0x21);
@@ -79,7 +80,7 @@ void CTreSubfile::ParseLevels()
 		return;
 	// Levels
 	// Read levels data
-	auto_ptr<Byte> pData(new Byte[m_uiMapLevelsLen]);
+	std::auto_ptr<Byte> pData(new Byte[m_uiMapLevelsLen]);
 	m_pSubFile->Read(pData.get(), m_uiMapLevelsOffset, m_uiMapLevelsLen);
 	// Parse the data from the beginning
 	UInt uiLevelOffset;
@@ -102,12 +103,12 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 	// Subdivisions are to be read by each level, because they need to be attached to
 	// level and they have different size depending on level
 	// Read subdivisions data
-	auto_ptr<Byte> pData(new Byte[m_uiSubdivisionLen]);
+	std::auto_ptr<Byte> pData(new Byte[m_uiSubdivisionLen]);
 	if (pStatusPainter)
 		pStatusPainter->SetProgressItems(iLevel, m_uiSubdivisionLen);
 	m_pSubFile->Read(pData.get(), m_uiSubdivisionOffset, m_uiSubdivisionLen);
 	// Start from the first level
-	list<CMapLevel>::iterator itLevel = m_Levels.begin();
+	std::list<CMapLevel>::iterator itLevel = m_Levels.begin();
 	UInt uiPos = 0;
 	UInt uiInCurrentLevel = 0;
 	UInt uiLevel = 0;
@@ -165,38 +166,6 @@ void CTreSubfile::ParseSubdivisions(IStatusPainter * pStatusPainter, int iLevel)
 	m_fSubdivisionsParsed = true;
 }
 
-
-//void CTreSubfile::Dump() const
-//{
-//	// Dump everything
-//	std::cerr << "\t\t""m_uiHeaderLength = " << m_uiHeaderLength << "\n";
-//	std::cerr << "\t\t""m_strType = " << m_strType.c_str() << "\n";
-////	std::cerr << "\t\t""m_iNorthBoundary = " << m_iNorthBoundary << " (" << Degree(m_iNorthBoundary) << ")\n";
-////	std::cerr << "\t\t""m_iSouthBoundary = " << m_iSouthBoundary << " (" << Degree(m_iSouthBoundary) << ")\n";
-////	std::cerr << "\t\t""m_iEastBoundary = " << m_iEastBoundary << " (" << Degree(m_iEastBoundary) << ")\n";
-////	std::cerr << "\t\t""m_iWestBoundary = " << m_iWestBoundary << " (" << Degree(m_iWestBoundary) << ")\n";
-//
-//	std::cerr << "\t\t""m_uiMapLevelsOffset = " << m_uiMapLevelsOffset << "\n";
-//	std::cerr << "\t\t""m_uiMapLevelsLen = " << m_uiMapLevelsLen << "\n";
-//	std::cerr << "\t\t""m_uiSubdivisionOffset = " << m_uiSubdivisionOffset << "\n";
-//	std::cerr << "\t\t""m_uiSubdivisionLen = " << m_uiSubdivisionLen << "\n";
-//	std::cerr << "\t\t""m_uiPolylineOffset = " << m_uiPolylineOffset << "\n";
-//	std::cerr << "\t\t""m_uiPolylineLen = " << m_uiPolylineLen << "\n";
-//	std::cerr << "\t\t""m_uiPolylineRecSize = " << m_uiPolylineRecSize << "\n";
-//	std::cerr << "\t\t""m_uiPolygonOffset = " << m_uiPolygonOffset << "\n";
-//	std::cerr << "\t\t""m_uiPolygonLen = " << m_uiPolygonLen << "\n";
-//	std::cerr << "\t\t""m_uiPolygonRecSize = " << m_uiPolygonRecSize << "\n";
-//	std::cerr << "\t\t""m_uiPointOffset = " << m_uiPointOffset << "\n";
-//	std::cerr << "\t\t""m_uiPointLen = " << m_uiPointLen << "\n";
-//	std::cerr << "\t\t""m_uiPointRecSize = " << m_uiPointRecSize << "\n";
-//
-//	for (list<CMapLevel>::iterator itLevel = m_Levels.begin(); itLevel != m_Levels.end(); ++itLevel)
-//		itLevel->Dump();
-//	
-//	for (list<CSubdivision>::iterator itSD = m_Subdivisions.begin(); itSD != m_Subdivisions.end(); ++itSD)
-//		itSD->Dump();
-//}
-
 void CTreSubfile::Paint(IPainter * pPainter, UInt uiBits, UInt uiObjects, bool fDirectPaint)
 {
 	// All we have to do is to paint our first block of subdivisions
@@ -225,8 +194,8 @@ UInt CTreSubfile::GetLevelByScale(unsigned int uiScale10)
 	ParseSubdivisions();
 	UInt uiRes = 0;
 	// We iterate through all levels
-	list<UInt> levels = GetLevels();
-	list<UInt>::iterator it;
+	std::list<UInt> levels = GetLevels();
+	std::list<UInt>::iterator it;
 	for (it = levels.begin(); it != levels.end(); ++it)
 	{
 		// Looking for a level with appropriate detail
@@ -246,12 +215,12 @@ void CTreSubfile::Trim(const GeoRect &rect)
 		it->Trim(rect);
 }
 
-list<UInt> CTreSubfile::GetLevels() 
+std::list<UInt> CTreSubfile::GetLevels() 
 {
 	ParseLevels();
 	ParseSubdivisions();
-	list<UInt> result;
-	for (list<CMapLevel>::iterator it = m_Levels.begin(); it != m_Levels.end(); ++it)
+	std::list<UInt> result;
+	for (std::list<CMapLevel>::iterator it = m_Levels.begin(); it != m_Levels.end(); ++it)
 	{
 		if (!it->IsEmpty())
 			result.push_back(it->GetBits());

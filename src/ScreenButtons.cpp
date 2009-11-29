@@ -29,7 +29,7 @@ struct CScreenButtons::Data
 		Action() : label(L""), command(0) {}
 		Action(const wchar_t * label_, int command_) : label(label_), command(command_) {};
 		bool operator == (int i) {return command == i;}
-		const wchar_t * label;
+		std::wstring label;
 		int command;
 	};
 	int selected;
@@ -53,7 +53,7 @@ CScreenButtons::~CScreenButtons()
 void CScreenButtons::Paint(IButtonPainter * pPainter)
 {
 	for (Data::Buttons::iterator it = m_data->buttons.begin(); it != m_data->buttons.end(); ++it)
-		pPainter->AddButton(it->second.label, it->first, it->first == m_data->selected);	
+		pPainter->AddButton(it->second.label.c_str(), it->first, it->first == m_data->selected);	
 }
 
 void CScreenButtons::SelectButton(int i)
@@ -79,7 +79,7 @@ bool CScreenButtons::ContextMenu(int iButton, const ScreenPoint & sp, HWND hwnd)
 	Data::Actions::iterator begin = m_data->actions.begin();
 	Data::Actions::iterator end = m_data->actions.end();
 	for (it = begin; it != end; ++it)
-		mmMenu.CreateItem(it->label, it->command);
+		mmMenu.CreateItem(it->label.c_str(), it->command);
 	DWORD dwRes = mmMenu.Popup(sp.x, sp.y, hwnd);
 	it = std::find(begin, end, dwRes);
 	if (it != end)
@@ -113,9 +113,9 @@ void CScreenButtons::Init(HKEY hKey)
 
 void CScreenButtons::Load()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	bool fSuccess = false;
-	unsigned long ulTotalLen = 0;
+	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
 	RegQueryValueEx(m_data->key, L"ScreenButtons", 0, &dwType, 0, &ulTotalLen);
 	if (ulTotalLen > 0)
@@ -145,7 +145,7 @@ void CScreenButtons::Load()
 
 void CScreenButtons::Save()
 {
-	vector<Byte> data;
+	std::vector<Byte> data;
 	for (Data::Buttons::iterator it = m_data->buttons.begin(); it != m_data->buttons.end(); ++it)
 	{
 		WORD wCommand = it->second.command;

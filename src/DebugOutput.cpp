@@ -14,7 +14,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #ifndef NO_DEBUG_OUTPUT
 	#include <iostream>
-	using namespace std;
 #endif
 
 #include "DebugOutput.h"
@@ -24,7 +23,7 @@ DebugOutput dout;
 DebugOutput & DebugOutput::operator << (char * a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout << a;
+	std::cout << a;
 #endif
 	return *this;
 }
@@ -32,7 +31,7 @@ DebugOutput & DebugOutput::operator << (char * a)
 DebugOutput & DebugOutput::operator << (Int a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout << a;
+	std::cout << a;
 #endif
 	return *this;
 }
@@ -40,15 +39,15 @@ DebugOutput & DebugOutput::operator << (Int a)
 DebugOutput & DebugOutput::operator << (UInt a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout << a;
+	std::cout << a;
 #endif
 	return *this;
 }
 
-DebugOutput & DebugOutput::operator << (string a)
+DebugOutput & DebugOutput::operator << (std::string a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout << a;
+	std::cout << a;
 #endif
 	return *this;
 }
@@ -56,9 +55,9 @@ DebugOutput & DebugOutput::operator << (string a)
 DebugOutput & DebugOutput::operator << (double a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout.precision(7);
-	cout.flags(cout.flags() & ~ ios_base::scientific);
-	cout << a;
+	std::cout.precision(7);
+	std::cout.flags(std::cout.flags() & ~ std::ios_base::scientific);
+	std::cout << a;
 #endif
 	return *this;
 }
@@ -66,9 +65,9 @@ DebugOutput & DebugOutput::operator << (double a)
 DebugOutput & DebugOutput::operator << (GeoPoint a)
 {
 #ifndef NO_DEBUG_OUTPUT
-	cout.precision(7);
-	cout.flags(cout.flags() & ~ ios_base::scientific);
-	cout << a;
+	std::cout.precision(7);
+	std::cout.flags(std::cout.flags() & ~ std::ios_base::scientific);
+	std::cout << a;
 #endif
 	return *this;
 }
@@ -78,10 +77,10 @@ DebugOutput & DebugOutput::operator << (GeoPoint a)
 //#ifndef NO_DEBUG_OUTPUT
 //	for (UInt i = 0; i < uiSize; ++i)
 //	{
-//		cout << hex;
-//		cout << UInt(data[i]) << " ";
+//		std::cout << hex;
+//		std::cout << UInt(data[i]) << " ";
 //	}
-//	cout << "\n";
+//	std::cout << "\n";
 //#endif
 //}
 //

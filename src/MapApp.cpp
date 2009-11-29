@@ -13,8 +13,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #define INITGUID
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#ifndef UNDER_WINE
+#	include <winsock2.h>
+#	include <ws2tcpip.h>
+#endif // UNDEX_WINE
 #ifdef UNDER_CE
 #	ifndef BARECE
 #		include <connmgr.h>
@@ -42,10 +44,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Commands.h"
 #include "Dialogs.h"
 
-#include "MenuBar.h"
+#include "menubar.h"
 
 #include "HttpClient.h"
 #include "GoogleMaps/GMPainter.h"
+#include "VersionNumber.h"
 
 const DWORD MIN_CPUMON_STEP_MS = 900;
 
@@ -60,7 +63,7 @@ extern HINSTANCE g_hInst;
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 
-const char * sVersion = "0.4.15";
+const CVersionNumber g_gpsVPVersion(0, 4, 19);
 
 class CNmeaCommandsDlg : public CMADialog
 {
@@ -87,6 +90,7 @@ class CNmeaCommandsDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -137,6 +141,7 @@ class CUnknownPointTypesDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -154,49 +159,47 @@ class CUnknownPointTypesDlg : public CMADialog
 	}
 };
 
-class CWaypointPropertiesDlg : public CMADialog
+// Window to display a single property of a waypoint
+class CWaypointPropertyDlg : public CMADialog
 {
 	enum
 	{
 		dmcCancel = 1000
 	};
-	wstring m_wstrLatitude;
-	wstring m_wstrLongitude;
-	CEditText m_label;
-	CEditText m_latitude;
-	CEditText m_longitude;
-	CEditText m_radius;
-	CEditText m_altitude;
+	std::wstring m_wstrLatitude;
+	std::wstring m_wstrLongitude;
+	CEditText m_name;
+	CEditText m_value;
 public:
-	int m_iWaypoint;
+	CWaypoints::enumWaypointPropNameSpace m_iType;
+	std::wstring m_strName;
+	std::wstring m_strValue;
 	virtual void InitDialog(HWND hDlg)
 	{
-		m_label.Create(hDlg);
-		m_latitude.Create(hDlg);
-		m_longitude.Create(hDlg);
-		m_radius.Create(hDlg);
-		m_altitude.Create(hDlg);
+		SetWindowText(hDlg, L("Property"));
 
-		AddItem(hDlg, CText(hDlg, L("Label:")));
-		AddItem(hDlg, m_label);
-		AddItem(hDlg, CText(hDlg, L("Latitude:")));
-		AddItem(hDlg, m_latitude);
-		AddItem(hDlg, CText(hDlg, L("Longitude:")));
-		AddItem(hDlg, m_longitude);
-		AddItem(hDlg, CText(hDlg, L("Radius:")));
-		AddItem(hDlg, m_radius);
-		AddItem(hDlg, CText(hDlg, L("Altitude:")));
-		AddItem(hDlg, m_altitude);
+		m_name.Create(hDlg);
+		m_value.Create(hDlg);
+
+		switch (m_iType)
+		{
+		case CWaypoints::nsGPX:
+			AddItem(hDlg, CText(hDlg, L("Type: Standard GPX")));
+			break;
+		case CWaypoints::nsVP:
+			AddItem(hDlg, CText(hDlg, L("Type: Specific gpsVP")));
+			break;
+		case CWaypoints::nsOSM:
+			AddItem(hDlg, CText(hDlg, L("Type: OpenStreetMap Tag")));
+			break;
+		}
+		AddItem(hDlg, CText(hDlg, L("Name:")));
+		AddItem(hDlg, m_name);
+		AddItem(hDlg, CText(hDlg, L("Value:")));
+		AddItem(hDlg, m_value);
 		
-		m_label.SetText(app.GetWaypoints().GetLabelByID(m_iWaypoint).c_str());
-		m_radius.SetInt(app.GetWaypoints().GetRadiusByID(m_iWaypoint));
-		m_altitude.SetInt(app.GetWaypoints().GetAltitudeByID(m_iWaypoint));
-		CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
-		m_wstrLatitude = DegreeToText(p.Latitude(), true);
-		m_wstrLongitude = DegreeToText(p.Longitude(), false);
-		m_latitude.SetText(m_wstrLatitude.c_str());
-		m_longitude.SetText(m_wstrLongitude.c_str());
-		m_label.SetFocus();
+		m_name.SetText(m_strName.c_str());
+		m_value.SetText(m_strValue.c_str());
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
 		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
@@ -207,29 +210,10 @@ public:
 		{
 			const Int cnMaxStr = 1000;
 			wchar_t buff[cnMaxStr] = {0};
-			m_label.GetText(buff, cnMaxStr);
-			app.GetWaypoints().SetLabelByID(m_iWaypoint, buff);
-			BOOL fTranslated = FALSE;
-			int iRadius = m_radius.GetInt(&fTranslated);
-			if (fTranslated)
-				app.GetWaypoints().SetRadiusByID(m_iWaypoint, iRadius);
-
-			CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
-
-			int iAltitude = m_altitude.GetInt(&fTranslated);
-			if (fTranslated)
-				p.Altitude(iAltitude);
-
-			m_latitude.GetText(buff, cnMaxStr);
-			if (m_wstrLatitude != buff)
-				p.Latitude(TextToDergee(buff));
-
-			m_longitude.GetText(buff, cnMaxStr);
-			if (m_wstrLongitude != buff)
-				p.Longitude(TextToDergee(buff));
-
-			app.GetWaypoints().Write();
-
+			m_name.GetText(buff, cnMaxStr);
+			m_strName = buff;
+			m_value.GetText(buff, cnMaxStr);
+			m_strValue = buff;
 			EndDialog(hDlg, TRUE);
 		}
 		if (iCommand == dmcCancel)
@@ -238,6 +222,242 @@ public:
 		}
 	}
 };
+
+// This Window list all the waypoint properties
+class CWaypointPropertiesDlg : public CMADialog
+{
+	std::wstring m_wstrLatitude;
+	std::wstring m_wstrLongitude;
+	CWaypoints::CPoint m_ClonedPoint;
+	std::vector<CText> m_TextControls;
+	std::vector<CEditText> m_EditTextControls;
+public:
+	int m_iWaypoint;
+
+	void SaveControlsToPoint(CWaypoints::CPoint& point)
+	{
+		CWaypoints::CPointEditor wptEditor = point.GetEditor();
+		for(int i=0, iEnd=wptEditor.GetPropertyCount(); i<iEnd; i++)
+		{
+			std::auto_ptr<CWaypoints::CPointProp> prop (wptEditor.GetPropertyByIndex(i));
+			const Int cnMaxStr = 1000;
+			wchar_t buff[cnMaxStr] = {0};
+			m_EditTextControls[i].GetText(buff, cnMaxStr);
+			prop->SetValue(buff);
+		}
+		wptEditor.Commit();
+	}
+	void ClearControls()
+	{
+		for(std::vector<CText>::iterator iter = m_TextControls.begin();
+ 			iter != m_TextControls.end();
+			iter++)
+		{
+			iter->Destroy();
+		}
+		for(std::vector<CEditText>::iterator iter = m_EditTextControls.begin();
+			iter != m_EditTextControls.end();
+			iter++)
+		{
+			iter->Destroy();
+		}
+		m_TextControls.clear();
+		m_EditTextControls.clear();
+		ReinitItemY();
+	}
+	void RecreateControls(HWND hDlg, CWaypoints::CPoint& point, bool bScrollToBottom)
+	{
+		ClearControls();
+		CWaypoints::CPointEditor wptEditor = point.GetEditor();
+		for(int i=0, iEnd=wptEditor.GetPropertyCount(); i<iEnd; i++)
+		{
+			std::auto_ptr<CWaypoints::CPointProp> prop (wptEditor.GetPropertyByIndex(i));
+			std::wstring name = (CWaypoints::nsOSM == prop->Namespace()) ? L"osm:"+prop->Name() : prop->Name();
+			m_TextControls.push_back(CText(m_hDialog, name.c_str()));
+			AddItem(m_hDialog, m_TextControls.back());
+			m_EditTextControls.push_back(CEditText());
+			m_EditTextControls.back().Create(m_hDialog);
+			AddItem(m_hDialog, m_EditTextControls.back());
+			m_EditTextControls.back().SetText(prop->Value().c_str());
+		}
+
+		// Activate first or last control:
+		if (bScrollToBottom)
+			SendMessage(hDlg, WM_NEXTDLGCTL, (WPARAM)m_EditTextControls.back().HWnd(), TRUE);
+		else
+		{
+			SendMessage(hDlg, WM_NEXTDLGCTL, (WPARAM)m_EditTextControls.front().HWnd(), TRUE);
+			SendMessage(m_EditTextControls.front().HWnd(), EM_SETSEL, 0, -1); // Select all
+		}
+	}
+	virtual void InitDialog(HWND hDlg)
+	{
+		SetWindowText(hDlg, L("Waypoint properties"));
+#ifndef UNDER_CE
+		ShowScrollBar(hDlg,SB_VERT,TRUE);
+#endif
+		CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
+		m_ClonedPoint.Assign(p);
+		RecreateControls(hDlg, m_ClonedPoint, false);
+
+		CreateMenu(hDlg, app.GetWaypoints().IsGPX());
+	}	
+	enum
+	{
+		dmcCancel = 1000,
+		dmcOK,
+		dmcWaypointNewOSMTag,
+		dmcWaypointDeleteProp,
+		dmcWaypointCopyTagsFirst = 2000,
+		// 2000-2099 Reserved for waypoint models
+		dmcWaypointCopyTagsLast = 2099
+
+	};
+	void CreateSubMenuCopyTags(CMenu & basemenu)
+	{
+		CMenu & mmCopyTags = basemenu.CreateSubMenu(L("Copy Tags"));
+		int modelsCount = app.GetWaypoints().GetWaypointModelCount();
+		if (0 == modelsCount)
+		{
+			std::wstring itemName = L("No wpt beginning with ")+WPT_MODEL_PREFIX;
+			mmCopyTags.CreateItem(itemName.c_str(), -1);
+		}
+		else
+		{
+			for(int i=0; i<modelsCount; i++)
+			{
+				if (dmcWaypointCopyTagsFirst+i > dmcWaypointCopyTagsLast) break;
+				CWaypoints::CPoint & modelPoint = app.GetWaypoints().GetWaypointModel(i);
+				mmCopyTags.CreateItem(modelPoint.GetLabel().c_str(), dmcWaypointCopyTagsFirst+i);
+			}
+		}
+	}
+	void CreateMenu(HWND hDlg, bool bWithOSM)
+	{
+		if (!bWithOSM)
+		{
+			SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
+			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), dmcOK);
+			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
+		}
+		else
+		{
+			SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_MENU);
+			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), dmcOK);
+			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Menu"), 0);
+			CMenu & menu = m_MenuBar.GetMenu();
+			menu.CreateItem(L("Cancel"), dmcCancel);
+			menu.CreateItem(L("Delete tag"), dmcWaypointDeleteProp);
+			menu.CreateItem(L("New OSM tag"), dmcWaypointNewOSMTag);
+			CreateSubMenuCopyTags(menu);
+		}
+	}
+	void EnableMenu()
+	{
+		// Not used because I don't know how to detect focus change.
+		//LONG idx = GetCurSelItem();
+		//bool bDeleteAllowed = false;
+		//if (idx >= 0)
+		//{
+		//	std::auto_ptr<CWaypoints::CPointProp> prop (m_ClonedPoint.GetPropertyByIndex(idx));
+		//	bDeleteAllowed = prop->DeleteAllowed();
+		//}
+		//m_MenuBar.GetMenu().EnableMenuItem(dmcWaypointDeleteProp, bDeleteAllowed);
+	}
+	virtual int Translate(int iChar)
+	{
+		switch (iChar)
+		{
+		case '1':
+			return dmcCancel;
+		case '2':
+			return dmcWaypointDeleteProp;
+		case '3':
+			return dmcWaypointNewOSMTag;
+		}
+		return CMADialog::Translate(iChar);
+	}
+	int GetCurSelItem()
+	{
+		HWND hFocusedWnd = ::GetFocus();
+		for(int i = 0, iEnd = m_EditTextControls.size(); i < iEnd; i++)
+		{
+			if (m_EditTextControls[i].HWnd() == hFocusedWnd) return i;
+		}
+		return -1;
+	}
+	virtual void Command(HWND hDlg, int iCommand)
+	{
+		switch (iCommand)
+		{
+		case dmcOK: // OK clicked => Apply changes
+			{
+				// Block all writes until the end of this code block
+				CWaypoints::UpdateZone updateZone(app.GetWaypoints().UpdateZoneForCodeBlock());
+
+				SaveControlsToPoint(m_ClonedPoint);
+
+				// Change the original point
+				CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
+				p.Assign(m_ClonedPoint);
+				app.GetWaypoints().Write();
+
+				EndDialog(hDlg, TRUE);
+				return;
+			}
+		case dmcCancel:
+			{
+				EndDialog(hDlg, FALSE);
+				return;
+			}
+		case dmcWaypointDeleteProp:
+			{
+				LONG idx = GetCurSelItem();
+				if (idx >= 0)
+				{
+					SaveControlsToPoint(m_ClonedPoint);
+					CWaypoints::CPointEditor wptEditor = m_ClonedPoint.GetEditor();
+					if (!wptEditor.RemovePropertyByIndex(idx))
+						MessageBox(0, L("Only OSM Tags can be deleted"), L("Delete Tag"), MB_ICONINFORMATION);
+					wptEditor.Commit();
+					RecreateControls(hDlg, m_ClonedPoint, false);
+				}
+				return;
+			}
+		case dmcWaypointNewOSMTag:
+			{
+				SaveControlsToPoint(m_ClonedPoint);
+				CWaypoints::CPointEditor wptEditor = m_ClonedPoint.GetEditor();
+				static CWaypointPropertyDlg dlg;
+				g_pNextDialog = &dlg;
+				CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
+				dlg.m_iType = prop.Namespace();
+				dlg.m_strName = prop.Name();
+				dlg.m_strValue = prop.Value();
+				if (TRUE == DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, hDlg, (DLGPROC)MADlgProc))
+				{
+					// change the value in the cloned point
+					prop.SetValue(dlg.m_strValue);
+					prop.SetName(dlg.m_strName);
+				}
+				wptEditor.Commit();
+				RecreateControls(hDlg, m_ClonedPoint, true);
+				return;
+			}
+		default:
+			{
+				if ((dmcWaypointCopyTagsFirst <= iCommand) && (iCommand <= dmcWaypointCopyTagsLast))
+				{
+					CWaypoints::CPoint & modelPoint = app.GetWaypoints().GetWaypointModel(iCommand-dmcWaypointCopyTagsFirst);
+					m_ClonedPoint.AssignOSM(modelPoint);
+					RecreateControls(hDlg, m_ClonedPoint, false);
+				}
+				return;
+			}
+		}
+	}
+};
+
 
 class CTeamSettingsDlg : public CMADialog
 {
@@ -324,6 +544,7 @@ class CMapsDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual int Translate(int iChar)
@@ -415,13 +636,6 @@ class CMapsDlg : public CMADialog
 	}
 };
 
-void CMapApp::GetTrackList(IListAcceptor * pAcceptor)
-{
-	int iIndex = 0;
-	for (list<CTrack>::iterator it = m_Tracks.begin(); it != m_Tracks.end();++it, ++iIndex)
-		pAcceptor->AddItem(it->GetExtFilename().c_str(), iIndex);
-}
-
 class CSearchResultsDlg : public CMADialog
 {
 	enum
@@ -448,6 +662,7 @@ class CSearchResultsDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -497,6 +712,7 @@ class CSearchOSMDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddItem(hDlg, m_query);
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -563,6 +779,7 @@ class CTracksDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual void Command(HWND hDlg, int iCommand)
@@ -601,8 +818,12 @@ class CSettingsDlg : public CMADialog
 	CCombo m_port;
 	CCombo m_portSpeed;
 	CCombo m_trackstep;
+	CEditText  m_proxy;
 	CCombo m_coordformat;
+	CCombo m_utmZone;
 	CCombo m_metrics;
+	CCombo m_GeoidMode;
+
 	std::map<std::wstring, int> m_comboItems;
 	void AddComboItem(int iCombo, int iItem, wchar_t * wcString, int iToSelect)
 	{
@@ -651,6 +872,7 @@ class CSettingsDlg : public CMADialog
 		m_portSpeed.AddItem(L"14400", app.m_rsPortSpeed().c_str());
 		m_portSpeed.AddItem(L"19200", app.m_rsPortSpeed().c_str());
 		m_portSpeed.AddItem(L"38400", app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L"57600", app.m_rsPortSpeed().c_str());
 		m_portSpeed.SetText(app.m_rsPortSpeed().c_str());
 
 		m_trackstep.Create(hDlg, false);
@@ -662,13 +884,27 @@ class CSettingsDlg : public CMADialog
 		m_trackstep.AddItem(50, app.m_riTrackStep());
 		m_trackstep.AddItem(100, app.m_riTrackStep());
 
+		m_proxy.Create(hDlg);
+		m_proxy.SetText(app.m_rsProxy().c_str());
+
 		m_coordformat.Create(hDlg, false);
-		m_coordformat.AddItem(L"N37°27'35\"");
-		m_coordformat.AddItem(L"N37°27.8743'");
-		m_coordformat.AddItem(L"N37.278742°");
+		m_coordformat.AddItem(L"N37В°27'35\"");
+		m_coordformat.AddItem(L"N37В°27.8743'");
+		m_coordformat.AddItem(L"N37.278742В°");
 		m_coordformat.AddItem(L"+37.278742");
-		m_coordformat.AddItem(L"N37°27'35.64\"");
+		m_coordformat.AddItem(L"N37В°27'35.64\"");
+		m_coordformat.AddItem(L"UTM (experimental)");
 		m_coordformat.Select(app.m_riCoordFormat());
+
+		m_utmZone.Create(hDlg, false);
+		m_utmZone.AddItem(L"Automatic");
+		for(int i=1;i<=60;i++)
+			m_utmZone.AddItem((wchar_t *)UTMZoneToLongText(i).c_str());
+		for(int i=-1;i>=-60;i--)
+			m_utmZone.AddItem((wchar_t *)UTMZoneToLongText(i).c_str());
+		int utmZoneIndex = app.m_riUTMZone();
+		if (utmZoneIndex < 0) utmZoneIndex = 60-utmZoneIndex;
+		m_utmZone.Select(utmZoneIndex);
 
 		m_metrics.Create(hDlg, false);
 		m_metrics.AddItem(L("Metric"));
@@ -676,24 +912,38 @@ class CSettingsDlg : public CMADialog
 		m_metrics.AddItem(L("Imperial"));
 		m_metrics.Select(app.m_riMetrics());
 
+		m_GeoidMode.Create(hDlg, false);
+		m_GeoidMode.AddItem(L"Auto", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Always", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Never", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"User", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L"Sirf", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
+
 		AddItem(hDlg, CText(hDlg, L("Port:")));
 		AddItem(hDlg, m_port);
 		AddItem(hDlg, CText(hDlg, L("Port speed:")));
 		AddItem(hDlg, m_portSpeed);
 		AddItem(hDlg, CText(hDlg, L("Track step:")));
 		AddItem(hDlg, m_trackstep);
+		AddItem(hDlg, CText(hDlg, L("Proxy server (user:pass@host:port):")));
+		AddItem(hDlg, m_proxy);
 		AddItem(hDlg, CText(hDlg, L("Coordinates format:")));
 		AddItem(hDlg, m_coordformat);
+		AddItem(hDlg, CText(hDlg, L("UTM Zone:")));
+		AddItem(hDlg, m_utmZone);
 		AddItem(hDlg, CText(hDlg, L("Metric system:")));
 		AddItem(hDlg, m_metrics);
-
+		AddItem(hDlg, CText(hDlg, L("Geoid Separation mode:")));
+		AddItem(hDlg, m_GeoidMode);
+		
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
 		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
 	}
 	void ApplySettings(HWND hDlg)
 	{
-		const Int cnMaxStr = 10;
+		const Int cnMaxStr = 100;
 		wchar_t buff[cnMaxStr] = {0};
 		bool fStartListening = false;
 
@@ -718,10 +968,35 @@ class CSettingsDlg : public CMADialog
 		app.m_riTrackStep.Set(wcstol(buff, 0, 10));
 
 		int index = m_coordformat.GetCurSel();
-		app.m_riCoordFormat.Set(index);
+		if (app.m_riCoordFormat() != index)
+		{
+			app.m_riCoordFormat.Set(index);
+			app.m_monLongitude.SetIdL(L"Longitude", CoordLabelLon());
+			app.m_monLatitude.SetIdL(L"Latitude", CoordLabelLat());
+		}
+
+		index = m_utmZone.GetCurSel();
+		if (index>60) index = 60-index;
+		app.m_riUTMZone.Set(index);
 
 		index = m_metrics.GetCurSel();
 		app.m_riMetrics.Set(index);
+
+		m_proxy.GetText(buff,cnMaxStr);
+		if (app.m_rsProxy() != buff)
+		{
+			app.m_rsProxy = buff;
+		}
+		CHttpRequest::SetProxy(app.m_rsProxy());
+
+		m_GeoidMode.GetText(buff, cnMaxStr);
+		if (app.m_rsGeoidMode() != buff)
+		{
+			app.m_rsGeoidMode = buff;
+			fStartListening = true;
+		}
+
+		
 	}
 	virtual void Command(HWND hDlg, int iCommand)
 	{
@@ -794,6 +1069,7 @@ class CWaypointsDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual int Translate(int iChar)
@@ -833,7 +1109,7 @@ class CWaypointsDlg : public CMADialog
 					dlg.m_iWaypoint = idx;
 					g_pNextDialog = &dlg;
 					DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, hDlg, (DLGPROC)MADlgProc);
-					m_list.UpdateCurrent(app.GetWaypoints().ById(idx).GetLabel().c_str());
+					m_list.UpdateSelected(app.GetWaypoints().ById(idx).GetLabel().c_str());
 				}
 				return;
 			}
@@ -935,6 +1211,7 @@ class CKeymapDlg : public CMADialog
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
+		ReinitItemY();
 		AddList(m_list.HWnd());
 	}
 	virtual int Translate(int iChar)
@@ -1031,7 +1308,7 @@ struct TrackPlayer : public IPainter
 	}
 	virtual void AddPoint(const GeoPoint & gp)
 	{
-		m_pClient->Fix(gp, 1);
+		m_pClient->Fix(gp, 0, 1);
 		Sleep(50);
 		if (app.m_fExiting)
 			throw m_pClient;
@@ -1060,7 +1337,7 @@ void CMapApp::ThreadRoutine()
 	bool fWriteLog;
 	bool fWait = false;
 	Byte buff[4096];
-	unsigned long i;
+	DWORD i;
 	m_hPortFile = 0;
 	{
 		fWriteLog = m_Options[mcoWriteConnectionLog];
@@ -1079,7 +1356,8 @@ void CMapApp::ThreadRoutine()
 			}
 			if (fPresent)
 			{
-				m_ReplayTrack.PaintUnlocked(&TrackPlayer(this), 0);
+				TrackPlayer player(this);
+				m_ReplayTrack.PaintUnlocked(&player, 0);
 				m_ReplayTrack = CTrack();
 			}
 			FILE * fileReplayNMEA = 0;
@@ -1133,16 +1411,20 @@ void CMapApp::ThreadRoutine()
 					}
 					LG(fprintf(log, "m_hPortFile is %p\n", m_hPortFile))
 					if (m_hPortFile != INVALID_HANDLE_VALUE)
-						break;
-					long lSpeed = wcstol(m_rsPortSpeed().c_str(), 0, 10);
-					if (lSpeed > 0)
 					{
-						DCB dcb;
-						if (GetCommState(m_hPortFile, &dcb))
+						long lSpeed = wcstol(m_rsPortSpeed().c_str(), 0, 10);
+						if (lSpeed > 0)
 						{
-							dcb.BaudRate = lSpeed;
-							SetCommState(m_hPortFile, &dcb);
+							DCB dcb;
+							if (GetCommState(m_hPortFile, &dcb))
+							{
+								dcb.BaudRate = lSpeed;
+								SetCommState(m_hPortFile, &dcb);
+							}
 						}
+						break;
+						// Note this loop is build so it keeps trying to open the]
+						// port. You have to break if opening works.
 					}
 				}
 				for (iTime = 9; --iTime && !m_fExiting;)
@@ -1155,11 +1437,12 @@ void CMapApp::ThreadRoutine()
 		LG(fprintf(log, "Configuring port\n"))
 		m_dwConnected = GetTickCount();
 		fWait = false;
+		int iTimeOut = 0;
 		COMMTIMEOUTS ct;
 		ZeroMemory(&ct, sizeof(ct));
-		ct.ReadIntervalTimeout = MAXDWORD;
-		ct.ReadTotalTimeoutConstant = 3000;
-		ct.ReadTotalTimeoutMultiplier = MAXDWORD;
+		ct.ReadIntervalTimeout = 50;		// MAXDWORD;
+		ct.ReadTotalTimeoutConstant = 1000;
+		ct.ReadTotalTimeoutMultiplier = 0;	// MAXDWORD;
 		SetCommTimeouts(m_hPortFile, &ct);
 
 		while(m_hPortFile && !m_fExiting)
@@ -1167,20 +1450,36 @@ void CMapApp::ThreadRoutine()
 			LG(fprintf(log, "Reading port\n"));
 			i = 0;
 			Sleep(500);
-			if (!ReadFile(m_hPortFile, buff, sizeof(buff), &i, 0))
+			iTimeOut += 500;
+			if (!ReadFile(m_hPortFile, buff, sizeof(buff), &i, 0)) {
 				break;
+			}
 			LG(fprintf(log, "Read %d bytes: ", i); for (unsigned long j = 0; j < i; ++j) fprintf(log, "%c", buff[j]); fprintf(log, "\n"))
-			if ((i < 1) || (i > sizeof(buff)))
-				break;
+			if (i < 1) {
+				if ((iTimeOut > 9999)) {
+					LG(fprintf(log, "Reading underrun\n"));
+					break;
+				}
+				LG(fprintf(log, "Re-reading\n"));
+				continue;
+			}
+			if ((i > sizeof(buff))) {
+				LG(fprintf(log, "Reading overflow\n"));
+ 				break;
+			}
+			iTimeOut = 0;
 			m_NMEAParser.AddData(buff, i);
 			if (m_riConnectPeriodMin() > 0 && GetTickCount() > m_dwConnected + 5000)
 			{
 				fWait = true;
 				m_NMEAParser.Pause();
+				LG(fprintf(log, "Max GPS connect time\n"));
 				break;
 			}
-			if (!m_Options[mcoConnect])
+			if (!m_Options[mcoConnect]) {
+				LG(fprintf(log, "GPS disconnected\n"));
 				break;
+			}
 #ifdef SMARTPHONE
 			if ((!m_Options[mcoConnect] || !m_Options[mcoBluetoothOn]) && m_fBluetoothWasTurnedOn)
 			{
@@ -1212,6 +1511,7 @@ void CMapApp::ThreadRoutine()
 		m_monSleepCounter.Reset();
 		if (!fWait || !m_Options[mcoConnect])
 		{
+			LG(fprintf(log, "Starting new stream\n"));
 			m_NMEAParser.NewStream();
 		}
 #ifdef SMARTPHONE
@@ -1254,13 +1554,14 @@ CMapApp::CMapApp() : m_fMoving(false), m_hWnd(0), m_hPortThread(0), m_hHttpThrea
 
 CMapApp::~CMapApp() 
 {
+	CHttpRequest::CleanupSocketsIfNecessary();
 #ifdef UNDER_CE
 	if (m_hCoreDll) {
 		m_pfnGetIdleTime = NULL;
 		FreeLibrary(m_hCoreDll);
 	}
 #endif // UNDER_CE
-	// Надеюсь, в этот момент никто не юзает m_pRasterMapPainter из другого потока...
+	// Hope, no one uses m_pRasterMapPainter from another thread now...
 	delete m_pRasterMapPainter;
 	Exit();
 }
@@ -1352,12 +1653,12 @@ class CIndex
 {
 	struct File
 	{
-		wstring m_wstrFilename;
+		std::wstring m_wstrFilename;
 		GeoRect m_grArea;
 	};
-	typedef list<File> ListFiles;
+	typedef std::list<File> ListFiles;
 	ListFiles m_listFiles;
-	wstring m_wstrFolder;
+	std::wstring m_wstrFolder;
 	int m_iNextNotification;
 	int m_iCount;
 public:
@@ -1389,7 +1690,7 @@ public:
 };
 
 void CMapApp::FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, wchar_t * wstrFilter, 
-							   wchar_t * strFile, bool fDirectory, bool fMustExist)
+							   wchar_t * strFile, bool fDirectory, bool fMustExist, bool fOverwritePrompt)
 {
 	memset(of, 0, sizeof(*of));
 	of->hwndOwner = hwndOwner;
@@ -1402,10 +1703,10 @@ void CMapApp::FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, wchar_t * wstr
 	of->nMaxFile = MAX_PATH + 1;
 	of->hInstance = g_hInst;
 #if defined(UNDER_CE) && !defined(BARECE)
-	of->Flags = OFN_EXPLORER | (fMustExist ? OFN_FILEMUSTEXIST : 0) |
+	of->Flags = OFN_EXPLORER | (fMustExist ? OFN_FILEMUSTEXIST : 0) | (fOverwritePrompt ? OFN_OVERWRITEPROMPT : 0) |
 		(fDirectory ? OFN_PROJECT : 0);
 #else
-	of->Flags = OFN_EXPLORER | (fMustExist ? OFN_FILEMUSTEXIST : 0);
+	of->Flags = OFN_EXPLORER | (fMustExist ? OFN_FILEMUSTEXIST : 0) | (fOverwritePrompt ? OFN_OVERWRITEPROMPT : 0);
 #endif
 }
 
@@ -1416,7 +1717,7 @@ void CMapApp::FileIndexDirectory()
 	FillOpenFileName(&of, m_hWnd, L("All files\0*.*\0"), strFile, false, false);
 	if (GetOpenFileName(&of))
 	{
-		wstring dir = strFile;
+		std::wstring dir = strFile;
 		dir.resize(dir.find_last_of(L"/\\") + 1);
 
 		CIndex idx;
@@ -1489,10 +1790,10 @@ void CMapApp::FileOpenMapFolder()
 	{
 #endif
 		WIN32_FIND_DATA ffd;
-		HANDLE h = FindFirstFile((wstring(strFile) + L"\\*.img").c_str(), &ffd);
+		HANDLE h = FindFirstFile((std::wstring(strFile) + L"\\*.img").c_str(), &ffd);
 		while (h)
 		{
-			m_atlas.Add((wstring(strFile) + L"\\" + ffd.cFileName).c_str(), &m_painter);
+			m_atlas.Add((std::wstring(strFile) + L"\\" + ffd.cFileName).c_str(), &m_painter);
 			if (!FindNextFile(h, &ffd))
 				break;
 		}
@@ -1523,20 +1824,74 @@ void CMapApp::ExportWaypoint(int id, HWND hWnd)
 void CMapApp::FileOpenWaypoints()
 {
 	wchar_t strFile[MAX_PATH + 1] = {0};
+	wsprintf(strFile, L"%s", m_Waypoints.GetFilename().c_str());
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
+		m_Waypoints.Read(strFile);
+		if (!m_Waypoints.CanWrite())
+		{
+			MessageBox(m_hWnd, L("This isn't a gpsvp file. Please use the import function."), L("Not a gpsVP file"), MB_OK | MB_ICONEXCLAMATION);
+			// Back to the previous file
+			m_Waypoints.Read(m_rsWaypointsFile().c_str());
+		}
+		else
+		{
+			m_rsWaypointsFile = strFile;
+			m_painter.Redraw();
+		}
+	}
+}
+
+void CMapApp::FileNewWaypointsWPT()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(strFile, L"Wpt-%04d-%02d-%02d-%02d-%02d.wpt", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, false, true);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".wpt"))
+			wcscpy(strFile + iLen, L".wpt");
+		CWaypoints newPoints;
+		newPoints.WriteWPT(strFile);
 		m_Waypoints.Read(strFile);
 		m_rsWaypointsFile = strFile;
 		m_painter.Redraw();
 	}
 }
+void CMapApp::FileNewWaypointsGPX()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(strFile, L"Wpt-%04d-%02d-%02d-%02d-%02d.gpx", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.gpx\0"), strFile, false, false, true);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".gpx"))
+			wcscpy(strFile + iLen, L".gpx");
+		CWaypoints newPoints;
+#ifndef UNDER_WINE
+		newPoints.WriteGPX(strFile);
+#endif // UNDER_WINE
+		m_Waypoints.Read(strFile);
+		m_rsWaypointsFile = strFile;
+		m_painter.Redraw();
+	}
+}
+
 void CMapApp::FileImportWaypoints()
 {
 	wchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		CWaypoints t;
@@ -1545,6 +1900,62 @@ void CMapApp::FileImportWaypoints()
 		m_painter.Redraw();
 	}
 }
+
+void CMapApp::FileExportWaypointsWPT()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(strFile, L"Exported_wpt-%04d-%02d-%02d-%02d-%02d.wpt", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, false, true);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".wpt"))
+			wcscpy(strFile + iLen, L".wpt");
+		CWaypoints newPoints;
+		newPoints.SetNameWPT(strFile);
+		newPoints.Import(m_Waypoints); // Import also write the file
+	}
+}
+void CMapApp::FileExportWaypointsGPX()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(strFile, L"Exported_wpt-%04d-%02d-%02d-%02d-%02d.gpx", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.gpx\0"), strFile, false, false, true);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".gpx"))
+			wcscpy(strFile + iLen, L".gpx");
+		CWaypoints newPoints;
+		newPoints.SetNameGPX(strFile);
+		newPoints.Import(m_Waypoints); // Import also write the file
+	}
+}
+void CMapApp::FileExportWaypointsOSM()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(strFile, L"gpsvp-wpt-%04d-%02d-%02d-%02d-%02d.osm", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("OpenStreetMap files\0*.osm\0"), strFile, false, false, true);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L".osm"))
+			wcscpy(strFile + iLen, L".osm");
+#ifndef UNDER_WINE
+		m_Waypoints.WriteOSM(strFile);
+#endif // UNDER_WINE
+	}
+}
+
 void CMapApp::FileSaveWaypoints()
 {
 	m_Waypoints.Write();
@@ -1603,35 +2014,21 @@ void CMapApp::FileOpenTrack()
 {
 	wchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
-		m_Tracks.push_back(CTrack());
-		m_Tracks.back().Read(strFile);
-		if (m_Tracks.back().IsPresent())
+		if (m_Tracks.OpenTracks(strFile))
 		{
-			m_painter.SetView(m_Tracks.back().GetLastPoint(), true);
+			m_painter.SetView(m_Tracks.Last().GetLastPoint(), true);
 			m_painter.Redraw();
 		}
-		else
-			m_Tracks.pop_back();
 	}
 }
 
 void CMapApp::CloseTrack(Int iIndex)
 {
-	list<CTrack>::iterator it;
-	for (it = m_Tracks.begin(); it != m_Tracks.end(); ++it)
-	{
-		if (!iIndex)
-			break;
-		--iIndex;
-	}
-	if (it != m_Tracks.end())
-	{
-		m_Tracks.erase(it);
-		m_painter.Redraw();
-	}
+	m_Tracks.CloseTrack(iIndex);
+	m_painter.Redraw();
 }
 
 void CMapApp::OptionsSetTrackFolder()
@@ -1675,7 +2072,7 @@ void CMapApp::SetRasterMapFolder()
 	{
 #endif
 		m_rsRasterMapFolder = strFile;
-		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str());
+		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
 	}
 }
 
@@ -1738,6 +2135,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Show POIs"), L"ShowPOIs", true, mcoShowPOIs);
 	m_Options.AddOption(L("Show waypoints"), L"ShowWaypoints", true, mcoShowWaypoints);
 	m_Options.AddOption(L("Show area labels"), L"ShowPolygonLabels", true, mcoShowPolygonLabels);
+	m_Options.AddOption(L("Show outline only"), L"ShowAreaAsOutline", false, mcoShowAreaAsOutline);
 	m_Options.AddOption(L("Show unknown types"), L"ShowUnknownTypes", true, mcoShowUnknownTypes);
 	m_Options.AddOption(L("Rotate map by course"), L"RotateMap", false, mcoRotateMap);
 	m_Options.AddOption(L("Show road name"), L"ShowRoadName", true, mcoShowRoadName);
@@ -1749,6 +2147,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Keep backlight"), L"KeepBacklight", false, mcoKeepBacklight);
 	m_Options.AddOption(L("Keep device on"), L"KeepDeviceOn", true, mcoKeepDeviceOn);
 	m_Options.AddOption(L("Allow internet connection"), L"AllowInternet", true, mcoAllowInternet);
+	m_Options.AddOption(L("Use proxy server"), L"EnableProxy", false, mcoUseProxy);
 	m_Options.AddOption(L("Connect"), L"Connect", true, mcoConnect);
 	m_Options.AddOption(L("Show center"), L"ShowCenter", true, mcoShowCenter);
 	m_Options.AddOption(L("Refresh traffic on startup"), L"TrafficOnStartup", false, mcoRefreshTrafficOnStartup);
@@ -1766,6 +2165,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Large monitors"), L"LargeMonitors", false, mcoLargeMonitors);
 	m_Options.AddOption(L("Automatic light"), L"AutomaticLight", false, mcoAutoLight);
 	m_Options.AddOption(L("Large fonts"), L"LargeFonts", hiRes, mcoLargeFonts);
+	m_Options.AddOption(L("Show Sun azimuth"), L"ShowSunAz", false, mcoShowSunAz);
 
 	m_fTrafficAgreement.Init(hRegKey, L"TrafficAgreement", false);
 	
@@ -1786,6 +2186,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Keep memory low"), L"LowMemory", true, mcoLowMemory);
 	m_Options.AddOption(L("Write track"), L"WriteTrack", true, mcoWriteTrack);
 	m_Options.AddOption(L("Show current track"), L"ShowCurrentTrack", true, mcoShowCurrentTrack);
+	m_Options.AddOption(L("Quick read gpx (no time)"), L"QuickReadGPX", false, mcoQuickReadGPXTrack);	
 	m_Options.AddOption(L("Highlight maps"), L"ShowDetailMaps", true, mcoShowDetailMaps);
 	m_Options.AddOption(L("Direct paint"), L"DirectPaint", false, mcoDirectPaint);
 
@@ -1796,13 +2197,12 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_riTrackStep.Init(hRegKey, L"TrackStep", 1);
 	m_riCoordFormat.Init(hRegKey, L"CoordinateFormat", 0);
+	m_riUTMZone.Init(hRegKey, L"UTMZone", 0);
 	m_riMetrics.Init(hRegKey, L"MetricSystem", 0);
 	m_riWaypointsRadius.Init(hRegKey, L"WaypointsRadius", 40000000);
 	m_riDetail.Init(hRegKey, L"Detail", 0);
-	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
-	if (m_riGMapType() < 0 || m_riGMapType() > gtCount)
-		m_riGMapType.Set(0);
 	m_riConnectPeriodMin.Init(hRegKey, L"ConnectPeriod", 0);
+	m_riTrackFormat.Init(hRegKey, L"TrackFormat", 0);
 	m_gpNavigate.Init(hRegKey, L"NavigatePoint", GeoPoint(0,0));
 	m_fNavigate.Init(hRegKey, L"Navigate", false);
 	m_MRUPoints.Init(hRegKey);
@@ -1811,6 +2211,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	if (m_rsPortSpeed().empty())
 		m_rsPortSpeed = L"Default";
 	m_rsCurrentFolder.Init(hRegKey, L"");
+	m_rsProxy.Init(hRegKey,L"Proxy");
+	m_rsGeoidMode.Init(hRegKey, L"GeoidMode");
 	GetKeymap().Init(hRegKey);
 	GetButtons().Init(hRegKey);
 
@@ -1844,9 +2246,15 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_monAltitude.SetIdL(L"Altitude");
 	m_MonitorSet.AddMonitor(&m_monAltitude);
-	m_monLongitude.SetIdL(L"Longitude");
+	m_monSeparation.SetIdL(L"Geoid Separation");
+	//m_monSeparation.SetRegistry(hRegKey, L"GeoidSeparation");
+	m_MonitorSet.AddMonitor(&m_monSeparation);
+	
+	m_monLongitude.SetIdL(L"Longitude", CoordLabelLon());
+	m_monLongitude.SetLinkedLatitude(&m_monLatitude);
 	m_MonitorSet.AddMonitor(&m_monLongitude);
-	m_monLatitude.SetIdL(L"Latitude");
+	m_monLatitude.SetIdL(L"Latitude", CoordLabelLat());
+	m_monLatitude.SetLinkedLongitude(&m_monLongitude);
 	m_MonitorSet.AddMonitor(&m_monLatitude);
 
 	m_monMemory.SetIdL(L"Memory");
@@ -1937,9 +2345,15 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_rsRasterMapFolder.Init(hRegKey, L"RasterMapFolder");
 	if (!m_rsRasterMapFolder().empty())
-		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str());
+		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
+	// Only after loading the list of WMS-Maps
+	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
+	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
+		m_riGMapType.Set(0);
 
 	CheckOptions();
+
+	m_CurTrack.Init();
 
 	StartListening();
 	StartHttpThread();
@@ -2129,6 +2543,7 @@ void CMapApp::Paint()
 		bool fRotateMap;
 		bool fShowUnknownTypes;
 		bool fShowPolygonLabels;
+		bool fShowAreaAsOutline;
 		bool fShowCurrentTrack;
 		bool fShowGarminMaps;
 		bool fLargeMonitors;
@@ -2150,6 +2565,7 @@ void CMapApp::Paint()
 			fDirectPaint = m_Options[mcoDirectPaint];
 			fRotateMap = m_Options[mcoRotateMap] && m_riGMapType() == gtNone;
 			fShowPolygonLabels = m_Options[mcoShowPolygonLabels];
+			fShowAreaAsOutline = m_Options[mcoShowAreaAsOutline];
 			fShowCurrentTrack = m_Options[mcoShowCurrentTrack];
 			fLargeMonitors = m_Options[mcoLargeMonitors];
 			fLargeFonts = m_Options[mcoLargeFonts];
@@ -2211,6 +2627,7 @@ void CMapApp::Paint()
 				m_painter.BeginPaint(m_hWnd, hdc, m_painter.GetScreenRect(), degree, fLowCenter);
 				m_painter.SetShowUnknownTypes(fShowUnknownTypes);
 				m_painter.SetShowPolygonLabels(fShowPolygonLabels);
+				m_painter.SetShowAreaAsOutline(fShowAreaAsOutline);
 			}
 
 			if (!fOnlyMonitors)
@@ -2220,11 +2637,13 @@ void CMapApp::Paint()
 					UInt uiScale = PrepareScale(m_painter.GetScale());
 					if (fShowGarminMaps)
 					{
-						m_atlas.BeginPaint(uiScale, &m_painter, &CStatusPainter(m_hWnd, m_painter.GetFontCache()));
+						CStatusPainter statuspainter(m_hWnd, m_painter.GetFontCache());
+						m_atlas.BeginPaint(uiScale, &m_painter, &statuspainter);
 						if (fShowDetailMaps)
 							m_atlas.PaintMapPlaceholders(&m_painter);
 					}
 
+					m_pRasterMapPainter->SetKeepMemoryLow(fLowMemory);
 					m_pRasterMapPainter->Paint(hdc.Get(), m_painter.GetScreenRect(), m_painter.GetCenter(), m_painter.GetXScale(), enumGMapType(m_riGMapType()), fLargeFonts);
 
 					if (fShowGarminMaps)
@@ -2242,7 +2661,7 @@ void CMapApp::Paint()
 				}
 				{
 					AutoLock l;
-					for (list<CTrack>::iterator trit = m_Tracks.begin(); trit != m_Tracks.end(); ++trit)
+					for (CTrackList::iterator trit = m_Tracks.begin(); trit != m_Tracks.end(); ++trit)
 					{
 						if (m_TrackCompetition.IsDetected()) 
 						{
@@ -2384,7 +2803,7 @@ void CMapApp::NoVFix()
 	m_CurTrack.ResetAltitude();
 }
 
-void CMapApp::Fix(GeoPoint gp, double dHDOP)
+void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 {
 	if (m_fFix)
 		AddOdometer(DoubleDistance(gp, m_gpCursor));
@@ -2394,7 +2813,7 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 	if (m_fMemoryVeryLow)
 		m_CurTrack.Break();
 	else
-		m_CurTrack.AddPoint(gp, 0, dHDOP); // TODO: GPS time
+		m_CurTrack.AddPoint(gp, dTimeUTC, dHDOP); // TODO: GPS time
 	// Move view to point if flag present
 	if (m_Options[mcoFollowCursor])
 		m_painter.SetView(gp, false); // SYNC
@@ -2421,8 +2840,8 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 		m_fCoursePointPresent = true;
 		m_gpCoursePoint = gp;
 	}
-	// Сначала проверяем опцию, чтобы не искать зря
 #ifdef UNDER_CE
+	// We check the option first not to check for proximity in vain
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
 		PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
 #endif // UNDER_CE
@@ -2432,10 +2851,11 @@ void CMapApp::Fix(GeoPoint gp, double dHDOP)
 	m_team.Fix(gp, GetTickCount());
 }
 
-void CMapApp::VFix(double dAltitude)
+void CMapApp::VFix(double dAltitude, double dSeparation)
 {
 	m_CurTrack.SetAltitude(dAltitude);
 	(CDoubleMonitor &)m_monAltitude = dAltitude;
+	(CDoubleMonitor &)m_monSeparation = dSeparation;
 }	
 
 void CMapApp::UpdateMonitors()
@@ -2477,7 +2897,7 @@ void CMapApp::UpdateMonitors()
 		m_fMemoryVeryLow = (ms.dwAvailPhys < cnCriticalMemory);
 	}
 	{
-#if !defined(BARECE)
+#if !defined(BARECE) && !defined(UNDER_WINE)
 #if defined(UNDER_CE)
 		SYSTEM_POWER_STATUS_EX status;
 		GetSystemPowerStatusEx(&status, FALSE);
@@ -2589,6 +3009,7 @@ void CMapApp::InitMenu()
 			mmGarminMaps.CreateItem(L("Show area labels"), mcoShowPolygonLabels);
 			mmGarminMaps.CreateItem(L("Show road name"), mcoShowRoadName);
 			mmGarminMaps.CreateItem(L("Show area name"), mcoShowAreaName);
+			mmGarminMaps.CreateItem(L("Show only outline"), mcoShowAreaAsOutline);
 		}
 		{
 			CMenu & mmGoogleMaps = mmMaps.CreateSubMenu(L("Raster maps"));
@@ -2607,6 +3028,7 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
+				InitMenuAllWMSMaps(mmMapType);
 			}
 			{
 				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
@@ -2648,13 +3070,30 @@ void CMapApp::InitMenu()
 		mmTracks.CreateBreak();
 		mmTracks.CreateItem(L("Write track"), mcoWriteTrack);
 		mmTracks.CreateItem(L("Show current track"), mcoShowCurrentTrack);
+		mmTracks.CreateItem(L("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
+		{
+			CMenu & mmTrackFormat = mmTracks.CreateSubMenu(L("Track format"));
+			mmTrackFormat.CreateItem(L("plt"), mcTrackFormatPLT);
+			mmTrackFormat.CreateItem(L("gpx"), mcTrackFormatGPX);
+		}
 	}
 	{
 		CMenu & mmWaypoints = mMenu.CreateSubMenu(L("Waypoints"));
-		mmWaypoints.CreateItem(L("Select waypoints file"), mcOpenWaypoints);
+		{
+			CMenu & mmSelectWaypointsFile = mmWaypoints.CreateSubMenu(L("Select waypoints file"));
+			mmSelectWaypointsFile.CreateItem(L("Existing file"), mcOpenWaypoints);
+			mmSelectWaypointsFile.CreateItem(L("New WPT file"), mcNewWaypointsWPT);
+			mmSelectWaypointsFile.CreateItem(L("New GPX file"), mcNewWaypointsGPX);
+		}
 		mmWaypoints.CreateItem(L("Add waypoint"), mcAddWaypoint);
 		mmWaypoints.CreateItem(L("Waypoints list"), mcWaypointsList);
-		mmWaypoints.CreateItem(L("Import waypoints file"), mcImportWaypoints);
+		{
+			CMenu & mmImportExportWpt = mmWaypoints.CreateSubMenu(L("Import/Export"));
+			mmImportExportWpt.CreateItem(L("Import"), mcImportWaypoints);
+			mmImportExportWpt.CreateItem(L("Export as WPT"), mcExportWaypointsWPT);
+			mmImportExportWpt.CreateItem(L("Export as GPX"), mcExportWaypointsGPX);
+			mmImportExportWpt.CreateItem(L("Export as OSM"), mcExportWaypointsOSM);
+		}
 		mmWaypoints.CreateBreak();
 		mmWaypoints.CreateItem(L("Show waypoints"), mcoShowWaypoints);
 	}
@@ -2676,6 +3115,7 @@ void CMapApp::InitMenu()
 		}
 		mmNavigation.CreateItem(L("Navigate recent"), mcNavigateRecent);
 		mmNavigation.CreateItem(L("Stop navigating"), mcStopNavigating);
+		mmNavigation.CreateItem(L("Show Sun azimuth"), mcoShowSunAz);
 	}
 	{
 		CMenu & mmDisplay = mMenu.CreateSubMenu(L("Display"));
@@ -2756,6 +3196,7 @@ void CMapApp::InitMenu()
 		mmSetup.CreateItem(L("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
 		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternet);
+		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);
 	}
 	{
 		CMenu & mmHelp = mMenu.CreateSubMenu(L("Help"));
@@ -2786,6 +3227,15 @@ void CMapApp::InitMenu()
 	CheckMenu();
 }
 
+void CMapApp::InitMenuAllWMSMaps(CMenu& baseMenu)
+{
+	for(int i=0, iEnd=m_pRasterMapPainter->GetWMSMapCount();
+		i<iEnd; i++)
+	{
+		baseMenu.CreateItem(m_pRasterMapPainter->GetWMSMapName(i).c_str(), mcFirstWMSMapType+i);
+	}
+}
+
 void CMapApp::CheckMenu()
 {
 	CMenu & menu = m_MenuBar.GetMenu();
@@ -2799,7 +3249,11 @@ void CMapApp::CheckMenu()
 	menu.CheckMenuItem(mcConnectPeriod4, m_riConnectPeriodMin() == 4);
 	menu.CheckMenuItem(mcConnectPeriod9, m_riConnectPeriodMin() == 9);
 
-	for (int i = 0; i < gtCount; ++i)
+	menu.CheckMenuItem(mcTrackFormatPLT, m_riTrackFormat() == 0);
+	menu.CheckMenuItem(mcTrackFormatGPX, m_riTrackFormat() == 1);
+
+	for (int i = 0, iEnd = m_pRasterMapPainter->GetGMapCount();
+		 i < iEnd; ++i)
 		menu.CheckMenuItem(mcGMapType + i, i == m_riGMapType());
 
 	menu.EnableMenuItem(mcCloseColors, !m_rsToolsFile().empty());
@@ -2809,6 +3263,7 @@ void CMapApp::CheckMenu()
 	menu.EnableMenuItem(mcoShowDetailMaps, fGarminMaps);
 	menu.EnableMenuItem(mcoShowUnknownTypes, fGarminMaps);
 	menu.EnableMenuItem(mcoShowPolygonLabels, fGarminMaps);
+	menu.EnableMenuItem(mcoShowAreaAsOutline, fGarminMaps);
 	menu.EnableMenuItem(mcoShowRoadName, fGarminMaps);
 	menu.EnableMenuItem(mcoShowAreaName, fGarminMaps);
 	menu.EnableMenuItem(mcCloseAllMaps, fGarminMaps);
@@ -2826,6 +3281,22 @@ void CMapApp::PaintCursor(const GeoPoint & gp, bool fCursorVisible)
 {
 	if (fCursorVisible)
 	{
+		if (m_Options[mcoShowSunAz])
+		{
+			double az = (m_Sun.m_dSunAzimuth - m_painter.GetScreenRotationAngle()) * (pi/180.);
+			double sunradius = 16./60/180*pi;
+			ScreenPoint sp = m_painter.GeoToScreen(gp);
+			int iScrSize = (std::max)(m_painter.GetScreenRect().Width(), m_painter.GetScreenRect().Height());
+			iScrSize *= 10; // !!! fix this later
+			m_painter.StartPolyline(0x204, 0);
+			m_painter.AddPoint(sp);
+			m_painter.AddPoint(ScreenPoint(sp.x + int(iScrSize*sin(az+sunradius)), sp.y - int(iScrSize*cos(az+sunradius))));
+			m_painter.FinishObject();
+			m_painter.StartPolyline(0x204, 0);
+			m_painter.AddPoint(sp);
+			m_painter.AddPoint(ScreenPoint(sp.x + int(iScrSize*sin(az-sunradius)), sp.y - int(iScrSize*cos(az-sunradius))));
+			m_painter.FinishObject();
+		}
 		if (m_fNavigate())
 		{
 			if (!m_Options[mcoShowFastestWay] || !m_TrafficNodes.PaintFastestWay(gp, m_gpNavigate(), &m_painter))
@@ -2949,8 +3420,23 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcOpenWaypoints:
 			FileOpenWaypoints();
 			break;
+		case mcNewWaypointsWPT:
+			FileNewWaypointsWPT();
+			break;
+		case mcNewWaypointsGPX:
+			FileNewWaypointsGPX();
+			break;
 		case mcImportWaypoints:
 			FileImportWaypoints();
+			break;
+		case mcExportWaypointsWPT:
+			FileExportWaypointsWPT();
+			break;
+		case mcExportWaypointsGPX:
+			FileExportWaypointsGPX();
+			break;
+		case mcExportWaypointsOSM:
+			FileExportWaypointsOSM();
 			break;
 		case mcOpenColors:
 			FileOpenColors();
@@ -3082,27 +3568,17 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			SetDetail(m_riDetail() + 1);
 			break;
 		case mcPrevGMapType:
-			SetGMapType((m_riGMapType() - 1 + gtCount) % gtCount);
+			{
+				long mapCount = m_pRasterMapPainter->GetGMapCount();
+				SetGMapType((m_riGMapType() - 1 + mapCount) % mapCount);
+			}
 			break;
 		case mcNextGMapType:
-			SetGMapType((m_riGMapType() + 1 + gtCount) % gtCount);
-			break;
-		case mcGMapType + 0:
-		case mcGMapType + 1:
-		case mcGMapType + 2:
-		case mcGMapType + 3:
-		case mcGMapType + 4:
-		case mcGMapType + 5:
-		case mcGMapType + 6:
-		case mcGMapType + 7:
-		case mcGMapType + 8:
 			{
-				int iNewType = wp - mcGMapType;
-				if (iNewType == m_riGMapType())
-					iNewType = 0;
-				SetGMapType(iNewType);
-				break;
+				long mapCount = m_pRasterMapPainter->GetGMapCount();
+				SetGMapType((m_riGMapType() + 1 + mapCount) % mapCount);
 			}
+			break;
 		case mcDownlRasterAddCurrentView:
 			DRMAddCurrentView();
 			break;
@@ -3136,8 +3612,22 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcSetGoogleMapsFolder:
 			SetRasterMapFolder();
 			break;
+		case mcTrackFormatPLT:
+			SetTrackFormat(0);
+			break;
+		case mcTrackFormatGPX:
+			SetTrackFormat(1);
+			break;
 		default:
 			{
+			    if ((mcGMapType <= wp) && (wp <= mcLastGMapType))
+				{
+					int iNewType = wp - mcGMapType;
+					if (iNewType == m_riGMapType())
+						iNewType = 0;
+					SetGMapType(iNewType);
+					break;
+				}
 				if (m_Options.ProcessCommand(wp, m_MenuBar))
 				{
 					switch (wp) {
@@ -3166,6 +3656,13 @@ void CMapApp::SetConnectPeriod(int nPeriod)
 {
 	m_riConnectPeriodMin.Set(nPeriod);
 	CheckMenu();
+}
+
+void CMapApp::SetTrackFormat(int nTrackFormat)
+{
+	m_riTrackFormat.Set(nTrackFormat);
+	CheckMenu();
+	NewTrack(); // New track to apply change
 }
 
 void CMapApp::NextMonitorsRow()
@@ -3281,9 +3778,21 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		if (m_Options[mcoDebugMode])
 			mmMenu.CreateItem(L("Debug: cursor here"), 3);
 
+
+		CMenu & mmRaster = mmMenu.CreateSubMenu(L("Raster map"));
+		double m_dummyScale;
+		if (GeoPoint(0, 0) != m_pRasterMapPainter->GetDemoPoint(enumGMapType(m_riGMapType()), m_dummyScale))
+		{
+			mmRaster.CreateItem(L("Go to demo point"), 51);
+		}
+		else
+		{
+			mmRaster.CreateItem(L("No demo point"), -1);
+		}
 		
 //		RECT rect = m_painter.GetScreenRect();
 		DWORD res = mmMenu.Popup(sp.x, sp.y, m_hWnd);
+		std::wstring wstrLon, wstrLat;
 
 		switch(res)
 		{
@@ -3304,7 +3813,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		case 3:
 			{
 				GeoPoint gp = m_painter.ScreenToGeo(sp);
-				Fix(gp, 100);
+				Fix(gp, 0, 100);
 				break;
 			}
 		case 4:
@@ -3357,10 +3866,11 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		case 14:
 			{
 				CWaypoints::CPoint & p = m_Waypoints.ById(nPointID);
-				MessageBox(0, (wstring(L"")
+				CoordToText(p.Longitude(), p.Latitude(), wstrLon, wstrLat);
+				MessageBox(0, (std::wstring(L"")
 					+ L("Name: ") + p.GetLabel()
-					+ L"\n" + L("Latitude: ") + DegreeToText(p.Latitude(), true)
-					+ L"\n" + L("Longitude: ") + DegreeToText(p.Longitude(), false)
+					+ L"\n" + L("Latitude: ") + wstrLat
+					+ L"\n" + L("Longitude: ") + wstrLon
 					+ L"\n" + L("Altitude: ") + DoubleToText(p.GetAltitude())
 					).c_str(),
 					L("Waypoint info"),MB_ICONINFORMATION);
@@ -3382,28 +3892,35 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			m_painter.Redraw();
 			break;
 		case 24:
-			MessageBox(0, (wstring(L"")
+			CoordToText(Degree(pinfo.gp.lon), Degree(pinfo.gp.lat), wstrLon, wstrLat);
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + pinfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PointType(pinfo.uiType)
 				+ L"\n" + L("Code: ") + IntToHex(pinfo.uiType)
-				+ L"\n" + L("Latitude: ") + DegreeToText(Degree(pinfo.gp.lat), true)
-				+ L"\n" + L("Longitude: ") + DegreeToText(Degree(pinfo.gp.lon), false)
+				+ L"\n" + L("Latitude: ") + wstrLat
+				+ L"\n" + L("Longitude: ") + wstrLon
 				).c_str(),
 				L("Point info"),MB_ICONINFORMATION);
 			break;
 		case 30:
-			MessageBox(0, (wstring(L"")
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + linfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PolylineType(linfo.uiType)
 				).c_str(),
 				L("Line info"),MB_ICONINFORMATION);
 			break;
 		case 40:
-			MessageBox(0, (wstring(L"")
+			MessageBox(0, (std::wstring(L"")
 				+ L("Name: ") + pginfo.wstrName
 				+ L"\n" + L("Type: ") + m_TypeInfo.PolygonType(pginfo.uiType)
 				).c_str(),
 				L("Area info"),MB_ICONINFORMATION);
+			break;
+		case 51:
+			double scale;
+		    GeoPoint demoPoint = m_pRasterMapPainter->GetDemoPoint(enumGMapType(m_riGMapType()), scale);
+			m_painter.SetView(demoPoint, true);
+			m_painter.SetXScale(scale);
 			break;
 		}
 	}
@@ -3425,7 +3942,7 @@ private:
 	bool m_fStarted;
 	double m_dDistance;
 	GeoPoint m_gpLast;
-	wstring m_wcName;
+	std::wstring m_wcName;
 	UInt m_uiType;
 	bool m_fPolygon;
 	bool m_fInside;
@@ -3517,7 +4034,7 @@ public:
 		if (m_fPolyline)
 		{
 			if (m_fStarted)
-				m_dDistance = min(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
+				m_dDistance = (std::min)(m_dDistance, PointFromLine(m_gp, m_gpLast, gp));
 			else
 				m_fStarted = true;
 			m_gpLast = gp;
@@ -3556,7 +4073,7 @@ public:
 						if (sign(lat_d1) * sign(lat_d2) < 0)
 						{
 							++m_iTotal;
-							if (abs(lat_d1) > 0x7fff || abs(lat_d2) > 0x7fff || abs(lon_d1) > 0x7fff || abs(lon_d2) > 0x7fff)
+							while (abs(lat_d1) > 0x7fff || abs(lat_d2) > 0x7fff || abs(lon_d1) > 0x7fff || abs(lon_d2) > 0x7fff)
 							{
 								lat_d1 /= 0x100;
 								lat_d2 /= 0x100;
@@ -3650,7 +4167,7 @@ public:
 		m_pt1 = pt1;
 		m_pt2 = pt2;
 		NewTrack();
-		m_dDelta = max(IntDistance(pt1, pt2) / 100, 50);
+		m_dDelta = (std::max)(IntDistance(pt1, pt2) / 100, 50);
 		m_dResult = 40000000;
 	}
 	void NewTrack()
@@ -3711,7 +4228,7 @@ double CMapApp::GetDistanceByTrack(const GeoPoint & pt1, const GeoPoint & pt2)
 		return 0;
 	CDistanceMeter meter(pt1, pt2);
 	m_CurTrack.PaintUnlocked(&meter, 0);
-	for (list<CTrack>::iterator it = m_Tracks.begin(); it != m_Tracks.end();++it)
+	for (CTrackList::iterator it = m_Tracks.begin(); it != m_Tracks.end();++it)
 	{
 		meter.NewTrack();
 		it->PaintUnlocked(&meter, 0);
@@ -3736,7 +4253,7 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 				const wchar_t * wcFinish = wcStart + 1;
 				while (*wcFinish && *wcFinish != '"')
 					++wcFinish;
-				wstring wstrElement;
+				std::wstring wstrElement;
 				wstrElement.assign(wcStart, wcFinish - wcStart);
 				ProcessCmdLineElement(wstrElement.c_str());
 				wcStart = wcFinish + 1;
@@ -3747,7 +4264,7 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 			const wchar_t * wcFinish = wcStart;
 			while (*wcFinish && !isspace(*wcFinish))
 				++wcFinish;
-			wstring wstrElement;
+			std::wstring wstrElement;
 			wstrElement.assign(wcStart, wcFinish - wcStart);
 			ProcessCmdLineElement(wstrElement.c_str());
 			wcStart = wcFinish + 1;
@@ -3757,19 +4274,20 @@ void CMapApp::ProcessCmdLine(const wchar_t * wcCmdLine)
 
 void CMapApp::ProcessCmdLineElement(const wchar_t * wcCmdLine)
 {
-	wstring wstrCmdLine = wcCmdLine;
-	wstring wstrExtention = wstrCmdLine.substr(wstrCmdLine.length() - 4, 4);
-	for (wstring::iterator it = wstrExtention.begin(); it != wstrExtention.end(); ++it)
+	std::wstring wstrCmdLine = wcCmdLine;
+	std::wstring wstrExtention = wstrCmdLine.substr(wstrCmdLine.length() - 4, 4);
+	for (std::wstring::iterator it = wstrExtention.begin(); it != wstrExtention.end(); ++it)
 		*it = towlower(*it);
 	if (wstrExtention == L".img")
 		m_atlas.Add(wstrCmdLine.c_str(), &m_painter);
 	if (wstrExtention == L".plt")
 	{
-		m_Tracks.push_back(CTrack());
-		m_Tracks.back().Read(wstrCmdLine.c_str());
-		if (m_Tracks.back().IsPresent())
-			m_painter.SetView(m_Tracks.back().GetLastPoint(), true);
+		if (m_Tracks.OpenTracks(wstrCmdLine))
+		{
+			m_painter.SetView(m_Tracks.Last().GetLastPoint(), true);
+		}
 		m_painter.Redraw();
+
 	}
 	if (wstrExtention == L".vpc")
 		m_painter.InitTools(wstrCmdLine.c_str());
@@ -3845,7 +4363,7 @@ void CMapApp::About()
 {
 	wchar_t buffer[10000];
 	swprintf(buffer, 10000, L"%s %S\n%s %S\n%s.\n%s",
-		L("gpsVP version"), sVersion, L("Built on"), __DATE__, 
+		L("gpsVP version"), g_gpsVPVersion.AsString().c_str(), L("Built on"), __DATE__, 
 		L("GPS navigation software for PCs, handhelds and smartphones"),
 		L"Copyright (c) 2005-2008, Vsevolod E. Shorin\nAll rights reserved.\n\n"
 		L"Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n"
@@ -3857,7 +4375,7 @@ void CMapApp::About()
 	MessageBox(m_hWnd, buffer, L("About"), MB_ICONINFORMATION);
 }
 
-wstring CMapApp::HeightFromFeet(const wchar_t * wcOriginal)
+std::wstring CMapApp::HeightFromFeet(const wchar_t * wcOriginal)
 {
 	if (!wcOriginal || !wcOriginal[0])
 		return L"";
@@ -3893,7 +4411,7 @@ void CMapApp::ReplayTrack()
 	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
-		m_ReplayTrack.Read(strFile);
+		m_ReplayTrack.ReadPLT(strFile);
 	}
 }
 
@@ -3925,8 +4443,11 @@ void CMapApp::HttpThreadRoutine()
 		m_wstrHttpStatus = L"Idle";
 	}
 
+	
+	CHttpRequest::SetProxy(app.m_rsProxy());
 	std::string request;
 	int request_source = 0;
+	int ErrorWaitingTime = 1; // beginning with 1 second
 
 	while (!m_fStopHttpThread)
 	{
@@ -3945,7 +4466,7 @@ void CMapApp::HttpThreadRoutine()
 				request = "http://";
 				request += GetServerName(); 
 				request += "/LatestVersion.php?version=";
-				request += sVersion;
+				request += g_gpsVPVersion.AsString();
 				request_source = 1;
 			}
 			if (request.empty() && !m_fStopHttpThread)
@@ -4051,12 +4572,14 @@ void CMapApp::HttpThreadRoutine()
 					m_wstrHttpStatus = L"Requesting";
 				}
 				CHttpRequest req(0);
-				req.Request(request, std::string("gpsVP ") + sVersion);
+				CHttpRequest::m_useProxy=m_Options[mcoUseProxy];
+				req.Request(request, g_gpsVPVersion.AsStringWithName());
 				m_monDataIn += req.GetIncoming();
 				m_monDataOut += req.GetOutgoing();
 				m_monDataTotal += req.GetIncoming() + req.GetOutgoing();
 				if (!m_fStopHttpThread && req.IsGood())
 				{
+					ErrorWaitingTime = 1;
 					{
 						AutoLock l;
 						m_wstrHttpStatus = L"Ok";
@@ -4103,8 +4626,10 @@ void CMapApp::HttpThreadRoutine()
 						m_searchurl = "";
 						MessageBox(m_hWnd, L("Search failed"), L("Search"), MB_OK | MB_ICONERROR);
 					}
-					for (int i = 0; i < 60 && !m_fStopHttpThread; ++i )
+					for (int i = 0; i < ErrorWaitingTime && !m_fStopHttpThread; ++i )
 						Sleep(1000);
+					ErrorWaitingTime = ErrorWaitingTime << 1; // If error next time then wait twice as long
+					ErrorWaitingTime = (ErrorWaitingTime>60)?60:ErrorWaitingTime; // but max 60 seconds
 				}
 			}
 			else if (!m_fStopHttpThread)
@@ -4156,13 +4681,11 @@ void CMapApp::DRMByTrack()
 	if (GetOpenFileName(&of))
 	{
 		CTrack track;
-		track.Read(strFile);
+		track.ReadPLT(strFile);
 		if (track.IsPresent())
 		{
 			// m_pRasterMapPainter->DownloadByTrack(track);
 		}
-		else
-			m_Tracks.pop_back();
 	}
 }
 
@@ -4304,4 +4827,9 @@ void CMapApp::ProcessOSMSearchResult(const char * data, int size)
 
 		}
 	}
+}
+
+const CVersionNumber& CMapApp::GetGpsVPVersion()
+{
+	return g_gpsVPVersion;
 }

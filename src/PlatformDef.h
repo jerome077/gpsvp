@@ -126,4 +126,26 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 
 #define tstring basic_string<tchar_t>
 
+#ifndef INVALID_FILE_ATTRIBUTES
+#	define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
+
+#ifdef UNDER_WINE
+#	define stdext __gnu_cxx
+#	include <wchar.h>
+	inline int _wtoi(const wchar_t* w) {
+		wchar_t* t;
+		return wcstol(w, &t, 10);
+	}
+	inline FILE* _wfopen(const wchar_t*, const wchar_t*) {
+		return 0;
+	}
+	inline void _wmkdir(const wchar_t*) {
+		return;
+	}
+#	define _snprintf snprintf
+#	define _wcsnicmp wcsncasecmp 
+#	define _wcsicmp wcscasecmp
+#endif // UNDER_WINE
+
 #endif // PLATFORMDEF_H

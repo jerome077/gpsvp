@@ -26,7 +26,7 @@ void CAzimuthMonitor::Paint(IMonitorPainter * pPainter)
 {
 	if (m_fSet)
 	{
-		std::wstring str = IntToText(m_iValue) + L"°";
+		std::wstring str = IntToText(m_iValue) + L"Â°";
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), str.c_str());
 	}
 	else

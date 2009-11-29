@@ -31,9 +31,9 @@ private:
 		Int m_iId;
 		int m_wKey;
 		WORD m_wCommand;
-		wstring m_wstrDescription;
+		std::wstring m_wstrDescription;
 	};
-	list<CAction> m_Actions;
+	std::list<CAction> m_Actions;
 	HKEY m_hRegKey;
 public:
 	void Init(HKEY hRegKey);

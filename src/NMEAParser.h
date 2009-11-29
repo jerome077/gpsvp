@@ -29,8 +29,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #	include "Lock.h"
 #endif
 
-using namespace std;
-
 struct IGPSClient
 {
 	enum enumConnectionStatus 
@@ -42,9 +40,9 @@ struct IGPSClient
 		csDisabled = 5
 	};
 	virtual void NoFix() = 0;
-	virtual void Fix(GeoPoint gp, double dHDOP) = 0;
+	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP) = 0;
 	virtual void NoVFix() = 0;
-	virtual void VFix(double dAltitude) = 0;
+	virtual void VFix(double dAltitude, double dSeparation) = 0;
 	virtual void SetConnectionStatus(enumConnectionStatus iStatus) = 0;
 };
 class CTrack;
@@ -61,12 +59,12 @@ private:
 		cnMaxCommand = 100 //!< Max command length
 	};
 	//! Current command
-	string m_strCommand;
+	std::string m_strCommand;
 	//! Is command started
 	bool m_fCommandStarted;
-	map<string, string> m_mapCommands;
+	std::map<std::string, std::string> m_mapCommands;
 	int m_iSatNum;
-	map<int, int> m_mapSats;
+	std::map<int, int> m_mapSats;
 #ifndef LINUX
 	CSpeedMonitor m_dSpeed;
 	CSpeedMonitor m_dMaxSpeed;

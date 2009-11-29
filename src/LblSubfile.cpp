@@ -134,9 +134,9 @@ const tchar_t * CLblSubfile::GetLabel(UInt uiOffset)
 			}
 			else if (iChar == 0x1B)
 			{
-//				// Судя по карте мира, это просто конец
+//				// Judging by world.img this is just the end
 //				break;
-				// Но по документации надо так:
+				// But specification says this:
 				iChar = bs.GetChar(6);
 				if (iChar == 0)
 					wChar = L'`';

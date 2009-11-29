@@ -19,8 +19,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <map>
 #include <string>
 
-using namespace std;
-
 #include "PlatformDef.h"
 #include "FATBlock.h"
 #include "File.h"
@@ -39,7 +37,7 @@ class CIMGFile
 	//! Offset of the first filesystem data block
 	UInt m_uiFirstBlockOffset;
 	//! List of FAT blocks
-	list<CFATBlock> m_FATBlocks;
+	std::list<CFATBlock> m_FATBlocks;
 	//! Size of a block in filesystem
 	UInt m_uiBlockSize;
 	//! OS file with map data
@@ -72,8 +70,8 @@ public:
 	GeoPoint GetCenter() const;
 	GeoRect GetRect() const;
 	UInt GetLevelByScale(unsigned int uiScale10, IPainter * pPainter);
-	list<UInt> GetLevels(IPainter * pPainter);
-	fnstring GetFilename() const {return m_wstrFilename;}
+	std::list<UInt> GetLevels(IPainter * pPainter);
+	std::fnstring GetFilename() const {return m_wstrFilename;}
 	int GetID() const {return m_iID;};
 	void Trim(const GeoRect & rect);
 	bool WillRead() const;

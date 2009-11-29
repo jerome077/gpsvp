@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 void CMRUPoints::AddPoint(GeoPoint gp, const wchar_t * wcName)
 {
-	wstring wstrName = wcName;
+	std::wstring wstrName = wcName;
 
 	Points::iterator it;
 	for (it = m_points.begin(); it != m_points.end(); ++it)

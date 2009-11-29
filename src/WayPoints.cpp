@@ -15,8 +15,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "WayPoints.h"
 #include <windows.h>
 #include <vector>
+#ifndef UNDER_WINE
+#include "FileFormats/OSM.h"
+#endif // UNDER_WINE
+#include "MapApp.h"
+
+bool isWptModel(const std::wstring& WaypointName)
+{
+	return (WaypointName.substr(0, WPT_MODEL_PREFIX.length()) == WPT_MODEL_PREFIX);
+}
+
 
 CWaypoints::CPoint::CPoint(double dLon, double dLat, int iAltitude, const wchar_t * wcName)
+: m_OSMPropList()
 {
 	static int iNextId = 0;
 	m_iId = iNextId++;
@@ -33,6 +44,47 @@ CWaypoints::CPoint::CPoint(double dLon, double dLat, int iAltitude, const wchar_
 	m_dLastUsed = double(ft.dwHighDateTime) * double(1 << 16) * double(1 << 16) 
 		+ double(ft.dwLowDateTime);
 	m_fInProximity = false;
+}
+//CWaypoints::CPoint::CPoint(const CWaypoints::CPoint& source)
+//{
+//	m_iId = source.m_iId; // Same ID because not in the list
+//	m_dLongitude = source.m_dLongitude;
+//	m_dLatitude = source.m_dLatitude;
+//	m_poscache = source.m_poscache;
+//	m_iAltitude = source.m_iAltitude;
+//	m_wstrName = source.m_wstrName;
+//	m_iRadius = source.m_iRadius;
+//	m_dLastUsed = source.m_dLastUsed;
+//	m_fInProximity = source.m_fInProximity;
+//}
+CWaypoints::CPoint::CPoint()
+{
+	m_iId = 0;
+	m_dLongitude = 0;
+	m_dLatitude = 0;
+	m_iAltitude = -777;
+	m_iRadius = 0;
+	m_fInProximity = false;
+}
+void CWaypoints::CPoint::Assign(const CWaypoints::CPoint& source)
+{
+	// m_iId don't need to be changed
+	m_dLongitude = source.m_dLongitude;
+	m_dLatitude = source.m_dLatitude;
+	m_poscache = source.m_poscache;
+	m_iAltitude = source.m_iAltitude;
+	m_wstrName = source.m_wstrName;
+	m_iRadius = source.m_iRadius;
+	m_dLastUsed = source.m_dLastUsed;
+	m_fInProximity = source.m_fInProximity;
+	m_OSMPropList.assign(source.m_OSMPropList.begin(), source.m_OSMPropList.end());
+}
+void CWaypoints::CPoint::AssignOSM(const CWaypoints::CPoint& source)
+{
+	// here just copy the complementary porperties (to use the point as model)
+	m_iRadius = source.m_iRadius;
+	m_fInProximity = source.m_fInProximity;
+	m_OSMPropList.assign(source.m_OSMPropList.begin(), source.m_OSMPropList.end());
 }
 void CWaypoints::CPoint::Paint(IPainter * pPainter, const GeoPoint * pgp)
 {
@@ -88,6 +140,13 @@ Int CWaypoints::AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int
 	Write();
 	return m_Points.back().GetID();
 }
+Int CWaypoints::AddPoint(const CPoint & pt, int iRadius)
+{
+	m_Points.push_back(pt);
+	m_Points.back().SetRadius(iRadius);
+	Write();
+	return m_Points.back().GetID();
+}
 Int CWaypoints::AddPoint(const CPoint & pt)
 {
 	m_Points.push_back(pt);
@@ -98,7 +157,7 @@ int CWaypoints::GetNearestPoint(GeoPoint gp, double dRadius)
 {
 	double dMin = dRadius;
 	int nNearest = -1;
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		double dDistance = IntDistance(it->GetApproximatePos(), gp);
 		if (dDistance < dMin)
@@ -109,11 +168,70 @@ int CWaypoints::GetNearestPoint(GeoPoint gp, double dRadius)
 	}
 	return nNearest;
 }
+
+// ---------------------------------------------------------------
+
 void CWaypoints::Write()
 {
-	if (m_wstrFilename.empty())
+	if (0 < m_BeginUpdateCount)
+	{
+		m_bWriteRequested = true;
 		return;
-	FILE * pFile = wfopen(m_wstrFilename.c_str(), L"wt");
+	}
+	if (m_bCanWrite)
+		Write(m_wstrFilename);
+};
+
+void CWaypoints::Write(const std::wstring& wstrFilename)
+{
+	if (wstrFilename.empty())
+		return;
+	std::wstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
+#ifndef UNDER_WINE
+	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+		WriteGPX(wstrFilename);
+	else
+#endif // UNDER_WINE
+		WriteWPT(wstrFilename);
+}
+
+// ---------------------------------------------------------------
+
+#ifndef UNDER_WINE
+void CWaypoints::WriteGPX(const std::wstring& wstrFilename)
+{
+	try
+	{
+		CGPXFileWriter GpxWriter(wstrFilename, GetCreator());
+		for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+		{
+			GpxWriter.AddNextWaypoint(it->m_dLatitude, it->m_dLongitude);
+			// Caution: field order is important, see http://www.topografix.com/GPX/1/1/
+			GpxWriter.CurrentWpt()->addAltitude(it->m_iAltitude);
+			GpxWriter.CurrentWpt()->addName(it->m_wstrName);
+
+			// <extensions> after all standard fields:
+			GpxWriter.CurrentWpt()->addRadiusEx(it->m_iRadius);
+			for(std::vector<CStringProp>::iterator iter = it->m_OSMPropList.begin();
+				iter != it->m_OSMPropList.end();
+				iter++)
+			{
+				GpxWriter.CurrentWpt()->addOSMTag(iter->Name(), iter->Value());
+			}
+		}
+	}
+	catch (CGPXFileWriter::Error e)
+	{
+		MessageBox(NULL, e.c_str(), L("GPX write error"), MB_ICONEXCLAMATION);
+	}
+}
+#endif // UNDER_WINE
+
+// ---------------------------------------------------------------
+
+void CWaypoints::WriteWPT(const std::wstring& wstrFilename)
+{
+	FILE * pFile = wfopen(wstrFilename.c_str(), L"wt");
 	if (!pFile)
 		return;
 	fputs(
@@ -122,16 +240,163 @@ void CWaypoints::Write()
 		"Reserved 2\n"
 		"Reserved 3\n", pFile);
 	int nCount = 0;
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		it->Write(pFile, ++nCount);
 	}
 	fclose(pFile);
 }
+
+// ---------------------------------------------------------------
+
+// Default Name for waypoint is like "2001.01.01 12:00:00"
+bool IsDefaultWaypointName(const std::wstring& wstrWptName)
+{
+	return (19 == wstrWptName.length())
+	    && (L'.' == wstrWptName[4])
+	    && (L'.' == wstrWptName[7])
+	    && (L' ' == wstrWptName[10])
+	    && (L':' == wstrWptName[13])
+	    && (L':' == wstrWptName[16])
+	    && (isdigit(wstrWptName[0]))
+	    && (isdigit(wstrWptName[1]))
+	    && (isdigit(wstrWptName[2]))
+	    && (isdigit(wstrWptName[3]))
+	    && (isdigit(wstrWptName[5]))
+	    && (isdigit(wstrWptName[6]))
+	    && (isdigit(wstrWptName[8]))
+	    && (isdigit(wstrWptName[9]))
+	    && (isdigit(wstrWptName[11]))
+	    && (isdigit(wstrWptName[12]))
+	    && (isdigit(wstrWptName[14]))
+	    && (isdigit(wstrWptName[15]))
+	    && (isdigit(wstrWptName[17]))
+	    && (isdigit(wstrWptName[18]));
+}
+
+// ---------------------------------------------------------------
+
+#ifndef UNDER_WINE
+void CWaypoints::WriteOSM(const std::wstring& wstrFilename)
+{
+	try
+	{
+		COSMFileWriter OsmWriter(wstrFilename, GetCreator());
+		int iOsmWptCount = 0;
+		for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+		{
+			if (isWptModel(it->m_wstrName)) continue;    // ignore models
+			if (0 == it->m_OSMPropList.size()) continue; // ignore waypoints without osm tags
+			bool bNameWritten = false;
+			OsmWriter.AddNextWaypoint(it->m_dLatitude, it->m_dLongitude);
+			iOsmWptCount++;
+			for(std::vector<CStringProp>::iterator iter = it->m_OSMPropList.begin();
+				iter != it->m_OSMPropList.end();
+				iter++)
+			{
+				if (L"name" == iter->Name()) bNameWritten = true;
+				if (0 == iter->Value().length()) continue; // ignore empty values
+				OsmWriter.CurrentWpt()->addTag(iter->Name(), iter->Value());
+			}
+			if (!bNameWritten)
+			{
+				if (!IsDefaultWaypointName(it->m_wstrName))
+					OsmWriter.CurrentWpt()->addTag(L"name", it->m_wstrName);
+			}
+		}
+		wchar_t wcMsg[100];
+		swprintf(wcMsg, 100, L("%d waypoints with OSM tags"), iOsmWptCount);
+		MessageBox(NULL, wcMsg, L("File written"), MB_ICONEXCLAMATION);
+	}
+	catch (CGPXFileWriter::Error e)
+	{
+		MessageBox(NULL, e.c_str(), L("OSM write error"), MB_ICONEXCLAMATION);
+	}
+}
+#endif // UNDER_WINE
+
+// ---------------------------------------------------------------
+
 void CWaypoints::Read(const wchar_t * wcFilename)
 {
 	m_wstrFilename = L"";
 	m_Points.erase(m_Points.begin(), m_Points.end());
+
+	std::wstring wstrName = wcFilename;
+	std::wstring wstrExt = wstrName.substr(wstrName.length()-4, 4);
+#ifndef UNDER_WINE
+	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+		ReadGPX(wstrName);
+	else
+#endif // UNDER_WINE
+		ReadWPT(wcFilename);
+
+	m_wstrFilename = wcFilename;
+}
+
+// ---------------------------------------------------------------
+
+#ifndef UNDER_WINE
+void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
+{
+	try
+	{
+		ComInit MyObjectToInitCOM;
+		{
+			CGPXFileReader GpxReader(wstrFilename);
+			CGPXFileReader::WaypointIterator iterWpt = GpxReader.WaypointBegin();
+			while (iterWpt != GpxReader.WaypointEnd())
+			{
+				double dLatitude = iterWpt->getLatitude();
+				double dLongitude = iterWpt->getLongitude();
+				int iRadius = iterWpt->getRadius();
+				int iAltitude = int(iterWpt->getAltitude());
+
+				CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, L""), iRadius));
+				CWaypoints::CPointEditor wptEditor = wpt.GetEditor();
+				std::auto_ptr<CGPXField> apField = iterWpt->firstField();
+				while (!apField->eof())
+				{
+					std::wstring fieldName = apField->getName();
+					if (L"name" == fieldName)
+					{
+						wpt.SetLabel(apField->getValue().c_str());
+					}
+					else if (L"gpsVP:osm" == fieldName)
+					{
+						CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
+						prop.SetName(apField->getOSMKey());
+						prop.SetValue(apField->getOSMValue());
+					}
+					apField = iterWpt->nextField();
+				}
+				wptEditor.Commit();
+
+				++iterWpt;
+			}
+			m_bCanWrite = GpxReader.IsGpsVPWaypointFile();
+		}
+	}
+	catch (CGPXFileReader::Error& e)
+	{
+		MessageBox(NULL, (L("Error while reading waypoints: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
+		m_Points.erase(m_Points.begin(), m_Points.end());
+	}
+#ifndef UNDER_WINE
+	catch (_com_error& e)
+	{
+		MessageBox(NULL, (std::wstring(L("Error while reading waypoints: "))+e.ErrorMessage()).c_str(),
+			       L("GPX read error"), MB_ICONEXCLAMATION);
+		m_Points.erase(m_Points.begin(), m_Points.end());
+	}
+#endif
+}
+#endif // UNDER_WINE
+
+// ---------------------------------------------------------------
+
+void CWaypoints::ReadWPT(const wchar_t * wcFilename)
+{
 	char buff[1000];
 	FILE * pFile = wfopen(wcFilename, L"rt");
 	if (pFile)
@@ -142,14 +407,14 @@ void CWaypoints::Read(const wchar_t * wcFilename)
 			if (!fgets(buff, sizeof(buff), pFile))
 				break;
 		}
-		vector<string> listParts;
+		std::vector<std::string> listParts;
 		while(fgets(buff, sizeof(buff), pFile))
 		{
-			string strCommand = buff;
+			std::string strCommand = buff;
 			listParts.resize(0);
-			string::size_type pos = 0;
-			string::size_type nextpos = 0;
-			while ((nextpos = strCommand.find(',', pos)) != string::npos)
+			std::string::size_type pos = 0;
+			std::string::size_type nextpos = 0;
+			while ((nextpos = strCommand.find(',', pos)) != std::string::npos)
 			{
 				listParts.push_back(strCommand.substr(pos, nextpos - pos));
 				pos = nextpos + 1;
@@ -163,20 +428,23 @@ void CWaypoints::Read(const wchar_t * wcFilename)
 				MultiByteToWideChar(CP_ACP, 0, listParts[1].c_str(), -1, buff, 1000);
 				int iRadius = atoi(listParts[13].c_str());
 				int iAltitude = atoi(listParts[14].c_str());
-				AddPoint(GeoPoint(dLongitude, dLatitude), iAltitude, buff, iRadius);
+				AddPoint(CPoint(dLongitude, dLatitude, iAltitude, buff), iRadius);
 			}
 		}
 	}
-	m_wstrFilename = wcFilename;
+	m_bCanWrite = true;
 }
+
+// ---------------------------------------------------------------
+
 void CWaypoints::Paint(IPainter * pPainter, const GeoPoint * pgp)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		it->Paint(pPainter, pgp);
 }
 void CWaypoints::GetList(IListAcceptor * pAcceptor, GeoPoint gpCenter, int iRadius)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (IntDistance(it->GetApproximatePos(), gpCenter) < iRadius)
 			it->AddToList(pAcceptor);
@@ -184,12 +452,12 @@ void CWaypoints::GetList(IListAcceptor * pAcceptor, GeoPoint gpCenter, int iRadi
 }
 void CWaypoints::GetList(IListAcceptor2 * pAcceptor)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		it->AddToList(pAcceptor);
 }
-wstring CWaypoints::GetLabelByID(int iId)
+std::wstring CWaypoints::GetLabelByID(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetLabel();
@@ -198,7 +466,7 @@ wstring CWaypoints::GetLabelByID(int iId)
 }
 int CWaypoints::GetRadiusByID(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetRadius();
@@ -207,7 +475,7 @@ int CWaypoints::GetRadiusByID(int iId)
 }
 int CWaypoints::GetAltitudeByID(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetAltitude();
@@ -216,7 +484,7 @@ int CWaypoints::GetAltitudeByID(int iId)
 }
 void CWaypoints::SetLabelByID(int iId, const wchar_t * wcLabel)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 		{
@@ -228,7 +496,7 @@ void CWaypoints::SetLabelByID(int iId, const wchar_t * wcLabel)
 }
 void CWaypoints::SetRadiusByID(int iId, int iRadius)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 		{
@@ -240,7 +508,7 @@ void CWaypoints::SetRadiusByID(int iId, int iRadius)
 }
 GeoPoint CWaypoints::GetPointByIDApprox(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetApproximatePos();
@@ -249,7 +517,7 @@ GeoPoint CWaypoints::GetPointByIDApprox(int iId)
 }
 double CWaypoints::GetUsedByID(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetUsed();
@@ -258,7 +526,7 @@ double CWaypoints::GetUsedByID(int iId)
 }
 void CWaypoints::DeleteByID(int iId)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 		{
@@ -270,7 +538,7 @@ void CWaypoints::DeleteByID(int iId)
 }	
 void CWaypoints::MovePoint(int iId, GeoPoint gp)
 {
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 		{
@@ -283,13 +551,13 @@ void CWaypoints::MovePoint(int iId, GeoPoint gp)
 bool CWaypoints::CheckProximity(GeoPoint gp)
 {
 	bool fRes = false;
-	for (list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
+	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		fRes |= it->CheckProximity(gp);
 	return fRes;
 }	
 void CWaypoints::Import(const CWaypoints & from)
 {
-	for (list<CPoint>::const_iterator it = from.m_Points.begin(); it != from.m_Points.end(); ++it)
+	for (std::list<CPoint>::const_iterator it = from.m_Points.begin(); it != from.m_Points.end(); ++it)
 	{
 		if (std::find(m_Points.begin(), m_Points.end(), *it) == m_Points.end())
 		{
@@ -300,9 +568,131 @@ void CWaypoints::Import(const CWaypoints & from)
 }
 CWaypoints::CPoint & CWaypoints::ById(int id)
 {
-	list<CPoint>::iterator it = std::find(m_Points.begin(), m_Points.end(), id);
+	std::list<CPoint>::iterator it = std::find(m_Points.begin(), m_Points.end(), id);
 	if (it != m_Points.end())
 		return *it;
 	static CPoint stub(0, 0, 0, L"");
 	return stub;
 }
+// ---------------------------------------------------------------
+std::wstring CWaypoints::GetCreator()
+{
+	return app.GetGpsVPVersion().AswstringWithName();
+}
+// ---------------------------------------------------------------
+void CWaypoints::BeginUpdate()
+{
+	if (0 == m_BeginUpdateCount)
+		m_bWriteRequested = false;
+	m_BeginUpdateCount++;
+}
+void CWaypoints::EndUpdate()
+{
+	m_BeginUpdateCount--;
+	if ((0 == m_BeginUpdateCount) && m_bWriteRequested)
+	{
+		Write();
+	}
+}
+// ---------------------------------------------------------------
+int CWaypoints::GetWaypointModelCount()
+{
+	m_ModelsIdList.clear();
+	for(std::list<CPoint>::iterator it = m_Points.begin();
+		it != m_Points.end();
+		it++)
+	{
+		// Waypoint with a name beginning with "~" are considered as models for new waypoints
+		if (isWptModel(it->m_wstrName))
+			m_ModelsIdList.push_back(it->GetID());
+	}
+	return m_ModelsIdList.size();
+}
+// ---------------------------------------------------------------
+CWaypoints::CPoint & CWaypoints::GetWaypointModel(int modelIndex)
+{
+	int modelId = -1;
+	if (modelIndex < (int)m_ModelsIdList.size())
+		modelId = m_ModelsIdList.at(modelIndex);
+	return ById(modelId);
+}
+// ---------------------------------------------------------------
+bool CWaypoints::IsGPX()
+{
+	std::wstring wstrExt = m_wstrFilename.substr(m_wstrFilename.length()-4, 4);
+	return (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4));
+}
+// ---------------------------------------------------------------
+
+CWaypoints::CPointEditor CWaypoints::CPoint::GetEditor()
+{
+	return CWaypoints::CPointEditor(*this);
+}
+
+// ---------------------------------------------------------------
+int CWaypoints::CPointEditor::GetPropertyCount() const
+{
+	return 5+m_pt.m_OSMPropList.size();
+}
+
+// ---------------------------------------------------------------
+
+std::auto_ptr<CWaypoints::CPointProp> CWaypoints::CPointEditor::GetPropertyByIndex(int iId)
+{
+	switch (iId) 
+	{
+	case 0:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CNameProp(m_pt));
+	case 1:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CLatitudeProp(m_pt, *this));
+	case 2:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CLongitudeProp(m_pt, *this));
+	case 3:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CRadiusProp(m_pt));
+	case 4:
+		return std::auto_ptr<CWaypoints::CPointProp>(new CAltitudeProp(m_pt));
+	default:
+		if (iId-5 < (int)m_pt.m_OSMPropList.size())
+			return std::auto_ptr<CWaypoints::CPointProp>(new CPropProxy(&m_pt.m_OSMPropList[iId-5]));
+		else
+			return std::auto_ptr<CWaypoints::CPointProp>(NULL);
+	}
+}
+
+// ---------------------------------------------------------------
+
+// Returns false if the property can't be removed
+bool CWaypoints::CPointEditor::RemovePropertyByIndex(int iId)
+{	
+	if (iId <5) return false;
+	int iOsmId = iId-5;
+	if ((iOsmId < (int)m_pt.m_OSMPropList.size()) && m_pt.m_OSMPropList[iOsmId].DeleteAllowed())
+	{
+		 m_pt.m_OSMPropList.erase(m_pt.m_OSMPropList.begin()+iOsmId);
+		 return true;
+	}
+	return false;
+}
+
+// ---------------------------------------------------------------
+
+CWaypoints::CPointProp& CWaypoints::CPointEditor::AddOSMProp()
+{
+	m_pt.m_OSMPropList.push_back(CStringProp(nsOSM, L"", L""));
+	return m_pt.m_OSMPropList.back();
+}
+
+// ---------------------------------------------------------------
+
+void CWaypoints::CPointEditor::Commit()
+{
+	if (!m_wstrLon.empty() && !m_wstrLat.empty())
+	{
+		double dLon, dLat;
+		TextToCoord(m_wstrLon, m_wstrLat, dLon, dLat);
+		m_pt.Longitude(dLon);
+		m_pt.Latitude(dLat);
+	}
+}
+
+// ---------------------------------------------------------------

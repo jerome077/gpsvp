@@ -18,7 +18,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "PlatformDef.h"
 #include "Header.h"
 
-inline bool operator == (const pair<CIMGFile, bool> & p, int id)
+inline bool operator == (const std::pair<CIMGFile, bool> & p, int id)
 {
 	return p.first.GetID() == id;
 }
@@ -28,14 +28,14 @@ struct IStatusPainter;
 class CAtlas
 {
 private:
-	typedef list<pair<CIMGFile, bool> > FileList;
+	typedef std::list<std::pair<CIMGFile, bool> > FileList;
 	FileList m_imgFiles;
 #ifndef LINUX
 	HKEY m_hRegKey;
 #endif
 	unsigned int m_uiScale10;
 	IPainter * m_pPainter;
-	list<CIMGFile *> m_listToPaint;
+	std::list<CIMGFile *> m_listToPaint;
 	UInt m_uiBestBits;
 public:
 #ifndef LINUX

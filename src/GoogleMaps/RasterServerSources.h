@@ -1,4 +1,4 @@
-/*
+п»ї/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -16,6 +16,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 #include <list>
+#include "GMCommon.h"
+#include "../VersionNumber.h"
+#include "../GeoPoint.h"
+#include "VariableInterpreter.h"
 
 enum enumGMapType
 {
@@ -28,10 +32,9 @@ enum enumGMapType
 	gtMSSat,
 	gtMSHyb,
 	gtHybrid,
-	gtCount
+	gtFirstWMSMapType,
+	gtLastGMapType = 0x1000
 };
-
-const long LEVEL_REVERSE_OFFSET = 18;
 
 struct GEOFILE_DATA {
 	GEOFILE_DATA(unsigned char t, unsigned char l, unsigned long x, unsigned long y) 
@@ -77,7 +80,7 @@ public:
 	enumGMapType GetType() const { return m_enMyType; };
 	void SetType(enumGMapType en) { m_enMyType = en; };
 
-	// Возвращает URL для заданного data
+	// Return URL for given data
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data) = 0;
 
 	virtual bool GetDiskFileName(
@@ -98,6 +101,11 @@ public:
 		return false;
 	};
 
+	virtual GeoPoint GetDemoPoint(double &scale) const
+	{
+		return GeoPoint(0, 0);
+	};
+
 protected:
 	virtual std::string GetNextPrefix()
 	{
@@ -115,6 +123,8 @@ private:
 	std::list<std::string> m_lstPrefixes;
 	std::list<std::string>::iterator m_it;
 };
+
+typedef CRasterMapSource* PRasterMapSource;
 
 class CNullSource : public CRasterMapSource
 {
@@ -136,7 +146,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%d&y=%d&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
 		return buffer;
 	};
 
@@ -163,7 +173,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%d&y=%d&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
 		return buffer;
 	};
 
@@ -212,7 +222,8 @@ public:
 	virtual bool IsSatellite() const { return true; }
 
 protected:
-	std::string GetSatelliteBlockName(const GEOFILE_DATA& data) const;
+	std::string GetSatelliteBlockName(const GEOFILE_DATA& data) const
+	{	return GoogleXYZ17toQRST(data.X, data.Y, data.level); };
 };
 
 class CMSSource : public CRasterMapSource
@@ -245,7 +256,8 @@ public:
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
 
 protected:
-	std::string GetBlockName(const GEOFILE_DATA& data) const;
+	std::string GetBlockName(const GEOFILE_DATA& data) const
+	{	return GoogleXYZ17toQKey(data.X, data.Y, data.level); };
 };
 
 class CMSMapSource : public CMSSource
@@ -314,7 +326,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "http://tile.openstreetmap.org/%d/%d/%d.png", 17 - data.level, data.X, data.Y);
+		sprintf(buffer, "http://tile.openstreetmap.org/%d/%ld/%ld.png", 17 - data.level, data.X, data.Y);
 		return buffer;
 	};
 
@@ -331,5 +343,64 @@ public:
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+};
+
+
+// Properties for one level of zoom of a user defined Map:
+class CUserMapZoomProp
+{
+public:
+	CStringSchema URLSchema;
+	CStringSchema FilenameSchema;
+	CStringSchema SubpathSchema;
+};
+typedef std::map<std::wstring, CUserMapZoomProp> CUserMapZoomProp_MAP;
+
+
+// User defined map type (mapcfg.ini)
+class CUserWMSMapSource : public CRasterMapSource
+{
+private:
+    std::wstring m_MapName;
+    std::wstring m_CacheRoot;
+	GeoPoint m_DemoPoint; // A point where the map should be visible
+	int m_DemoPointZoomOne;
+
+public:
+	CUserWMSMapSource(long iMapType,
+					  const std::wstring& mapName,
+					  const std::wstring& configFile,
+					  const std::wstring& cacheRoot,
+					  const CVersionNumber& gpsVPVersion);
+	virtual std::string GetRequestURL(const GEOFILE_DATA& data);
+	std::wstring GetName() { return m_MapName; };
+
+	virtual bool GetDiskFileName(
+			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		);
+
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+
+	virtual GeoPoint GetDemoPoint(double &scale) const;
+
+	enum enumConfigErrorType { cecOK,
+		                       cecMapVersionNewerAsGpsVP,
+						       cecError };
+	enumConfigErrorType GetConfigError() { return m_ConfigErrorCode; };
+
+private:
+	// Default map properties:
+	CUserMapZoomProp m_DefaultProps;
+	// Complementary map properties (Key = Name as in the ini file, Value = corresponding CUserMapZoomProp):
+	CUserMapZoomProp_MAP m_MapZoomProps;
+	// Array of pointers on the map properties for each zoom level:
+	CUserMapZoomProp* m_ZoomProps[LEVEL_REVERSE_OFFSET];
+	// Access to the map properties:
+	CUserMapZoomProp& GetZoomProps(long zoomSeventeen) // zoomSeventeen corresponds to 'data.level'
+	{
+		return *m_ZoomProps[17-zoomSeventeen];
+	};
+	enumConfigErrorType m_ConfigErrorCode;
+
 };
 

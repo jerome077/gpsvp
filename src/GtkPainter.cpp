@@ -939,9 +939,9 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		}
 	};
 	virtual void NoFix() { std::cerr << "NoDix" << std::endl;}
-	virtual void Fix(GeoPoint gp, double dHDOP) { m_gpCenter = gp; Redraw(); }
+	virtual void Fix(GeoPoint gp, double, double dHDOP) { m_gpCenter = gp; Redraw(); }
 	virtual void NoVFix() {}
-	virtual void VFix(double dAltitude) {}
+	virtual void VFix(double dAltitude, double) {}
 	virtual void SetConnectionStatus(enumConnectionStatus iStatus) {}
 };
 

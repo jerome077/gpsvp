@@ -19,8 +19,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <list>
 #include <vector>
 
-using namespace std;
-
 #include "PlatformDef.h"
 #include "MapLevel.h"
 #include "SubDivision.h"
@@ -38,7 +36,7 @@ class CTreSubfile
 	//! TRE subfile header data length
 	UInt m_uiHeaderLength;
 	//! Some unnecessary info about file type
-	string m_strType;
+	std::string m_strType;
 	//! Boundary of map area
 	GeoRect m_grBound;
 	//! Offset of levels section
@@ -62,13 +60,13 @@ class CTreSubfile
 	UInt m_uiPointRecSize;
 
 	//! Type for list of levels in the map
-	typedef list<CMapLevel> Levels;
+	typedef std::list<CMapLevel> Levels;
 	//! List of levels in the map
-	list<CMapLevel> m_Levels;
+	std::list<CMapLevel> m_Levels;
 	//! List of subdivisions in the map
-	list<CSubdivision> m_Subdivisions;
+	std::list<CSubdivision> m_Subdivisions;
 	//! Index of subdivisions
-	vector<CSubdivision *> m_SubdivisionsIndex;
+	std::vector<CSubdivision *> m_SubdivisionsIndex;
 
 	//! Subfile with object shapes
 	CRgnSubfile * m_pRgnSubfile;
@@ -108,7 +106,7 @@ public:
 	GeoRect GetRect() {return m_grBound;}
 	void Trim(const GeoRect &rect);
 	bool WillRead() {return !m_fSubdivisionsParsed || !m_fLevelsParsed;}
-	list<UInt> GetLevels();
+	std::list<UInt> GetLevels();
 	void ParseSubdivisions(IStatusPainter * pStatusPainter = 0, int iLevel = 0);
 };
 

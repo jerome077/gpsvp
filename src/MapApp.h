@@ -29,7 +29,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "MRUPoints.h"
 #ifdef UNDER_CE
 #	include <pm.h>
-#endif UNDER_CE
+#endif // UNDER_CE
 #include "Commands.h"
 #include "TypeInfo.h"
 #include "Lock.h"
@@ -42,12 +42,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 struct ObjectInfo
 {
-	wstring wstrName;
+	std::wstring wstrName;
 	GeoPoint gp;
 	UInt uiType;
 	bool fPresent;
 	ObjectInfo() : fPresent(false) {}
-	wstring GetDescription()
+	std::wstring GetDescription()
 	{
 		if (wstrName == L"")
 			return L("(No label)");
@@ -75,25 +75,29 @@ public:
 	bool m_fMoving;
 	int m_iPressedButton;
 	HWND m_hWnd;
-	wstring m_wstrHome;
-	list<CTrack> m_Tracks;
+	std::wstring m_wstrHome;
+	CTrackList m_Tracks;
 	CTrack m_CurTrack;
 	HANDLE m_hPortFile;
 	CRegString m_rsPort;
 	CRegString m_rsPortSpeed;
 	CRegString m_rsCurrentFolder;
+	CRegString m_rsProxy;
 	HANDLE m_hPortThread;
 	HANDLE m_hHttpThread;
+	CRegString m_rsGeoidMode;
 	CNMEAParser m_NMEAParser;
 	CWaypoints m_Waypoints;
 	CWaypoints m_Found;
 	COptionSet m_Options;
 	CRegScalar<int, REG_BINARY> m_riTrackStep;
 	CRegScalar<int, REG_BINARY> m_riCoordFormat;
+	CRegScalar<int, REG_BINARY> m_riUTMZone;
 	CRegScalar<int, REG_BINARY> m_riMetrics;
 	CRegScalar<int, REG_BINARY> m_riWaypointsRadius;
 	CRegScalar<int, REG_BINARY> m_riDetail;
 	CRegScalar<int, REG_BINARY> m_riConnectPeriodMin;
+	CRegScalar<int, REG_BINARY> m_riTrackFormat;
 	CRegScalar<int, REG_BINARY> m_riGMapType;
 	bool volatile m_fExiting;
 	bool volatile m_fStopHttpThread;
@@ -101,6 +105,7 @@ public:
 	CAzimuthMonitor m_monAzimuth;
 	CAzimuthMonitor m_monCourse;
 	CHeightMonitor m_monAltitude;
+	CHeightMonitor m_monSeparation;
 	CDegreeMonitorLon m_monLongitude;
 	CDegreeMonitorLat m_monLatitude;
 	CDistanceMonitor m_monOdometerTotal;
@@ -131,10 +136,10 @@ public:
 	bool m_fCoursePointPresent;
 	GeoPoint m_gpCoursePoint;
 	void FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, wchar_t * wstrFilter, 
-							   wchar_t * strFile, bool fDirectory, bool fMustExist);
+							   wchar_t * strFile, bool fDirectory, bool fMustExist,  bool fOverwritePrompt = false);
 	void AddOdometer(double dDist);
 	wchar_t * m_wstrCmdLine;
-	wstring m_wstrProgName;
+	std::wstring m_wstrProgName;
 	DWORD m_dwConnected;
 	enumConnectionStatus m_iConnectionStatus;
 	bool m_fActive;
@@ -175,9 +180,9 @@ public:
 	CMapApp();
 	~CMapApp();
 	virtual void NoFix();
-	virtual void Fix(GeoPoint gp, double dHDOP);
+	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP);
 	virtual void NoVFix();
-	virtual void VFix(double dAltitude);
+	virtual void VFix(double dAltitude, double dSeparation);
 	void OnLButtonDown(ScreenPoint pt);
 	void OnLButtonUp(ScreenPoint pt);
 	int AddPointScreen(ScreenPoint pt, wchar_t * wcName);
@@ -194,7 +199,12 @@ public:
 	void FileCloseAllMaps();
 	void FileOpenTrack();
 	void FileOpenWaypoints();
+	void FileNewWaypointsWPT();
+	void FileNewWaypointsGPX();
 	void FileImportWaypoints();
+	void FileExportWaypointsWPT();
+	void FileExportWaypointsGPX();
+	void FileExportWaypointsOSM();
 	void FileSaveWaypoints();
 	void FileNextColors();
 	void FileOpenColors();
@@ -215,6 +225,8 @@ public:
 
 	void Create(HWND hWnd, wchar_t * wcHome = L"./");
 	void InitMenu();
+	void InitMenuAllWMSMaps(CMenu& baseMenu);
+	void SetWMSMapType(WPARAM wp);
 	void Paint();
 	void ThreadRoutine();
 	void StartListening();
@@ -255,7 +267,7 @@ public:
 	void OptionsKeymap();
 	void DebugNmeaCommands();
 	void DebugUnknownPointTypes();
-	void DebugCursorHere() {Fix(m_painter.GetCenter(), 50.0);}
+	void DebugCursorHere() {Fix(m_painter.GetCenter(), 0.0, 50.0);}
 	void DebugNoFix() {NoFix();}
 	void DebugShowTime() {m_NMEAParser.DebugShowTime();}
 	CAtlas & GetAtlas() {return m_atlas;}
@@ -270,13 +282,14 @@ public:
 		case -2: return uiScale10 * 4;
 		case -1: return uiScale10 * 2;
 		case 0: return uiScale10;
-		case 1: return max(uiScale10 / 2, 1u);
-		case 2: return max(uiScale10 / 4, 1u);
+		case 1: return (std::max)(uiScale10 / 2, 1u);
+		case 2: return (std::max)(uiScale10 / 4, 1u);
 		}
 		return uiScale10;
 	}
-	void GetTrackList(IListAcceptor * pAcceptor);
+	void GetTrackList(IListAcceptor * pAcceptor) { m_Tracks.GetTrackList(pAcceptor); };
 	void SetConnectPeriod(int nPeriod);
+	void SetTrackFormat(int nTrackFormat);
 	void OnTimer();
 	void ToggleConnect();
 	void ToggleShowCenter();
@@ -297,7 +310,7 @@ public:
 	void RegisterFileTypes();
 	void About();
 	void Exit();
-	wstring FileDialog(wstring wstrMask);
+	std::wstring FileDialog(std::wstring wstrMask);
 	void SetActive(bool fActive)
 	{
 		m_fActive = fActive;
@@ -308,7 +321,7 @@ public:
 			m_painter.Redraw();
 		}
 	}
-	wstring HeightFromFeet(const wchar_t * wcOriginal);
+	std::wstring HeightFromFeet(const wchar_t * wcOriginal);
 	wchar_t * GetTitle() {return L"gpsVP";}
 	void ExportWaypoint(int id, HWND hWnd);
 	Dict & GetDict() {return m_dict;}
@@ -323,6 +336,7 @@ public:
 	void SetSearchURL(const char * url);
 	void ProcessOSMSearchResult(const char * data, int size);
 	void AddSearchResult(const std::string & name, const std::string & lat, const std::string & lon);
+	const CVersionNumber& GetGpsVPVersion();
 };
 
 extern CMapApp app;

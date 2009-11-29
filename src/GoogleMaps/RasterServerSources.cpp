@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -15,13 +15,32 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <windows.h>
 #include "../PlatformDef.h"
 #include "../Lock.h"
+#include "../SimpleIniExt.h"
 #include "RasterServerSources.h"
+#include <sstream>
 
 #ifndef UNDER_CE
 #	define WMKDIR(x) _wmkdir(x)
 #else // UNDER_CE
 #	define WMKDIR(x) CreateDirectory(x, NULL)
 #endif // UNDER_CE
+
+void CreateDirectoryRecursively(const std::wstring& wstrRoot, const std::wstring& wstrSubpath)
+{
+    if (!wstrRoot.empty())
+	{
+		std::wstring wstrSubpathSlash = wstrSubpath;
+		std::replace(wstrSubpathSlash.begin(), wstrSubpathSlash.end(), L'\\', L'/');
+		std::wstringstream wssSubPath(wstrSubpathSlash);
+		std::wstring wstrSubPathItem;
+		std::wstring wstrPath = wstrRoot;
+		while (std::getline(wssSubPath, wstrSubPathItem, L'/'))
+		{
+			wstrPath += L"/" + wstrSubPathItem;
+			WMKDIR(wstrPath.c_str());
+		}
+	}
+}
 
 bool CRasterMapSource::GetDiskGenericFileName(const GEOFILE_DATA& gfdata, const std::wstring& root, 
 	std::wstring &path, const wchar_t *pwszMapType)
@@ -206,46 +225,6 @@ bool CGSatSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) c
 	return true;
 };
 
-std::string CGSatSource::GetSatelliteBlockName(const GEOFILE_DATA& data) const
-{
-	long NumX = data.X;
-	long NumY = data.Y;
-	long level = LEVEL_REVERSE_OFFSET - data.level;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	char buf[24];
-	buf[0] = 't';
-
-	for (long nPos = 1; nPos < level; nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = 'q';
-			} else {
-				buf[nPos] = 'r';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = 't';
-			} else { 
-				buf[nPos] = 's';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level] = '\0';
-	return buf;
-}
-
 bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
 {
 	long nLevel = 0;
@@ -295,46 +274,6 @@ bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) con
 	return true;
 };
 
-std::string CMSSource::GetBlockName(const GEOFILE_DATA& data) const
-{
-	long NumX = data.X;
-	long NumY = data.Y;
-	long level = LEVEL_REVERSE_OFFSET - data.level;
-	long d = 1 << (level - 1);
-
-	if ((NumX < 0) || (NumX > (d-1))) {
-		NumX = NumX % d;
-		if (NumX < 0) {
-			NumX += d;
-		}
-	}
-
-	char buf[24];
-
-	for (long nPos = 0; nPos < (level-1); nPos++) {
-	    d >>= 1;
-		if (NumY < d) {
-			if (NumX < d) {
-				buf[nPos] = '0';
-			} else {
-				buf[nPos] = '1';
-				NumX -= d;
-			}
-		} else {
-			if (NumX < d) {
-				buf[nPos] = '2';
-			} else { 
-				buf[nPos] = '3';
-				NumX -= d;
-			}
-			NumY -= d;
-		}
-	}
-	buf[level-1] = '\0';
-	return buf;
-}
-
-
 COSMSource::COSMSource()
 {
 	SetType(gtOsm);
@@ -361,3 +300,109 @@ bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) co
 		return false;
 	}
 }
+
+CUserWMSMapSource::CUserWMSMapSource(long iMapType,
+					                 const std::wstring& mapName,
+					                 const std::wstring& configFile,
+									 const std::wstring& cacheRoot,
+									 const CVersionNumber& gpsVPVersion)
+	: m_MapName(mapName),
+	  m_CacheRoot(cacheRoot),
+	  m_ConfigErrorCode(cecOK),
+	  m_DemoPoint(0, 0),
+	  m_DemoPointZoomOne(14)
+{
+	SetType(enumGMapType(iMapType));
+
+	CSimpleIniExtW iniFile;
+    iniFile.LoadAnsiOrUtf8File(configFile.c_str());
+
+	if (iniFile.GetSectionSize(L"Tiled MAP") <= 0)
+	{
+		m_ConfigErrorCode = cecError;
+		return;
+	}
+	CVersionNumber mapMinVersion(iniFile.GetValue(L"Tiled MAP", L"gpsVPVersionMin", L"" /*default*/));
+	if (gpsVPVersion < mapMinVersion)
+		m_ConfigErrorCode = cecMapVersionNewerAsGpsVP;
+
+	m_DefaultProps.URLSchema.assign(iniFile.GetValue(L"Tiled MAP", L"URL", L"" /*default*/));
+	m_DefaultProps.FilenameSchema.assign(iniFile.GetValue(L"Tiled MAP", L"Filename", L"" /*default*/));
+	m_DefaultProps.SubpathSchema.assign(iniFile.GetValue(L"Tiled MAP", L"Subpath", L"" /*default*/));
+	for(int zoomOne=1;zoomOne<=LEVEL_REVERSE_OFFSET;zoomOne++)
+	{
+		wchar_t valueName[32];
+		swprintf(valueName, 32, L"ZoomOne%d", zoomOne);
+		std::wstring sMapForZoom = iniFile.GetValue(L"Tiled MAP", valueName, L"" /*default*/);
+		if (sMapForZoom.empty())
+		{
+			m_ZoomProps[zoomOne-1] = &m_DefaultProps;
+		}
+		else
+		{
+			CUserMapZoomProp_MAP::iterator it = m_MapZoomProps.find(sMapForZoom);
+		    if (it != m_MapZoomProps.end())
+			{
+				m_ZoomProps[zoomOne-1] = &(it->second);
+			}
+			else
+			{
+				CUserMapZoomProp& zoomProps = m_MapZoomProps[sMapForZoom];
+				zoomProps.URLSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"URL", L"" /*default*/));
+				zoomProps.FilenameSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"Filename", L"" /*default*/));
+				zoomProps.SubpathSchema.assign(iniFile.GetValue(sMapForZoom.c_str(), L"Subpath", L"" /*default*/));
+				m_ZoomProps[zoomOne-1] = &zoomProps;
+			}
+		}
+	}//for zoomOne
+
+	double DemoPointLon = iniFile.GetDoubleValue(L"Tiled MAP", L"DemoPointLon", L"0" /*default*/);
+	double DemoPointLat = iniFile.GetDoubleValue(L"Tiled MAP", L"DemoPointLat", L"0" /*default*/);
+	m_DemoPointZoomOne = iniFile.GetIntValue(L"Tiled MAP", L"DemoPointZoomOne", L"14" /*default*/);
+	m_DemoPoint = GeoPoint(DemoPointLon, DemoPointLat);
+}
+
+bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+{
+    return true;
+}
+
+std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
+{
+	CUserMapZoomProp& zoomProps = GetZoomProps(data.level);
+	std::wstring wstrUrl = zoomProps.URLSchema.interpret(data.level, data.X, data.Y);
+    std::string strUrl;
+    strUrl.assign(wstrUrl.begin(), wstrUrl.end());
+	//sprintf(buffer, "http://tile.openstreetmap.org/%d/%d/%d.png", 17 - data.level, data.X, data.Y);
+	return strUrl;
+}
+
+bool CUserWMSMapSource::GetDiskFileName(
+		const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+	)
+{
+	CUserMapZoomProp& zoomProps = GetZoomProps(gfdata.level);
+	name = zoomProps.FilenameSchema.interpret(gfdata.level, gfdata.X, gfdata.Y);
+
+	if (!zoomProps.SubpathSchema.empty())
+	{
+		path = zoomProps.SubpathSchema.interpret(gfdata.level, gfdata.X, gfdata.Y);
+		path = m_MapName + L"/" + path;
+		if (!root.empty())
+		{
+			CreateDirectoryRecursively(root, path);
+			path = root + L"/" + path;
+		}
+		return true;
+	}
+	else
+		return GetDiskGenericFileName(gfdata, root, path, m_MapName.c_str());
+}
+
+GeoPoint CUserWMSMapSource::GetDemoPoint(double &scale) const
+{
+	// I don't exactely how to calculate the "scale". I've just tried and
+	// found out that the following works:
+	scale = pow(2.0, 16.0-m_DemoPointZoomOne);
+	return m_DemoPoint;
+};

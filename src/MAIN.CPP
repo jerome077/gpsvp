@@ -2,7 +2,7 @@
 #include "DebugOutput.h"
 #include "Common.h"
 #include "IPainter.h"
-#include "Windows.h"
+#include <windows.h>
 
 
 // TODO: move into separate file

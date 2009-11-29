@@ -22,7 +22,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "File.h"
 #include "Common.h"
 
-void CFile::Open(const fnstring & filename)
+void CFile::Open(const std::fnstring & filename)
 {
 #ifdef USE_STDIO_H
 	// Open file

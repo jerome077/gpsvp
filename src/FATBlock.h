@@ -18,8 +18,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include <vector>
 
-using namespace std;
-
 #include "PlatformDef.h"
 #include "TreSubfile.h"
 
@@ -32,13 +30,13 @@ class CFATBlock
 	//! Is it true block
 	bool m_fIsTrue;
 	//! Name of file the block belong to
-	string m_strFileName;
+	std::string m_strFileName;
 	//! Part of file
 	UInt m_uiPart;
 	//! File size if the block is fist in the file
 	UInt m_uiSize;
 	//! Vector of filesystem block numbers for the file
-	vector<UInt> m_Blocks;
+	std::vector<UInt> m_Blocks;
 	//! Main map object
 	CIMGFile * m_pIMGFile;
 	//! Size of block in Garmin filesystem
@@ -56,7 +54,7 @@ public:
 	//! Dump the block info
 	// void Dump();
 	//! Get name of file to which the block belongs
-	string GetFileName() {return m_strFileName;}
+	std::string GetFileName() {return m_strFileName;}
 	//! Get sequence number of part in the file
 	UInt GetPart() {return m_uiPart;}
 	//! Get file size; valid for first block only

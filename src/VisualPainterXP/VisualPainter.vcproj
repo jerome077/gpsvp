@@ -497,6 +497,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\EGM96Geoid.c"
+				>
+			</File>
+			<File
+				RelativePath="..\EGM96Geoid.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FATBlock.cpp"
 				>
 				<FileConfiguration
@@ -897,6 +905,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIniExt.h"
+				>
+			</File>
+			<File
 				RelativePath="..\SubDivision.cpp"
 				>
 				<FileConfiguration
@@ -1011,6 +1027,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\VersionNumber.h"
+				>
+			</File>
+			<File
 				RelativePath="..\vpGDI.h"
 				>
 			</File>
@@ -1018,10 +1038,38 @@
 				RelativePath="..\WayPoints.cpp"
 				>
 			</File>
+			<Filter
+				Name="FileFormats"
+				>
+				<File
+					RelativePath="..\FileFormats\GPX.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\GPX.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Google Maps"
 			>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.h"
+				>
+			</File>
 			<File
 				RelativePath="..\GoogleMaps\GMFileHolder.cpp"
 				>
@@ -1048,6 +1096,14 @@
 			</File>
 			<File
 				RelativePath="..\GoogleMaps\RasterServerSources.h"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.h"
 				>
 			</File>
 		</Filter>

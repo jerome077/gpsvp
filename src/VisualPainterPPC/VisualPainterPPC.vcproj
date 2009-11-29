@@ -184,7 +184,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/ALIGN:4096 /subsystem:$(CESubsystem) /MACHINE:ARM "
-				AdditionalDependencies="commctrl.lib coredll.lib aygshell.lib Oleaut32.lib secchk.lib ccrtrtti.lib bthutil.lib"
+				AdditionalDependencies="commctrl.lib coredll.lib aygshell.lib Oleaut32.lib secchk.lib ccrtrtti.lib bthutil.lib ws2.lib cellcore.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/VisualPainterPPC.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -1837,6 +1837,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\EGM96Geoid.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FATBlock.h"
 				>
 			</File>
@@ -1986,6 +1990,14 @@
 			</File>
 			<File
 				RelativePath="..\screenpoint.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIni.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SimpleIniExt.h"
 				>
 			</File>
 			<File
@@ -2142,6 +2154,10 @@
 			</File>
 			<File
 				RelativePath="..\TypeInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\VersionNumber.h"
 				>
 			</File>
 			<File
@@ -2351,6 +2367,10 @@
 							AdditionalIncludeDirectories="."
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\EGM96Geoid.c"
+					>
 				</File>
 				<File
 					RelativePath="..\FATBlock.cpp"
@@ -3606,10 +3626,38 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
+			<Filter
+				Name="FileFormats"
+				>
+				<File
+					RelativePath="..\FileFormats\GPX.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\GPX.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\OSM.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Google Maps"
 			>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\GMCommon.h"
+				>
+			</File>
 			<File
 				RelativePath="..\GoogleMaps\GMFileHolder.cpp"
 				>
@@ -3636,6 +3684,14 @@
 			</File>
 			<File
 				RelativePath="..\GoogleMaps\RasterServerSources.h"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\VariableInterpreter.h"
 				>
 			</File>
 		</Filter>

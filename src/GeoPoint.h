@@ -19,13 +19,25 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "PlatformDef.h"
 #include <math.h>
 
+// "Bit width" of fixed-point latitude in GeoPoint. 360 degrees corresponds to 2^GPWIDTH.
+// 24 <= GPWIDTH <= 30
+#define GPWIDTH (30)
+
 struct GeoPoint
 {
 	GeoPoint() {};
-	GeoPoint(int iLongitude, int iLatitude) : lon(iLongitude), lat(iLatitude){}
+	GeoPoint(int igLongitude, int igLatitude) : lon(igLongitude), lat(igLatitude){}
 	GeoPoint(double dLongitude, double dLatitude) : lon (FromDegree(dLongitude)), lat(FromDegree(dLatitude)) {}
 	int lon;
 	int lat;
+	inline int lat24() const  // 24-bit values for interfaces
+	{
+		return lat >> (GPWIDTH - 24);
+	}
+	inline int lon24() const
+	{
+		return lon >> (GPWIDTH - 24);
+	}
 	bool operator == (const GeoPoint & pt) const
 	{
 		return (lon == pt.lon) && (lat == pt.lat);
@@ -35,6 +47,8 @@ struct GeoPoint
 		return !operator ==(pt);
 	}
 };
+
+#define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) << (GPWIDTH - 24), (iLatitude24) << (GPWIDTH - 24))
 
 struct GeoRect
 {
@@ -114,28 +128,29 @@ struct GeoRect
 	}
 };
 
+// Distance in meters between gp1 and gp2
 inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 {
 	int iLonScale100 = cos100((gp1.lat + gp2.lat) / 2);
-	int x = abs(iLonScale100 * (gp1.lon - gp2.lon) / 100);
+	int x = abs(int(iLonScale100 * (int64_t)(gp1.lon - gp2.lon) / 100));
 	int y = abs(gp1.lat - gp2.lat);
 	int c = 1;
 	while (x > (1 << 15) || y > (1 << 15))
 	{
-		x /= 2;
-		y /= 2;
-		c *= 2;
+		x /= 4;
+		y /= 4;
+		c *= 4;
 	}
-	int res = int_sqrt(sqr(x) + sqr(y));
-	res *= 4000;
-	res /= (1 << 12);
-	res *= 10000;
-	res /= (1 << 12);
+	int res = int_sqrt(sqr(x) + sqr(y));  // res < 1.42*2^15
+	res *= 40000000 / (1 << 10);  // res < 0.85*2^31
+	// assert(GPWIDTH >= 10);
+	res /= 1 << (GPWIDTH - 10);
 	res *= c;
 	return res;
 }
 
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2);
+// Return azimuth in degrees (to the right from the North)
 int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo);
 
 #endif // GEOPOINT_H

@@ -30,7 +30,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif
 
 volatile PMADialog g_pNextDialog = 0;
-map<HWND, CMADialog *> g_Dialogs;
+std::map<HWND, CMADialog *> g_Dialogs;
 
 LRESULT CMADialog::ProcessSubWindowMessage(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -111,11 +111,7 @@ LRESULT CMADialog::Process(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		}
 	case WM_WINDOWPOSCHANGED:
 		{
-			m_buttonX = 4;
-			m_buttonY = 4;
-			m_itemY = 0;
 			GetClientRect(hDlg, &m_rectWin);
-
 			WindowPosChanged(hDlg);
 			return TRUE;
 		}
@@ -126,7 +122,8 @@ LRESULT CMADialog::Process(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		}
 	case WM_SETTINGCHANGE:
 		{
-			CommonInit(hDlg);
+			//CommonInit(hDlg);
+			ResetVScrollBar(hDlg);
 			return TRUE;
 		}
 	case WM_CLOSE:
@@ -134,8 +131,108 @@ LRESULT CMADialog::Process(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			EndDialog(hDlg, 0);
 			return TRUE;
 		}
+	case WM_VSCROLL:
+		{
+			VScroll(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
 	}
 	return FALSE;
+}
+
+void CMADialog::VScroll(HWND hDlg, int iScrollParam)
+{
+#ifndef SMARTPHONE
+	// Get vertical scroll bar information
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask  = SIF_ALL;
+	GetScrollInfo(hDlg, SB_VERT, &si);
+	int iCurrentVertPos = si.nPos;
+
+	switch (iScrollParam)
+	{
+	case SB_TOP:
+		si.nPos = si.nMin;
+		break;
+           
+	case SB_BOTTOM:
+		si.nPos = si.nMax;
+		break;
+           
+	case SB_LINEUP:
+		si.nPos -= 1;
+		break;
+           
+	case SB_LINEDOWN:
+		si.nPos += 1;
+		break;
+           
+	case SB_PAGEUP:
+		si.nPos -= si.nPage;
+		break;
+           
+	case SB_PAGEDOWN:
+		si.nPos += si.nPage;
+		break;
+           
+	case SB_THUMBTRACK:
+		si.nPos = si.nTrackPos;
+		break;
+           
+	default:
+		break;
+	}
+	// Set the position and then retrieve it (Windows might change it)
+	si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE | SIF_TRACKPOS;
+	SetScrollInfo(hDlg, SB_VERT, &si, TRUE);
+	GetScrollInfo(hDlg, SB_VERT, &si);
+
+	// Scroll the window
+	if (si.nPos != iCurrentVertPos)
+	{
+	#ifndef UNDER_CE
+		ScrollWindow(hDlg, 0, (iCurrentVertPos - si.nPos), NULL, NULL);
+	#else
+		ScrollWindowEx(hDlg, 0, (iCurrentVertPos - si.nPos), NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
+	#endif
+		UpdateWindow(hDlg);
+	}
+#endif
+	return;
+}
+
+void CMADialog::ResetVScrollBar(HWND hDlg)
+{
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask  = SIF_ALL;
+	GetScrollInfo (hDlg, SB_VERT, &si);
+	int iCurrentVertPos = si.nPos;
+
+#ifdef SMARTPHONE
+	SendMessage(hDlg, DM_RESETSCROLL, false, true);
+#else
+	si.fMask = SIF_RANGE | SIF_POS | SIF_PAGE | SIF_TRACKPOS;
+	si.nMax = m_itemY;
+	si.nPos = 0;
+	RECT rectItem;
+	GetClientRect(hDlg, &rectItem);
+	si.nPage = rectItem.bottom - rectItem.top; 
+	SetScrollInfo(hDlg, SB_VERT, &si, TRUE);
+#endif
+	
+	// Retrieve the position again (Windows might change it) and scroll the content
+	GetScrollInfo(hDlg, SB_VERT, &si);
+	if (si.nPos != iCurrentVertPos)
+	{
+	#ifndef UNDER_CE
+		ScrollWindow(hDlg, 0, (iCurrentVertPos - si.nPos), NULL, NULL);
+	#else
+		ScrollWindowEx(hDlg, 0, (iCurrentVertPos - si.nPos), NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
+	#endif
+		UpdateWindow(hDlg);
+	}
 }
 
 void CEditText::Create(HWND hDlg)

@@ -42,7 +42,7 @@ void CSubFile::Read(Byte * buffer, UInt uiStart, UInt uiCount) const
 	// We start with no data yet
 	UInt uiHaveRead = 0;
 	// Iterate through all our blocks
-	list<BlockInfo>::const_iterator it;
+	std::list<BlockInfo>::const_iterator it;
 	for (it = m_Blocks.begin(); it != m_Blocks.end(); ++it)
 	{
 		// If the end of the block is earlier than start of data we want to read
@@ -72,7 +72,7 @@ void CSubFile::Read(Byte * buffer, UInt uiStart, UInt uiCount) const
 //void CSubFile::Dump()
 //{
 //	// Just dump list of blocks
-//	for (list<BlockInfo>::iterator it = m_Blocks.begin(); it != m_Blocks.end(); ++it)
+//	for (std::list<BlockInfo>::iterator it = m_Blocks.begin(); it != m_Blocks.end(); ++it)
 //	{
 //		it->m_pBlock->Dump();
 //	}

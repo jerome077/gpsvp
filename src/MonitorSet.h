@@ -21,10 +21,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 class CMonitorSet
 {
 private:
-	typedef list< pair<ScreenRect, int> > MonitorRects;
+	typedef std::list<std::pair<ScreenRect, int> > MonitorRects;
 	MonitorRects m_listMonitorRects;
-	map<wstring, IMonitor *> m_mapMonitors;
-	vector<wstring> m_vectMonitors;
+	std::map<std::wstring, IMonitor *> m_mapMonitors;
+	std::vector<std::wstring> m_vectMonitors;
 	HKEY m_hRegKey;
 	UInt m_iActiveMonitor;
 	int m_nRow;
@@ -39,11 +39,11 @@ public:
 	}
 	void AddMonitor(IMonitor * pMonitor)
 	{
-		wstring wstrName = pMonitor->GetId();
+		std::wstring wstrName = pMonitor->GetId();
 		m_mapMonitors[wstrName] = pMonitor;
 		if (m_vectMonitors.size() < 30)
 		{
-			vector<wstring>::iterator it;
+			std::vector<std::wstring>::iterator it;
 			for (it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
 				if (*it == wstrName) break;
 			if (it == m_vectMonitors.end())
@@ -74,8 +74,8 @@ public:
 	}
 	void Load()
 	{
-		vector<Byte> data;
-		unsigned long ulTotalLen = 0;
+		std::vector<Byte> data;
+		DWORD ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
 		RegQueryValueEx(m_hRegKey, L"Monitors", 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)
@@ -90,7 +90,7 @@ public:
 			while (uiPos < ulTotalLen)
 			{
 				int iLen;
-				wstring wstr;
+				std::wstring wstr;
 				memcpy(&iLen, &data[uiPos], sizeof(iLen));
 				uiPos += sizeof(iLen);
 				wstr.assign((wchar_t *)&data[uiPos], iLen);
@@ -101,10 +101,10 @@ public:
 	}
 	void Save()
 	{
-		vector<Byte> data;
-		for (vector<wstring>::iterator it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
+		std::vector<Byte> data;
+		for (std::vector<std::wstring>::iterator it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
 		{
-			wstring wstrFilename = *it;
+			std::wstring wstrFilename = *it;
 			int len = wstrFilename.length();
 			data.insert(data.end(), (const Byte*)&len, (const Byte*)&len + sizeof(len));
 			data.insert(data.end(), (const Byte*)&wstrFilename.c_str()[0], (const Byte*)&wstrFilename.c_str()[0] + sizeof(wchar_t) * len); 

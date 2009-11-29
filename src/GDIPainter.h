@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef GDIPAINTER_H
 #define GDIPAINTER_H
 
-#include "ScreenPoint.h"
+#include "screenpoint.h"
 #include <map>
 #include <hash_map>
 #include <set>
@@ -79,6 +79,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	CRegScalar<GeoPoint, REG_BINARY> m_gpCenter;
 	GeoPoint m_gpCenterCache;
 	GeoPoint m_gpCenterView;
+	int m_rotate; // the map on screen is rotated m_rotate degrees CCW
 	int m_sin100;
 	int m_cos100;
 	bool m_fViewSet;
@@ -164,9 +165,9 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	
 
 	HINSTANCE m_hResourceInst;
-	set<int> m_setUnknownTypes;
+	std::set<int> m_setUnknownTypes;
 	ScreenRect m_srActiveMonitor;
-	map<int, HICON> m_mapIcons;
+	std::map<int, HICON> m_mapIcons;
 	int m_iCurrentStatusIcon;
 	CGDIPainter & operator = (const CGDIPainter &);
 	bool m_fFullScreen;
@@ -178,6 +179,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	Buttons m_buttons;
 	bool m_fShowUnknownTypes;
 	bool m_fShowPolygonLabels;
+	bool m_fShowAreaAsOutline;
 	int m_iStatusLineOffset;
 public:
 	virtual ~CGDIPainter();
@@ -229,6 +231,7 @@ public:
 	ScreenPoint GeoToScreen(const GeoPoint & pt);
 	ScreenRect GeoToScreen(const GeoRect & rect);
 	GeoRect ScreenToGeo(const ScreenRect & rect);
+	int GetScreenRotationAngle() {return m_rotate;}
 	const GeoPoint GetCenter();
 	void PaintScale();
 
@@ -268,6 +271,7 @@ public:
 	void PaintCompass();
 	void SetShowUnknownTypes(bool f) {m_fShowUnknownTypes = f;}
 	void SetShowPolygonLabels(bool f) {m_fShowPolygonLabels = f;}
+	void SetShowAreaAsOutline(bool f) {m_fShowAreaAsOutline = f;}
 	double GetXScale();
 	void SetXScale(double scale);
 	void PrepareScales();
