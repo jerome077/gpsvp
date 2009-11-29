@@ -17,12 +17,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "PlatformDef.h"
 #include <string>
-#include <hash_map>
 
 using namespace std;
 #ifdef LINUX
+	#include <ext/hash_map>
 	using namespace __gnu_cxx;
 #else
+	#include <hash_map>
 	using namespace stdext;
 #endif
 
