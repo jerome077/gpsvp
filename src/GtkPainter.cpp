@@ -157,7 +157,13 @@ inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
 struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPainter, public IGPSClient
 {
 	CAtlas a;
-	DumpPainter() {}
+	DumpPainter() : pressed(false)
+	{
+#ifndef GLIBMM_DEFAULT_SIGNAL_HANDLERS_ENABLED
+		//Connect the signal handler if it isn't already a virtual method override:
+		signal_expose_event().connect(sigc::mem_fun(*this, &DumpPainter::on_expose_event), false);
+#endif //GLIBMM_DEFAULT_SIGNAL_HANDLERS_ENABLED
+	}
 	void AddMap(const fnchar_t * name)
 	{
 		a.Add(name, this);
@@ -359,6 +365,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 	int m_ruiScale10;
 
 	Cairo::RefPtr<Cairo::Context> cr;
+	Glib::RefPtr<Gdk::Pixmap> pixmap;
 	bool started;
 	int m_cos100;
 	int m_sin100;
@@ -380,9 +387,18 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		m_srWindow.Init(ScreenPoint(0, 0));
 		m_srWindow.Append(ScreenPoint(width, height));
 
-    	cr = window->create_cairo_context();
-    	cr->set_line_width(3.0);
-    	cr->set_source_rgb(0.8, 0.0, 0.0);
+		pixmap = Gdk::Pixmap::create(window, width, height);
+		// pixmap->set_colormap(window->get_colormap());
+    	cr = pixmap->create_cairo_context();
+    	// window->create_cairo_context();
+    	cr->set_source_rgb(1, 1, 1);
+		cr->begin_new_path();
+		cr->move_to(0, 0);
+		cr->line_to(width, 0);
+		cr->line_to(width, height);
+		cr->line_to(0, height);
+		cr->line_to(0, 0);
+    	cr->fill_preserve();
     	
     	a.BeginPaint(m_uiScale10Cache, this, this);
 		a.PaintMapPlaceholders(this);
@@ -391,6 +407,8 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		m_srsPoints.Reset();
 		a.Paint(maskPoints, true);
 		cr.clear();
+		static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(window);
+		window->draw_drawable(dc, pixmap, 0, 0, 0, 0, width, height);
 		return true;
 	}
 	GeoPoint m_gpCenterCache;
@@ -756,14 +774,31 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 			ZoomOut();
 	}
 	int orig_x, orig_y;
+	bool pressed;
 	bool on_press(GdkEventButton* event) 
 	{
 		orig_x = event->x;
 		orig_y = event->y;
+		pressed = true;
+		return true;
 	}
 	bool on_release(GdkEventButton* event) 
 	{
 		Move(ScreenDiff(event->x - orig_x, event->y - orig_y));
+		pressed = false;
+		return true;
+	}
+	bool on_motion(GdkEventMotion* event)
+	{
+		if (pressed) {
+			Glib::RefPtr<Gdk::Window> window = get_window();
+			Gtk::Allocation allocation = get_allocation();
+			const int width = allocation.get_width();
+			const int height = allocation.get_height();
+			static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(window);
+			window->clear();
+			window->draw_drawable(dc, pixmap, 0, 0, event->x - orig_x, event->y - orig_y, width, height);
+		}
 	}
 	void Move(ScreenDiff d)
 	{
@@ -958,9 +993,10 @@ int main(int argc, char ** argv)
 	dp.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
 	dp.signal_button_press_event().connect(sigc::mem_fun(dp, &DumpPainter::on_press));
 	dp.signal_button_release_event().connect(sigc::mem_fun(dp, &DumpPainter::on_release));
+	dp.signal_motion_notify_event().connect(sigc::mem_fun(dp, &DumpPainter::on_motion));
 	// window.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
-	dp.set_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK );
-	Glib::Thread::create(sigc::mem_fun(&dp, &DumpPainter::ThreadRoutine), true);
+	dp.set_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK);
+	// Glib::Thread::create(sigc::mem_fun(&dp, &DumpPainter::ThreadRoutine), true);
  	Gtk::Main::run (window);
  	// toolkit.run(dp);
 
