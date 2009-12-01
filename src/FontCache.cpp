@@ -59,7 +59,7 @@ CFontCache::CFontCache() : m_impl(new Impl)
 	lf.lfQuality = ANTIALIASED_QUALITY | CLEARTYPE_COMPAT_QUALITY | CLEARTYPE_QUALITY;
 #endif
 	lf.lfPitchAndFamily = FF_ROMAN | VARIABLE_PITCH;
-	wchar_t wcsName[] = L"Tahoma";
+	tchar_t wcsName[] = T("Tahoma");
 	memcpy(lf.lfFaceName, wcsName, sizeof(wcsName));
 }
 

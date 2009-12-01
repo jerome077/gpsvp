@@ -41,7 +41,7 @@ public:
 #ifndef LINUX
 	void Init(HKEY hRegKey);
 #endif
-	void Add(const fnchar_t * wcFilename, IPainter * pPainter);
+	void Add(const tchar_t * wcFilename, IPainter * pPainter);
 	void BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPainter * pStatusPainter);
 	void PaintMapPlaceholders(IPainter * pPainter);
 	void Paint(UInt uiObjectTypes, bool fDirectPaint);

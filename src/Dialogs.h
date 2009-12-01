@@ -15,18 +15,21 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef DIALOGS_H
 #define DIALOGS_H
 
-#include <windows.h>
-#include <commctrl.h>
-#if defined(UNDER_CE) && !defined(BARECE)
-#	include <aygshell.h>
-#	include <tpcshell.h>
-#endif // UNDER_CE
+#ifndef LINUX
+#	include <windows.h>
+#	include <commctrl.h>
+#	if defined(UNDER_CE) && !defined(BARECE)
+#		include <aygshell.h>
+#		include <tpcshell.h>
+#	endif // UNDER_CE
+#endif
 #include <map>
 #include "Common.h"
 
 #include "Lock.h"
 #include "menubar.h"
 
+#ifndef LINUX
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 extern HINSTANCE g_hInst;
 
@@ -49,8 +52,8 @@ protected:
 public:
 	HWND HWnd() {return m_hControl;}
 	void SetFocus() {::SetFocus(m_hControl);}
-	void SetText(const wchar_t * wcText);
-	void GetText(wchar_t * buffer, int size);
+	void SetText(const tchar_t * wcText);
+	void GetText(tchar_t * buffer, int size);
 	int GetFontHeight(HWND hDlg, HFONT hFont)
 	{
 		TEXTMETRIC m;
@@ -74,12 +77,12 @@ public:
 
 class CCombo : public CControl
 {
-	int AddString(wchar_t * string, bool fSelect);
+	int AddString(tchar_t * string, bool fSelect);
 	HWND m_hControl2;
 public:
 	void Create(HWND hDlg, bool fSort);
-	void AddItem(wchar_t * string, const wchar_t * select);
-	int AddItem(wchar_t * string);
+	void AddItem(tchar_t * string, const tchar_t * select);
+	int AddItem(tchar_t * string);
 	void AddItem(int i, int select);
 	int GetCurSel();
 	void Select(int i);
@@ -91,7 +94,7 @@ public:
 			SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 		return res;
 	}
-	void GetText(wchar_t * buffer, int size);
+	void GetText(tchar_t * buffer, int size);
 };
 
 class CEditText : public CControl
@@ -106,8 +109,8 @@ class CText : public CControl
 {
 public:
 	CText();
-	CText(HWND hDlg, const wchar_t * wcText);
-	void Create(HWND hDlg, const wchar_t * wcText);
+	CText(HWND hDlg, const tchar_t * wcText);
+	void Create(HWND hDlg, const tchar_t * wcText);
 };
 
 class CListView : public CControl, public IListAcceptor, public IListAcceptor2
@@ -117,21 +120,21 @@ private:
 public:
 	void Create(HWND hDlg, bool fSort)
 	{
-		m_hControl = CreateWindow(WC_LISTVIEW, L"ListView", 
+		m_hControl = CreateWindow(WC_LISTVIEW, T("ListView"), 
 					WS_CHILD | LVS_REPORT | LVS_NOCOLUMNHEADER | WS_BORDER | 
 					WS_TABSTOP | WS_VISIBLE
 					| (fSort ? LVS_SORTASCENDING : 0),
 					0, 0, 100, 100, hDlg, 0, g_hInst, 0);	
 	}
-	virtual void AddItem(const wchar_t * wcLabel, int iId)
+	virtual void AddItem(const tchar_t * wcLabel, int iId)
 	{
 		AddItem(wcLabel, iId, 0, iId);
 	}
-	virtual void UpdateSelected(const wchar_t * wcLabel)
+	virtual void UpdateSelected(const tchar_t * wcLabel)
 	{
 		UpdateSelected(wcLabel, 0);
 	}
-	virtual void UpdateSelected(const wchar_t * wcLabel, int iSubItem)
+	virtual void UpdateSelected(const tchar_t * wcLabel, int iSubItem)
 	{
 		int iSelected = MySendMessage(LVM_GETSELECTIONMARK, 0, 0);
 		LVITEM item;
@@ -139,10 +142,10 @@ public:
 		item.mask = LVIF_TEXT;
 		item.iItem = iSelected;
 		item.iSubItem = iSubItem;
-		item.pszText = const_cast<wchar_t *>(wcLabel);
+		item.pszText = const_cast<tchar_t *>(wcLabel);
 		MySendMessage(LVM_SETITEMTEXT, iSelected, (LPARAM)&item);
 	}
-	virtual int AddItem(const wchar_t * wcLabel, int iId, int iSubItem, int lParam) 
+	virtual int AddItem(const tchar_t * wcLabel, int iId, int iSubItem, int lParam) 
 	{
 		LVITEM item;
 		memset(&item, 0, sizeof(item));
@@ -151,20 +154,20 @@ public:
 		item.iItem = iId;
 		item.iSubItem = iSubItem;
 		item.lParam = lParam ? lParam : iId;
-		item.pszText = const_cast<wchar_t *>(wcLabel);
+		item.pszText = const_cast<tchar_t *>(wcLabel);
 		if (iSubItem)
 			return MySendMessage(LVM_SETITEMTEXT, iId, (LPARAM)&item);
 		else
 			return MySendMessage(LVM_INSERTITEM, 0, (LPARAM)&item);
 	}
-	virtual void UpdateCurrent(const wchar_t * wcLabel, int iSubItem)
+	virtual void UpdateCurrent(const tchar_t * wcLabel, int iSubItem)
 	{
 		LVITEM item;
 		memset(&item, 0, sizeof(item));
 		item.mask = LVIF_TEXT;
 		item.iItem = m_iCurrent;
 		item.iSubItem = iSubItem;
-		item.pszText = const_cast<wchar_t *>(wcLabel);
+		item.pszText = const_cast<tchar_t *>(wcLabel);
 		MySendMessage(LVM_SETITEMTEXT, m_iCurrent, (LPARAM)&item);
 	}
 	void Clear()
@@ -179,7 +182,7 @@ public:
 			LVITEM lv;
 			ZeroMemory(&lv, sizeof(lv));
 			lv.mask = LVIF_TEXT | LVIF_PARAM;
-			wchar_t buff[1000];
+			tchar_t buff[1000];
 			lv.iItem = m_iCurrent;
 			lv.pszText = buff;
 			lv.cchTextMax = sizeof(buff);
@@ -196,7 +199,7 @@ public:
 			LVITEM lv;
 			ZeroMemory(&lv, sizeof(lv));
 			lv.mask = LVIF_TEXT | LVIF_PARAM;
-			wchar_t buff[1000];
+			tchar_t buff[1000];
 			lv.iItem = iSelected;
 			lv.pszText = buff;
 			lv.cchTextMax = sizeof(buff);
@@ -211,7 +214,7 @@ public:
 		if (iSelected >= 0)
 			MySendMessage(LVM_DELETEITEM, iSelected, 0);
 	}
-	void AddColumn(wchar_t * wcName, int width, int subItem)
+	void AddColumn(tchar_t * wcName, int width, int subItem)
 	{
 		LVCOLUMN lvcName;
 		lvcName.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
@@ -351,5 +354,7 @@ public:
 	virtual void VScroll(HWND hDlg, int iScrollParam);
 	void ResetVScrollBar(HWND hDlg);
 };
+
+#endif
 
 #endif // DIALOGS_H

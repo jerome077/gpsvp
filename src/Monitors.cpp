@@ -26,11 +26,11 @@ void CAzimuthMonitor::Paint(IMonitorPainter * pPainter)
 {
 	if (m_fSet)
 	{
-		std::wstring str = IntToText(m_iValue) + L"°";
+		std::tstring str = IntToText(m_iValue) + T("°");
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), str.c_str());
 	}
 	else
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), L"-");
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), T("-"));
 }
 
 void CTimeMonitor::PrepareContextMenu(IListAcceptor * pMenu)

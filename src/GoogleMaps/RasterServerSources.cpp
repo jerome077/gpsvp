@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -43,7 +43,7 @@ void CreateDirectoryRecursively(const std::wstring& wstrRoot, const std::wstring
 }
 
 bool CRasterMapSource::GetDiskGenericFileName(const GEOFILE_DATA& gfdata, const std::wstring& root, 
-	std::wstring &path, const wchar_t *pwszMapType)
+	std::fnstring &path, const wchar_t *pwszMapType)
 {
 	wchar_t dir[MAX_PATH];
 	wchar_t zoomname[16];
@@ -139,7 +139,7 @@ CMSHybSource::CMSHybSource()
 	SetType(gtMSHyb);
 }
 
-bool CGMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CGMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
 	std::string::size_type q = name.find(L".png");
 	if (q == std::string::npos)
@@ -161,7 +161,7 @@ bool CGMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) c
 	}
 }
 
-bool CGTopoSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CGTopoSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
 	std::string::size_type q = name.find(L".jpg");
 	if (q == std::string::npos)
@@ -183,7 +183,7 @@ bool CGTopoSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) 
 	}
 }
 
-bool CGSatSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CGSatSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
 	long nLevel = 0;
 
@@ -225,7 +225,7 @@ bool CGSatSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) c
 	return true;
 };
 
-bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CMSSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
 	long nLevel = 0;
 
@@ -279,7 +279,7 @@ COSMSource::COSMSource()
 	SetType(gtOsm);
 }
 
-bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
 	std::string::size_type q = name.find(L".png");
 	if (q == std::string::npos)
@@ -362,7 +362,7 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 	m_DemoPoint = GeoPoint(DemoPointLon, DemoPointLat);
 }
 
-bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const
 {
     return true;
 }
@@ -378,7 +378,7 @@ std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
 }
 
 bool CUserWMSMapSource::GetDiskFileName(
-		const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 	)
 {
 	CUserMapZoomProp& zoomProps = GetZoomProps(gfdata.level);

@@ -73,7 +73,7 @@ private:
 	CMemoryMonitor m_monGPSData;
 	CTextMonitor m_monRawTime;
 #endif
-	std::wstring m_wstrFilename;
+	std::fnstring m_wstrFilename;
 	Byte m_fileBuffer[4096];
 	UInt m_fileBufferPos;
 public:
@@ -88,7 +88,7 @@ public:
 	void NewStream();
 	void ConnectionDisabled();
 	void GetList(IListAcceptor * pAcceptor);
-	void SaveCommands(const wchar_t * wstrFilename);
+	void SaveCommands(const tchar_t * wstrFilename);
 	void Pause();
 	void DebugShowTime();
 #ifndef LINUX
@@ -97,8 +97,8 @@ public:
 	const CTimeMonitor & GetTimeMonitor() const { return m_monTime; }
 #endif
 	void SetTime();
-	void SetFilename(wchar_t * wcFilename);
-	std::wstring GetFilename();
+	void SetFilename(tchar_t * wcFilename);
+	std::tstring GetFilename();
 };
 
 #endif // NMEAPARSER_H

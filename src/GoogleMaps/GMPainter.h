@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -17,16 +17,24 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GMCommon.h"
 #include "GMFileHolder.h"
 #include "../GeoPoint.h"
-#include <windows.h>
-#ifdef USE_GDI_PLUS
-#	include <gdiplus.h>
-#endif // USE_GDI_PLUS
+#ifndef LINUX
+#	include <windows.h>
+#	ifdef USE_GDI_PLUS
+#		include <gdiplus.h>
+#	endif // USE_GDI_PLUS
+#endif
 #include <list>
 #include "../VersionNumber.h"
 
 struct GEOFILE_CONTENTS {
+#ifndef LINUX
 	HBITMAP h;
+#endif
 };
+
+#ifdef LINUX
+typedef void* HDC;
+#endif
 
 struct GEOFILE_RASTERIZED {
 	GEOFILE_DATA data;

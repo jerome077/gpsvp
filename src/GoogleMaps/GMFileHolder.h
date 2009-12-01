@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -52,7 +52,9 @@ public:
 	long GetMinLevel() const { return m_nMinLevel; };
 	bool empty() { return false; };
 
-	HANDLE RelocateFiles(HANDLE h, long nMaxMSec = INFINITE); 
+#ifndef LINUX
+	HANDLE RelocateFiles(HANDLE h, long nMaxMSec = INFINITE);
+#endif
 	bool NeedRelocateFiles(); 
 
 	const CRasterMapSource *GetRMS(enum enumGMapType t) const
@@ -74,14 +76,16 @@ protected:
 	bool RelocateFilesInDir(std::wstring wstrCurPath, std::wstring wstrPartPath);
 	bool DeleteDirIfEmpty(std::wstring sDir, bool bDeleteThis = true);
 
-	bool GetDiskFileName(const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root = L"") const;
+	bool GetDiskFileName(const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root = L"") const;
 
     void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
 
 private:
 	// Common prefix for all raster map folders
 	std::wstring m_strMapsRoot;
+#ifndef LINUX
 	DWORD m_dwMapsAttr;
+#endif
 	// Inited
 	bool m_bInitialized;
 
@@ -100,5 +104,7 @@ private:
 	unsigned char m_nMTServerId;
 	unsigned char m_nKHServerId;
 
+#ifndef LINUX
 	DWORD m_wdLastRequestTicks;
+#endif
 };

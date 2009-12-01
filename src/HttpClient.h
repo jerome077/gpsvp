@@ -31,7 +31,7 @@ public:
 	static std::string m_proxyPort;
 	static std::string m_proxyAuth; // base64-encoded std::string "user:password"
 	
-	CHttpRequest(std::wstring * pwstrHttpStatus);
+	CHttpRequest(std::tstring * pwstrHttpStatus);
 	~CHttpRequest();
 	void Request(const std::string & uri, const std::string & user_agent);
 	bool IsGood() const;
@@ -42,7 +42,7 @@ public:
 	int GetIncoming() const;
 	static void InitSocketsIfNecessary();
 	static void CleanupSocketsIfNecessary();
-	static void SetProxy(std::wstring proxy);
+	static void SetProxy(std::tstring proxy);
 };
 
 // ---------------------------------------------------------------

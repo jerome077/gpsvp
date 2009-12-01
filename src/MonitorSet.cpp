@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 {
-	std::map<int, std::wstring> mapMenu;
+	std::map<int, std::tstring> mapMenu;
 	CMenu mmPopupMenu;
 	mmPopupMenu.Init();
 
@@ -28,7 +28,7 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	int i = 1;
 	mmMonitors.CreateItem(L("None"), 0xbadd);
 	mmMonitors.CreateBreak();
-	for (std::map<std::wstring, IMonitor *>::iterator it = m_mapMonitors.begin(); it != m_mapMonitors.end(); ++it)
+	for (std::map<std::tstring, IMonitor *>::iterator it = m_mapMonitors.begin(); it != m_mapMonitors.end(); ++it)
 	{
 		mmMonitors.CreateItem(GetDict().Translate(it->first.c_str()), (it->first == m_vectMonitors[iMonitor]) ? -1 : i);
 		mapMenu[i] = it->first;
@@ -47,7 +47,7 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	DWORD res = mmPopupMenu.Popup(pt.x, pt.y, hWnd);
 	if (res == 0xbadd)
 	{
-		m_vectMonitors[iMonitor] = L"";
+		m_vectMonitors[iMonitor] = T("");
 		Save();
 	}
 	else if (res == mcoFullScreen)

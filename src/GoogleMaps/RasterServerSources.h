@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -84,10 +84,10 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data) = 0;
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		) = 0;
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const = 0;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const = 0;
 
 	virtual void SetServerPrefixes(std::list<std::string> &lstPrefixes)
 	{
@@ -116,7 +116,7 @@ protected:
 	};
 
 	bool GetDiskGenericFileName(const GEOFILE_DATA& gfdata, const std::wstring& root, 
-		std::wstring &path, const wchar_t *pwszMapType);
+		std::fnstring &path, const wchar_t *pwszMapType);
 
 private:
 	enumGMapType m_enMyType;
@@ -131,11 +131,11 @@ class CNullSource : public CRasterMapSource
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data) { return ""; };
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		) 
 	{ return false;	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const { return false; };
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const { return false; };
 };
 
 class CGMapSource : public CRasterMapSource
@@ -151,18 +151,18 @@ public:
 	};
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		wchar_t filename[MAX_PATH];
+		fnchar_t filename[MAX_PATH];
 
-		wsprintf(filename, L"x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
+		fnsprintf(filename, FN("x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gmap");
 	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 };
 
 class CGTopoSource : public CRasterMapSource
@@ -178,18 +178,18 @@ public:
 	};
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		wchar_t filename[MAX_PATH];
+		fnchar_t filename[MAX_PATH];
 
-		wsprintf(filename, L"x=%d&y=%d&zoom=%d.jpg", gfdata.X, gfdata.Y, gfdata.level);
+		fnsprintf(filename, FN("x=%d&y=%d&zoom=%d.jpg"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gtopo");
 	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 };
 
 class CGSatSource : public CRasterMapSource
@@ -205,19 +205,19 @@ public:
 	};
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		wchar_t filename[MAX_PATH];
+		fnchar_t filename[MAX_PATH];
 
-		wsprintf(filename, L"%S.jpg", GetSatelliteBlockName(gfdata).c_str());
+		fnsprintf(filename, FN("%S.jpg"), GetSatelliteBlockName(gfdata).c_str());
 		name = filename;
 		// wsprintf(zoomname, L"level=%d", name.length() - 4); // 4 = length(.jpg)
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gsat");
 	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 
 	virtual bool IsSatellite() const { return true; }
 
@@ -242,18 +242,18 @@ public:
 	};
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		wchar_t filename[MAX_PATH];
+		fnchar_t filename[MAX_PATH];
 
-		wsprintf(filename, L"%s%S%s", GetMapType().c_str(), GetBlockName(gfdata).c_str(), GetFileExtension().c_str());
+		fnsprintf(filename, FN("%s%S%s"), GetMapType().c_str(), GetBlockName(gfdata).c_str(), GetFileExtension().c_str());
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 
 protected:
 	std::string GetBlockName(const GEOFILE_DATA& data) const
@@ -331,18 +331,18 @@ public:
 	};
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		wchar_t filename[MAX_PATH];
+		fnchar_t filename[MAX_PATH];
 
-		wsprintf(filename, L"osm-x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
+		fnsprintf(filename, FN("osm-x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"osm");
 	};
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 };
 
 
@@ -376,10 +376,10 @@ public:
 	std::wstring GetName() { return m_MapName; };
 
 	virtual bool GetDiskFileName(
-			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		);
 
-	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::fnstring &name) const;
 
 	virtual GeoPoint GetDemoPoint(double &scale) const;
 

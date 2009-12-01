@@ -17,32 +17,39 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <string>
 #include <list>
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#endif
 #include "Common.h"
+#include "PlatformDef.h"
 
 class CKeymap : public IListAcceptor2Acceptor
 {
 private:
 	struct CAction
 	{
-		CAction(WORD wKey, WORD wCommand, const wchar_t * wcsDescription);
+		CAction(WORD wKey, WORD wCommand, const tchar_t * wcsDescription);
 		void AddToList(IListAcceptor2 * pAcceptor);
 		void UpdateCurrent(IListAcceptor2 * pAcceptor);
 		Int m_iId;
 		int m_wKey;
 		WORD m_wCommand;
-		std::wstring m_wstrDescription;
+		std::tstring m_wstrDescription;
 	};
 	std::list<CAction> m_Actions;
+#ifndef LINUX
 	HKEY m_hRegKey;
+#endif
 public:
+#ifndef LINUX
 	void Init(HKEY hRegKey);
+#endif
 	void GetList(IListAcceptor2 * pAcceptor);
 	CKeymap();
 	void SetActionKey(int iAction, int nScancode);
 	bool SetCommandKey(WORD wCommand, int nScancode);
 	UINT Translate(int nScancode);
-	void AddAction(int iCommand, const wchar_t * wcCommand);
+	void AddAction(int iCommand, const tchar_t * wcCommand);
 	void Load();
 	void Save();
 	virtual void UpdateCurrent(int iId, IListAcceptor2 * pAcceptor);

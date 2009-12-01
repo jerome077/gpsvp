@@ -20,13 +20,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif
 
 #ifndef WC_EDIT
-#	define WC_EDIT L"edit"
+#	define WC_EDIT T("edit")
 #endif
 #ifndef WC_STATIC
-#	define WC_STATIC L"Static"
+#	define WC_STATIC T("Static")
 #endif
 #ifndef WC_LISTBOX
-#	define WC_LISTBOX L"ListBox"
+#	define WC_LISTBOX T("ListBox")
 #endif
 
 volatile PMADialog g_pNextDialog = 0;
@@ -238,17 +238,17 @@ void CMADialog::ResetVScrollBar(HWND hDlg)
 void CEditText::Create(HWND hDlg)
 {
 	HFONT f = (HFONT)SendMessage(hDlg, WM_GETFONT, 0, 0);
-	m_hControl = CreateWindow(/*WS_EX_CLIENTEDGE, */WC_EDIT, L"EditText", 
+	m_hControl = CreateWindow(/*WS_EX_CLIENTEDGE, */WC_EDIT, T("EditText"), 
 		WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_NOHIDESEL | 
 		ES_AUTOHSCROLL | WS_TABSTOP,
 		0, 0, 100, GetFontHeight(hDlg, f) + 2, hDlg, 0, g_hInst, 0);
 	MySendMessage(WM_SETFONT, WPARAM(f), 0);
 }
-void CControl::SetText(const wchar_t * wcText)
+void CControl::SetText(const tchar_t * wcText)
 {
 	SetWindowText(m_hControl, wcText);
 }
-void CControl::GetText(wchar_t * buffer, int size)
+void CControl::GetText(tchar_t * buffer, int size)
 {
 	GetWindowText(m_hControl, buffer, size);
 }
@@ -258,15 +258,15 @@ void CEditText::SetInt(int i)
 }
 int CEditText::GetInt(BOOL * fTranslated)
 {
-	wchar_t buffer[100];
-	wchar_t *end;
+	tchar_t buffer[100];
+	tchar_t *end;
 	GetWindowText(m_hControl, buffer, 100);
-	int i = wcstol(buffer, &end, 10);
+	int i = tcstol(buffer, &end, 10);
 	*fTranslated = (buffer[0] != 0) && (*end == 0);
 	return i;
 }
 
-void CCombo::GetText(wchar_t * buffer, int size)
+void CCombo::GetText(tchar_t * buffer, int size)
 {
 #ifdef USE_SPIN_CONTROL
 	int iSel = MySendMessage(LB_GETCURSEL, 0, 0);
@@ -293,7 +293,7 @@ void CCombo::Create(HWND hDlg, bool fSort)
 
 #else
 	
-	m_hControl = CreateWindow(L"combobox", 0, 
+	m_hControl = CreateWindow(T("combobox"), 0, 
 		WS_CHILD | WS_VISIBLE | WS_BORDER  | WS_VSCROLL | WS_TABSTOP | (fSort ? CBS_SORT : 0) |
 		CBS_DROPDOWNLIST,
 		10,17,32,GetFontHeight(hDlg, f) * 8, hDlg, 0, g_hInst, 0);
@@ -312,7 +312,7 @@ void CCombo::Select(int i)
 #endif
 }
 
-int CCombo::AddString(wchar_t * string, bool fSelect)
+int CCombo::AddString(tchar_t * string, bool fSelect)
 {
 #ifdef USE_SPIN_CONTROL
 	int index = MySendMessage(LB_ADDSTRING, 0, LPARAM(string));
@@ -328,14 +328,14 @@ CText::CText()
 {
 }
 
-CText::CText(HWND hDlg, const wchar_t * wcText)
+CText::CText(HWND hDlg, const tchar_t * wcText)
 {
 	Create(hDlg, wcText);
 }
-void CText::Create(HWND hDlg, const wchar_t * wcText)
+void CText::Create(HWND hDlg, const tchar_t * wcText)
 {
 	HFONT f = (HFONT)SendMessage(hDlg, WM_GETFONT, 0, 0);
-	m_hControl = CreateWindow(WC_STATIC, L"Text", 
+	m_hControl = CreateWindow(WC_STATIC, T("Text"), 
 		SS_LEFT | WS_CHILD | WS_VISIBLE, 
 		0, 0, 100, GetFontHeight(hDlg, f), 
 		hDlg, 0, g_hInst, 0);
@@ -343,19 +343,19 @@ void CText::Create(HWND hDlg, const wchar_t * wcText)
 	MySendMessage(WM_SETFONT, WPARAM(f), 0);
 }
 
-int CCombo::AddItem(wchar_t * buffer)
+int CCombo::AddItem(tchar_t * buffer)
 {
 	return AddString(buffer, false);
 }
 
 void CCombo::AddItem(int value, int select)
 {
-	wchar_t buffer[100];
-	swprintf(buffer, 100, L"%d", value);
+	tchar_t buffer[100];
+	stprintf(buffer, 100, T("%d"), value);
 	AddString(buffer, value == select);
 }
 
-void CCombo::AddItem(wchar_t * string, const wchar_t * select)
+void CCombo::AddItem(tchar_t * string, const tchar_t * select)
 {
 	AddString(string, !wcscmp(string, select));
 }

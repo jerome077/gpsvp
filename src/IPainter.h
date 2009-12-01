@@ -41,12 +41,12 @@ struct IPainter
 
 struct IButtonPainter
 {
-	virtual void AddButton(const wchar_t * wcLabel, int iCommand, bool fSelected) = 0;
+	virtual void AddButton(const tchar_t * wcLabel, int iCommand, bool fSelected) = 0;
 };
 
 struct IStatusPainter
 {
-	virtual void PaintText(const wchar_t * wcText) = 0;
+	virtual void PaintText(const tchar_t * wcText) = 0;
 	virtual void SetProgressItems(int iLevel, int iCount) = 0;
 	virtual void SetProgress(int iLevel, int iProgress) = 0;
 	virtual void Advance(int iLevel) = 0;

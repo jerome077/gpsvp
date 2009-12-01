@@ -31,7 +31,7 @@ class CFileDlg : public CMADialog
 	CListView m_list;
 	CEditText m_filename;
 	CText m_path;
-	bool FileExist(const wchar_t * wcFilename)
+	bool FileExist(const tchar_t * wcFilename)
 	{
 		WIN32_FIND_DATA wwd;
 		HANDLE h = FindFirstFile(wcFilename, &wwd);
@@ -54,38 +54,38 @@ class CFileDlg : public CMADialog
 			if (!h || h == INVALID_HANDLE_VALUE || 
 				!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				app.m_rsCurrentFolder = L"";
+				app.m_rsCurrentFolder = T("");
 			}
 			FindClose(h);
 		}
 		int iItem = 0;
 		{
-			if (app.m_rsCurrentFolder() != L"")
-				m_list.AddItem(L"[..]", iItem, 0, 1);
+			if (app.m_rsCurrentFolder() != T(""))
+				m_list.AddItem(T("[..]"), iItem, 0, 1);
 			++iItem;
 		}
 		{
 			// Here we make the list of folders
 			WIN32_FIND_DATA wwd;
-			std::set<std::wstring> setDirectories;
-			std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\*.*";
+			std::set<std::tstring> setDirectories;
+			std::tstring wstrMask = app.m_rsCurrentFolder() + T("\\*.*");
 			HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
 			if (h && h != INVALID_HANDLE_VALUE)
 			{
 				do
 				{
 					if ((wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) 
-						&& !!wcscmp(wwd.cFileName, L".") && !!wcscmp(wwd.cFileName, L".."))
+						&& !!wcscmp(wwd.cFileName, T(".")) && !!wcscmp(wwd.cFileName, T("..")))
 					{
-						std::wstring wstrItem = L"[";
-						wstrItem += std::wstring(wwd.cFileName);
-						wstrItem += L"]";
+						std::tstring wstrItem = T("[");
+						wstrItem += std::tstring(wwd.cFileName);
+						wstrItem += T("]");
 						setDirectories.insert(wstrItem);
 					}
 				} while (FindNextFile(h, &wwd));
 				FindClose(h);
 			}
-			for (std::set<std::wstring>::iterator it = setDirectories.begin();
+			for (std::set<std::tstring>::iterator it = setDirectories.begin();
 				it != setDirectories.end(); ++it)
 			{
 				m_list.AddItem(it->c_str(), iItem, 0, 1);
@@ -95,13 +95,13 @@ class CFileDlg : public CMADialog
 		{
 			// And here we make the list of files
 			WIN32_FIND_DATA wwd;
-			std::set<std::wstring> setFiles;
+			std::set<std::tstring> setFiles;
 			// m_wstrMask could contain several extensions separated with ";"
 			std::wstringstream wssMaskStream(m_wstrMask);
-			std::wstring wstrMaskItem;
+			std::tstring wstrMaskItem;
 			while (std::getline(wssMaskStream, wstrMaskItem, L';'))
 			{
-				std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\" + wstrMaskItem;
+				std::tstring wstrMask = app.m_rsCurrentFolder() + T("\\") + wstrMaskItem;
 				HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
 				if (h && h != INVALID_HANDLE_VALUE)
 				{
@@ -115,21 +115,21 @@ class CFileDlg : public CMADialog
 					FindClose(h);
 				}
 			}
-			for (std::set<std::wstring>::iterator it = setFiles.begin();
+			for (std::set<std::tstring>::iterator it = setFiles.begin();
 				it != setFiles.end(); ++it)
 			{
 				m_list.AddItem(it->c_str(), iItem, 0, 2);
 				++iItem;
 			}
 		}
-		m_path.SetText((std::wstring(L"[") + app.m_rsCurrentFolder() + L"\\]").c_str());
+		m_path.SetText((std::tstring(T("[")) + app.m_rsCurrentFolder() + T("\\]")).c_str());
 		m_filename.SetFocus();
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
 		SetWindowText(hDlg, L("Select file/folder"));
 		m_filename.Create(hDlg);
-		m_path.Create(hDlg, L"");
+		m_path.Create(hDlg, T(""));
 		m_list.Create(hDlg, false);
 		m_list.AddColumn(L("Name"), 300, 0);
 
@@ -163,7 +163,7 @@ class CFileDlg : public CMADialog
 						LVITEM lv;
 						ZeroMemory(&lv, sizeof(lv));
 						lv.mask = LVIF_TEXT | LVIF_PARAM;
-						wchar_t buff[1000];
+						tchar_t buff[1000];
 						lv.iItem = iSelected;
 						lv.pszText = buff;
 						lv.cchTextMax = sizeof(buff);
@@ -190,26 +190,26 @@ class CFileDlg : public CMADialog
 					LVITEM lv;
 					ZeroMemory(&lv, sizeof(lv));
 					lv.mask = LVIF_TEXT | LVIF_PARAM;
-					wchar_t buff[1000];
+					tchar_t buff[1000];
 					lv.iItem = iSelected;
 					lv.pszText = buff;
 					lv.cchTextMax = sizeof(buff);
 					SendMessage(m_list.HWnd(), LVM_GETITEM, 0, LPARAM(&lv));
 					if (buff[0] == L'[' && lv.lParam == 1)
 					{
-						wchar_t * ch = wcschr(buff + 1, ']');
+						tchar_t * ch = wcschr(buff + 1, ']');
 						if (ch)
 							*ch = 0;
-						if (!wcscmp(buff + 1, L".."))
+						if (!wcscmp(buff + 1, T("..")))
 						{
-							std::wstring wstrCurrentFolder = app.m_rsCurrentFolder();
-							wstrCurrentFolder.erase(wstrCurrentFolder.find_last_of(L"\\"));
+							std::tstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							wstrCurrentFolder.erase(wstrCurrentFolder.find_last_of(T("\\")));
 							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
 						}
 						else
 						{
-							std::wstring wstrCurrentFolder = app.m_rsCurrentFolder();
-							wstrCurrentFolder += L"\\";
+							std::tstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							wstrCurrentFolder += T("\\");
 							wstrCurrentFolder += buff + 1;
 							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
 						}
@@ -231,11 +231,11 @@ class CFileDlg : public CMADialog
 
 				// Accept filename typede in top dialog
 				{
-					wchar_t buff[MAX_PATH + 1];
+					tchar_t buff[MAX_PATH + 1];
 					m_filename.GetText(buff, MAX_PATH);
 					if (buff[0])
 					{
-						std::wstring wstrResult = app.m_rsCurrentFolder() + L"\\" + buff;
+						std::tstring wstrResult = app.m_rsCurrentFolder() + T("\\") + buff;
 
 						if (m_fFileMustExist)
 						{
@@ -267,20 +267,20 @@ class CFileDlg : public CMADialog
 			}
 			return;
 		case dmcCancel:
-			m_wstrResult = L"";
+			m_wstrResult = T("");
 			EndDialog(hDlg, 0);
 			return;
 		}
 	}
 public:
-	std::wstring m_wstrMask;
-	std::wstring m_wstrResult;
+	std::tstring m_wstrMask;
+	std::tstring m_wstrResult;
 	bool m_fFileMustExist;
 	bool m_fProject;
 	bool m_fSave;
 };
 
-std::wstring FileDialog(std::wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
+std::tstring FileDialog(std::tstring wstrMask, MyOPENFILENAME * pof, bool fSave)
 {
 	static CFileDlg dlg;
 	g_pNextDialog = &dlg;
@@ -295,9 +295,9 @@ std::wstring FileDialog(std::wstring wstrMask, MyOPENFILENAME * pof, bool fSave)
 
 bool MyGetOpenFileName(MyOPENFILENAME * pof)
 {
-	wchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
-	std::wstring wstrResult = FileDialog(wcFilter, pof, false);
-	if (wstrResult == L"")
+	tchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
+	std::tstring wstrResult = FileDialog(wcFilter, pof, false);
+	if (wstrResult == T(""))
 		return false;
 	wcsncpy(pof->lpstrFile, wstrResult.c_str(), pof->nMaxFile);
 	return true;
@@ -305,9 +305,9 @@ bool MyGetOpenFileName(MyOPENFILENAME * pof)
 
 bool MyGetSaveFileName(MyOPENFILENAME * pof)
 {
-	wchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
-	std::wstring wstrResult = FileDialog(wcFilter, pof, true);
-	if (wstrResult == L"")
+	tchar_t * wcFilter = pof->lpstrFilter + wcslen(pof->lpstrFilter) + 1;
+	std::tstring wstrResult = FileDialog(wcFilter, pof, true);
+	if (wstrResult == T(""))
 		return false;
 	wcsncpy(pof->lpstrFile, wstrResult.c_str(), pof->nMaxFile);
 	return true;

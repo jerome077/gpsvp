@@ -17,7 +17,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "screenpoint.h"
 #include <map>
-#include <hash_map>
+#ifdef LINUX
+	#include <ext/hash_map>
+	#define stdext __gnu_cxx
+#else
+	#include <hash_map>
+#endif
 #include <set>
 #include <vector>
 #include <list>
@@ -33,23 +38,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 extern HWND g_hwndCB;
 #endif
 #endif
-
-struct IMonitorPainter
-{
-	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText) = 0;
-	virtual void DrawMonitorLabel(const wchar_t * wcLabel) = 0;
-	virtual ScreenPoint GetMonitorSize() = 0;
-	virtual void DrawBar(const ScreenRect & srBar) = 0;
-	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive) = 0;
-};
-
-struct IMonitor
-{
-	virtual void Paint(IMonitorPainter * pPainter) = 0;
-	virtual const wchar_t * GetId() = 0;
-	virtual void PrepareContextMenu(IListAcceptor * pMenu) = 0;
-	virtual void ProcessMenuCommand(int i) = 0;
-};
 
 template<class T, int n> class myvector
 {
@@ -143,7 +131,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 		ciMinZoom = 1,		//!< Minimum zoom
 		ciMaxZoom = 100000	//!< Maximum zoom
 	};
-	const wchar_t * m_wcName;
+	const tchar_t * m_wcName;
 	SIZE m_LabelSize;
 	Int m_iWriteSegment;
 	bool m_fLabelSizeKnown;
@@ -185,13 +173,13 @@ public:
 	virtual ~CGDIPainter();
 	void Init(HWND hWnd, HKEY hRegKey);
 	// IPainter
-	virtual void StartPolygon(UInt uiType, const wchar_t * wcName);
-	virtual void StartPolyline(UInt uiType, const wchar_t * wcName);
+	virtual void StartPolygon(UInt uiType, const tchar_t * wcName);
+	virtual void StartPolyline(UInt uiType, const tchar_t * wcName);
 	virtual void FinishObject();
 	virtual void AddPoint(const GeoPoint & pt);
 	virtual bool WillPaint(const GeoRect & rect);
 	virtual void SetView(const GeoPoint & gpCenter, bool fManual);
-	virtual void PaintPoint(UInt uiType, const GeoPoint & gpPoint, const wchar_t * wcName);
+	virtual void PaintPoint(UInt uiType, const GeoPoint & gpPoint, const tchar_t * wcName);
 	virtual void SetLabelMandatory();
 	virtual GeoRect GetRect();
 
@@ -202,7 +190,7 @@ public:
 	void BeginPaintLite(VP::DC hdc);
 	void EndPaint();
 	//! Initialize tools
-	void InitTools(const wchar_t * strFilename);
+	void InitTools(const tchar_t * strFilename);
 	//! Zoom view in
 	void ZoomIn();
 	//! Zoom view out
@@ -235,10 +223,10 @@ public:
 	const GeoPoint GetCenter();
 	void PaintScale();
 
-	void PaintStatusLine(const wchar_t * wcName);
-	void PaintLowMemory(const wchar_t * wcString1, const wchar_t * wcString2);
-	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText);
-	virtual void DrawMonitorLabel(const wchar_t * wcLabel);
+	void PaintStatusLine(const tchar_t * wcName);
+	void PaintLowMemory(const tchar_t * wcString1, const tchar_t * wcString2);
+	virtual void DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText);
+	virtual void DrawMonitorLabel(const tchar_t * wcLabel);
 	virtual ScreenPoint GetMonitorSize();
 	virtual void DrawBar(const ScreenRect & srBar);
 	void SetShowMonitors(bool fShow)
@@ -256,7 +244,7 @@ public:
 	ScreenPoint GetScreenCenter(){return m_spWindowCenter;}
 	ScreenPoint GetActiveMonitorCenter(){return m_srActiveMonitor.Center();}
 	void PaintStatusIcon(int iIcon);
-	void ParseString(const char * buff, const std::wstring & wstrBase);
+	void ParseString(const char * buff, const std::tstring & wstrBase);
 	void InitToolsCommon();
 	void InitTools(int iScheme);
 	bool IsFullScreen(){return m_fFullScreen;}
@@ -264,7 +252,7 @@ public:
 	void OnTimer() {AutoLock l; if (m_iManualTimer > 0) --m_iManualTimer;}
 	bool ManualMode() {AutoLock l; return m_iManualTimer > 0;}
 	void ResetManualMode() {AutoLock l; m_iManualTimer = 0;}
-	virtual void AddButton(const wchar_t * wcLabel, int iCommand, bool fSelected);
+	virtual void AddButton(const tchar_t * wcLabel, int iCommand, bool fSelected);
 	void ClearButtons();
 	int CheckButton(const ScreenPoint & sp);
 	CFontCache & GetFontCache() {return m_FontCache;}

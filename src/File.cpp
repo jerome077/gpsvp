@@ -27,7 +27,7 @@ void CFile::Open(const std::fnstring & filename)
 #ifdef USE_STDIO_H
 	// Open file
 	#ifndef LINUX
-	m_pFile = wfopen(filename.c_str(), L"rb");
+	m_pFile = wfopen(filename.c_str(), T("rb"));
 	#else
 	m_pFile = fopen(filename.c_str(), "rb");
 	#endif

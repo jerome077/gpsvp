@@ -81,8 +81,8 @@
 
 /* ---------------------------------------------------------------------
     The following 4 definitions are compiler-specific.
-    The C standard does not guarantee that wchar_t has at least
-    16 bits, so wchar_t is no less portable than unsigned short!
+    The C standard does not guarantee that tchar_t has at least
+    16 bits, so tchar_t is no less portable than unsigned short!
     All should be unsigned values to avoid sign extension during
     bit mask & shift operations.
 ------------------------------------------------------------------------ */

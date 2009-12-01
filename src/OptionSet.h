@@ -21,9 +21,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 class CMonitorSet;
 class CMenuBar;
 
-struct HKEY__;
-typedef HKEY__ * HKEY;
-
 class COptionSet
 {
 	struct Option;
@@ -33,7 +30,7 @@ public:
 	COptionSet();
 	~COptionSet();
 	void Init(HKEY hKey, CMonitorSet * pMonitorSet);
-	void AddOption(wchar_t * wcLabel, wchar_t * wcRegName, bool fDefault, int iCommand);
+	void AddOption(const tchar_t * wcLabel, const tchar_t * wcRegName, bool fDefault, int iCommand);
 	void CheckMenu(CMenuBar & menuBar);
 	bool ProcessCommand(int iCommand, CMenuBar & menuBar);
 	bool operator [] (int iCommand);

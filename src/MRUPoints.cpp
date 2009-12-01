@@ -15,9 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "MRUPoints.h"
 #include "MapApp.h"
 
-void CMRUPoints::AddPoint(GeoPoint gp, const wchar_t * wcName)
+void CMRUPoints::AddPoint(GeoPoint gp, const tchar_t * wcName)
 {
-	std::wstring wstrName = wcName;
+	std::tstring wstrName = wcName;
 
 	Points::iterator it;
 	for (it = m_points.begin(); it != m_points.end(); ++it)

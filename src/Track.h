@@ -15,7 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef TRACK_H
 #define TRACK_H
 
-#include <ole2.h>
+#ifndef LINUX
+#	include <ole2.h>
+#endif
 #include "Common.h"
 #include <list>
 #include <vector>
@@ -24,9 +26,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "IPainter.h"
 #include "Lock.h"
 #include "VersionNumber.h"
-#ifndef UNDER_WINE
+#ifndef LINUX
 #	include "FileFormats/GPX.h"
-#endif // UNDER_WINE
+#endif // LINUX
 
 //! Track representation, both active and loaded
 class CTrack
@@ -51,8 +53,8 @@ class CTrack
 	Track m_CompressedTrack;
 	int m_nPointCount;
 	//! Name for file
-	std::wstring m_wstrFilenameInt;
-	std::wstring m_wstrFilenameExt;
+	std::tstring m_wstrFilenameInt;
+	std::tstring m_wstrFilenameExt;
 	//! The track will begin with next point
 	bool m_fBeginTrack;
 	bool m_fBeginFile;
@@ -76,7 +78,7 @@ class CTrack
 	std::string m_strGPXName;
 	fpos_t m_FilePosForAdding;
 
-	const wchar_t * GetFileName();
+	const tchar_t * GetFileName();
 	void CreateFile();
 	void CreateFilePLT();
 	void CreateFileGPX();
@@ -117,13 +119,13 @@ public:
 	void PaintUnlocked(IPainter * pPainter, unsigned int uiType);
 	//! Tell the track that it is broken (missing points)
 	void Break();
-	void Read(const std::wstring& wstrFilename);
-	void ReadPLT(const std::wstring& wstrFilename);
-#ifndef UNDER_WINE
-	void ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename);
-#endif // UNDER_WINE
-	void ReadFirstTrackFromGPX(const std::wstring& wstrFilename);
-	const std::wstring GetExtFilename();
+	void Read(const std::tstring& wstrFilename);
+	void ReadPLT(const std::tstring& wstrFilename);
+#ifndef LINUX
+	void ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::tstring& wstrFilename);
+#endif // LINUX
+	void ReadFirstTrackFromGPX(const std::tstring& wstrFilename);
+	const std::tstring GetExtFilename();
 	bool IsPresent();
 	GeoPoint GetLastPoint();
 	void SetAltitude(double dAltitude);
@@ -170,8 +172,8 @@ class CTrackList
 {
 protected:
 	std::list<CTrack> m_Tracks;
-	bool OpenTrackPLT(const std::wstring& wstrFile);
-	bool OpenTracksGPX(const std::wstring& wstrFile);
+	bool OpenTrackPLT(const std::tstring& wstrFile);
+	bool OpenTracksGPX(const std::tstring& wstrFile);
 public:
 	typedef std::list<CTrack>::iterator iterator;
 	iterator begin() { return m_Tracks.begin(); };
@@ -179,7 +181,7 @@ public:
 	CTrack& Last() { return m_Tracks.back(); };
 
 	void GetTrackList(IListAcceptor * pAcceptor);
-	bool OpenTracks(const std::wstring& wstrFile);
+	bool OpenTracks(const std::tstring& wstrFile);
 	void CloseTrack(Int iIndex);
 };
 

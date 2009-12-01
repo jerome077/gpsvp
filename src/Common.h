@@ -27,7 +27,7 @@ Int FromDegree(double dDegree);
 void Check(bool fCondition);
 //! Make double from std::string
 double myatof(const char * str);
-double myatof(const wchar_t * str);
+double myatof(const tchar_t * str);
 
 /*
 	//! Template implementation for swapping values
@@ -47,28 +47,28 @@ T sqr(T a)
 	return a * a;
 }
 
-std::wstring DoubleToText(double dDouble, int iDigits = 1);
+std::tstring DoubleToText(double dDouble, int iDigits = 1);
 std::string DoubleToStr(double dDouble, int iDigits = 1);
 
-std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
-double TextToDegree(const wchar_t * wcText);
+std::tstring DegreeToText(double dDegree, bool fLat, int iCoordFormat);
+double TextToDegree(const tchar_t * wcText);
 // Some coordinates must know WGS84-longitude and latitude at the same time.
-void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& wstrLat);
-void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, double& dLon, double& dLat);
-std::wstring CoordLabelLon();
-std::wstring CoordLabelLat();
+void CoordToText(double dLon, double dLat, std::tstring& wstrLon, std::tstring& wstrLat);
+void TextToCoord(const std::tstring& wstrLon, const std::tstring& wstrLat, double& dLon, double& dLat);
+std::tstring CoordLabelLon();
+std::tstring CoordLabelLat();
 
-std::wstring IntToText(int iInt);
-std::wstring IntToHex(int iInt);
-std::wstring DistanceToText(double dDistance);
-std::wstring HeightToText(double dDistance);
-std::wstring SpeedToText(double dDistance);
-std::wstring MemoryToText(unsigned long ulMemory);
-inline std::wstring a2w(const char * s)
+std::tstring IntToText(int iInt);
+std::tstring IntToHex(int iInt);
+std::tstring DistanceToText(double dDistance);
+std::tstring HeightToText(double dDistance);
+std::tstring SpeedToText(double dDistance);
+std::tstring MemoryToText(unsigned long ulMemory);
+inline std::tstring a2w(const char * s)
 {
-	wchar_t buff[1000];
-	swprintf(buff, 1000, L"%S", s);
-	return std::wstring(buff);
+	tchar_t buff[1000];
+	stprintf(buff, 1000, T("%S"), s);
+	return std::tstring(buff);
 }
 
 struct IListAcceptor
@@ -79,9 +79,9 @@ struct IListAcceptor
 
 struct IListAcceptor2
 {
-	virtual int AddItem(const wchar_t * wcLabel, int iId, int iSubItem, int lParam) = 0;
-	virtual void UpdateCurrent(const wchar_t * wcLabel, int iSubItem) = 0;
-	virtual void UpdateSelected(const wchar_t * wcLabel, int iSubItem) = 0;
+	virtual int AddItem(const tchar_t * wcLabel, int iId, int iSubItem, int lParam) = 0;
+	virtual void UpdateCurrent(const tchar_t * wcLabel, int iSubItem) = 0;
+	virtual void UpdateSelected(const tchar_t * wcLabel, int iSubItem) = 0;
 };
 
 struct IListAcceptor2Acceptor
@@ -130,15 +130,15 @@ static const double cdYard = 0.9144;
 static const double pi = 3.1415926535897932;
 std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename);
 
-#define L(x) (GetDict().Translate(L##x))
+#define L(x) (GetDict().Translate(T(x)))
 
 class Dict
 {
 public:
 	Dict();
 	~Dict();
-	void Read(const wchar_t * wcFilename);
-	wchar_t * Translate(const wchar_t * wcOriginal);
+	void Read(const tchar_t * wcFilename);
+	tchar_t * Translate(const tchar_t * wcOriginal);
 private:
 	struct Data;
 	Data * m_data;
@@ -182,7 +182,7 @@ void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double&
 //  - utmZone = used zone (should NOT be 0!)
 // ouput:
 //  - a text describing the zone
-std::wstring UTMZoneToLongText(int utmZone);
+std::tstring UTMZoneToLongText(int utmZone);
 
 // ---------------------------------------------------------------
 

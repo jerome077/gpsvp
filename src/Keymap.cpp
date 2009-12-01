@@ -17,9 +17,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <vector>
 
-extern std::wstring FormatKey(int nScancode);
+extern std::tstring FormatKey(int nScancode);
 
-CKeymap::CAction::CAction(WORD wKey, WORD wCommand, const wchar_t * wcsDescription)
+CKeymap::CAction::CAction(WORD wKey, WORD wCommand, const tchar_t * wcsDescription)
 {
 	static int iNextId = 0;
 	m_iId = iNextId++;
@@ -46,11 +46,11 @@ void CKeymap::Load()
 	bool fSuccess = false;
 	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
-	std::wstring wstrKey = L"Keymap";
+	std::tstring wstrKey = T("Keymap");
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	if (!ulTotalLen)
 	{
-		wstrKey = L"KeymapDef";
+		wstrKey = T("KeymapDef");
 		RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	}
 	if (ulTotalLen > 0)
@@ -93,9 +93,9 @@ void CKeymap::Save()
 		data.insert(data.end(), (const Byte*)&wCommand, (const Byte*)&wCommand + sizeof(wCommand));
 		data.insert(data.end(), (const Byte*)&iScancode, (const Byte*)&iScancode + sizeof(iScancode));
 	}
-	wchar_t buf[1000];
-	wsprintf(buf, L"%d", data.size());
-	RegSetValueEx(m_hRegKey, L"Keymap", 0, REG_BINARY, &data[0], data.size());
+	tchar_t buf[1000];
+	stprintf(buf, 1000, T("%d"), data.size());
+	RegSetValueEx(m_hRegKey, T("Keymap"), 0, REG_BINARY, &data[0], data.size());
 }
 
 void CKeymap::Init(HKEY hRegKey)
@@ -147,7 +147,7 @@ UINT CKeymap::Translate(int nScancode)
 		return mcoDebugMode;
 	return -1;
 }
-void CKeymap::AddAction(int iCommand, const wchar_t * wcCommand)
+void CKeymap::AddAction(int iCommand, const tchar_t * wcCommand)
 {
 	m_Actions.push_back(CAction(0, iCommand, wcCommand));
 }

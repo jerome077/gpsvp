@@ -18,7 +18,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <memory>
 #include <iostream>
 #include <string.h>
-#ifndef UNDER_WINE
+#ifndef LINUX
 #	include <winsock2.h>
 #	include <ws2tcpip.h>
 #else
@@ -31,7 +31,7 @@ const char * method = "GET";
 
 struct CHttpRequest::Data
 {
-	Data(std::wstring * pwstrHttpStatus) : _pwstrHttpStatus(pwstrHttpStatus), _h(0) {}
+	Data(std::tstring * pwstrHttpStatus) : _pwstrHttpStatus(pwstrHttpStatus), _h(0) {}
 	void Request(const std::string & uri, const std::string & user_agent);
 	std::string _error;
 	std::string _protocol;
@@ -39,7 +39,7 @@ struct CHttpRequest::Data
 	std::string _description;
 	int _size;
 	std::vector<char> _response;
-	std::wstring * _pwstrHttpStatus;
+	std::tstring * _pwstrHttpStatus;
 	HANDLE _h;
 	void Error(const char * descr);
 	int _incoming;
@@ -51,10 +51,10 @@ void CHttpRequest::Data::Error(const char * descr)
 	_error = descr;
 	if (_pwstrHttpStatus)
 	{
-		wchar_t buffer[1000];
-#ifndef UNDER_WINE
-		wsprintf(buffer, L"%S (%d)", descr, WSAGetLastError());
-#endif // UNDER_WINE
+		tchar_t buffer[1000];
+#ifndef LINUX
+		stprintf(buffer, 1000, T("%S (%d)"), descr, WSAGetLastError());
+#endif // LINUX
 		*_pwstrHttpStatus = buffer;
 	}
 }
@@ -65,11 +65,11 @@ void CHttpRequest::InitSocketsIfNecessary()
 {
 	if (!bSocketsInitialized)
 	{
-#ifndef UNDER_WINE
+#ifndef LINUX
 		WSADATA wsaData;
 		int wsaRes = WSAStartup(MAKEWORD(1, 1), &wsaData);
 		bSocketsInitialized = (0 == wsaRes);
-#endif // UNDER_WINE
+#endif // LINUX
 	}
 }
 
@@ -77,13 +77,13 @@ void CHttpRequest::CleanupSocketsIfNecessary()
 {
 	if (bSocketsInitialized)
 	{
-#ifndef UNDER_WINE
+#ifndef LINUX
 		WSACleanup();
-#endif // UNDER_WINE
+#endif // LINUX
 	}
 }
 
-CHttpRequest::CHttpRequest(std::wstring * pwstrHttpStatus) : _data(new Data(pwstrHttpStatus))
+CHttpRequest::CHttpRequest(std::tstring * pwstrHttpStatus) : _data(new Data(pwstrHttpStatus))
 {
 }
 
@@ -103,9 +103,9 @@ std::string CHttpRequest::m_proxyPort;
 std::string CHttpRequest::m_proxyAuth;
 
 // assign proxy variables to static members of CHttpRequest
-void CHttpRequest::SetProxy(std::wstring prox) 
+void CHttpRequest::SetProxy(std::tstring prox) 
 {
-	const wchar_t* wbuf=prox.c_str();
+	const tchar_t* wbuf=prox.c_str();
 	char buf[101];
 	int i;
 	i=-1;
@@ -113,7 +113,7 @@ void CHttpRequest::SetProxy(std::wstring prox)
 		i++;
 		buf[i]=(char) wbuf[i];
 	} while (buf[i]!=0 && i<100);
-	std::string proxy(buf); // std::wstring to std::string - conversion  may work bad for non-ascii characters!
+	std::string proxy(buf); // std::tstring to std::string - conversion  may work bad for non-ascii characters!
 
 	std::string server;
 	std::string credentials;

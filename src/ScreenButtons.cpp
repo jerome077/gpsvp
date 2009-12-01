@@ -26,10 +26,10 @@ struct CScreenButtons::Data
 {
 	struct Action
 	{
-		Action() : label(L""), command(0) {}
-		Action(const wchar_t * label_, int command_) : label(label_), command(command_) {};
+		Action() : label(T("")), command(0) {}
+		Action(const tchar_t * label_, int command_) : label(label_), command(command_) {};
 		bool operator == (int i) {return command == i;}
-		std::wstring label;
+		std::tstring label;
 		int command;
 	};
 	int selected;
@@ -91,7 +91,7 @@ bool CScreenButtons::ContextMenu(int iButton, const ScreenPoint & sp, HWND hwnd)
 	return false;
 }
 
-void CScreenButtons::AddAction(int iCommand, const wchar_t * wcCommand)
+void CScreenButtons::AddAction(int iCommand, const tchar_t * wcCommand)
 {
 	m_data->actions.push_back(Data::Action(wcCommand, iCommand));
 }
@@ -117,13 +117,13 @@ void CScreenButtons::Load()
 	bool fSuccess = false;
 	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
-	RegQueryValueEx(m_data->key, L"ScreenButtons", 0, &dwType, 0, &ulTotalLen);
+	RegQueryValueEx(m_data->key, T("ScreenButtons"), 0, &dwType, 0, &ulTotalLen);
 	if (ulTotalLen > 0)
 	{
 		if (dwType != REG_BINARY)
 			return;
 		data.resize(ulTotalLen);
-		if (RegQueryValueEx(m_data->key, L"ScreenButtons", 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
+		if (RegQueryValueEx(m_data->key, T("ScreenButtons"), 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
 			return;
 		unsigned int iPos = 0;
 		while (iPos < ulTotalLen)
@@ -151,5 +151,5 @@ void CScreenButtons::Save()
 		WORD wCommand = it->second.command;
 		data.insert(data.end(), (const Byte*)&wCommand, (const Byte*)&wCommand + sizeof(wCommand));
 	}
-	RegSetValueEx(m_data->key, L"ScreenButtons", 0, REG_BINARY, &data[0], data.size());
+	RegSetValueEx(m_data->key, T("ScreenButtons"), 0, REG_BINARY, &data[0], data.size());
 }

@@ -20,7 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 extern HINSTANCE g_hInst;
 
-void CGDIPainter::StartPolygon(UInt uiType, const wchar_t * wcName)
+void CGDIPainter::StartPolygon(UInt uiType, const tchar_t * wcName)
 {
 	// Record type
 	m_uiType = uiType;
@@ -53,7 +53,7 @@ void CGDIPainter::SetLabelMandatory()
 	m_fMandatoryLabel = true;
 }
 
-void CGDIPainter::StartPolyline(UInt uiType, const wchar_t * wcName)
+void CGDIPainter::StartPolyline(UInt uiType, const tchar_t * wcName)
 {
 	// Record type
 	m_uiType = uiType;
@@ -65,7 +65,7 @@ void CGDIPainter::StartPolyline(UInt uiType, const wchar_t * wcName)
 	// Elevation can be specified for POI objects like summit (Type 0x6616) and depth / height
 	// points (Types 0x6200 & 0x6300) as well as for polyline objects like land / depth contours
 	// (Types=0x20 to 0x25).
-	static std::wstring wstrReplace;
+	static std::tstring wstrReplace;
 	if (wcName && (uiType >= 0x20 && uiType <= 0x25))
 	{
 		wstrReplace = app.HeightFromFeet(wcName);
@@ -409,12 +409,12 @@ void CGDIPainter::SetView(const GeoPoint & gp, bool fManual)
 
 void CGDIPainter::InitTools(int iScheme)
 {
-	wchar_t wcFilename[MAX_PATH + 1] = {0};
+	tchar_t wcFilename[MAX_PATH + 1] = {0};
 	GetModuleFileName(0, wcFilename, MAX_PATH);
 
 	InitToolsCommon();
 	HRSRC hResource;
-	hResource = FindResource(m_hResourceInst, L"VPC1", RT_RCDATA);
+	hResource = FindResource(m_hResourceInst, T("VPC1"), RT_RCDATA);
 	HGLOBAL hGlobal = LoadResource(m_hResourceInst, hResource);
 	DWORD dwSize = SizeofResource(m_hResourceInst, hResource);
 	char * data = (char *)LockResource(hGlobal);
@@ -435,7 +435,7 @@ void CGDIPainter::InitTools(int iScheme)
 	}
 	if (iScheme == 1)
 	{
-		hResource = FindResource(m_hResourceInst, L"VPC2", RT_RCDATA);
+		hResource = FindResource(m_hResourceInst, T("VPC2"), RT_RCDATA);
 		HGLOBAL hGlobal = LoadResource(m_hResourceInst, hResource);
 		char * data = (char *)LockResource(hGlobal);
 		char * from = data;
@@ -456,12 +456,12 @@ void CGDIPainter::InitTools(int iScheme)
 	}
 }
 
-void CGDIPainter::InitTools(const wchar_t * strFilename)
+void CGDIPainter::InitTools(const tchar_t * strFilename)
 {
 	InitToolsCommon();
 
 	char buff[100];
-	FILE * pFile = wfopen(strFilename, L"rt");
+	FILE * pFile = wfopen(strFilename, T("rt"));
 	if (pFile == NULL)
 		return;
 	while(fgets(buff, sizeof(buff), pFile) != 0)
@@ -541,7 +541,7 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	m_hWnd = hWnd;
 	m_hResourceInst = g_hInst;
 
-	m_gpCenter.Init(hRegKey, L"Center", GeoPoint(0, 0));
+	m_gpCenter.Init(hRegKey, T("Center"), GeoPoint(0, 0));
 	if(abs(m_gpCenter().lon) > 1 << (GPWIDTH - 1) || abs(m_gpCenter().lat) > 1 << (GPWIDTH - 2))
 	{
 		// If Center is out of bounds try to guess the rigth value 
@@ -556,7 +556,7 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 		m_gpCenter.Set(GeoPoint(lon, lat));
 	}
 	m_fViewSet = false;
-	m_ruiScale10.Init(hRegKey, L"ScaleD", 500);
+	m_ruiScale10.Init(hRegKey, T("ScaleD"), 500);
 	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10()));
 	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10()));
 
@@ -582,7 +582,7 @@ void CGDIPainter::RedrawMonitors()
 	RedrawWindow(m_hWnd, &rc, 0, RDW_INVALIDATE);
 }
 
-void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * wcName)
+void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName)
 {
 	ScreenPoint sp = GeoToScreen(gp);
 	if (false == WillPaint(sp))
@@ -654,7 +654,7 @@ void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const wchar_t * w
 		// Elevation can be specified for POI objects like summit (Type 0x6616) and depth / height
 		// points (Types 0x6200 & 0x6300) as well as for polyline objects like land / depth contours
 		// (Types=0x20 to 0x25).
-		std::wstring wstrNameReplace;
+		std::tstring wstrNameReplace;
 		if (uiType == 0x6616 || uiType == 0x6200 || uiType == 0x6300)
 		{
 			wstrNameReplace = app.HeightFromFeet(wcName);
@@ -691,10 +691,10 @@ void CGDIPainter::PaintStatusIcon(int iIcon)
 	}
 }
 
-void CGDIPainter::ParseString(const char * buff, const std::wstring & wstrBase)
+void CGDIPainter::ParseString(const char * buff, const std::tstring & wstrBase)
 {
 	std::vector<long> vRecord;
-	std::wstring wstrRecord;
+	std::tstring wstrRecord;
 	const char * pos = buff;
 	while ((*pos != 0) && (*pos != '\n') && (*pos != '\r'))
 	{
@@ -709,7 +709,7 @@ void CGDIPainter::ParseString(const char * buff, const std::wstring & wstrBase)
 			pos = ++newpos;
 			while (*newpos && *newpos != '\n' && *newpos != '\r' && *newpos != '"')
 				++newpos;
-			wchar_t buffer[1000];
+			tchar_t buffer[1000];
 			buffer[MultiByteToWideChar(CP_ACP, 0, pos, newpos - pos, buffer, 1000)] = 0;
 			wstrRecord = buffer;
 			break;
@@ -739,26 +739,26 @@ void CGDIPainter::ParseString(const char * buff, const std::wstring & wstrBase)
 			}
 		case maskPoints:
 			{
-				if (vRecord.size() == 4 && wstrRecord != L"")
+				if (vRecord.size() == 4 && wstrRecord != T(""))
 				{
 					PointTools & pt = m_PointTools[vRecord[1]];
 					pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
 					if (!pt.m_hIcon)
 					{
-						int i = wcstol(wstrRecord.c_str(), 0, 10);
+						int i = tcstol(wstrRecord.c_str(), 0, 10);
 						if (i)
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
 					}
 					pt.m_iDiffX = vRecord[2];
 					pt.m_iDiffY = vRecord[3];
 				}
-				if (vRecord.size() == 2 && wstrRecord != L"")
+				if (vRecord.size() == 2 && wstrRecord != T(""))
 				{
 					PointTools & pt = m_PointTools[vRecord[1]];
 					pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
 					if (!pt.m_hIcon)
 					{
-						int i = wcstol(wstrRecord.c_str(), 0, 10);
+						int i = tcstol(wstrRecord.c_str(), 0, 10);
 						if (i)
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
 					}
@@ -827,11 +827,11 @@ void CGDIPainter::InitToolsCommon()
 	m_hDefaultBrush = CreateSolidBrush(RGB(0xff, 0x0, 0x0));
 	// Prepare font structures
 
-	m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, L"satelliteno", IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, L"satellitenofix", IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, L"satelliteyes", IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, L"satellitewait", IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, L"satellitedisabled", IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, T("satelliteno"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, T("satellitenofix"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, T("satelliteyes"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, T("satellitewait"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, T("satellitedisabled"), IMAGE_ICON, 32, 32, 0);
 }
 
 GeoRect CGDIPainter::GetRect() 
@@ -839,7 +839,7 @@ GeoRect CGDIPainter::GetRect()
 	return ScreenToGeo(m_srWindow);
 }
 
-void CGDIPainter::DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText)
+void CGDIPainter::DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText)
 {
 	ScreenRect &sr = m_srCurrentMonitor;
 	int iHeight = m_srCurrentMonitor.bottom - m_srCurrentMonitor.top;
@@ -864,7 +864,7 @@ void CGDIPainter::DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcTex
 	sr.top += sizeCurr.cy;
 
 }
-void CGDIPainter::DrawMonitorLabel(const wchar_t * wcLabel)
+void CGDIPainter::DrawMonitorLabel(const tchar_t * wcLabel)
 {
 	ScreenRect &sr = m_srCurrentMonitor;
 	int iHeight = m_srCurrentMonitor.bottom - m_srCurrentMonitor.top;
@@ -925,7 +925,7 @@ CGDIPainter::~CGDIPainter()
 {
 }
 
-void CGDIPainter::PaintLowMemory(const wchar_t * wcString1, const wchar_t * wcString2)
+void CGDIPainter::PaintLowMemory(const tchar_t * wcString1, const tchar_t * wcString2)
 {
 	HFONT hMonitorValueFont = m_FontCache.GetFont(40, true, 0);
 
@@ -942,7 +942,7 @@ void CGDIPainter::PaintLowMemory(const wchar_t * wcString1, const wchar_t * wcSt
 
 }
 
-void CGDIPainter::PaintStatusLine(const wchar_t * wcName)
+void CGDIPainter::PaintStatusLine(const tchar_t * wcName)
 {
 	if (!wcName || !*wcName)
 		return;
@@ -978,7 +978,7 @@ void CGDIPainter::SetFullScreen(bool fFull)
 		SetForegroundWindow(m_hWnd);
 		SHFullScreen(m_hWnd, SHFS_HIDETASKBAR | SHFS_HIDESIPBUTTON | SHFS_HIDESTARTICON);
 #ifdef SMARTPHONE
-		HWND hwndTray = FindWindow(L"Tray", 0);
+		HWND hwndTray = FindWindow(T("Tray"), 0);
 		if (hwndTray)
 			ShowWindow(hwndTray, SW_HIDE);
 #endif // SMARTPHONE
@@ -989,7 +989,7 @@ void CGDIPainter::SetFullScreen(bool fFull)
 		rectWin = m_rectLastWinSize;
 		rectCB = m_rectLastCBSize;
 #ifdef SMARTPHONE
-		HWND hwndTray = FindWindow(L"Tray", 0);
+		HWND hwndTray = FindWindow(T("Tray"), 0);
 		if (hwndTray)
 			ShowWindow(hwndTray, SW_SHOW);
 #endif // SMARTPHONE
@@ -1105,7 +1105,7 @@ void CGDIPainter::PaintScale()
 		finish.x = length;
 		if (finish.x > sr.right)
 			break;
-		const std::wstring & label = DistanceToText(*l);
+		const std::tstring & label = DistanceToText(*l);
 		StartPolyline(type, label.c_str());
 		AddPoint(start);
 		AddPoint(finish);
@@ -1121,7 +1121,7 @@ void CGDIPainter::PaintScale()
 	double dDist = IntDistance(m_gpCenter(), ScreenToGeo(GeoToScreen(m_gpCenter()) + ScreenDiff(2000,0))) / 50;
 	ScreenPoint pt1 = ScreenPoint(m_srWindow.left, m_srWindow.bottom) + ScreenDiff(10, -10);
 	ScreenPoint pt2 = pt1 + ScreenDiff(iWidth,0);
-	std::wstring wcScale = DistanceToText(dDist);
+	std::tstring wcScale = DistanceToText(dDist);
 	StartPolyline(0xFD, wcScale.c_str());
 	SetLabelMandatory();
 	AddPoint(pt1 + ScreenDiff(0, -2));
@@ -1131,7 +1131,7 @@ void CGDIPainter::PaintScale()
 	FinishObject();
 }
 
-void CGDIPainter::AddButton(const wchar_t * wcLabel, int iCommand, bool fSelected)
+void CGDIPainter::AddButton(const tchar_t * wcLabel, int iCommand, bool fSelected)
 {
 	HFONT f = m_FontCache.GetFont(5, 0);
 	ScreenSize size;
@@ -1172,8 +1172,8 @@ void CGDIPainter::GetUnknownTypes(IListAcceptor * pAcceptor)
 	for (std::set<int>::iterator it = m_setUnknownTypes.begin(); 
 			it != m_setUnknownTypes.end(); ++it)
 	{
-		wchar_t wstrType[100];
-		swprintf(wstrType, 100, L"%d, 0x%04x, %s", *it, *it, app.m_TypeInfo.PointType(*it).c_str());
+		tchar_t wstrType[100];
+		stprintf(wstrType, 100, T("%d, 0x%04x, %s"), *it, *it, app.m_TypeInfo.PointType(*it).c_str());
 		pAcceptor->AddItem(wstrType, *it);
 	}
 }

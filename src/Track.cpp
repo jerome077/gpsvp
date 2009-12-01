@@ -172,7 +172,7 @@ void CTrack::CreateFile()
 	// Track should begin
 	m_fBeginTrack = true;
 	m_fTrackPresent = false;
-	m_wstrFilenameInt = L"";
+	m_wstrFilenameInt = T("");
 	switch (app.m_riTrackFormat())
 	{
 	case tfPLT:
@@ -205,9 +205,9 @@ std::string CTrack::GetCreator()
 void CTrack::CreateFileGPX()
 {
 	m_CurrentTrackFormat = tfGPX;
-#ifndef UNDER_WINE
+#ifndef LINUX
 	m_FilePosForAdding = 0;
-#endif // UNDER_WINE
+#endif // LINUX
 	// Write file header
 	GetFileName(); // initializes m_strGPXName
 	m_iBufferPos = _snprintf(m_writeBuffer, 4096,
@@ -221,7 +221,7 @@ void CTrack::FlushPLT(int iSize)
 {
 	if (m_fWriting && m_fTrackPresent)
 	{
-		FILE * pFile = wfopen(GetFileName(), L"ab");
+		FILE * pFile = wfopen(GetFileName(), T("ab"));
 		if (pFile)
 		{
 			fwrite(m_writeBuffer, 1, iSize, pFile);
@@ -260,22 +260,22 @@ void CTrack::Break()
 	m_fBeginTrack = true;
 }
 
-void CTrack::Read(const std::wstring& wstrFilename)
+void CTrack::Read(const std::tstring& wstrFilename)
 {
 	AutoLock l;
-	std::wstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
-#ifndef UNDER_WINE
-	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+	std::tstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
+#ifndef LINUX
+	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
 		ReadFirstTrackFromGPX(wstrFilename);
 	else
-#endif // UNDER_WINE
+#endif // LINUX
 		ReadPLT(wstrFilename);
 }
 
-#ifndef UNDER_WINE
-void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename)
+#ifndef LINUX
+void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::tstring& wstrFilename)
 {
-	m_wstrFilenameExt = apTrack->getName() + L" - " + wstrFilename; 
+	m_wstrFilenameExt = apTrack->getName() + T(" - ") + wstrFilename; 
 	std::auto_ptr<CGPXTrackSeg> apTrackSeg = apTrack->firstTrackSeg();
 	while (!apTrackSeg->eof())
 	{
@@ -294,8 +294,8 @@ void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring
 }
 #endif
 
-#ifndef UNDER_WINE
-void CTrack::ReadFirstTrackFromGPX(const std::wstring& wstrFilename)
+#ifndef LINUX
+void CTrack::ReadFirstTrackFromGPX(const std::tstring& wstrFilename)
 {
 	try
 	{
@@ -313,21 +313,21 @@ void CTrack::ReadFirstTrackFromGPX(const std::wstring& wstrFilename)
 	{
 		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
 	}
-#ifndef UNDER_WINE
+#ifndef LINUX
 	catch (_com_error e)
 	{
-		MessageBox(NULL, (std::wstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
+		MessageBox(NULL, (std::tstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
 			       L("GPX read error"), MB_ICONEXCLAMATION);
 	}
-#endif // UNDER_WINE
+#endif // LINUX
 }
-#endif // UNDER_WINE
+#endif // LINUX
 
-void CTrack::ReadPLT(const std::wstring& wstrFilename)
+void CTrack::ReadPLT(const std::tstring& wstrFilename)
 {
 	m_wstrFilenameExt = wstrFilename;
 	char buff[100];
-	FILE * pFile = wfopen(wstrFilename.c_str(), L"rt");
+	FILE * pFile = wfopen(wstrFilename.c_str(), T("rt"));
 	if (!pFile)
 		return;
 	std::vector<long> vRecord;
@@ -369,7 +369,7 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 		}
 	}
 }
-const std::wstring CTrack::GetExtFilename()
+const std::tstring CTrack::GetExtFilename()
 {
 	AutoLock l;
 	return m_wstrFilenameExt;
@@ -401,21 +401,21 @@ void CTrack::SetCompressable()
 	m_fCompressable = true;
 }
 
-const wchar_t * CTrack::GetFileName()
+const tchar_t * CTrack::GetFileName()
 {
-	if (m_wstrFilenameInt == L"")
+	if (m_wstrFilenameInt == T(""))
 	{
-		wchar_t wcFilename[50];
+		tchar_t wcFilename[50];
 		SYSTEMTIME st;
 		GetLocalTime(&st);
-		wsprintf(wcFilename, L"%04d.%02d.%02d-%02d.%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+		stprintf(wcFilename, 50, T("%04d.%02d.%02d-%02d.%02d.%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 		switch (m_CurrentTrackFormat)
 		{
 		case tfPLT:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + L"\\" + wcFilename + L".plt";		
+			m_wstrFilenameInt = app.m_rsTrackFolder() + T("\\") + wcFilename + T(".plt");		
 			break;
 		case tfGPX:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + L"\\" + wcFilename + L".gpx";
+			m_wstrFilenameInt = app.m_rsTrackFolder() + T("\\") + wcFilename + T(".gpx");
 			char cFilename[50];
 			sprintf(cFilename, "%04d.%02d.%02d-%02d.%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 			m_strGPXName = cFilename;
@@ -482,18 +482,18 @@ void CTrackList::GetTrackList(IListAcceptor * pAcceptor)
 		pAcceptor->AddItem(it->GetExtFilename().c_str(), iIndex);
 }
 
-bool CTrackList::OpenTracks(const std::wstring& wstrFile)
+bool CTrackList::OpenTracks(const std::tstring& wstrFile)
 {
-	std::wstring wstrExt = wstrFile.substr(wstrFile.length()-4, 4);
-#ifndef UNDER_WINE
-	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+	std::tstring wstrExt = wstrFile.substr(wstrFile.length()-4, 4);
+#ifndef LINUX
+	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
 		return OpenTracksGPX(wstrFile);
 	else
-#endif // UNDER_WINE
+#endif // LINUX
 		return OpenTrackPLT(wstrFile);
 }
 
-bool CTrackList::OpenTrackPLT(const std::wstring& wstrFile)
+bool CTrackList::OpenTrackPLT(const std::tstring& wstrFile)
 {
 	m_Tracks.push_back(CTrack());
 	m_Tracks.back().ReadPLT(wstrFile);
@@ -508,8 +508,8 @@ bool CTrackList::OpenTrackPLT(const std::wstring& wstrFile)
 	}
 }
 
-#ifndef UNDER_WINE
-bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
+#ifndef LINUX
+bool CTrackList::OpenTracksGPX(const std::tstring& wstrFile)
 {
 	bool Result = false;
 	try
@@ -539,16 +539,16 @@ bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 	{
 		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
 	}
-#ifndef UNDER_WINE
+#ifndef LINUX
 	catch (_com_error e)
 	{
-		MessageBox(NULL, (std::wstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
+		MessageBox(NULL, (std::tstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
 			       L("GPX read error"), MB_ICONEXCLAMATION);
 	}
-#endif // UNDER_WINE
+#endif // LINUX
 	return Result;
 }
-#endif // UNDER_WINE
+#endif // LINUX
 
 void CTrackList::CloseTrack(Int iIndex)
 {

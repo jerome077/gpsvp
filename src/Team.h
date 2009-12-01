@@ -22,10 +22,10 @@ class CTeam
 {
 public:
 	CTeam() : ulCurrent(0), ulSuccess(0), update(false) {}
-	const std::wstring & GetChannel() {return channel;}
-	const std::wstring & GetName() {return name;}
-	void SetChannel(const wchar_t * value) {channel = value;}
-	void SetName(const wchar_t * value) {name = value;}
+	const std::tstring & GetChannel() {return channel;}
+	const std::tstring & GetName() {return name;}
+	void SetChannel(const tchar_t * value) {channel = value;}
+	void SetName(const tchar_t * value) {name = value;}
 	void Fix(const GeoPoint & gp, unsigned long ulTime)
 	{
 		ulCurrent = ulTime;
@@ -46,8 +46,8 @@ public:
 	{
 	}
 private:
-	std::wstring channel;
-	std::wstring name;
+	std::tstring channel;
+	std::tstring name;
 	unsigned long ulCurrent;
 	unsigned long ulRequest;
 	unsigned long ulSuccess;

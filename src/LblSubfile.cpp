@@ -88,7 +88,7 @@ const tchar_t * CLblSubfile::GetLabel(UInt uiOffset)
 		bool fAfterAlpha = false;
 		while (!bs.AtEnd())
 		{
-			wchar_t wChar = 0xffff;
+			tchar_t wChar = 0xffff;
 			int iChar = bs.GetChar(6);
 			if (iChar >= 0x01 && iChar <= 0x1A)
 				wChar = L'A' + iChar - 0x01;

@@ -19,6 +19,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "ResourceCommon.h"
 #include <map>
 
+#ifndef LINUX
+
 struct HWND__;
 typedef HWND__ * HWND;
 
@@ -38,7 +40,7 @@ public:
 		SetMenu(hMenu);
 #endif // UNDER_CE
 	}
-	void SetItemLabelAndCommand(int iItem, wchar_t * wcLabel, int iCommand)
+	void SetItemLabelAndCommand(int iItem, tchar_t * wcLabel, int iCommand)
 	{
 #if defined(UNDER_CE) && UNDER_CE >= 0x0500 || defined(SMARTPHONE)
 		TBBUTTONINFO tbbi;
@@ -69,5 +71,6 @@ public:
 	CKeymap & GetKeymap() {return m_mMenu.GetKeymap(); }
 	CScreenButtons & GetButtons() { return m_mMenu.GetButtons(); }
 };
+#endif
 
 #endif // MENUBAR_H_INCLUDED

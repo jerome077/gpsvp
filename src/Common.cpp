@@ -127,7 +127,7 @@ double myatof(const char * str)
 }
 
 // Make double from std::string
-double myatof(const wchar_t * str)
+double myatof(const tchar_t * str)
 {
 	// Start from tabula rasa
 	double res = 0;
@@ -183,120 +183,120 @@ double myatof(const wchar_t * str)
 					fPoint = true;
 			}
 			else
-				break; // Unknown wchar_t
+				break; // Unknown tchar_t
 		}
-		// Next wchar_t
+		// Next tchar_t
 		++str;
 	}
 	// Return calculated number
 	return res * sign;
 }
 
-std::wstring DistanceToText(double dDistance)
+std::tstring DistanceToText(double dDistance)
 {
-	wchar_t wcDistance[1000] = {0};
+	tchar_t wcDistance[1000] = {0};
 	switch (app.m_riMetrics())
 	{
 	case 0:
 		if (dDistance < 100)
-			swprintf(wcDistance, 1000, L"%.1f%s", dDistance, L("m"));
+			stprintf(wcDistance, 1000, T("%.1f%s"), dDistance, L("m"));
 		else if (dDistance < 2000)
-			swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("m"));
+			stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("m"));
 		else if (dDistance < 20000)
-			swprintf(wcDistance, 1000, L"%.1f%s", dDistance / 1000, L("km"));
+			stprintf(wcDistance, 1000, T("%.1f%s"), dDistance / 1000, L("km"));
 		else
-			swprintf(wcDistance, 1000, L"%d%s", int(dDistance / 1000 + 0.5), L("km"));
+			stprintf(wcDistance, 1000, T("%d%s"), int(dDistance / 1000 + 0.5), L("km"));
 		break;
 	case 1:
 		if (dDistance < cdYard * 1000)
 		{
 			dDistance /= cdYard;
-			swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("yd"));
+			stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("yd"));
 		}
 		else
 		{
 			dDistance /= cdNauticalMile;
 			dDistance /= 1000;
 			if (dDistance < 10.0)
-				swprintf(wcDistance, 1000, L"%.2f%s", dDistance, L("nm"));
+				stprintf(wcDistance, 1000, T("%.2f%s"), dDistance, L("nm"));
 			else if (dDistance < 100.0)
-				swprintf(wcDistance, 1000, L"%.1f%s", dDistance, L("nm"));
+				stprintf(wcDistance, 1000, T("%.1f%s"), dDistance, L("nm"));
 			else
-				swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("nm"));
+				stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("nm"));
 		}
 		break;
 	case 2:
 		if (dDistance < cdYard * 1000)
 		{
 			dDistance /= cdYard;
-			swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("yd"));
+			stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("yd"));
 		}
 		else
 		{
 			dDistance /= cdLandMile;
 			dDistance /= 1000;
 			if (dDistance < 10.0)
-				swprintf(wcDistance, 1000, L"%.2f%s", dDistance, L("mi"));
+				stprintf(wcDistance, 1000, T("%.2f%s"), dDistance, L("mi"));
 			else if (dDistance < 100.0)
-				swprintf(wcDistance, 1000, L"%.1f%s", dDistance, L("mi"));
+				stprintf(wcDistance, 1000, T("%.1f%s"), dDistance, L("mi"));
 			else
-				swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("mi"));
+				stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("mi"));
 		}
 		break;
 	}
 	return wcDistance;
 }
 
-std::wstring SpeedToText(double dSpeed)
+std::tstring SpeedToText(double dSpeed)
 {
-	wchar_t wcSpeed[1000] = {0};
+	tchar_t wcSpeed[1000] = {0};
 	switch (app.m_riMetrics())
 	{
 	case 0:
 		if (dSpeed < 100)
-			swprintf(wcSpeed, 1000, L"%.1f%s", dSpeed, L("kmh"));
+			stprintf(wcSpeed, 1000, T("%.1f%s"), dSpeed, L("kmh"));
 		else
-			swprintf(wcSpeed, 1000, L"%d%s", int(dSpeed), L("kmh"));
+			stprintf(wcSpeed, 1000, T("%d%s"), int(dSpeed), L("kmh"));
 		break;
 	case 1:
 		dSpeed /= cdNauticalMile;
 		if (dSpeed < 100)
-			swprintf(wcSpeed, 1000, L"%.1f%s", dSpeed, L("kn"));
+			stprintf(wcSpeed, 1000, T("%.1f%s"), dSpeed, L("kn"));
 		else
-			swprintf(wcSpeed, 1000, L"%d%s", int(dSpeed), L("kn"));
+			stprintf(wcSpeed, 1000, T("%d%s"), int(dSpeed), L("kn"));
 		break;
 	case 2:
 		dSpeed /= cdLandMile;
 		if (dSpeed < 100)
-			swprintf(wcSpeed, 1000, L"%.1f%s", dSpeed, L("mph"));
+			stprintf(wcSpeed, 1000, T("%.1f%s"), dSpeed, L("mph"));
 		else
-			swprintf(wcSpeed, 1000, L"%d%s", int(dSpeed), L("mph"));
+			stprintf(wcSpeed, 1000, T("%d%s"), int(dSpeed), L("mph"));
 		break;
 	}
 	return wcSpeed;
 }
 
-std::wstring HeightToText(double dDistance)
+std::tstring HeightToText(double dDistance)
 {
-	wchar_t wcDistance[1000] = {0};
+	tchar_t wcDistance[1000] = {0};
 	switch (app.m_riMetrics())
 	{
 	case 0:
 	case 2:
-		swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("m"));
+		stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("m"));
 		break;
 	case 1:
 		dDistance /= cdFoot;
-		swprintf(wcDistance, 1000, L"%d%s", int(dDistance + 0.5), L("ft"));
+		stprintf(wcDistance, 1000, T("%d%s"), int(dDistance + 0.5), L("ft"));
 		break;
 	}
 	return wcDistance;
 }
 
-std::wstring DoubleToText(double dDouble, int iDigits)
+std::tstring DoubleToText(double dDouble, int iDigits)
 {
-	wchar_t wcDouble[1000];
-	swprintf(wcDouble, 1000, L"%.*f", iDigits, dDouble);
+	tchar_t wcDouble[1000];
+	stprintf(wcDouble, 1000, T("%.*f"), iDigits, dDouble);
 	return wcDouble;
 }
 
@@ -307,29 +307,29 @@ std::string DoubleToStr(double dDouble, int iDigits)
 	return cDouble;
 }
 
-std::wstring IntToText(int iInt)
+std::tstring IntToText(int iInt)
 {
-	wchar_t wcInt[1000];
-	swprintf(wcInt, 1000, L"%d", iInt);
+	tchar_t wcInt[1000];
+	stprintf(wcInt, 1000, T("%d"), iInt);
 	return wcInt;
 }
 
-std::wstring IntToHex(int iInt)
+std::tstring IntToHex(int iInt)
 {
-	wchar_t wcInt[1000];
-	swprintf(wcInt, 1000, L"%x", iInt);
+	tchar_t wcInt[1000];
+	stprintf(wcInt, 1000, T("%x"), iInt);
 	return wcInt;
 }
 
-std::wstring MemoryToText(unsigned long ulMemory)
+std::tstring MemoryToText(unsigned long ulMemory)
 {
-	wchar_t wcMemory[1000];
+	tchar_t wcMemory[1000];
 	if (ulMemory < 1 * 1024)
-		swprintf(wcMemory, 1000, L"%u%s", ulMemory, L("b"));
+		stprintf(wcMemory, 1000, T("%u%s"), ulMemory, L("b"));
 	else if (ulMemory < 1 * 1024 * 1024)
-		swprintf(wcMemory, 1000, L"%.1f%s", double(ulMemory) / 1024, L("kb"));
+		stprintf(wcMemory, 1000, T("%.1f%s"), double(ulMemory) / 1024, L("kb"));
 	else
-		swprintf(wcMemory, 1000, L"%.1f%s", double(ulMemory) / 1024 / 1024, L("mb"));
+		stprintf(wcMemory, 1000, T("%.1f%s"), double(ulMemory) / 1024 / 1024, L("mb"));
 	return wcMemory;
 }
 
@@ -377,36 +377,36 @@ int sin100(int degree)
 	return mycos100.Guess(degree - (1 << (GPWIDTH - 2)));
 }
 
-std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat) 
+std::tstring DegreeToText(double dDegree, bool fLat, int iCoordFormat) 
 {
 	int n1, n2, n3;
 	n1 = n2 = n3 = 1;
-	const wchar_t * fmt = L"";
-	wchar_t S = L'S';
-	wchar_t N = L'N';
-	wchar_t E = L'E';
-	wchar_t W = L'W';
+	const tchar_t * fmt = T("");
+	tchar_t S = L'S';
+	tchar_t N = L'N';
+	tchar_t E = L'E';
+	tchar_t W = L'W';
 	switch (iCoordFormat)
 	{
 	case 0:
 	default:
 		n1 = 60;
 		n2 = 60;
-		fmt = L"%c%d°%d'%d\"";
+		fmt = T("%c%d°%d'%d\")";
 		break;
 	case 1:
 		n1 = 60;
 		n2 = 10000;
-		fmt = L"%c%d°%d.%04d\'";
+		fmt = T("%c%d°%d.%04d\'");
 		break;
 	case 2:
 		n1 = 100000;
-		fmt = L"%c%d.%05d°";
+		fmt = T("%c%d.%05d°");
 		break;
 	case 3:
 		n1 = 100000;
 		n2 = 1;
-		fmt = L"%c%d.%05d°";
+		fmt = T("%c%d.%05d°");
 		N = E = L'+';
 		S = W = L'-';
 		break;
@@ -414,7 +414,7 @@ std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat)
 		n1 = 60;
 		n2 = 60;
 		n3 = 100;
-		fmt = L"%c%d°%d'%d.%02d\"";
+		fmt = T("%c%d°%d'%d.%02d\")";
 		break;
 	};
 	bool fNeg = false;
@@ -423,7 +423,7 @@ std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat)
 		dDegree = -dDegree;
 		fNeg = true;
 	}
-	wchar_t sign( fLat ? (fNeg ? S : N) : (fNeg ? W : E) );
+	tchar_t sign( fLat ? (fNeg ? S : N) : (fNeg ? W : E) );
 	int i1 = int(dDegree);
 	dDegree -= i1;
 	if (n1 == 1 && dDegree > 0.5)
@@ -440,12 +440,12 @@ std::wstring DegreeToText(double dDegree, bool fLat, int iCoordFormat)
 		i3 += 1;
 	dDegree *= n3;
 	int i4 = int(dDegree);
-	wchar_t wcDegree[1000];
-	swprintf(wcDegree, 1000, fmt, sign, i1, i2, i3, i4);
+	tchar_t wcDegree[1000];
+	stprintf(wcDegree, 1000, fmt, sign, i1, i2, i3, i4);
 	return wcDegree;
 };
 
-double TextToDegree(const wchar_t * wcText)
+double TextToDegree(const tchar_t * wcText)
 {
 	double dDegree = 0;
 	double dCurrent = 0;
@@ -499,7 +499,7 @@ double TextToDegree(const wchar_t * wcText)
 	return dDegree * sign;
 }
 
-void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& wstrLat)
+void CoordToText(double dLon, double dLat, std::tstring& wstrLon, std::tstring& wstrLat)
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (iCoordFormat <= 4)
@@ -513,13 +513,13 @@ void CoordToText(double dLon, double dLat, std::wstring& wstrLon, std::wstring& 
 		int iUtmX, iUtmY, iUtmZone;
 		iUtmZone = app.m_riUTMZone();
 		LongLatToUTM(dLon, dLat, iUtmZone, iUtmX, iUtmY);
-		wstrLon = IntToText(iUtmX)+L" z"+IntToText(iUtmZone);
+		wstrLon = IntToText(iUtmX)+T(" z")+IntToText(iUtmZone);
 		wstrLat = IntToText(iUtmY);
 	}
-#endif LINUX
+#endif // LINUX
 }
 
-void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, double& dLon, double& dLat)
+void TextToCoord(const std::tstring& wstrLon, const std::tstring& wstrLat, double& dLon, double& dLat)
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (iCoordFormat <= 4)
@@ -530,8 +530,8 @@ void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, doubl
 	else if (5 == iCoordFormat) // UTM
 	{
 		int iUtmX, iUtmY, iUtmZone;
-		int nReadFields1 = swscanf(wstrLon.c_str(), L"%d z%d", &iUtmX, &iUtmZone);
-		int nReadFields2 = swscanf(wstrLat.c_str(), L"%d", &iUtmY);
+		int nReadFields1 = swscanf(wstrLon.c_str(), T("%d z%d"), &iUtmX, &iUtmZone);
+		int nReadFields2 = swscanf(wstrLat.c_str(), T("%d"), &iUtmY);
 		if ((2 == nReadFields1) && (1 == nReadFields2))
 		{
 			UTMToLongLat(iUtmX, iUtmY, iUtmZone, dLon, dLat);
@@ -544,7 +544,7 @@ void TextToCoord(const std::wstring& wstrLon, const std::wstring& wstrLat, doubl
 	}
 }
 
-std::wstring CoordLabelLon()
+std::tstring CoordLabelLon()
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
@@ -553,7 +553,7 @@ std::wstring CoordLabelLon()
 		return L("Longitude");
 }
 
-std::wstring CoordLabelLat()
+std::tstring CoordLabelLat()
 {
 	int iCoordFormat = app.m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
@@ -565,17 +565,17 @@ std::wstring CoordLabelLat()
 
 std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename)
 {
-	if (name[0] == FN('/') || name[0] == FN('\\'))
+	if (name[0] == T('/') || name[0] == T('\\'))
 		return name;
-	int pos = basename.find_last_of(FN("\\/"));
-	if (pos == std::wstring::npos)
+	int pos = basename.find_last_of(T("\\/"));
+	if (pos == std::tstring::npos)
 		return name;
 	return basename.substr(0, pos + 1) + name;
 }
 
 struct Dict::Data
 {
-	typedef std::map<std::wstring, std::wstring> Map;
+	typedef std::map<std::tstring, std::tstring> Map;
 	Map m_map;
 };
 
@@ -588,40 +588,40 @@ Dict::~Dict()
 	delete m_data;
 }
 
-wchar_t * Dict::Translate(const wchar_t * wcOriginal)
+tchar_t * Dict::Translate(const tchar_t * wcOriginal)
 {
 	Data::Map::iterator it = m_data->m_map.find(wcOriginal);
 	if (it == m_data->m_map.end())
-		return const_cast<wchar_t *>(wcOriginal);
-	return const_cast<wchar_t *>(it->second.c_str());
+		return const_cast<tchar_t *>(wcOriginal);
+	return const_cast<tchar_t *>(it->second.c_str());
 }
 
-void Dict::Read(const wchar_t * wcFilename)
+void Dict::Read(const tchar_t * wcFilename)
 {
-	FILE * f = wfopen(wcFilename, L"rb");
+	FILE * f = wfopen(wcFilename, T("rb"));
 	if (!f)
 		return;
-	std::auto_ptr<wchar_t> apBuffer(new wchar_t[100000]);
-	wchar_t * buffer = apBuffer.get();;
+	std::auto_ptr<tchar_t> apBuffer(new tchar_t[100000]);
+	tchar_t * buffer = apBuffer.get();;
 	buffer[fread(buffer, sizeof(*buffer), 100000, f)] = 0;
 	fclose(f);
-	wchar_t * curr = buffer;
+	tchar_t * curr = buffer;
 	while (curr && *curr)
 	{
-		wchar_t * next = wcschr(curr + 1, L'\n');
+		tchar_t * next = wcschr(curr + 1, L'\n');
 		if (!next)
 			return;
-		std::wstring wstr(curr, next - curr);
+		std::tstring wstr(curr, next - curr);
 		curr = next;
-		std::wstring::size_type fb, fe, sb, se;
-		if (std::wstring::npos == (fb = wstr.find(L'['))) continue;
+		std::tstring::size_type fb, fe, sb, se;
+		if (std::tstring::npos == (fb = wstr.find(L'['))) continue;
 		++fb;
-		if (std::wstring::npos == (fe = wstr.find(L']', fb))) continue;
-		if (std::wstring::npos == (sb = wstr.find(L'[', fe))) continue;
+		if (std::tstring::npos == (fe = wstr.find(L']', fb))) continue;
+		if (std::tstring::npos == (sb = wstr.find(L'[', fe))) continue;
 		++sb;
-		if (std::wstring::npos == (se = wstr.find(L']', sb))) continue;
-		std::wstring f = wstr.substr(fb, fe - fb);
-		std::wstring s = wstr.substr(sb, se - sb);
+		if (std::tstring::npos == (se = wstr.find(L']', sb))) continue;
+		std::tstring f = wstr.substr(fb, fe - fb);
+		std::tstring s = wstr.substr(sb, se - sb);
 		m_data->m_map[f] = s;
 	}
 }
@@ -871,14 +871,14 @@ void TestUTM()
 
 // ---------------------------------------------------------------
 
-std::wstring UTMZoneToLongText(int utmZone)
+std::tstring UTMZoneToLongText(int utmZone)
 {
 #ifndef LINUX
 	int lon0_360 = abs(utmZone)*6 - 183;
-	wchar_t bufDegrees[128];
-	wsprintf(bufDegrees, L("%d° to %d°"), lon0_360-3, lon0_360+3);
-	std::wstring sHemisphere = (utmZone > 0) ? L("north hemisphere") : L("south hemisphere");
-	return IntToText(utmZone) + L" (" + bufDegrees + L", " + sHemisphere + L")";
+	tchar_t bufDegrees[128];
+	stprintf(bufDegrees, 128, L("%d° to %d°"), lon0_360-3, lon0_360+3);
+	std::tstring sHemisphere = (utmZone > 0) ? L("north hemisphere") : L("south hemisphere");
+	return IntToText(utmZone) + T(" (") + bufDegrees + T(", ") + sHemisphere + T(")");
 #endif // LINUX
 }
 

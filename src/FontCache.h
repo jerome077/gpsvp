@@ -15,7 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef FONTCACHE_H_INCLUDED
 #define FONTCACHE_H_INCLUDED
 
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#endif
 
 class CFontCache
 {

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -541,8 +541,8 @@ bool CGMFileHolder::DeleteDirIfEmpty(std::wstring sDir, bool bDeleteThis)
 	return false;
 }
 
-bool CGMFileHolder::GetDiskFileName(const GEOFILE_DATA& gfdata, std::wstring &path, 
-	std::wstring &name, const std::wstring root) const
+bool CGMFileHolder::GetDiskFileName(const GEOFILE_DATA& gfdata, std::fnstring &path, 
+	std::fnstring &name, const std::wstring root) const
 {
 	return m_vecRMS[gfdata.type]->GetDiskFileName(gfdata, path, name, root);
 }

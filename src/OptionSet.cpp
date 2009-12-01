@@ -48,7 +48,7 @@ void COptionSet::Init(HKEY hKey, CMonitorSet * pMonitorSet)
 	m_data->m_pMonitorSet = pMonitorSet;
 }
 
-void COptionSet::AddOption(wchar_t * wcLabel, wchar_t * wcRegName, bool fDefault, int iCommand)
+void COptionSet::AddOption(tchar_t * wcLabel, tchar_t * wcRegName, bool fDefault, int iCommand)
 {
 	AutoLock l;
 	m_data->m_listOptions.push_back(Option());

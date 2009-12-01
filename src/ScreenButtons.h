@@ -15,7 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef SCREENBUTTONS_H
 #define SCREENBUTTONS_H
 
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#endif
 struct IButtonPainter;
 struct ScreenPoint;
 
@@ -31,10 +33,12 @@ public:
 	int GetCommand(int iButton);
 	void SelectButton(int iButton);
 	void DeselectButton();
+#ifndef LINUX
 	bool ContextMenu(int iButton, const ScreenPoint & sp, HWND hwnd);
-	void AddAction(int iCommand, const wchar_t * wcCommand);
-	void AddButton(int iCommand);
 	void Init(HKEY hKey);
+#endif
+	void AddAction(int iCommand, const tchar_t * wcCommand);
+	void AddButton(int iCommand);
 	void Load();
 	void Save();
 };

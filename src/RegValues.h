@@ -16,102 +16,132 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define REGVALUES_H
 
 #include <string>
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#endif
 
 #include "Lock.h"
 
-class CRegBase
-{
-public:
-	virtual ~CRegBase();
-protected:
-	HKEY m_hKey;
-	std::wstring m_wstrKey;
-	void Init(HKEY hKey, const wchar_t * wcKey)
-	{
-		m_hKey = hKey;
-		m_wstrKey = wcKey;
-	}
-private:
-	void operator = (const CRegBase &);
-};
+#ifndef LINUX
 
-template <class T, DWORD type>
-class CRegScalar : private CRegBase
-{
-private:
-	T m_Value;
-	void operator = (const CRegScalar<T, type> &);
-public:
-	void Init(HKEY hKey, const wchar_t * wcKey, T wcDefault)
+	class CRegBase
 	{
-		AutoLock l;
-		CRegBase::Init(hKey, wcKey);
-		T buff;
-		DWORD lLen = sizeof(buff);
-		DWORD lType;
-		if (0 != RegQueryValueEx(m_hKey, m_wstrKey.c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
+	public:
+		virtual ~CRegBase();
+	protected:
+		HKEY m_hKey;
+		std::tstring m_wstrKey;
+		void Init(HKEY hKey, const tchar_t * wcKey)
 		{
-			if (0 != RegQueryValueEx(m_hKey, (m_wstrKey + L"Def").c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
+			m_hKey = hKey;
+			m_wstrKey = wcKey;
+		}
+	private:
+		void operator = (const CRegBase &);
+	};
+
+	template <class T, DWORD type>
+	class CRegScalar : private CRegBase
+	{
+	private:
+		T m_Value;
+		void operator = (const CRegScalar<T, type> &);
+	public:
+		void Init(HKEY hKey, const tchar_t * wcKey, T wcDefault)
+		{
+			AutoLock l;
+			CRegBase::Init(hKey, wcKey);
+			T buff;
+			DWORD lLen = sizeof(buff);
+			DWORD lType;
+			if (0 != RegQueryValueEx(m_hKey, m_wstrKey.c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
 			{
-				m_Value = wcDefault;
-				return;
+				if (0 != RegQueryValueEx(m_hKey, (m_wstrKey + T("Def")).c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
+				{
+					m_Value = wcDefault;
+					return;
+				}
+			}
+			{
+				if (lLen == sizeof(buff))
+				{
+					m_Value = buff;
+					return;
+				}
 			}
 		}
+		void Set(T value)
 		{
-			if (lLen == sizeof(buff))
-			{
-				m_Value = buff;
-				return;
-			}
+			AutoLock l;
+			m_Value = value;
+			RegSetValueEx(m_hKey, m_wstrKey.c_str(), 0, type, (unsigned char *)&m_Value, sizeof(m_Value));
 		}
-	}
-	void Set(T value)
-	{
-		AutoLock l;
-		m_Value = value;
-		RegSetValueEx(m_hKey, m_wstrKey.c_str(), 0, type, (unsigned char *)&m_Value, sizeof(m_Value));
-	}
-	const T operator()()
-	{
-		AutoLock l;
-		return m_Value;
-	}
-	bool operator !()
-	{
-		AutoLock l;
-		return !m_Value;
-	}
-};
+		const T operator()()
+		{
+			AutoLock l;
+			return m_Value;
+		}
+		bool operator !()
+		{
+			AutoLock l;
+			return !m_Value;
+		}
+	};
 
-class CRegString : private CRegBase
-{
-	std::wstring m_wstrValue;
-public:
-	void Init(HKEY hKey, const wchar_t * wcKey);
-	void operator =(const wchar_t * wcValue);
-	const std::wstring operator()(void);
-};
+	class CRegString : private CRegBase
+	{
+		std::tstring m_wstrValue;
+	public:
+		void Init(HKEY hKey, const tchar_t * wcKey);
+		void operator =(const tchar_t * wcValue);
+		const std::tstring operator()(void);
+	};
 
-inline void MyRegSetValueString(HKEY hKey, const wchar_t * wcName, const wchar_t * wcValue)
-{
-	RegSetValueEx(hKey, wcName, 0, REG_SZ, (BYTE *)wcValue, wcslen(wcValue) * sizeof(*wcValue));
-}
+	inline void MyRegSetValueString(HKEY hKey, const tchar_t * wcName, const tchar_t * wcValue)
+	{
+		RegSetValueEx(hKey, wcName, 0, REG_SZ, (BYTE *)wcValue, wcslen(wcValue) * sizeof(*wcValue));
+	}
 
-inline void RegisterFileType(const wchar_t * wcExtention, const wchar_t * wcDescription, 
-	const wchar_t * wcFileType, const wchar_t * wcProgName)
-{
-	HKEY hKey;
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, wcExtention, 0, L"", 0, 0, 0, &hKey, 0);
-	MyRegSetValueString(hKey, NULL, wcFileType);
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, wcFileType, 0, L"", 0, 0, 0, &hKey, 0);
-	MyRegSetValueString(hKey, NULL, wcDescription);
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::wstring(wcFileType) + L"\\shell\\open\\command").c_str(), 
-		0, L"", 0, 0, 0, &hKey, 0);
-	MyRegSetValueString(hKey, NULL, (std::wstring(L"\"") + wcProgName + L"\" \"%1\"").c_str());
-	RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::wstring(wcFileType) + L"\\DefaultIcon").c_str(), 
-		0, L"", 0, 0, 0, &hKey,0);
-	MyRegSetValueString(hKey, NULL, (std::wstring(L"") + wcProgName + L",0").c_str());
-}
+	inline void RegisterFileType(const tchar_t * wcExtention, const tchar_t * wcDescription, 
+		const tchar_t * wcFileType, const tchar_t * wcProgName)
+	{
+		HKEY hKey;
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcExtention, 0, T(""), 0, 0, 0, &hKey, 0);
+		MyRegSetValueString(hKey, NULL, wcFileType);
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcFileType, 0, T(""), 0, 0, 0, &hKey, 0);
+		MyRegSetValueString(hKey, NULL, wcDescription);
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + T("\\shell\\open\\command")).c_str(), 
+			0, T(""), 0, 0, 0, &hKey, 0);
+		MyRegSetValueString(hKey, NULL, (std::tstring(T("\"")) + wcProgName + T("\" \"%1\"")).c_str());
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + T("\\DefaultIcon")).c_str(), 
+			0, T(""), 0, 0, 0, &hKey,0);
+		MyRegSetValueString(hKey, NULL, (std::tstring(T("")) + wcProgName + T(",0")).c_str());
+	}
+#else
+	typedef void* HKEY;
+	class CRegString
+	{
+	private:
+		std::tstring Value;
+	public:
+		void Init(HKEY, const tchar_t* value) { Value = value;}
+		const std::tstring& operator()() const {return Value;}
+		CRegString& operator =(const std::tstring& value) {Value = value;}
+	};
+
+	enum RegType {
+		REG_BINARY
+	};
+	template <class T, RegType type>
+	class CRegScalar
+	{
+	private:
+		T Value;
+	public:
+		void Set(const T& value) {Value = value;};
+		const T& operator()() {return Value;}
+		void Init(HKEY hKey, const tchar_t * wcKey, T wcDefault) {Value = wcDefault;}
+	};
+#endif
 
 #endif // REGVALUES_H

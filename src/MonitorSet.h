@@ -16,20 +16,27 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define MONITORSET_H
 
 #include "Menu.h"
-#include "GDIPainter.h"
+#include "Monitors.h"
+
+#ifdef LINUX
+	typedef void* HWND;
+#endif
 
 class CMonitorSet
 {
 private:
 	typedef std::list<std::pair<ScreenRect, int> > MonitorRects;
 	MonitorRects m_listMonitorRects;
-	std::map<std::wstring, IMonitor *> m_mapMonitors;
-	std::vector<std::wstring> m_vectMonitors;
+	std::map<std::tstring, IMonitor *> m_mapMonitors;
+	std::vector<std::tstring> m_vectMonitors;
+#ifndef LINUX
 	HKEY m_hRegKey;
+#endif
 	UInt m_iActiveMonitor;
 	int m_nRow;
 	UInt m_iInRow;
 public:
+#ifndef LINUX
 	void Init(HKEY hRegKey)
 	{
 		m_hRegKey = hRegKey;
@@ -37,13 +44,14 @@ public:
 		m_iActiveMonitor = 0;
 		m_nRow = 0;
 	}
+#endif
 	void AddMonitor(IMonitor * pMonitor)
 	{
-		std::wstring wstrName = pMonitor->GetId();
+		std::tstring wstrName = pMonitor->GetId();
 		m_mapMonitors[wstrName] = pMonitor;
 		if (m_vectMonitors.size() < 30)
 		{
-			std::vector<std::wstring>::iterator it;
+			std::vector<std::tstring>::iterator it;
 			for (it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
 				if (*it == wstrName) break;
 			if (it == m_vectMonitors.end())
@@ -74,44 +82,48 @@ public:
 	}
 	void Load()
 	{
+#ifndef LINUX
 		std::vector<Byte> data;
 		DWORD ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
-		RegQueryValueEx(m_hRegKey, L"Monitors", 0, &dwType, 0, &ulTotalLen);
+		RegQueryValueEx(m_hRegKey, T("Monitors"), 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)
 		{
 			if (dwType != REG_BINARY)
 				return;
 			data.resize(ulTotalLen);
-			if (RegQueryValueEx(m_hRegKey, L"Monitors", 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
+			if (RegQueryValueEx(m_hRegKey, T("Monitors"), 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
 				return;
 			m_vectMonitors.clear();
 			unsigned int uiPos = 0;
 			while (uiPos < ulTotalLen)
 			{
 				int iLen;
-				std::wstring wstr;
+				std::tstring wstr;
 				memcpy(&iLen, &data[uiPos], sizeof(iLen));
 				uiPos += sizeof(iLen);
-				wstr.assign((wchar_t *)&data[uiPos], iLen);
-				uiPos += sizeof(wchar_t) * iLen;
+				wstr.assign((tchar_t *)&data[uiPos], iLen);
+				uiPos += sizeof(tchar_t) * iLen;
 				m_vectMonitors.push_back(wstr);
 			}
 		}
+#endif
 	}
 	void Save()
 	{
+#ifndef LINUX
 		std::vector<Byte> data;
-		for (std::vector<std::wstring>::iterator it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
+		for (std::vector<std::tstring>::iterator it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
 		{
-			std::wstring wstrFilename = *it;
+			std::tstring wstrFilename = *it;
 			int len = wstrFilename.length();
 			data.insert(data.end(), (const Byte*)&len, (const Byte*)&len + sizeof(len));
-			data.insert(data.end(), (const Byte*)&wstrFilename.c_str()[0], (const Byte*)&wstrFilename.c_str()[0] + sizeof(wchar_t) * len); 
+			data.insert(data.end(), (const Byte*)&wstrFilename.c_str()[0], (const Byte*)&wstrFilename.c_str()[0] + sizeof(tchar_t) * len); 
 		}
-		wchar_t buf[1000];
-		wsprintf(buf, L"%d", data.size());
-		RegSetValueEx(m_hRegKey, L"Monitors", 0, REG_BINARY, &data[0], data.size());
+		tchar_t buf[1000];
+		stprintf(buf, 1000, T("%d"), data.size());
+		RegSetValueEx(m_hRegKey, T("Monitors"), 0, REG_BINARY, &data[0], data.size());
+#endif
 	}
 	void Decrease(UInt uiDiff)
 	{

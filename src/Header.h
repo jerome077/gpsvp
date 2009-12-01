@@ -57,7 +57,7 @@ public:
 		cnHeaderSize = 0x600 //!< Size of file header
 	};
 	//! Parse file with given name
-	bool Parse(const fnchar_t * wcFilename);
+	bool Parse(const tchar_t * wcFilename);
 	//! Debug dump of internal data
 	// void Dump();
 	//! Get-method for m_uiBlockSize

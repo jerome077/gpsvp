@@ -16,9 +16,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define MRUPOINTS_H
 
 #include <list>
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#	include "GDIPainter.h"
+#endif
 #include "GeoPoint.h"
-#include "GDIPainter.h"
 
 class CMRUPoints
 {
@@ -26,47 +28,54 @@ private:
 	struct Point
 	{
 		GeoPoint gp;
-		std::wstring wstrName;
+		std::tstring wstrName;
 	};
 	typedef std::list<Point> Points;
 	Points m_points;
+#ifndef LINUX
 	HKEY m_hRegKey;
+#endif
 	enum {cnMaxPoints = 9};
 public:
 	CMRUPoints() {};
-	void AddPoint(GeoPoint gp, const wchar_t * wcName);
+	void AddPoint(GeoPoint gp, const tchar_t * wcName);
 	void Navigate(ScreenPoint pt, HWND hWnd);
+#ifndef LINUX
 	void Init(HKEY hRegKey)
 	{
 		m_hRegKey = hRegKey;
 		Load();
 	}
+#endif
 	void Save()
 	{
+#ifndef LINUX
 		std::vector<Byte> data;
 		for (Points::iterator it = m_points.begin(); it != m_points.end(); ++it)
 		{
 			int len = it->wstrName.length();
 			data.insert(data.end(), (const Byte*)&it->gp, (const Byte*)&it->gp + sizeof(it->gp));
 			data.insert(data.end(), (const Byte*)&len, (const Byte*)&len + sizeof(len));
-			data.insert(data.end(), (const Byte*)&it->wstrName.c_str()[0], (const Byte*)&it->wstrName.c_str()[0] + sizeof(wchar_t) * len); 
+			data.insert(data.end(), (const Byte*)&it->wstrName.c_str()[0], (const Byte*)&it->wstrName.c_str()[0] + sizeof(tchar_t) * len); 
 		}
-		wchar_t buf[1000];
-		wsprintf(buf, L"%d", data.size());
-		RegSetValueEx(m_hRegKey, L"MRUPoints", 0, REG_BINARY, &data[0], data.size());
+		tchar_t buf[1000];
+		stprintf(buf, 1000, T("%d"), data.size());
+		RegSetValueEx(m_hRegKey, T("MRUPoints"), 0, REG_BINARY, &data[0], data.size());
+#endif
 	}
 	void Load()
 	{
+#ifndef LINUX
 		std::vector<Byte> data;
 		DWORD ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
-		RegQueryValueEx(m_hRegKey, L"MRUPoints", 0, &dwType, 0, &ulTotalLen);
+		RegQueryValueEx(m_hRegKey, T("MRUPoints"), 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)
 		{
 			if (dwType != REG_BINARY)
 				return;
 			data.resize(ulTotalLen);
-			if (RegQueryValueEx(m_hRegKey, L"MRUPoints", 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
+			if (RegQueryValueEx(m_hRegKey, T("MRUPoints"), 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
 				return;
 			m_points.clear();
 			unsigned int uiPos = 0;
@@ -74,18 +83,19 @@ public:
 			{
 				GeoPoint gp;
 				int iLen;
-				std::wstring wstr;
+				std::tstring wstr;
 				memcpy(&gp, &data[uiPos], sizeof(gp));
 				uiPos += sizeof(gp);
 				memcpy(&iLen, &data[uiPos], sizeof(iLen));
 				uiPos += sizeof(iLen);
-				wstr.assign((wchar_t *)&data[uiPos], iLen);
-				uiPos += sizeof(wchar_t) * iLen;
+				wstr.assign((tchar_t *)&data[uiPos], iLen);
+				uiPos += sizeof(tchar_t) * iLen;
 				m_points.push_back(Point());
 				m_points.back().gp = gp;
 				m_points.back().wstrName = wstr;
 			}
 		}
+#endif
 	}
 };
 

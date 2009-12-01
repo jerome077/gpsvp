@@ -31,7 +31,7 @@
     - optional case-insensitive sections and keys (for ASCII characters only)
     - saves files with sections and keys in the same order as they were loaded
     - preserves comments on the file, section and keys where possible.
-    - supports both char or wchar_t programming interfaces
+    - supports both char or tchar_t programming interfaces
     - supports both MBCS (system locale) and UTF-8 file encodings
     - system locale does not need to be UTF-8 on Linux/Unix to load UTF-8 file
     - support for non-ASCII characters in section, keys, values and comments
@@ -61,13 +61,13 @@
         <tr><th>SI_CONVERT_GENERIC
             <tr><td>char        <td>No              <td>Yes         <td>Yes #1      <td>CSimpleIniA
             <tr><td>char        <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseA
-            <tr><td>wchar_t     <td>No              <td>Yes         <td>Yes         <td>CSimpleIniW
-            <tr><td>wchar_t     <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseW
+            <tr><td>tchar_t     <td>No              <td>Yes         <td>Yes         <td>CSimpleIniW
+            <tr><td>tchar_t     <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseW
         <tr><th>SI_CONVERT_WIN32
             <tr><td>char        <td>No              <td>No #2       <td>Yes         <td>CSimpleIniA
             <tr><td>char        <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseA
-            <tr><td>wchar_t     <td>No              <td>Yes         <td>Yes         <td>CSimpleIniW
-            <tr><td>wchar_t     <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseW
+            <tr><td>tchar_t     <td>No              <td>Yes         <td>Yes         <td>CSimpleIniW
+            <tr><td>tchar_t     <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseW
         <tr><th>SI_CONVERT_ICU
             <tr><td>char        <td>No              <td>Yes         <td>Yes         <td>CSimpleIniA
             <tr><td>char        <td>Yes             <td>Yes         <td>Yes         <td>CSimpleIniCaseA
@@ -246,10 +246,10 @@ enum SI_Error {
 
 #ifdef _WIN32
 # define SI_NEWLINE_A   "\r\n"
-# define SI_NEWLINE_W   L"\r\n"
+# define SI_NEWLINE_W   T("\r\n")
 #else // !_WIN32
 # define SI_NEWLINE_A   "\n"
-# define SI_NEWLINE_W   L"\n"
+# define SI_NEWLINE_W   T("\n")
 #endif // _WIN32
 
 #if defined(SI_CONVERT_ICU)
@@ -258,7 +258,7 @@ enum SI_Error {
 
 #if defined(_WIN32)
 # define SI_HAS_WIDE_FILE
-# define SI_WCHAR_T     wchar_t
+# define SI_WCHAR_T     tchar_t
 #elif defined(SI_CONVERT_ICU)
 # define SI_HAS_WIDE_FILE
 # define SI_WCHAR_T     UChar
@@ -279,13 +279,13 @@ enum SI_Error {
         <tr><th>Interface   <th>Case-sensitive  <th>Typedef
         <tr><td>char        <td>No              <td>CSimpleIniA
         <tr><td>char        <td>Yes             <td>CSimpleIniCaseA
-        <tr><td>wchar_t     <td>No              <td>CSimpleIniW
-        <tr><td>wchar_t     <td>Yes             <td>CSimpleIniCaseW
+        <tr><td>tchar_t     <td>No              <td>CSimpleIniW
+        <tr><td>tchar_t     <td>Yes             <td>CSimpleIniCaseW
     </table>
 
     Note that using other types for the SI_CHAR is supported. For instance,
     unsigned char, unsigned short, etc. Note that where the alternative type
-    is a different size to char/wchar_t you may need to supply new helper
+    is a different size to char/tchar_t you may need to supply new helper
     classes for SI_STRLESS and SI_CONVERTER.
  */
 template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
@@ -650,7 +650,7 @@ public:
         <table>
             <tr><th>SI_CHAR     <th>FORMAT
             <tr><td>char        <td>same format as when loaded (MBCS or UTF-8)
-            <tr><td>wchar_t     <td>UTF-8
+            <tr><td>tchar_t     <td>UTF-8
             <tr><td>other       <td>UTF-8
         </table>
 
@@ -1210,9 +1210,9 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadFile(
 #ifdef _WIN32
     FILE * fp = NULL;
 #if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
-    _wfopen_s(&fp, a_pwszFile, L"rb");
+    _wfopen_s(&fp, a_pwszFile, T("rb"));
 #else // !__STDC_WANT_SECURE_LIB__
-    fp = _wfopen(a_pwszFile, L"rb");
+    fp = _wfopen(a_pwszFile, T("rb"));
 #endif // __STDC_WANT_SECURE_LIB__
     if (!fp) return SI_FILE;
     SI_Error rc = LoadFile(fp);
@@ -1708,8 +1708,8 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::CopyString(
     if (sizeof(SI_CHAR) == sizeof(char)) {
         uLen = strlen((const char *)a_pString);
     }
-    else if (sizeof(SI_CHAR) == sizeof(wchar_t)) {
-        uLen = wcslen((const wchar_t *)a_pString);
+    else if (sizeof(SI_CHAR) == sizeof(tchar_t)) {
+        uLen = wcslen((const tchar_t *)a_pString);
     }
     else {
         for ( ; a_pString[uLen]; ++uLen) /*loop*/ ;
@@ -2126,7 +2126,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SaveFile(
     ) const
 {
 #ifdef _WIN32
-    FILE * fp = _wfopen(a_pwszFile, L"wb");
+    FILE * fp = _wfopen(a_pwszFile, T("wb"));
     if (!fp) return SI_FILE;
     SI_Error rc = SaveFile(fp, a_bAddSignature);
     fclose(fp);
@@ -2578,7 +2578,7 @@ public:
 #include "ConvertUTF.h"
 
 /**
- * Converts UTF-8 to a wchar_t (or equivalent) using the Unicode reference
+ * Converts UTF-8 to a tchar_t (or equivalent) using the Unicode reference
  * library functions. This can be used on all platforms.
  */
 template<class SI_CHAR>
@@ -2616,7 +2616,7 @@ public:
         SI_ASSERT(a_uInputDataLen != (size_t) -1);
 
         if (m_bStoreIsUtf8) {
-            // worst case scenario for UTF-8 to wchar_t is 1 char -> 1 wchar_t
+            // worst case scenario for UTF-8 to tchar_t is 1 char -> 1 tchar_t
             // so we just return the same number of characters required as for
             // the source text.
             return a_uInputDataLen;
@@ -2647,20 +2647,20 @@ public:
     {
         if (m_bStoreIsUtf8) {
             // This uses the Unicode reference implementation to do the
-            // conversion from UTF-8 to wchar_t. The required files are
+            // conversion from UTF-8 to tchar_t. The required files are
             // ConvertUTF.h and ConvertUTF.c which should be included in
             // the distribution but are publically available from unicode.org
             // at http://www.unicode.org/Public/PROGRAMS/CVTUTF/
             ConversionResult retval;
             const UTF8 * pUtf8 = (const UTF8 *) a_pInputData;
-            if (sizeof(wchar_t) == sizeof(UTF32)) {
+            if (sizeof(tchar_t) == sizeof(UTF32)) {
                 UTF32 * pUtf32 = (UTF32 *) a_pOutputData;
                 retval = ConvertUTF8toUTF32(
                     &pUtf8, pUtf8 + a_uInputDataLen,
                     &pUtf32, pUtf32 + a_uOutputDataSize,
                     lenientConversion);
             }
-            else if (sizeof(wchar_t) == sizeof(UTF16)) {
+            else if (sizeof(tchar_t) == sizeof(UTF16)) {
                 UTF16 * pUtf16 = (UTF16 *) a_pOutputData;
                 retval = ConvertUTF8toUTF16(
                     &pUtf8, pUtf8 + a_uInputDataLen,
@@ -2690,7 +2690,7 @@ public:
         const SI_CHAR * a_pInputData)
     {
         if (m_bStoreIsUtf8) {
-            // worst case scenario for wchar_t to UTF-8 is 1 wchar_t -> 6 char
+            // worst case scenario for tchar_t to UTF-8 is 1 tchar_t -> 6 char
             size_t uLen = 0;
             while (a_pInputData[uLen]) {
                 ++uLen;
@@ -2734,20 +2734,20 @@ public:
             ++uInputLen; // include the NULL char
 
             // This uses the Unicode reference implementation to do the
-            // conversion from wchar_t to UTF-8. The required files are
+            // conversion from tchar_t to UTF-8. The required files are
             // ConvertUTF.h and ConvertUTF.c which should be included in
             // the distribution but are publically available from unicode.org
             // at http://www.unicode.org/Public/PROGRAMS/CVTUTF/
             ConversionResult retval;
             UTF8 * pUtf8 = (UTF8 *) a_pOutputData;
-            if (sizeof(wchar_t) == sizeof(UTF32)) {
+            if (sizeof(tchar_t) == sizeof(UTF32)) {
                 const UTF32 * pUtf32 = (const UTF32 *) a_pInputData;
                 retval = ConvertUTF32toUTF8(
                     &pUtf32, pUtf32 + uInputLen,
                     &pUtf8, pUtf8 + a_uOutputDataSize,
                     lenientConversion);
             }
-            else if (sizeof(wchar_t) == sizeof(UTF16)) {
+            else if (sizeof(tchar_t) == sizeof(UTF16)) {
                 const UTF16 * pUtf16 = (const UTF16 *) a_pInputData;
                 retval = ConvertUTF16toUTF8(
                     &pUtf16, pUtf16 + uInputLen,
@@ -2974,7 +2974,7 @@ public:
 #endif
 
 // And wine also
-#ifdef UNDER_WINE
+#ifdef LINUX
 # ifndef SI_NO_MBCS
 #  define SI_NO_MBCS
 # endif
@@ -3000,9 +3000,9 @@ struct SI_NoCase {
             return _mbsicmp((const unsigned char *)pLeft,
                 (const unsigned char *)pRight) < 0;
         }
-        if (sizeof(SI_CHAR) == sizeof(wchar_t)) {
-            return _wcsicmp((const wchar_t *)pLeft,
-                (const wchar_t *)pRight) < 0;
+        if (sizeof(SI_CHAR) == sizeof(tchar_t)) {
+            return _wcsicmp((const tchar_t *)pLeft,
+                (const tchar_t *)pRight) < 0;
         }
         return SI_GenericNoCase<SI_CHAR>()(pLeft, pRight);
     }
@@ -3010,7 +3010,7 @@ struct SI_NoCase {
 #endif // SI_NO_MBCS
 
 /**
- * Converts MBCS and UTF-8 to a wchar_t (or equivalent) on Windows. This uses
+ * Converts MBCS and UTF-8 to a tchar_t (or equivalent) on Windows. This uses
  * only the Win32 functions and doesn't require the external Unicode UTF-8
  * conversion library. It will not work on Windows 95 without using Microsoft
  * Layer for Unicode in your application.
@@ -3080,7 +3080,7 @@ public:
         int nSize = MultiByteToWideChar(
             m_uCodePage, 0,
             a_pInputData, (int) a_uInputDataLen,
-            (wchar_t *) a_pOutputData, (int) a_uOutputDataSize);
+            (tchar_t *) a_pOutputData, (int) a_uOutputDataSize);
         return (nSize > 0);
     }
 
@@ -3099,7 +3099,7 @@ public:
     {
         int retval = WideCharToMultiByte(
             m_uCodePage, 0,
-            (const wchar_t *) a_pInputData, -1,
+            (const tchar_t *) a_pInputData, -1,
             0, 0, 0, 0);
         return (size_t) (retval > 0 ? retval : -1);
     }
@@ -3124,7 +3124,7 @@ public:
     {
         int retval = WideCharToMultiByte(
             m_uCodePage, 0,
-            (const wchar_t *) a_pInputData, -1,
+            (const tchar_t *) a_pInputData, -1,
             a_pOutputData, (int) a_uOutputDataSize, 0, 0);
         return retval > 0;
     }
@@ -3148,10 +3148,10 @@ typedef CSimpleIniTempl<UChar,
 typedef CSimpleIniTempl<UChar,
     SI_Case<UChar>,SI_ConvertW<UChar> >                 CSimpleIniCaseW;
 #else
-typedef CSimpleIniTempl<wchar_t,
-    SI_NoCase<wchar_t>,SI_ConvertW<wchar_t> >           CSimpleIniW;
-typedef CSimpleIniTempl<wchar_t,
-    SI_Case<wchar_t>,SI_ConvertW<wchar_t> >             CSimpleIniCaseW;
+typedef CSimpleIniTempl<tchar_t,
+    SI_NoCase<tchar_t>,SI_ConvertW<tchar_t> >           CSimpleIniW;
+typedef CSimpleIniTempl<tchar_t,
+    SI_Case<tchar_t>,SI_ConvertW<tchar_t> >             CSimpleIniCaseW;
 #endif
 
 #ifdef _UNICODE

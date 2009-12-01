@@ -15,18 +15,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "WayPoints.h"
 #include <windows.h>
 #include <vector>
-#ifndef UNDER_WINE
+#ifndef LINUX
 #include "FileFormats/OSM.h"
-#endif // UNDER_WINE
+#endif // LINUX
 #include "MapApp.h"
 
-bool isWptModel(const std::wstring& WaypointName)
+bool isWptModel(const std::tstring& WaypointName)
 {
 	return (WaypointName.substr(0, WPT_MODEL_PREFIX.length()) == WPT_MODEL_PREFIX);
 }
 
 
-CWaypoints::CPoint::CPoint(double dLon, double dLat, int iAltitude, const wchar_t * wcName)
+CWaypoints::CPoint::CPoint(double dLon, double dLat, int iAltitude, const tchar_t * wcName)
 : m_OSMPropList()
 {
 	static int iNextId = 0;
@@ -103,11 +103,11 @@ void CWaypoints::CPoint::AddToList(IListAcceptor * pAcceptor)
 }
 void CWaypoints::CPoint::AddToList(IListAcceptor2 * pAcceptor)
 {
-	wchar_t buff[100];
+	tchar_t buff[100];
 	int i = pAcceptor->AddItem(m_wstrName.c_str(), m_iId, 0, 0);
-	swprintf(buff, 100, L"%f", m_dLatitude);
+	stprintf(buff, 100, T("%f"), m_dLatitude);
 	pAcceptor->AddItem(buff, i, 2, 0);
-	swprintf(buff, 100, L"%f", m_dLongitude);
+	stprintf(buff, 100, T("%f"), m_dLongitude);
 	pAcceptor->AddItem(buff, i, 3, 0);
 }
 
@@ -133,7 +133,7 @@ bool CWaypoints::CPoint::operator == (int to) const
 	return m_iId == to;
 }
 
-Int CWaypoints::AddPoint(GeoPoint gp, int iAltitude, const wchar_t * wcName, int iRadius)
+Int CWaypoints::AddPoint(GeoPoint gp, int iAltitude, const tchar_t * wcName, int iRadius)
 {
 	m_Points.push_back(CPoint(Degree(gp.lon), Degree(gp.lat), iAltitude, wcName));
 	m_Points.back().SetRadius(iRadius);
@@ -182,23 +182,23 @@ void CWaypoints::Write()
 		Write(m_wstrFilename);
 };
 
-void CWaypoints::Write(const std::wstring& wstrFilename)
+void CWaypoints::Write(const std::tstring& wstrFilename)
 {
 	if (wstrFilename.empty())
 		return;
-	std::wstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
-#ifndef UNDER_WINE
-	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+	std::tstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
+#ifndef LINUX
+	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
 		WriteGPX(wstrFilename);
 	else
-#endif // UNDER_WINE
+#endif // LINUX
 		WriteWPT(wstrFilename);
 }
 
 // ---------------------------------------------------------------
 
-#ifndef UNDER_WINE
-void CWaypoints::WriteGPX(const std::wstring& wstrFilename)
+#ifndef LINUX
+void CWaypoints::WriteGPX(const std::tstring& wstrFilename)
 {
 	try
 	{
@@ -225,13 +225,13 @@ void CWaypoints::WriteGPX(const std::wstring& wstrFilename)
 		MessageBox(NULL, e.c_str(), L("GPX write error"), MB_ICONEXCLAMATION);
 	}
 }
-#endif // UNDER_WINE
+#endif // LINUX
 
 // ---------------------------------------------------------------
 
-void CWaypoints::WriteWPT(const std::wstring& wstrFilename)
+void CWaypoints::WriteWPT(const std::tstring& wstrFilename)
 {
-	FILE * pFile = wfopen(wstrFilename.c_str(), L"wt");
+	FILE * pFile = wfopen(wstrFilename.c_str(), T("wt"));
 	if (!pFile)
 		return;
 	fputs(
@@ -250,7 +250,7 @@ void CWaypoints::WriteWPT(const std::wstring& wstrFilename)
 // ---------------------------------------------------------------
 
 // Default Name for waypoint is like "2001.01.01 12:00:00"
-bool IsDefaultWaypointName(const std::wstring& wstrWptName)
+bool IsDefaultWaypointName(const std::tstring& wstrWptName)
 {
 	return (19 == wstrWptName.length())
 	    && (L'.' == wstrWptName[4])
@@ -276,8 +276,8 @@ bool IsDefaultWaypointName(const std::wstring& wstrWptName)
 
 // ---------------------------------------------------------------
 
-#ifndef UNDER_WINE
-void CWaypoints::WriteOSM(const std::wstring& wstrFilename)
+#ifndef LINUX
+void CWaypoints::WriteOSM(const std::tstring& wstrFilename)
 {
 	try
 	{
@@ -294,18 +294,18 @@ void CWaypoints::WriteOSM(const std::wstring& wstrFilename)
 				iter != it->m_OSMPropList.end();
 				iter++)
 			{
-				if (L"name" == iter->Name()) bNameWritten = true;
+				if (T("name") == iter->Name()) bNameWritten = true;
 				if (0 == iter->Value().length()) continue; // ignore empty values
 				OsmWriter.CurrentWpt()->addTag(iter->Name(), iter->Value());
 			}
 			if (!bNameWritten)
 			{
 				if (!IsDefaultWaypointName(it->m_wstrName))
-					OsmWriter.CurrentWpt()->addTag(L"name", it->m_wstrName);
+					OsmWriter.CurrentWpt()->addTag(T("name"), it->m_wstrName);
 			}
 		}
-		wchar_t wcMsg[100];
-		swprintf(wcMsg, 100, L("%d waypoints with OSM tags"), iOsmWptCount);
+		tchar_t wcMsg[100];
+		stprintf(wcMsg, 100, L("%d waypoints with OSM tags"), iOsmWptCount);
 		MessageBox(NULL, wcMsg, L("File written"), MB_ICONEXCLAMATION);
 	}
 	catch (CGPXFileWriter::Error e)
@@ -313,22 +313,22 @@ void CWaypoints::WriteOSM(const std::wstring& wstrFilename)
 		MessageBox(NULL, e.c_str(), L("OSM write error"), MB_ICONEXCLAMATION);
 	}
 }
-#endif // UNDER_WINE
+#endif // LINUX
 
 // ---------------------------------------------------------------
 
-void CWaypoints::Read(const wchar_t * wcFilename)
+void CWaypoints::Read(const tchar_t * wcFilename)
 {
-	m_wstrFilename = L"";
+	m_wstrFilename = T("");
 	m_Points.erase(m_Points.begin(), m_Points.end());
 
-	std::wstring wstrName = wcFilename;
-	std::wstring wstrExt = wstrName.substr(wstrName.length()-4, 4);
-#ifndef UNDER_WINE
-	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
+	std::tstring wstrName = wcFilename;
+	std::tstring wstrExt = wstrName.substr(wstrName.length()-4, 4);
+#ifndef LINUX
+	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
 		ReadGPX(wstrName);
 	else
-#endif // UNDER_WINE
+#endif // LINUX
 		ReadWPT(wcFilename);
 
 	m_wstrFilename = wcFilename;
@@ -336,8 +336,8 @@ void CWaypoints::Read(const wchar_t * wcFilename)
 
 // ---------------------------------------------------------------
 
-#ifndef UNDER_WINE
-void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
+#ifndef LINUX
+void CWaypoints::ReadGPX(const std::tstring& wstrFilename)
 {
 	try
 	{
@@ -352,17 +352,17 @@ void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
 				int iRadius = iterWpt->getRadius();
 				int iAltitude = int(iterWpt->getAltitude());
 
-				CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, L""), iRadius));
+				CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, T("")), iRadius));
 				CWaypoints::CPointEditor wptEditor = wpt.GetEditor();
 				std::auto_ptr<CGPXField> apField = iterWpt->firstField();
 				while (!apField->eof())
 				{
-					std::wstring fieldName = apField->getName();
-					if (L"name" == fieldName)
+					std::tstring fieldName = apField->getName();
+					if (T("name") == fieldName)
 					{
 						wpt.SetLabel(apField->getValue().c_str());
 					}
-					else if (L"gpsVP:osm" == fieldName)
+					else if (T("gpsVP:osm") == fieldName)
 					{
 						CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
 						prop.SetName(apField->getOSMKey());
@@ -382,23 +382,23 @@ void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
 		MessageBox(NULL, (L("Error while reading waypoints: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
 		m_Points.erase(m_Points.begin(), m_Points.end());
 	}
-#ifndef UNDER_WINE
+#ifndef LINUX
 	catch (_com_error& e)
 	{
-		MessageBox(NULL, (std::wstring(L("Error while reading waypoints: "))+e.ErrorMessage()).c_str(),
+		MessageBox(NULL, (std::tstring(L("Error while reading waypoints: "))+e.ErrorMessage()).c_str(),
 			       L("GPX read error"), MB_ICONEXCLAMATION);
 		m_Points.erase(m_Points.begin(), m_Points.end());
 	}
 #endif
 }
-#endif // UNDER_WINE
+#endif // LINUX
 
 // ---------------------------------------------------------------
 
-void CWaypoints::ReadWPT(const wchar_t * wcFilename)
+void CWaypoints::ReadWPT(const tchar_t * wcFilename)
 {
 	char buff[1000];
-	FILE * pFile = wfopen(wcFilename, L"rt");
+	FILE * pFile = wfopen(wcFilename, T("rt"));
 	if (pFile)
 	{
 		std::vector<long> vRecord;
@@ -424,7 +424,7 @@ void CWaypoints::ReadWPT(const wchar_t * wcFilename)
 			{
 				double dLatitude = myatof(listParts[2].c_str());
 				double dLongitude = myatof(listParts[3].c_str());
-				wchar_t buff[1000] = {0};
+				tchar_t buff[1000] = {0};
 				MultiByteToWideChar(CP_ACP, 0, listParts[1].c_str(), -1, buff, 1000);
 				int iRadius = atoi(listParts[13].c_str());
 				int iAltitude = atoi(listParts[14].c_str());
@@ -455,14 +455,14 @@ void CWaypoints::GetList(IListAcceptor2 * pAcceptor)
 	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 		it->AddToList(pAcceptor);
 }
-std::wstring CWaypoints::GetLabelByID(int iId)
+std::tstring CWaypoints::GetLabelByID(int iId)
 {
 	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
 		if (it->GetID() == iId)
 			return it->GetLabel();
 	}
-	return L"";
+	return T("");
 }
 int CWaypoints::GetRadiusByID(int iId)
 {
@@ -482,7 +482,7 @@ int CWaypoints::GetAltitudeByID(int iId)
 	}
 	return 0;
 }
-void CWaypoints::SetLabelByID(int iId, const wchar_t * wcLabel)
+void CWaypoints::SetLabelByID(int iId, const tchar_t * wcLabel)
 {
 	for (std::list<CPoint>::iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	{
@@ -571,11 +571,11 @@ CWaypoints::CPoint & CWaypoints::ById(int id)
 	std::list<CPoint>::iterator it = std::find(m_Points.begin(), m_Points.end(), id);
 	if (it != m_Points.end())
 		return *it;
-	static CPoint stub(0, 0, 0, L"");
+	static CPoint stub(0, 0, 0, T(""));
 	return stub;
 }
 // ---------------------------------------------------------------
-std::wstring CWaypoints::GetCreator()
+std::tstring CWaypoints::GetCreator()
 {
 	return app.GetGpsVPVersion().AswstringWithName();
 }
@@ -619,8 +619,8 @@ CWaypoints::CPoint & CWaypoints::GetWaypointModel(int modelIndex)
 // ---------------------------------------------------------------
 bool CWaypoints::IsGPX()
 {
-	std::wstring wstrExt = m_wstrFilename.substr(m_wstrFilename.length()-4, 4);
-	return (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4));
+	std::tstring wstrExt = m_wstrFilename.substr(m_wstrFilename.length()-4, 4);
+	return (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4));
 }
 // ---------------------------------------------------------------
 
@@ -678,7 +678,7 @@ bool CWaypoints::CPointEditor::RemovePropertyByIndex(int iId)
 
 CWaypoints::CPointProp& CWaypoints::CPointEditor::AddOSMProp()
 {
-	m_pt.m_OSMPropList.push_back(CStringProp(nsOSM, L"", L""));
+	m_pt.m_OSMPropList.push_back(CStringProp(nsOSM, T(""), T("")));
 	return m_pt.m_OSMPropList.back();
 }
 

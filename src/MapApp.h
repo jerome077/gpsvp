@@ -18,7 +18,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define DONT_DEFINE_MIN
 #include "Common.h"
 #include "Header.h"
-#include "GDIPainter.h"
+#ifndef LINUX
+#	include "GDIPainter.h"
+#endif
 #include "FileDialogs.h"
 #include "Track.h"
 #include "NMEAParser.h"
@@ -42,14 +44,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 struct ObjectInfo
 {
-	std::wstring wstrName;
+	std::tstring wstrName;
 	GeoPoint gp;
 	UInt uiType;
 	bool fPresent;
 	ObjectInfo() : fPresent(false) {}
-	std::wstring GetDescription()
+	std::tstring GetDescription()
 	{
-		if (wstrName == L"")
+		if (wstrName == T(""))
 			return L("(No label)");
 		return wstrName;
 	}
@@ -62,7 +64,11 @@ class CMapApp : public IGPSClient
 private:
 	Dict m_dict;
 public:
+#ifndef LINUX
 	CGDIPainter m_painter;
+#else
+	CGTKPainter m_painter;
+#endif
 	CRegString m_rsWaypointsFile;
 	CRegString m_rsToolsFile;
 	CRegString m_rsTranslationFile;
@@ -75,16 +81,22 @@ public:
 	bool m_fMoving;
 	int m_iPressedButton;
 	HWND m_hWnd;
-	std::wstring m_wstrHome;
+	std::tstring m_wstrHome;
 	CTrackList m_Tracks;
 	CTrack m_CurTrack;
+#ifndef LINUX
 	HANDLE m_hPortFile;
 	CRegString m_rsPort;
 	CRegString m_rsPortSpeed;
-	CRegString m_rsCurrentFolder;
-	CRegString m_rsProxy;
 	HANDLE m_hPortThread;
+	DWORD m_dwConnected;
+	enumConnectionStatus m_iConnectionStatus;
+#endif
+	CRegString m_rsCurrentFolder;
+#ifndef LINUX
+	CRegString m_rsProxy;
 	HANDLE m_hHttpThread;
+#endif
 	CRegString m_rsGeoidMode;
 	CNMEAParser m_NMEAParser;
 	CWaypoints m_Waypoints;
@@ -112,10 +124,12 @@ public:
 	CDistanceMonitor m_monOdometer1;
 	CDistanceMonitor m_monOdometer2;
 	// CDistanceMonitor m_monTrackDistance;
+#ifndef LINUX
 	CMemoryMonitor m_monMemory;
 	CMemoryMonitor m_monDataTotal;
 	CMemoryMonitor m_monDataIn;
 	CMemoryMonitor m_monDataOut;
+#endif
 	CPercentMonitor m_monBattery;
 	CPercentMonitor m_monCPU;
 	CDoubleMonitor m_monHDOP;
@@ -135,13 +149,13 @@ public:
 	bool m_fCheckLatestVersion;
 	bool m_fCoursePointPresent;
 	GeoPoint m_gpCoursePoint;
-	void FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, wchar_t * wstrFilter, 
-							   wchar_t * strFile, bool fDirectory, bool fMustExist,  bool fOverwritePrompt = false);
+#ifndef LINUX
+	void FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, tchar_t * wstrFilter, 
+							   tchar_t * strFile, bool fDirectory, bool fMustExist,  bool fOverwritePrompt = false);
+#endif
 	void AddOdometer(double dDist);
-	wchar_t * m_wstrCmdLine;
-	std::wstring m_wstrProgName;
-	DWORD m_dwConnected;
-	enumConnectionStatus m_iConnectionStatus;
+	tchar_t * m_wstrCmdLine;
+	std::tstring m_wstrProgName;
 	bool m_fActive;
 	bool m_fNeedPaintOnActivate;
 	CTypeInfo m_TypeInfo;
@@ -153,6 +167,7 @@ public:
 	CSun m_Sun;
 	CTeam m_team;
 
+#ifndef LINUX
 	// For CPU load monitor
 	DWORD m_dwLastTickTimer;
 #ifdef UNDER_CE
@@ -163,18 +178,21 @@ public:
 #else // UNDER_CE
 	__int64 m_nProcessorUsage;
 #endif // UNDER_CE
+#endif
 
 #ifdef SMARTPHONE
 	bool m_fBluetoothWasTurnedOn;
 #endif // SMARTPHONE
 
+#ifndef LINUX
 	VP::Buffer m_screenBuffer;
 	VP::Buffer m_alphaBuffer;
+#endif
 
 	CTrack m_ReplayTrack;
-	std::wstring m_wstrReplayNMEA;
+	std::tstring m_wstrReplayNMEA;
 	TrafficNodes m_TrafficNodes;
-	std::wstring m_wstrVersionMessage;
+	std::tstring m_wstrVersionMessage;
 
 public:
 	CMapApp();
@@ -185,8 +203,8 @@ public:
 	virtual void VFix(double dAltitude, double dSeparation);
 	void OnLButtonDown(ScreenPoint pt);
 	void OnLButtonUp(ScreenPoint pt);
-	int AddPointScreen(ScreenPoint pt, wchar_t * wcName);
-	int AddPointCenter(wchar_t * wcName);
+	int AddPointScreen(ScreenPoint pt, tchar_t * wcName);
+	int AddPointCenter(tchar_t * wcName);
 	void ViewZoomIn();
 	void ViewZoomOut();
 	void ViewUp();
@@ -223,10 +241,10 @@ public:
 	void DRMByTrack();
 	void InitCoreDll();
 
-	void Create(HWND hWnd, wchar_t * wcHome = L"./");
+	void Create(HWND hWnd, tchar_t * wcHome = T("./"));
 	void InitMenu();
 	void InitMenuAllWMSMaps(CMenu& baseMenu);
-	void SetWMSMapType(WPARAM wp);
+	// void SetWMSMapType(WPARAM wp);
 	void Paint();
 	void ThreadRoutine();
 	void StartListening();
@@ -234,16 +252,18 @@ public:
 	CWaypoints & GetWaypoints() {return m_Waypoints;}
 	CKeymap & GetKeymap();
 	CScreenButtons & GetButtons();
-	void Navigate(ScreenPoint pt, const wchar_t * wcName);
-	void Navigate(const GeoPoint & gp, const wchar_t * wcName)
+	void Navigate(ScreenPoint pt, const tchar_t * wcName);
+	void Navigate(const GeoPoint & gp, const tchar_t * wcName)
 	{
 		m_gpNavigate.Set(gp);
 		m_fNavigate.Set(true);
 		m_painter.Redraw();
 		m_MRUPoints.AddPoint(gp, wcName);
 	};
+#ifndef LINUX
 	void SetMenu(HMENU hMenu);
 	void SetMenu(HWND hWndMenu);
+#endif
 	void CheckMenu();
 	void NextMonitorsRow();
 	void PrevMonitorsRow();
@@ -272,7 +292,7 @@ public:
 	void DebugShowTime() {m_NMEAParser.DebugShowTime();}
 	CAtlas & GetAtlas() {return m_atlas;}
 	int GetTrackStep() {return m_riTrackStep();}
-	bool ProcessCommand(WPARAM wp);
+	bool ProcessCommand(unsigned int wp);
 	void ProcessWMHIBERNATE();
 	void SetDetail(int iDetail);
 	int PrepareScale(unsigned int uiScale10)
@@ -302,15 +322,17 @@ public:
 	ObjectInfo FindPolygon(const GeoPoint & gp);
 	double GetDistanceByTrack(const GeoPoint & pt1, const GeoPoint & pt2);
 	void CheckTrackDistance();
-	void ProcessCmdLine(const wchar_t * wcCmdLine);
-	void ProcessCmdLineElement(const wchar_t * wcCmdLine);
+	void ProcessCmdLine(const tchar_t * wcCmdLine);
+	void ProcessCmdLineElement(const tchar_t * wcCmdLine);
+#ifndef LINUX
 	HANDLE m_hPwrReq;
+#endif
 	void CheckOptions();
 	void SetConnectionStatus(enumConnectionStatus iStatus);
 	void RegisterFileTypes();
 	void About();
 	void Exit();
-	std::wstring FileDialog(std::wstring wstrMask);
+	std::tstring FileDialog(std::tstring wstrMask);
 	void SetActive(bool fActive)
 	{
 		m_fActive = fActive;
@@ -321,8 +343,8 @@ public:
 			m_painter.Redraw();
 		}
 	}
-	std::wstring HeightFromFeet(const wchar_t * wcOriginal);
-	wchar_t * GetTitle() {return L"gpsVP";}
+	std::tstring HeightFromFeet(const tchar_t * wcOriginal);
+	const tchar_t * GetTitle() {return T("gpsVP");}
 	void ExportWaypoint(int id, HWND hWnd);
 	Dict & GetDict() {return m_dict;}
 	void ReplayTrack();
@@ -330,7 +352,7 @@ public:
 	void ReplayNMEA();
 	void StartHttpThread();
 	void HttpThreadRoutine();
-	std::wstring m_wstrHttpStatus;
+	std::tstring m_wstrHttpStatus;
 	CRegScalar<bool, REG_BINARY> m_fTrafficAgreement;
 	const char * GetServerName();
 	void SetSearchURL(const char * url);

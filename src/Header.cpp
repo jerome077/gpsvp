@@ -41,22 +41,22 @@ struct CIMGFile::Map
 	GeoPoint GetCenter() const;
 	void Dump(const std::fnstring & wstrFilename) const
 	{
-		fnchar_t buff[100];
+		tchar_t buff[100];
 		for (SubFiles::const_iterator it = m_SubFiles.begin(); it != m_SubFiles.end(); ++it)
 		{
 	#ifdef LINUX
 			snprintf(buff, 100, ".%s", it->first.c_str());
 	#else
-			swprintf(buff, 100, L".%S", it->first.c_str());
+			stprintf(buff, 100, T(".%S"), it->first.c_str());
 	#endif
 			int size = it->second.GetSize();
 			std::auto_ptr<Byte> buffer(new Byte[size]);
 			it->second.Read(buffer.get(), 0, size);
-#ifndef UNDER_WINE
+#ifndef LINUX
 			std::basic_ofstream<Byte> of((wstrFilename + buff).c_str());
 #else
 			std::basic_ofstream<Byte> of;
-#endif // UNDER_WINE
+#endif // LINUX
 			of.write((unsigned char*)buffer.get(), size);
 		}
 	}
@@ -158,7 +158,7 @@ void CIMGFile::Parse()
 //		(*it)->Dump();
 //}
 
-bool CIMGFile::Parse(const fnchar_t * wcFilename)
+bool CIMGFile::Parse(const tchar_t * wcFilename)
 {
 	m_wstrFilename = wcFilename;
 	static int s_iNextID = 0;

@@ -19,7 +19,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif // USE_STDIO_H
 
 #include <string>
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+#endif
 #include "PlatformDef.h"
 
 
@@ -35,6 +37,7 @@ public:
 		: m_MainVersion(source.m_MainVersion), m_SubVersion(source.m_SubVersion), m_SubSubVersion(source.m_SubSubVersion) 
 	{};
     // ---------------------------------------------------------------
+#ifndef LINUX
 	CVersionNumber(const std::string& sVersion)
 		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
 	{
@@ -54,15 +57,16 @@ public:
 		else
 			m_MainVersion = atoi(sVersion.c_str());
 	};
+#endif
     // ---------------------------------------------------------------
-	CVersionNumber(const std::wstring& sVersion)
+	CVersionNumber(const std::tstring& sVersion)
 		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
 	{
-		size_t found1 = sVersion.find(L".");
+		size_t found1 = sVersion.find(T("."));
 		if (std::string::npos != found1)
 		{
 			m_MainVersion = _wtoi(sVersion.substr(0, found1).c_str());
-			size_t found2 = sVersion.find(L".", found1+1);
+			size_t found2 = sVersion.find(T("."), found1+1);
 			if (std::string::npos != found2)
 			{
 				m_SubVersion = _wtoi(sVersion.substr(found1+1, found2-found1-1).c_str());
@@ -92,10 +96,10 @@ public:
 	    sprintf(buffer, "gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
 		return buffer;
     }
-	std::wstring AswstringWithName() const
+	std::tstring AswstringWithName() const
 	{
-		wchar_t buffer[128];
-	    wsprintf(buffer, L"gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		tchar_t buffer[128];
+	    stprintf(buffer, 128, T("gpsVP %d.%d.%d"), m_MainVersion, m_SubVersion, m_SubSubVersion);
 		return buffer;
     }
 	// ---------------------------------------------------------------

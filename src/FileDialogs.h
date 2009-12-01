@@ -15,8 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef FILEDIALOGS_H
 #define FILEDIALOGS_H
 
-#include <windows.h>
-#include <commdlg.h>
+#ifndef LINUX
+#	include <windows.h>
+#	include <commdlg.h>
 
 #if defined(OWNFILEDIALOGS)
 
@@ -24,8 +25,8 @@ struct MyOPENFILENAME
 {
 	HWND hwndOwner;
 	long lStructSize;
-	wchar_t * lpstrFilter;
-	wchar_t * lpstrFile;
+	tchar_t * lpstrFilter;
+	tchar_t * lpstrFile;
 	int nMaxFile;
 	HINSTANCE hInstance;
 	DWORD Flags;
@@ -48,6 +49,8 @@ bool MyGetOpenFileName(MyOPENFILENAME * pof);
 #define OPENFILENAME MyOPENFILENAME
 #define GetSaveFileName MyGetSaveFileName
 #define GetOpenFileName MyGetOpenFileName
+
+#endif
 
 #endif
 

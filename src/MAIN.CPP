@@ -9,7 +9,7 @@
 //! Painter object for testing purposes
 class CTestPainter : public IPainter
 {
-	virtual void StartPolygon(Byte bType, const wchar_t * wcName)
+	virtual void StartPolygon(Byte bType, const tchar_t * wcName)
 	{
 		dout << "Polygon started [" << UInt(bType) << "] {\n";
 	}
@@ -21,7 +21,7 @@ class CTestPainter : public IPainter
 	{
 		dout << "\t" << gp << "\n";
 	}
-	virtual void StartPolyline(Byte bType, const wchar_t * wcName)
+	virtual void StartPolyline(Byte bType, const tchar_t * wcName)
 	{
 		char buff[1000] = {0};
 		if (wcName)
@@ -35,7 +35,7 @@ class CTestPainter : public IPainter
 	virtual void SetView(GeoPoint gp) {}
 	virtual void SetCursor(GeoPoint gp) {}
 	virtual void SetCursor(bool fVisible) {}
-	virtual void PaintPoint(UInt uiType, GeoPoint gp, const wchar_t * wcName)
+	virtual void PaintPoint(UInt uiType, GeoPoint gp, const tchar_t * wcName)
 	{
 		char buff[1000] = {0};
 		if (wcName)

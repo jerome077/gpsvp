@@ -15,17 +15,27 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef LOCK_H
 #define LOCK_H
 
-#include <windows.h>
+#ifndef LINUX
+#	include <windows.h>
+	class MyLock
+	{
+		CRITICAL_SECTION m_cs;
+	public:
+		inline MyLock() {::InitializeCriticalSection(&m_cs);}
+		inline void Lock() {::EnterCriticalSection(&m_cs);}
+		inline void Unlock() {::LeaveCriticalSection(&m_cs);}
+		inline bool IsLocked() {return m_cs.LockCount != 0;}
+	};
+#else
+	class MyLock
+	{
+	public:
+		inline void Lock() {}
+		inline void Unlock() {}
+		inline bool IsLocked() {return false;}
+	};
+#endif
 
-class MyLock
-{
-	CRITICAL_SECTION m_cs;
-public:
-	inline MyLock() {::InitializeCriticalSection(&m_cs);}
-	inline void Lock() {::EnterCriticalSection(&m_cs);}
-	inline void Unlock() {::LeaveCriticalSection(&m_cs);}
-	inline bool IsLocked() {return m_cs.LockCount != 0;}
-};
 
 extern MyLock g_lock;
 

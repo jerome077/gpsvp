@@ -82,8 +82,21 @@ UInt GetInt16(Byte * pbStart);
 #	endif
 #endif
 
+#ifdef LINUX
+#	define tchar_t char
+#	define T(x) x
+#	define stprintf snprintf
+#	define tcstol strtol
+#else
+#	define tchar_t tchar_t
+#	define T(x) (L##x)
+#	define stprintf swprintf
+#	define tcstol wcstol
+#endif
+
+
 #ifdef UNDER_CE
-	inline int swprintf(wchar_t * buffer, int size, const wchar_t * format, ...)
+	inline int stprintf(tchar_t * buffer, int size, const tchar_t * format, ...)
 	{
 		va_list arg;
 		va_start(arg, format);
@@ -92,7 +105,7 @@ UInt GetInt16(Byte * pbStart);
 #endif
 
 #ifdef _WINDOWS
-inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
+inline FILE * wfopen(const tchar_t * name, const tchar_t * mode)
 {
 	FILE * res = NULL;
 	_wfopen_s(&res, name, mode);
@@ -100,7 +113,7 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 }
 #elif defined(LINUX)
 // LINUXTODO:
-inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
+inline FILE * wfopen(const tchar_t * name, const tchar_t * mode)
 {
 	return 0;
 }
@@ -108,21 +121,7 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 #	define wfopen _wfopen
 #endif
 
-#ifdef LINUX
-#	define fnchar_t char
-#	define FN(x) (x)
-#else
-#	define fnchar_t wchar_t
-#	define FN(x) (L##x)
-#endif
-
-#define fnstring basic_string<fnchar_t>
-
-#ifdef LINUX
-#	define tchar_t char
-#else
-#	define tchar_t wchar_t
-#endif
+#define fnstring basic_string<tchar_t>
 
 #define tstring basic_string<tchar_t>
 
@@ -130,22 +129,25 @@ inline FILE * wfopen(const wchar_t * name, const wchar_t * mode)
 #	define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
 
-#ifdef UNDER_WINE
+#ifdef LINUX
 #	define stdext __gnu_cxx
 #	include <wchar.h>
-	inline int _wtoi(const wchar_t* w) {
-		wchar_t* t;
-		return wcstol(w, &t, 10);
+	inline int _wtoi(const tchar_t* w) {
+		return atoi(w);
 	}
-	inline FILE* _wfopen(const wchar_t*, const wchar_t*) {
+	inline FILE* _wfopen(const tchar_t*, const tchar_t*) {
 		return 0;
 	}
-	inline void _wmkdir(const wchar_t*) {
+	inline void _wmkdir(const tchar_t*) {
 		return;
 	}
 #	define _snprintf snprintf
 #	define _wcsnicmp wcsncasecmp 
 #	define _wcsicmp wcscasecmp
-#endif // UNDER_WINE
+	typedef unsigned int WORD;
+	typedef unsigned int UINT;
+	typedef unsigned char byte;
+#	define MAX_PATH 1000
+#endif // LINUX
 
 #endif // PLATFORMDEF_H

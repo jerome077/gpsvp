@@ -1,3 +1,13 @@
+#include <iostream>
+#include <gtkmm.h>
+#include <hildonmm.h>
+#include <map>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
+
+#include "GtkPainter.h"
 #include "Common.h"
 #include "Header.h"
 #include "IPainter.h"
@@ -5,118 +15,11 @@
 #include "Atlas.h"
 #include "NMEAParser.h"
 
-#include <iostream>
-#include <gtkmm.h>
-#include <map>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <string.h>
-
 Dict dict;
 Dict & GetDict()
 {
 	return dict;
 }
-
-struct ScreenPoint
-{
-	ScreenPoint(int x_, int y_) : x(x_), y(y_) {}
-	ScreenPoint() : x(0), y(0) {}
-	int x, y;
-};
-
-struct ScreenSize
-{
-	int cx,cy;
-	ScreenSize() {}
-	ScreenSize(long x, long y) { cx = x; cy = y; }
-};
-
-struct ScreenRect
-{
-	int left, right, top, bottom;
-	ScreenRect(){};
-	// ScreenRect(const RECT & rc){ *(RECT*)this = rc;};
-	ScreenRect(const ScreenPoint & sp, const ScreenSize & ss)
-	{
-		left = sp.x;
-		top = sp.y;
-		right = sp.x + ss.cx;
-		bottom = sp.y + ss.cy;
-	}
-	void Init(const ScreenPoint & pt)
-	{
-		left = pt.x;
-		right = pt.x;
-		top = pt.y;
-		bottom = pt.y;
-	}
-	void Append(const ScreenPoint & pt)
-	{
-		if (pt.x < left)
-			left = pt.x;
-		else if (pt.x > right)
-			right = pt.x;
-		if (pt.y < top)
-			top = pt.y;
-		else if (pt.y > bottom)
-			bottom = pt.y;
-	}
-	bool Intersect(const ScreenRect & a)
-	{
-		if (a.top > bottom) return false;
-		if (a.bottom < top) return false;
-		if (a.left > right) return false;
-		if (a.right < left) return false;
-		return true;
-	}
-	bool IntersectHard(const ScreenRect & a)
-	{
-		if (a.top > (top + bottom) / 2) return false;
-		if (a.bottom < top) return false;
-		if (a.left > (right + left) / 2) return false;
-		if (a.right < left) return false;
-		return true;
-	}
-	int Side(const ScreenPoint & pt) const
-	{
-		if (pt.x > right)
-			return 1;
-		if (pt.x < left)
-			return 2;
-		if (pt.y > bottom)
-			return 3;
-		if (pt.y < top)
-			return 4;
-		return 0;
-	}
-	int Width()
-	{
-		return right - left;
-	}
-	int Height()
-	{
-		return bottom - top;
-	}
-	ScreenPoint Center()
-	{
-		return ScreenPoint((right + left) / 2, (top + bottom) / 2);
-	}
-	int mymax(int a, int b) { return (a>b)?a:b; }
-	int mymin(int a, int b) { return (a<b)?a:b; }
-	void Trim(const ScreenRect & r)
-	{
-		if (right > r.right)
-			right = mymax(left, r.right);
-		if (left < r.left)
-			left = mymin(right, r.left);
-		if (bottom > r.bottom)
-			bottom = mymax(top, r.bottom);
-		if (top < r.top)
-			top = mymin(bottom, r.top);
-	}
-};
 
 class ScreenRectSet
 {
@@ -130,41 +33,21 @@ public:
 	void Reset();
 };
 
-struct ScreenDiff
-{
-	ScreenDiff(const ScreenDiff & d) { dx = d.dx; dy = d.dy; }
-	ScreenDiff(int x, int y) : dx(x), dy(y) {}
-	bool Null() {return dx == 0.0 && dy == 0.0;}
-	int dx;
-	int dy;
-	void operator *=(int i) {dx*=i; dy*=i;}
-	void operator /=(int i) {dx/=i; dy/=i;}
-};
-
-inline ScreenPoint & operator -= (ScreenPoint & pt, const ScreenDiff & d)
-{
-	pt.x -= d.dx;
-	pt.y -= d.dy;
-	return pt;
-}
-
-inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
-{
-	return pt -= d;
-}
-
-
-struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPainter, public IGPSClient
+struct DumpPainter : public Hildon::Window, public IPainter, public IStatusPainter, public IGPSClient
 {
 	CAtlas a;
-	DumpPainter() : pressed(false)
+	Gtk::Menu menu;
+	Gtk::MenuItem item;
+	DumpPainter()
+		: pressed(false)
+		, item("Item")
 	{
-#ifndef GLIBMM_DEFAULT_SIGNAL_HANDLERS_ENABLED
-		//Connect the signal handler if it isn't already a virtual method override:
-		signal_expose_event().connect(sigc::mem_fun(*this, &DumpPainter::on_expose_event), false);
-#endif //GLIBMM_DEFAULT_SIGNAL_HANDLERS_ENABLED
+		menu.append(item);
+		menu.show_all_children();
+		set_main_menu(menu);
+		show_all_children();
 	}
-	void AddMap(const fnchar_t * name)
+	void AddMap(const tchar_t * name)
 	{
 		a.Add(name, this);
 	}
@@ -379,15 +262,14 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
 		m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
 		
-		Glib::RefPtr<Gdk::Window> window = get_window();
-		Gtk::Allocation allocation = get_allocation();
-    	const int width = allocation.get_width();
-    	const int height = allocation.get_height();
+		GdkWindow* window = event->window;
+    	int width, height;
+    	gdk_drawable_get_size(window, &width, &height);
 		m_spWindowCenter = ScreenPoint(width / 2, height / 2);
 		m_srWindow.Init(ScreenPoint(0, 0));
 		m_srWindow.Append(ScreenPoint(width, height));
 
-		pixmap = Gdk::Pixmap::create(window, width, height);
+		pixmap = Gdk::Pixmap::create(get_window(), width, height);
 		// pixmap->set_colormap(window->get_colormap());
     	cr = pixmap->create_cairo_context();
     	// window->create_cairo_context();
@@ -407,8 +289,8 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		m_srsPoints.Reset();
 		a.Paint(maskPoints, true);
 		cr.clear();
-		static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(window);
-		window->draw_drawable(dc, pixmap, 0, 0, 0, 0, width, height);
+		static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(get_window());
+		get_window()->draw_drawable(dc, pixmap, 0, 0, 0, 0, width, height);
 		return true;
 	}
 	GeoPoint m_gpCenterCache;
@@ -600,14 +482,14 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 		m_hDefaultBrush = CBrush(RGB(0xff, 0x0, 0x0));
 		// Prepare font structures
 		/*
-		m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, L"satelliteno", IMAGE_ICON, 32, 32, 0);
-		m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, L"satellitenofix", IMAGE_ICON, 32, 32, 0);
-		m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, L"satelliteyes", IMAGE_ICON, 32, 32, 0);
-		m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, L"satellitewait", IMAGE_ICON, 32, 32, 0);
-		m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, L"satellitedisabled", IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, T("satelliteno"), IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, T("satellitenofix"), IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, T("satelliteyes"), IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, T("satellitewait"), IMAGE_ICON, 32, 32, 0);
+		m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, T("satellitedisabled"), IMAGE_ICON, 32, 32, 0);
 		*/
 	}
-	void InitTools(const fnchar_t * strFilename)
+	void InitTools(const tchar_t * strFilename)
 	{
 		InitToolsCommon();
 
@@ -673,14 +555,14 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 					{
 						PointTools & pt = m_PointTools[vRecord[1]];
 						try {
-							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + FN(".png")).c_str());
+							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + T(".png")).c_str());
 						} catch (std::exception &) {}
 						/*
 						// LINUXTODO:
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
 						if (!pt.m_hIcon)
 						{
-							int i = wcstol(wstrRecord.c_str(), 0, 10);
+							int i = tcstol(wstrRecord.c_str(), 0, 10);
 							if (i)
 							pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
 						}
@@ -692,14 +574,14 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 					{
 						PointTools & pt = m_PointTools[vRecord[1]];
 						try {
-							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + FN(".png")).c_str());
+							pt.s = Cairo::ImageSurface::create_from_png((MakeFilename(strRecord, wstrBase) + T(".png")).c_str());
 						} catch (std::exception &) {}
 						/*
 						// LINUXTODO:
 						pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
 						if (!pt.m_hIcon)
 						{
-							int i = wcstol(wstrRecord.c_str(), 0, 10);
+							int i = tcstol(wstrRecord.c_str(), 0, 10);
 							if (i)
 							pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, MAKEINTRESOURCE(i), IMAGE_ICON, 32, 32, 0);
 						}
@@ -858,7 +740,7 @@ struct DumpPainter : public Gtk::DrawingArea, public IPainter, public IStatusPai
 			get_window()->invalidate_rect(get_allocation(), true);
 	}
 	
-	virtual void PaintText(const wchar_t * wcText){}
+	virtual void PaintText(const tchar_t * wcText){}
 	virtual void SetProgressItems(int iLevel, int iCount){}
 	virtual void SetProgress(int iLevel, int iProgress){}
 	virtual void Advance(int iLevel){}
@@ -980,6 +862,7 @@ int main(int argc, char ** argv)
 	Gtk::Main    toolkit (argc, argv);
 
 	DumpPainter dp;
+
 	while (*++argv)
 		dp.AddMap(*argv);
 	dp.m_ruiScale10 = 100;
@@ -987,9 +870,7 @@ int main(int argc, char ** argv)
 	dp.InitTools("Resources/Normal.vpc");
 	dp.m_fExiting = false;
 	
-	Gtk::Window  window;
-	window.add(dp);
-	dp.show();
+	dp.signal_expose_event().connect(sigc::mem_fun(dp, &DumpPainter::on_expose_event), false);
 	dp.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
 	dp.signal_button_press_event().connect(sigc::mem_fun(dp, &DumpPainter::on_press));
 	dp.signal_button_release_event().connect(sigc::mem_fun(dp, &DumpPainter::on_release));
@@ -997,7 +878,7 @@ int main(int argc, char ** argv)
 	// window.signal_scroll_event().connect(sigc::mem_fun(dp, &DumpPainter::on_scroll));
 	dp.set_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK);
 	// Glib::Thread::create(sigc::mem_fun(&dp, &DumpPainter::ThreadRoutine), true);
- 	Gtk::Main::run (window);
+ 	Gtk::Main::run (dp);
  	// toolkit.run(dp);
 
 	return 0;

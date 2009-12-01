@@ -244,7 +244,7 @@ struct TrafficNodes::Data : public ILegSender
 	GeoPoint m_gpPrevious;
 	double m_dLength;
 	TrafficPoints m_Points;
-	std::wstring m_wstrFilename;
+	std::fnstring m_wstrFilename;
 	bool m_fRefresh;
 	bool m_fTrafficLoaded;
 	typedef std::list<std::pair<std::pair<GeoPoint, GeoPoint>, int > > Traffic;

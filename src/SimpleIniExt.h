@@ -22,20 +22,20 @@ class CSimpleIniExtW : public CSimpleIniW
 {
 public:
 	// -----------------------------------------------------------------------
-	int GetIntValue(const wchar_t * a_pSection,
-                    const wchar_t * a_pKey,
-                    const wchar_t * a_pDefault = NULL)
+	int GetIntValue(const tchar_t * a_pSection,
+                    const tchar_t * a_pKey,
+                    const tchar_t * a_pDefault = NULL)
 	{
 		return _wtoi(GetValue(a_pSection, a_pKey, a_pDefault));
 	};
 
 	// -----------------------------------------------------------------------
-	double GetDoubleValue(const wchar_t * a_pSection,
-                          const wchar_t * a_pKey,
-                          const wchar_t * a_pDefault = NULL)
+	double GetDoubleValue(const tchar_t * a_pSection,
+                          const tchar_t * a_pKey,
+                          const tchar_t * a_pDefault = NULL)
 	{
-		// _wtof is not available on Windows Mobile, that why I must first convert the std::wstring.
-		std::wstring wsVal = GetValue(a_pSection, a_pKey, a_pDefault);
+		// _wtof is not available on Windows Mobile, that why I must first convert the std::tstring.
+		std::tstring wsVal = GetValue(a_pSection, a_pKey, a_pDefault);
 		std::string sVal;
 		sVal.assign(wsVal.begin(), wsVal.end());
 		return atof(sVal.c_str());
@@ -49,9 +49,9 @@ public:
 	#ifdef _WIN32
 	    FILE * fp = NULL;
 	#if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
-	    _wfopen_s(&fp, a_pwszFile, L"rb");
+	    _wfopen_s(&fp, a_pwszFile, T("rb"));
 	#else // !__STDC_WANT_SECURE_LIB__
-	    fp = _wfopen(a_pwszFile, L"rb");
+	    fp = _wfopen(a_pwszFile, T("rb"));
 	#endif // __STDC_WANT_SECURE_LIB__
 	    if (!fp) return SI_FILE;
 	    SI_Error rc = LoadAnsiOrUtf8File(fp);

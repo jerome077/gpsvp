@@ -32,15 +32,15 @@ char * SkipToNextLine(char * pos)
 	return pos;
 }
 
-std::wstring GetLabel(char * pos)
+std::tstring GetLabel(char * pos)
 {
 	while (*pos && *pos != '\r' && *pos != '\n' && *pos != '\t') ++pos;
 	if (*pos != '\t')
-		return L"";
+		return T("");
 	++pos;
 	char * start = pos;
 	while (*pos && *pos != '\r' && *pos != '\n') ++pos;
-	wchar_t buffer[1000];
+	tchar_t buffer[1000];
 	int iRes = MultiByteToWideChar(CP_ACP, MB_USEGLYPHCHARS, start, pos - start, buffer, 1000);
 	buffer[iRes] = 0;
 	return buffer;
@@ -48,7 +48,7 @@ std::wstring GetLabel(char * pos)
 
 void CTypeInfo::Parse(HINSTANCE hInst)
 {
-	HRSRC hResource = FindResource(hInst, L"Types", RT_RCDATA);
+	HRSRC hResource = FindResource(hInst, T("Types"), RT_RCDATA);
 	HGLOBAL hGlobal = LoadResource(hInst, hResource);
 	char * data = (char *)LockResource(hGlobal);
 	if (data)
@@ -72,7 +72,7 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 				{
 					if (eType == maskPoints)
 					{
-						std::wstring wstrLabel = GetLabel(data);
+						std::tstring wstrLabel = GetLabel(data);
 						byte bClass1 = Char22Byte(data + 2);
 						if (data[6] == '-')
 						{
@@ -90,13 +90,13 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 					}
 					if (eType == maskPolylines)
 					{
-						std::wstring wstrLabel = GetLabel(data);
+						std::tstring wstrLabel = GetLabel(data);
 						byte bClass = Char22Byte(data + 2);
 						m_PolylineTypes[bClass] = wstrLabel;
 					}
 					if (eType == maskPolygons)
 					{
-						std::wstring wstrLabel = GetLabel(data);
+						std::tstring wstrLabel = GetLabel(data);
 						byte bClass = Char22Byte(data + 2);
 						m_PolygonTypes[bClass] = wstrLabel;
 					}
@@ -108,7 +108,7 @@ void CTypeInfo::Parse(HINSTANCE hInst)
 	}
 }
 
-std::wstring CTypeInfo::PointType(int iType)
+std::tstring CTypeInfo::PointType(int iType)
 {
 	byte bClass = (iType >> 8) & 0xff;
 	byte bSubClass = iType & 0xff;
@@ -120,21 +120,21 @@ std::wstring CTypeInfo::PointType(int iType)
 			return it2->second;
 		return it1->second.wstrLabel;
 	}
-	return std::wstring(L("Unknown type")) + L" (" + IntToText(iType) + L")";
+	return std::tstring(L("Unknown type")) + T(" (") + IntToText(iType) + T(")");
 }
 
-std::wstring CTypeInfo::PolylineType(int iType)
+std::tstring CTypeInfo::PolylineType(int iType)
 {
 	GenericTypes::iterator it = m_PolylineTypes.find(iType);
 	if (it != m_PolylineTypes.end())
 		return it->second;
-	return std::wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
+	return std::tstring(L("Unknown type"))+ T(" (") + IntToText(iType) + T(")");
 }
 
-std::wstring CTypeInfo::PolygonType(int iType)
+std::tstring CTypeInfo::PolygonType(int iType)
 {
 	GenericTypes::iterator it = m_PolygonTypes.find(iType);
 	if (it != m_PolygonTypes.end())
 		return it->second;
-	return std::wstring(L("Unknown type"))+ L" (" + IntToText(iType) + L")";
+	return std::tstring(L("Unknown type"))+ T(" (") + IntToText(iType) + T(")");
 }
