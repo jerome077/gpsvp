@@ -60,26 +60,9 @@ public:
 		Save();
 	}
 	void PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool fMonitorsMode, bool fVertical, bool fLarge);
-	void ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt)
-	{
-		ContextMenu(hWnd, iMonitor, ScreenPoint(
-			rt.left + (rt.right - rt.left) * iMonitor / m_vectMonitors.size(), 
-			rt.bottom));
-	}
+	void ContextMenu(HWND hWnd, int iMonitor, const ScreenRect& rt);
 	void ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt);
-	void ContextMenu(HWND hWnd, ScreenPoint pt)
-	{
-		for (MonitorRects::iterator it1 = m_listMonitorRects.begin(); 
-			it1 != m_listMonitorRects.end(); ++it1)
-		{
-			if (it1->first.Side(pt) == 0)
-			{
-				int iMonitor = it1->second;
-				ContextMenu(hWnd, iMonitor, pt);
-				return;
-			}
-		}
-	}
+	void ContextMenu(HWND hWnd, const ScreenPoint& pt);
 	void Load()
 	{
 #ifndef LINUX

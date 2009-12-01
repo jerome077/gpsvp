@@ -2557,9 +2557,12 @@ void CMapApp::CheckOptions()
 		}
 	}
 #endif
+#ifndef LINUX
 	m_painter.GetFontCache().SetLargeFonts(m_Options[mcoLargeFonts]);
+#endif // LINUX
 }
 
+#ifndef LINUX
 class CStatusPainter : public IStatusPainter
 {
 	int m_iProgress;
@@ -2633,6 +2636,7 @@ private:
 	std::map<int, int> m_Levels;
 	std::map<int, int> m_Progress;
 };
+#endif // LINUX
 
 void CMapApp::AdjustZoom()
 {
@@ -2691,7 +2695,9 @@ void CMapApp::Paint()
 			fShowWaypoints = m_Options[mcoShowWaypoints];
 			fShowUnknownTypes = m_Options[mcoShowUnknownTypes];
 			fDirectPaint = m_Options[mcoDirectPaint];
+#ifndef LINUX
 			fRotateMap = m_Options[mcoRotateMap] && m_riGMapType() == gtNone;
+#endif // LINUX
 			fShowPolygonLabels = m_Options[mcoShowPolygonLabels];
 			fShowAreaAsOutline = m_Options[mcoShowAreaAsOutline];
 			fShowCurrentTrack = m_Options[mcoShowCurrentTrack];
@@ -2699,12 +2705,15 @@ void CMapApp::Paint()
 			fLargeFonts = m_Options[mcoLargeFonts];
 			request = m_request;
 		}
+#ifndef LINUX
 		PAINTSTRUCT ps;
 		VP::DC hdc;
 		VP::DC hdcScreen(m_hWnd, &ps);
+#endif // LINUX
 		if (fMonitorsMode)
 		{
 			ScreenRect srWindow;
+#ifndef LINUX
 			GetClientRect(m_hWnd, &srWindow);
 			if (fBuffered)
 				hdc = m_screenBuffer.GetContext(hdcScreen, srWindow.right - srWindow.left, srWindow.bottom - srWindow.top);
@@ -2712,9 +2721,11 @@ void CMapApp::Paint()
 				hdc = hdcScreen;
 
 			m_painter.BeginPaint(m_hWnd, hdc, ps.rcPaint, 0, false);
+#endif // LINUX
 			UpdateMonitors();
 			m_MonitorSet.PaintMonitors(&m_painter, srWindow, true, m_painter.IsVertical(), fLargeMonitors);
 			
+#ifndef LINUX
 			if (fBuffered)
 			{
 				hdcScreen.BitBlt(srWindow.left, srWindow.top,
@@ -2722,9 +2733,11 @@ void CMapApp::Paint()
 					srWindow.bottom - srWindow.top,
 					hdc, 0, 0, SRCCOPY);
 			}
+#endif // LINUX
 		}
 		else
 		{
+#ifndef LINUX
 			bool fOnlyMonitors = !((ps.rcPaint.top < m_painter.GetMonitorsBar().top)
 				|| (ps.rcPaint.left < m_painter.GetMonitorsBar().left));
 
@@ -2735,9 +2748,12 @@ void CMapApp::Paint()
 				hdc = m_screenBuffer.GetContext(hdcScreen, srWindow.right - srWindow.left, srWindow.bottom - srWindow.top);
 			else
 				hdc = hdcScreen;
+#endif // LINUX
 		
+#ifndef LINUX
 			DWORD dwTimer = GetTickCount();
 			DWORD dwTmp;
+#endif // LINUX
 			GeoPoint gpCursor;
 			bool fCursorVisible;
 			{

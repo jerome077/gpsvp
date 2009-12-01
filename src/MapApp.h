@@ -20,6 +20,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Header.h"
 #ifndef LINUX
 #	include "GDIPainter.h"
+#else
+#	include "GtkPainter.h"
 #endif
 #include "FileDialogs.h"
 #include "Track.h"

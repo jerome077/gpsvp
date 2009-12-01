@@ -15,20 +15,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef MONITORS_H
 #define MONITORS_H
 
-#ifndef LINUX
-#	include "GDIPainter.h"
-#else
-#	include "GtkPainter.h"
-#endif
 #include "RegValues.h"
 
 class CNMEAParser;
+class IMonitorPainter;
+class ScreenRect;
+class ScreenPoint;
 
 struct IMonitorPainter
 {
 	virtual void DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText) = 0;
 	virtual void DrawMonitorLabel(const tchar_t * wcLabel) = 0;
-	virtual ScreenPoint GetMonitorSize() = 0;
+	virtual const ScreenPoint& GetMonitorSize() = 0;
 	virtual void DrawBar(const ScreenRect & srBar) = 0;
 	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive) = 0;
 };

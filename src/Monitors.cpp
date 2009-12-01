@@ -15,6 +15,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Monitors.h"
 #include "NMEAParser.h"
 #include "MapApp.h"
+#ifndef LINUX
+#	include "GDIPainter.h"
+#else
+#	include "GtkPainter.h"
+#endif
 
 void CSatellitesMonitor::Paint(IMonitorPainter * pPainter)
 {

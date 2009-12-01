@@ -123,3 +123,24 @@ void CMonitorSet::PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool 
 		++i;
 	}
 }
+
+void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, const ScreenRect& rt)
+{
+	ContextMenu(hWnd, iMonitor, ScreenPoint(
+		rt.left + (rt.right - rt.left) * iMonitor / m_vectMonitors.size(), 
+		rt.bottom));
+}
+
+void CMonitorSet::ContextMenu(HWND hWnd, const ScreenPoint& pt)
+{
+	for (MonitorRects::iterator it1 = m_listMonitorRects.begin(); 
+		it1 != m_listMonitorRects.end(); ++it1)
+	{
+		if (it1->first.Side(pt) == 0)
+		{
+			int iMonitor = it1->second;
+			ContextMenu(hWnd, iMonitor, pt);
+			return;
+		}
+	}
+}
