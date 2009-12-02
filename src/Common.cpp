@@ -11,17 +11,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef LINUX
-struct CMapApp
-{
-	int m_riMetrics() {return 0;}
-	int m_riCoordFormat() {return 0;}
-};
-static CMapApp app;
-#else
 #include "MapApp.h"
-#endif
-
 #include "Common.h"
 #include "PlatformDef.h"
 #include "GeoPoint.h"
@@ -197,7 +187,7 @@ double myatof(const tchar_t * str)
 std::tstring DistanceToText(double dDistance)
 {
 	tchar_t wcDistance[1000] = {0};
-	switch (app.m_riMetrics())
+	switch (app->m_riMetrics())
 	{
 	case 0:
 		if (dDistance < 100)
@@ -252,7 +242,7 @@ std::tstring DistanceToText(double dDistance)
 std::tstring SpeedToText(double dSpeed)
 {
 	tchar_t wcSpeed[1000] = {0};
-	switch (app.m_riMetrics())
+	switch (app->m_riMetrics())
 	{
 	case 0:
 		if (dSpeed < 100)
@@ -281,7 +271,7 @@ std::tstring SpeedToText(double dSpeed)
 std::tstring HeightToText(double dDistance)
 {
 	tchar_t wcDistance[1000] = {0};
-	switch (app.m_riMetrics())
+	switch (app->m_riMetrics())
 	{
 	case 0:
 	case 2:
@@ -503,7 +493,7 @@ double TextToDegree(const tchar_t * wcText)
 
 void CoordToText(double dLon, double dLat, std::tstring& wstrLon, std::tstring& wstrLat)
 {
-	int iCoordFormat = app.m_riCoordFormat();
+	int iCoordFormat = app->m_riCoordFormat();
 	if (iCoordFormat <= 4)
 	{
 		wstrLon = DegreeToText(dLon, false, iCoordFormat);
@@ -513,7 +503,7 @@ void CoordToText(double dLon, double dLat, std::tstring& wstrLon, std::tstring& 
 	else if (5 == iCoordFormat) // UTM
 	{
 		int iUtmX, iUtmY, iUtmZone;
-		iUtmZone = app.m_riUTMZone();
+		iUtmZone = app->m_riUTMZone();
 		LongLatToUTM(dLon, dLat, iUtmZone, iUtmX, iUtmY);
 		wstrLon = IntToText(iUtmX)+L(" z")+IntToText(iUtmZone);
 		wstrLat = IntToText(iUtmY);
@@ -523,7 +513,7 @@ void CoordToText(double dLon, double dLat, std::tstring& wstrLon, std::tstring& 
 
 void TextToCoord(const std::tstring& wstrLon, const std::tstring& wstrLat, double& dLon, double& dLat)
 {
-	int iCoordFormat = app.m_riCoordFormat();
+	int iCoordFormat = app->m_riCoordFormat();
 	if (iCoordFormat <= 4)
 	{
 		dLon = TextToDegree(wstrLon.c_str());
@@ -548,7 +538,7 @@ void TextToCoord(const std::tstring& wstrLon, const std::tstring& wstrLat, doubl
 
 std::tstring CoordLabelLon()
 {
-	int iCoordFormat = app.m_riCoordFormat();
+	int iCoordFormat = app->m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
 		return I("UTM Easting, Zone");
 	else
@@ -557,7 +547,7 @@ std::tstring CoordLabelLon()
 
 std::tstring CoordLabelLat()
 {
-	int iCoordFormat = app.m_riCoordFormat();
+	int iCoordFormat = app->m_riCoordFormat();
 	if (5 == iCoordFormat) // UTM
 		return I("UTM Northing");
 	else

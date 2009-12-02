@@ -7,9 +7,11 @@ OBJS = TreSubfile.o SubDivision.o SubFile.o MapLevel.o \
 	PlatformDef.o LblSubfile.o BitStream.o FATBlock.o NetSubfile.o \
 	RgnSubfile.o Header.o File.o Atlas.o NMEAParser.o EGM96Geoid.o \
 	MapApp.o Common.o OptionSet.o Track.o WayPoints.o Lock.o ScreenPoint.o GtkPainter.o \
-	Traffic.o GeoPoint.o MonitorSet.o TrackCompetition.o Monitors.o MRUPoints.o
+	Traffic.o GeoPoint.o MonitorSet.o TrackCompetition.o Monitors.o MRUPoints.o MaemoMain.o
 
-MapApp.o: GtkPainter.h ScreenToGeo.h
+# OBJS = MaemoMain.o
+
+Mapapp->o: GtkPainter.h ScreenToGeo.h
 
 GtkPainter: ${OBJS}
 	g++ ${LDFLAGS} -o GtkPainter ${OBJS}

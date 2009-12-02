@@ -177,7 +177,7 @@ void CTrack::CreateFile()
 	m_fBeginTrack = true;
 	m_fTrackPresent = false;
 	m_wstrFilenameInt = L("");
-	switch (app.m_riTrackFormat())
+	switch (app->m_riTrackFormat())
 	{
 	case tfPLT:
 		CreateFilePLT();
@@ -203,7 +203,7 @@ void CTrack::CreateFilePLT()
 
 std::string CTrack::GetCreator()
 {
-	return app.GetGpsVPVersion().AsStringWithName();
+	return app->GetGpsVPVersion().AsStringWithName();
 }
 
 void CTrack::CreateFileGPX()
@@ -419,10 +419,10 @@ const tchar_t * CTrack::GetFileName()
 		switch (m_CurrentTrackFormat)
 		{
 		case tfPLT:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + L("\\") + wcFilename + L(".plt");		
+			m_wstrFilenameInt = app->m_rsTrackFolder() + L("\\") + wcFilename + L(".plt");		
 			break;
 		case tfGPX:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + L("\\") + wcFilename + L(".gpx");
+			m_wstrFilenameInt = app->m_rsTrackFolder() + L("\\") + wcFilename + L(".gpx");
 			char cFilename[50];
 			sprintf(cFilename, "%04d.%02d.%02d-%02d.%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 			m_strGPXName = cFilename;
@@ -527,7 +527,7 @@ bool CTrackList::OpenTracksGPX(const std::tstring& wstrFile)
 		ComInit MyObjectToInitCOM;
 		{
 			CGPXFileReader GpxReader(wstrFile);
-			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
+			GpxReader.setReadTime(!app->m_Options[mcoQuickReadGPXTrack]);
 			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
 			if (apTrack->eof())
 				MessageBox(NULL, I("No track in this file"), I("GPX read error"), MB_ICONEXCLAMATION);

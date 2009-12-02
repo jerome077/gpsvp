@@ -50,17 +50,17 @@ class CFileDlg : public CMADialog
 		{
 			// Here we just check if the folder exists
 			WIN32_FIND_DATA wwd;
-			HANDLE h = FindFirstFile((app.m_rsCurrentFolder()).c_str(), &wwd);
+			HANDLE h = FindFirstFile((app->m_rsCurrentFolder()).c_str(), &wwd);
 			if (!h || h == INVALID_HANDLE_VALUE || 
 				!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				app.m_rsCurrentFolder = L("");
+				app->m_rsCurrentFolder = L("");
 			}
 			FindClose(h);
 		}
 		int iItem = 0;
 		{
-			if (app.m_rsCurrentFolder() != L(""))
+			if (app->m_rsCurrentFolder() != L(""))
 				m_list.AddItem(L("[..]"), iItem, 0, 1);
 			++iItem;
 		}
@@ -68,7 +68,7 @@ class CFileDlg : public CMADialog
 			// Here we make the list of folders
 			WIN32_FIND_DATA wwd;
 			std::set<std::tstring> setDirectories;
-			std::tstring wstrMask = app.m_rsCurrentFolder() + L("\\*.*");
+			std::tstring wstrMask = app->m_rsCurrentFolder() + L("\\*.*");
 			HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
 			if (h && h != INVALID_HANDLE_VALUE)
 			{
@@ -101,7 +101,7 @@ class CFileDlg : public CMADialog
 			std::tstring wstrMaskItem;
 			while (std::getline(wssMaskStream, wstrMaskItem, L';'))
 			{
-				std::tstring wstrMask = app.m_rsCurrentFolder() + L("\\") + wstrMaskItem;
+				std::tstring wstrMask = app->m_rsCurrentFolder() + L("\\") + wstrMaskItem;
 				HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
 				if (h && h != INVALID_HANDLE_VALUE)
 				{
@@ -122,7 +122,7 @@ class CFileDlg : public CMADialog
 				++iItem;
 			}
 		}
-		m_path.SetText((std::tstring(L("[")) + app.m_rsCurrentFolder() + L("\\]")).c_str());
+		m_path.SetText((std::tstring(L("[")) + app->m_rsCurrentFolder() + L("\\]")).c_str());
 		m_filename.SetFocus();
 	}
 	virtual void InitDialog(HWND hDlg)
@@ -202,16 +202,16 @@ class CFileDlg : public CMADialog
 							*ch = 0;
 						if (!wcscmp(buff + 1, L("..")))
 						{
-							std::tstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							std::tstring wstrCurrentFolder = app->m_rsCurrentFolder();
 							wstrCurrentFolder.erase(wstrCurrentFolder.find_last_of(L("\\")));
-							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
+							app->m_rsCurrentFolder = wstrCurrentFolder.c_str();
 						}
 						else
 						{
-							std::tstring wstrCurrentFolder = app.m_rsCurrentFolder();
+							std::tstring wstrCurrentFolder = app->m_rsCurrentFolder();
 							wstrCurrentFolder += L("\\");
 							wstrCurrentFolder += buff + 1;
-							app.m_rsCurrentFolder = wstrCurrentFolder.c_str();
+							app->m_rsCurrentFolder = wstrCurrentFolder.c_str();
 						}
 						FillList();
 						return;
@@ -224,7 +224,7 @@ class CFileDlg : public CMADialog
 				// Accept dialog for project
 				if (m_fProject)
 				{
-					m_wstrResult = app.m_rsCurrentFolder();
+					m_wstrResult = app->m_rsCurrentFolder();
 					EndDialog(hDlg, 0);
 					break;
 				}
@@ -235,7 +235,7 @@ class CFileDlg : public CMADialog
 					m_filename.GetText(buff, MAX_PATH);
 					if (buff[0])
 					{
-						std::tstring wstrResult = app.m_rsCurrentFolder() + L("\\") + buff;
+						std::tstring wstrResult = app->m_rsCurrentFolder() + L("\\") + buff;
 
 						if (m_fFileMustExist)
 						{

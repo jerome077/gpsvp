@@ -76,7 +76,7 @@ void CTextMonitor::PrepareContextMenu(IListAcceptor * pMenu)
 {
 #ifndef LINUX
 	if (m_enTCSrc == TEXTCOPY_SRCURL) {
-		if ((m_strURL = app.m_request).empty()) {
+		if ((m_strURL = app->m_request).empty()) {
 		} else {
 			pMenu->AddItem(I("Copy URL"), cnCopyText);
 		}

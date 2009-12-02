@@ -209,7 +209,6 @@ public:
 	void SetShowPolygonLabels(bool f) {m_fShowPolygonLabels = f;}
 	void SetShowAreaAsOutline(bool f) {m_fShowAreaAsOutline = f;}
 	void SetXScale(double scale);
-	void PrepareScales();
 };
 
 #endif // GDIPAINTER_H

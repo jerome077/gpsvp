@@ -6,6 +6,8 @@
 #include "GeoPoint.h"
 #include "IPainter.h"
 
+typedef void* HWND;
+
 class CScreenToGeo : public IPainter
 {
 private:
@@ -35,6 +37,32 @@ public:
     CScreenToGeo()
     {
         m_iManualTimer = 0;
+    }
+    void Init(HWND hWnd, HKEY hRegKey)
+    {
+        m_gpCenter.Init(hRegKey, L("Center"), GeoPoint(0, 0));
+        if(abs(m_gpCenter().lon) > 1 << (GPWIDTH - 1) || abs(m_gpCenter().lat) > 1 << (GPWIDTH - 2))
+        {
+            // If Center is out of bounds try to guess the rigth value 
+            // assuming the wrong value is due to smaller GPWIDTH
+            int lat = m_gpCenter().lat;
+            int lon = m_gpCenter().lon;
+            while(abs(lon) > 1 << (GPWIDTH - 1) || abs(lat) > 1 << (GPWIDTH - 2))
+            {
+                lat >>= 1;
+                lon >>= 1;
+            }
+            m_gpCenter.Set(GeoPoint(lon, lat));
+        }
+        m_fViewSet = false;
+        m_ruiScale10.Init(hRegKey, L("ScaleD"), 500);
+        m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10()));
+        m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10()));
+
+        m_lXScale100 = cos100(m_gpCenter().lat);
+        m_srWindow.Init(ScreenPoint(0,0));
+        m_srWindow.Append(ScreenPoint(1,1));
+        PrepareScales();
     }
     virtual void Redraw() = 0;
 
@@ -69,6 +97,7 @@ public:
     }
     ScreenPoint GeoToScreen(const GeoPoint & pt)
     {
+        std::cerr << "GeoToScreen, " << m_uiScale10Cache << std::endl;
         AutoLock l;
         ScreenPoint res;
         int dx1 = int((int64_t)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
@@ -129,7 +158,7 @@ public:
     {
         AutoLock l;
 #ifndef LINUX
-        if (fManual && app.m_Options[mcoFollowCursor])
+        if (fManual && app->m_Options[mcoFollowCursor])
             m_iManualTimer = 60;
         else if (m_iManualTimer > 0)
             return;
@@ -207,6 +236,16 @@ public:
         // Move view by given number of screen points
         SetView(ScreenToGeo(m_spWindowCenter - d), true);
     }
+    void PrepareScales()
+    {
+        m_gpCenterCache = m_gpCenter();
+        m_uiScale10Cache = m_ruiScale10();
+        m_lXScale100 = cos100(m_gpCenterCache.lat);
+    }
+    const GeoPoint& GetCenterC() {return m_gpCenterCache;}
+    const UInt GetScale10C() {return m_uiScale10Cache;}
+    const long GetXScale100C() {return m_lXScale100;}
+
 };
 
 #endif // screentogeo_h

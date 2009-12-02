@@ -83,7 +83,7 @@ class CNmeaCommandsDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.m_NMEAParser.GetList(&m_list);
+		app->m_NMEAParser.GetList(&m_list);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -114,10 +114,10 @@ class CNmeaCommandsDlg : public CMADialog
 			{
 				tchar_t strFile[MAX_PATH + 1] = {0};
 				OPENFILENAME of;
-				app.FillOpenFileName(&of, hDlg, I("Text\0*.txt\0"), strFile, false,false);
+				app->FillOpenFileName(&of, hDlg, I("Text\0*.txt\0"), strFile, false,false);
 				if (GetSaveFileName(&of))
 				{
-					app.m_NMEAParser.SaveCommands(strFile);
+					app->m_NMEAParser.SaveCommands(strFile);
 				}
 				return;
 			}
@@ -135,7 +135,7 @@ class CUnknownPointTypesDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.m_painter.GetUnknownTypes(&m_list);
+		app->m_painter.GetUnknownTypes(&m_list);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -304,11 +304,11 @@ public:
 #ifndef UNDER_CE
 		ShowScrollBar(hDlg,SB_VERT,TRUE);
 #endif
-		CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
+		CWaypoints::CPoint & p = app->GetWaypoints().ById(m_iWaypoint);
 		m_ClonedPoint.Assign(p);
 		RecreateControls(hDlg, m_ClonedPoint, false);
 
-		CreateMenu(hDlg, app.GetWaypoints().IsGPX());
+		CreateMenu(hDlg, app->GetWaypoints().IsGPX());
 	}	
 	enum
 	{
@@ -324,7 +324,7 @@ public:
 	void CreateSubMenuCopyTags(CMenu & basemenu)
 	{
 		CMenu & mmCopyTags = basemenu.CreateSubMenu(I("Copy Tags"));
-		int modelsCount = app.GetWaypoints().GetWaypointModelCount();
+		int modelsCount = app->GetWaypoints().GetWaypointModelCount();
 		if (0 == modelsCount)
 		{
 			std::tstring itemName = I("No wpt beginning with ")+WPT_MODEL_PREFIX;
@@ -335,7 +335,7 @@ public:
 			for(int i=0; i<modelsCount; i++)
 			{
 				if (dmcWaypointCopyTagsFirst+i > dmcWaypointCopyTagsLast) break;
-				CWaypoints::CPoint & modelPoint = app.GetWaypoints().GetWaypointModel(i);
+				CWaypoints::CPoint & modelPoint = app->GetWaypoints().GetWaypointModel(i);
 				mmCopyTags.CreateItem(modelPoint.GetLabel().c_str(), dmcWaypointCopyTagsFirst+i);
 			}
 		}
@@ -401,14 +401,14 @@ public:
 		case dmcOK: // OK clicked => Apply changes
 			{
 				// Block all writes until the end of this code block
-				CWaypoints::UpdateZone updateZone(app.GetWaypoints().UpdateZoneForCodeBlock());
+				CWaypoints::UpdateZone updateZone(app->GetWaypoints().UpdateZoneForCodeBlock());
 
 				SaveControlsToPoint(m_ClonedPoint);
 
 				// Change the original point
-				CWaypoints::CPoint & p = app.GetWaypoints().ById(m_iWaypoint);
+				CWaypoints::CPoint & p = app->GetWaypoints().ById(m_iWaypoint);
 				p.Assign(m_ClonedPoint);
-				app.GetWaypoints().Write();
+				app->GetWaypoints().Write();
 
 				EndDialog(hDlg, TRUE);
 				return;
@@ -458,7 +458,7 @@ public:
 			{
 				if ((dmcWaypointCopyTagsFirst <= iCommand) && (iCommand <= dmcWaypointCopyTagsLast))
 				{
-					CWaypoints::CPoint & modelPoint = app.GetWaypoints().GetWaypointModel(iCommand-dmcWaypointCopyTagsFirst);
+					CWaypoints::CPoint & modelPoint = app->GetWaypoints().GetWaypointModel(iCommand-dmcWaypointCopyTagsFirst);
 					m_ClonedPoint.AssignOSM(modelPoint);
 					RecreateControls(hDlg, m_ClonedPoint, false);
 				}
@@ -488,8 +488,8 @@ public:
 		AddItem(hDlg, CText(hDlg, I("Your name:")));
 		AddItem(hDlg, m_name);
 		
-		m_channel.SetText(app.m_team.GetChannel().c_str());
-		m_name.SetText(app.m_team.GetName().c_str());
+		m_channel.SetText(app->m_team.GetChannel().c_str());
+		m_name.SetText(app->m_team.GetName().c_str());
 		m_channel.SetFocus();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), IDOK);
@@ -502,9 +502,9 @@ public:
 			const Int cnMaxStr = 1000;
 			tchar_t buff[cnMaxStr] = {0};
 			m_channel.GetText(buff, cnMaxStr);
-			app.m_team.SetChannel(buff);
+			app->m_team.SetChannel(buff);
 			m_name.GetText(buff, cnMaxStr);
-			app.m_team.SetName(buff);
+			app->m_team.SetName(buff);
 
 			EndDialog(hDlg, TRUE);
 		}
@@ -530,7 +530,7 @@ class CMapsDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.GetAtlas().GetList(&m_list);
+		app->GetAtlas().GetList(&m_list);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -549,7 +549,7 @@ class CMapsDlg : public CMADialog
 		menu.CreateItem(I("Center on map"), dmcCenter);
 		menu.CreateItem(I("Information"), dmcInfo);
 		menu.CreateItem(I("Unload all"), dmcUnloadAll);
-		if (app.m_Options[mcoDebugMode])
+		if (app->m_Options[mcoDebugMode])
 			menu.CreateItem(I("Dump"), dmcDump);
 	}
 	virtual void WindowPosChanged(HWND hDlg)
@@ -589,30 +589,30 @@ class CMapsDlg : public CMADialog
 		case dmcUnload:
 			if (iSelected >= 0)
 			{
-				app.GetAtlas().CloseMapByID(iSelected);
-				app.m_painter.Redraw();
+				app->GetAtlas().CloseMapByID(iSelected);
+				app->m_painter.Redraw();
 				m_list.RemoveSelected();
 			}
 			return;
 		case dmcToggleActive:
 			if (iSelected >= 0)
 			{
-				app.GetAtlas().ToggleActiveByID(iSelected);
-				app.m_painter.Redraw();
-				app.GetAtlas().GetListUpdateCurrent(iSelected, &m_list);
+				app->GetAtlas().ToggleActiveByID(iSelected);
+				app->m_painter.Redraw();
+				app->GetAtlas().GetListUpdateCurrent(iSelected, &m_list);
 			}
 			return;
 		case dmcCenter:
 			if (iSelected >= 0)
 			{
-				app.m_painter.SetView(app.GetAtlas().ById(iSelected).GetCenter(), true);
+				app->m_painter.SetView(app->GetAtlas().ById(iSelected).GetCenter(), true);
 				EndDialog(hDlg, 0);
 			}
 			return;
 		case dmcInfo:
 			if (iSelected >= 0)
 			{
-				const CIMGFile & img = app.GetAtlas().ById(iSelected);
+				const CIMGFile & img = app->GetAtlas().ById(iSelected);
 				std::tstring info;
 				info += I("Filename: ");
 				info += img.GetFilename();
@@ -626,15 +626,15 @@ class CMapsDlg : public CMADialog
 		case dmcUnloadAll:
 			if (MessageBox(hDlg, I("Are you sure"), I("Unload all"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 			{
-				app.GetAtlas().CloseAll();
-				app.m_painter.Redraw();
+				app->GetAtlas().CloseAll();
+				app->m_painter.Redraw();
 				FillList();
 			}
 			return;
 		case dmcDump:
 			if (iSelected >= 0)
 			{
-				const CIMGFile & img = app.GetAtlas().ById(iSelected);
+				const CIMGFile & img = app->GetAtlas().ById(iSelected);
 				img.Dump();
 			}
 			return;
@@ -657,7 +657,7 @@ class CSearchResultsDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.m_Found.GetList(&m_list);
+		app->m_Found.GetList(&m_list);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -690,7 +690,7 @@ class CSearchResultsDlg : public CMADialog
 				int idx = m_list.GetCurSelParam();
 				if (idx >= 0)
 				{
-					app.m_painter.SetView(app.m_Found.GetPointByIDApprox(idx), true);
+					app->m_painter.SetView(app->m_Found.GetPointByIDApprox(idx), true);
 					EndDialog(hDlg, 0);
 				}
 				return;
@@ -756,7 +756,7 @@ class CSearchOSMDlg : public CMADialog
 				(*to) = 0;
 				std::string url = "http://www.frankieandshadow.com/osm/search.xml?find=";
 				url += quoted;
-				app.SetSearchURI(url.c_str());
+				app->SetSearchURI(url.c_str());
 				EndDialog(hDlg, 0);
 				return;
 			}
@@ -774,7 +774,7 @@ class CTracksDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.GetTrackList(&m_list);
+		app->GetTrackList(&m_list);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -806,7 +806,7 @@ class CTracksDlg : public CMADialog
 				int idx = m_list.GetCurSelParam();
 				if (idx >= 0)
 				{
-					app.CloseTrack(idx);
+					app->CloseTrack(idx);
 				}
 				m_list.RemoveSelected();
 				return;
@@ -861,7 +861,7 @@ class CSettingsDlg : public CMADialog
 //		tchar_t * pos = buff;
 //		while (*pos)
 //		{
-//			m_port.AddItem(pos, app.m_rsPort().c_str());
+//			m_port.AddItem(pos, app->m_rsPort().c_str());
 //			pos += wcslen(pos) + 1;
 //		}
 //#else
@@ -869,33 +869,33 @@ class CSettingsDlg : public CMADialog
 		for (int i = 0; i <= 20; ++i)
 		{
 			stprintf(buff, 1000, L("COM%d:"), i);
-			m_port.AddItem(buff, app.m_rsPort().c_str());			
+			m_port.AddItem(buff, app->m_rsPort().c_str());			
 		}
 //#endif
-		m_port.SetText(app.m_rsPort().c_str());
+		m_port.SetText(app->m_rsPort().c_str());
 
 		m_portSpeed.Create(hDlg, false);
-		m_portSpeed.AddItem(L("Default"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("2400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("4800"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("9600"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("14400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("19200"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("38400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(L("57600"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.SetText(app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("Default"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("2400"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("4800"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("9600"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("14400"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("19200"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("38400"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("57600"), app->m_rsPortSpeed().c_str());
+		m_portSpeed.SetText(app->m_rsPortSpeed().c_str());
 
 		m_trackstep.Create(hDlg, false);
-		m_trackstep.AddItem(1, app.m_riTrackStep());
-		m_trackstep.AddItem(3, app.m_riTrackStep());
-		m_trackstep.AddItem(5, app.m_riTrackStep());
-		m_trackstep.AddItem(10, app.m_riTrackStep());
-		m_trackstep.AddItem(20, app.m_riTrackStep());
-		m_trackstep.AddItem(50, app.m_riTrackStep());
-		m_trackstep.AddItem(100, app.m_riTrackStep());
+		m_trackstep.AddItem(1, app->m_riTrackStep());
+		m_trackstep.AddItem(3, app->m_riTrackStep());
+		m_trackstep.AddItem(5, app->m_riTrackStep());
+		m_trackstep.AddItem(10, app->m_riTrackStep());
+		m_trackstep.AddItem(20, app->m_riTrackStep());
+		m_trackstep.AddItem(50, app->m_riTrackStep());
+		m_trackstep.AddItem(100, app->m_riTrackStep());
 
 		m_proxy.Create(hDlg);
-		m_proxy.SetText(app.m_rsProxy().c_str());
+		m_proxy.SetText(app->m_rsProxy().c_str());
 
 		m_coordformat.Create(hDlg, false);
 		m_coordformat.AddItem(L("N37°27'35\")");
@@ -904,7 +904,7 @@ class CSettingsDlg : public CMADialog
 		m_coordformat.AddItem(L("+37.278742"));
 		m_coordformat.AddItem(L("N37°27'35.64\")");
 		m_coordformat.AddItem(L("UTM (experimental)"));
-		m_coordformat.Select(app.m_riCoordFormat());
+		m_coordformat.Select(app->m_riCoordFormat());
 
 		m_utmZone.Create(hDlg, false);
 		m_utmZone.AddItem(L("Automatic"));
@@ -912,7 +912,7 @@ class CSettingsDlg : public CMADialog
 			m_utmZone.AddItem((tchar_t *)UTMZoneToLongText(i).c_str());
 		for(int i=-1;i>=-60;i--)
 			m_utmZone.AddItem((tchar_t *)UTMZoneToLongText(i).c_str());
-		int utmZoneIndex = app.m_riUTMZone();
+		int utmZoneIndex = app->m_riUTMZone();
 		if (utmZoneIndex < 0) utmZoneIndex = 60-utmZoneIndex;
 		m_utmZone.Select(utmZoneIndex);
 
@@ -920,15 +920,15 @@ class CSettingsDlg : public CMADialog
 		m_metrics.AddItem(I("Metric"));
 		m_metrics.AddItem(I("Nautical"));
 		m_metrics.AddItem(I("Imperial"));
-		m_metrics.Select(app.m_riMetrics());
+		m_metrics.Select(app->m_riMetrics());
 
 		m_GeoidMode.Create(hDlg, false);
-		m_GeoidMode.AddItem(L("Auto"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L("Always"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L("Never"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L("User"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L("Sirf"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Auto"), app->m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Always"), app->m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Never"), app->m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("User"), app->m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Sirf"), app->m_rsGeoidMode().c_str());
+		m_GeoidMode.SetText(app->m_rsGeoidMode().c_str());
 
 		AddItem(hDlg, CText(hDlg, I("Port:")));
 		AddItem(hDlg, m_port);
@@ -958,55 +958,55 @@ class CSettingsDlg : public CMADialog
 		bool fStartListening = false;
 
 		m_port.GetText(buff, cnMaxStr);
-		if (app.m_rsPort() != buff)
+		if (app->m_rsPort() != buff)
 		{
-			app.m_rsPort = buff;
+			app->m_rsPort = buff;
 			fStartListening = true;
 		}
 
 		m_portSpeed.GetText(buff, cnMaxStr);
-		if (app.m_rsPortSpeed() != buff)
+		if (app->m_rsPortSpeed() != buff)
 		{
-			app.m_rsPortSpeed = buff;
+			app->m_rsPortSpeed = buff;
 			fStartListening = true;
 		}
 
 #ifndef LINUX
 		if (fStartListening)
-			app.StartListening();
+			app->StartListening();
 #endif // LINUX
 
 		m_trackstep.GetText(buff, cnMaxStr);
-		app.m_riTrackStep.Set(tcstol(buff, 0, 10));
+		app->m_riTrackStep.Set(tcstol(buff, 0, 10));
 
 		int index = m_coordformat.GetCurSel();
-		if (app.m_riCoordFormat() != index)
+		if (app->m_riCoordFormat() != index)
 		{
-			app.m_riCoordFormat.Set(index);
-			app.m_monLongitude.SetIdL(L("Longitude"), CoordLabelLon());
-			app.m_monLatitude.SetIdL(L("Latitude"), CoordLabelLat());
+			app->m_riCoordFormat.Set(index);
+			app->m_monLongitude.SetIdL(L("Longitude"), CoordLabelLon());
+			app->m_monLatitude.SetIdL(L("Latitude"), CoordLabelLat());
 		}
 
 		index = m_utmZone.GetCurSel();
 		if (index>60) index = 60-index;
-		app.m_riUTMZone.Set(index);
+		app->m_riUTMZone.Set(index);
 
 		index = m_metrics.GetCurSel();
-		app.m_riMetrics.Set(index);
+		app->m_riMetrics.Set(index);
 
 		m_proxy.GetText(buff,cnMaxStr);
-		if (app.m_rsProxy() != buff)
+		if (app->m_rsProxy() != buff)
 		{
-			app.m_rsProxy = buff;
+			app->m_rsProxy = buff;
 		}
 #ifndef LINUX
-		CHttpRequest::SetProxy(app.m_rsProxy());
+		CHttpRequest::SetProxy(app->m_rsProxy());
 #endif // LINUX
 
 		m_GeoidMode.GetText(buff, cnMaxStr);
-		if (app.m_rsGeoidMode() != buff)
+		if (app->m_rsGeoidMode() != buff)
 		{
-			app.m_rsGeoidMode = buff;
+			app->m_rsGeoidMode = buff;
 			fStartListening = true;
 		}
 
@@ -1030,7 +1030,7 @@ class CWaypointsDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.GetWaypoints().GetList(&m_list, app.m_painter.GetCenter(), app.m_riWaypointsRadius());
+		app->GetWaypoints().GetList(&m_list, app->m_painter.GetCenter(), app->m_riWaypointsRadius());
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
@@ -1075,11 +1075,11 @@ class CWaypointsDlg : public CMADialog
 	}
 	void CheckMenu()
 	{
-		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius10, (app.m_riWaypointsRadius() == 10000));
-		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius50, (app.m_riWaypointsRadius() == 50000));
-		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius100, (app.m_riWaypointsRadius() == 100000));
-		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius500, (app.m_riWaypointsRadius() == 500000));
-		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadiusInf, (app.m_riWaypointsRadius() == 40000000));
+		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius10, (app->m_riWaypointsRadius() == 10000));
+		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius50, (app->m_riWaypointsRadius() == 50000));
+		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius100, (app->m_riWaypointsRadius() == 100000));
+		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadius500, (app->m_riWaypointsRadius() == 500000));
+		m_MenuBar.GetMenu().CheckMenuItem(dmcWaypointsRadiusInf, (app->m_riWaypointsRadius() == 40000000));
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
@@ -1124,7 +1124,7 @@ class CWaypointsDlg : public CMADialog
 					dlg.m_iWaypoint = idx;
 					g_pNextDialog = &dlg;
 					DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, hDlg, (DLGPROC)MADlgProc);
-					m_list.UpdateSelected(app.GetWaypoints().ById(idx).GetLabel().c_str());
+					m_list.UpdateSelected(app->GetWaypoints().ById(idx).GetLabel().c_str());
 				}
 				return;
 			}
@@ -1133,7 +1133,7 @@ class CWaypointsDlg : public CMADialog
 			{
 				if (idx >= 0)
 				{
-					app.m_painter.SetView(app.GetWaypoints().GetPointByIDApprox(idx), true);
+					app->m_painter.SetView(app->GetWaypoints().GetPointByIDApprox(idx), true);
 					EndDialog(hDlg, 0);
 				}
 				return;
@@ -1144,7 +1144,7 @@ class CWaypointsDlg : public CMADialog
 				{
 					if (MessageBox(hDlg, I("Are you sure"), I("Delete waypoint"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 					{
-						app.GetWaypoints().DeleteByID(idx);
+						app->GetWaypoints().DeleteByID(idx);
 						m_list.RemoveSelected();
 					}
 				}
@@ -1154,40 +1154,40 @@ class CWaypointsDlg : public CMADialog
 			{
 				if (idx >= 0)
 				{
-					app.Navigate(app.GetWaypoints().GetPointByIDApprox(idx), app.GetWaypoints().GetLabelByID(idx).c_str());
+					app->Navigate(app->GetWaypoints().GetPointByIDApprox(idx), app->GetWaypoints().GetLabelByID(idx).c_str());
 					EndDialog(hDlg, 0);
 				}
 				return;
 			}
 		case dmcWaypointsRadius10:
-			app.m_riWaypointsRadius.Set(10000);
+			app->m_riWaypointsRadius.Set(10000);
 			FillList();
 			CheckMenu();
 			return;
 		case dmcWaypointsRadius50:
-			app.m_riWaypointsRadius.Set(50000);
+			app->m_riWaypointsRadius.Set(50000);
 			FillList();
 			CheckMenu();
 			return;
 		case dmcWaypointsRadius100:
-			app.m_riWaypointsRadius.Set(100000);
+			app->m_riWaypointsRadius.Set(100000);
 			FillList();
 			CheckMenu();
 			return;
 		case dmcWaypointsRadius500:
-			app.m_riWaypointsRadius.Set(500000);
+			app->m_riWaypointsRadius.Set(500000);
 			FillList();
 			CheckMenu();
 			return;
 		case dmcWaypointsRadiusInf:
-			app.m_riWaypointsRadius.Set(40000000);
+			app->m_riWaypointsRadius.Set(40000000);
 			FillList();
 			CheckMenu();
 			return;
 		case dmcExportWaypoint:
 			if (idx >= 0)
 			{
-				app.ExportWaypoint(idx, m_hDialog);
+				app->ExportWaypoint(idx, m_hDialog);
 			}
 			return;
 		case IDC_PAGEUP:
@@ -1210,7 +1210,7 @@ class CKeymapDlg : public CMADialog
 	void FillList()
 	{
 		m_list.Clear();
-		app.GetKeymap().GetList(&m_list);
+		app->GetKeymap().GetList(&m_list);
 		m_fSetKey = false;
 	}
 	virtual void InitDialog(HWND hDlg)
@@ -1263,9 +1263,9 @@ class CKeymapDlg : public CMADialog
 
 			int nScancode = MakeScancode(wParam, lParam);
 			int iSelected = m_list.GetCurSelParam();
-			app.GetKeymap().SetActionKey(iSelected, nScancode);
+			app->GetKeymap().SetActionKey(iSelected, nScancode);
 
-			m_list.Update(&app.GetKeymap());
+			m_list.Update(&app->GetKeymap());
 			// FillList(); // REPLACE
 			return TRUE;
 		}
@@ -1325,14 +1325,14 @@ struct TrackPlayer : public IPainter
 	virtual void FinishObject()
 	{
 		m_pClient->NoFix();
-		app.m_TrafficNodes.RefreshTrafficData();
+		app->m_TrafficNodes.RefreshTrafficData();
 		Sleep(100);
 	}
 	virtual void AddPoint(const GeoPoint & gp)
 	{
 		m_pClient->Fix(gp, 0, 1);
 		Sleep(50);
-		if (app.m_fExiting)
+		if (app->m_fExiting)
 			throw m_pClient;
 	}
 	virtual bool WillPaint(const GeoRect & rect)
@@ -2880,7 +2880,7 @@ void CMapApp::Paint()
 				dwTmp = GetTickCount(); m_monProfile[6] = dwTmp - dwTimer; dwTimer = dwTmp;
 #endif // LINUX
 				m_painter.PaintScale();
-				if (!app.m_searchurl.empty())
+				if (!app->m_searchurl.empty())
 					m_painter.PaintStatusLine(I("Searching ..."));
 				if (!m_fMemoryLow)
 				{
@@ -3621,7 +3621,7 @@ bool CMapApp::ProcessCommand(unsigned int wp)
     switch (wp)
     {
 		case mcExit:
-			app.FileExit();
+			app->FileExit();
 			break;
 		case mcZoomIn:
 			ViewZoomIn();
@@ -3707,7 +3707,7 @@ bool CMapApp::ProcessCommand(unsigned int wp)
 			break;
 #endif // LINUX
 		case mcStopNavigating:
-			app.ToolsStopNavigating();
+			app->ToolsStopNavigating();
 			break;
 		case  mcSetTrackFolder:
 			OptionsSetTrackFolder();
@@ -4583,7 +4583,7 @@ void CMapApp::Exit()
 
 int GetTrackStep()
 {
-	return app.GetTrackStep();
+	return app->GetTrackStep();
 }
 
 bool IsConnectedStatus(IGPSClient::enumConnectionStatus iStatus)
@@ -4669,7 +4669,7 @@ CScreenButtons & CMapApp::GetButtons()
 Dict & GetDict()
 {
 #ifndef LINUX
-	return app.GetDict();
+	return app->GetDict();
 #else
 	static Dict dict;
 	return dict;
@@ -4722,7 +4722,7 @@ void CMapApp::HttpThreadRoutine()
 	}
 
 	
-	CHttpRequest::SetProxy(app.m_rsProxy());
+	CHttpRequest::SetProxy(app->m_rsProxy());
 	std::string request;
 	int request_source = 0;
 	int ErrorWaitingTime = 1; // beginning with 1 second
@@ -4885,7 +4885,7 @@ void CMapApp::HttpThreadRoutine()
 					{
 						m_searchurl = "";
 						ProcessOSMSearchResult(req.GetResult(), req.GetSize());
-						::PostMessage(app.m_hWnd, WM_COMMAND, mcSearchResults, 0);
+						::PostMessage(app->m_hWnd, WM_COMMAND, mcSearchResults, 0);
 					}
 					else if (request_source == 5)
 					{

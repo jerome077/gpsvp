@@ -367,6 +367,6 @@ public:
 	const CVersionNumber& GetGpsVPVersion();
 };
 
-extern CMapApp app;
+extern CMapApp* app;
 
 #endif // MAPAPP_H

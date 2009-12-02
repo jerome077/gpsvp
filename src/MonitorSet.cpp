@@ -38,9 +38,9 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	// Other non monitor menu items
 	mmPopupMenu.CreateBreak();
 	mmPopupMenu.CreateItem(I("Full screen"), mcoFullScreen);
-	mmPopupMenu.CheckMenuItem(mcoFullScreen, app.m_Options[mcoFullScreen]);
+	mmPopupMenu.CheckMenuItem(mcoFullScreen, app->m_Options[mcoFullScreen]);
 	mmPopupMenu.CreateItem(I("Monitors Mode"), mcoMonitorsMode);
-	mmPopupMenu.CheckMenuItem(mcoMonitorsMode, app.m_Options[mcoMonitorsMode]);
+	mmPopupMenu.CheckMenuItem(mcoMonitorsMode, app->m_Options[mcoMonitorsMode]);
 	// I think I should be using MF_CHECKED | MF_BYCOMMAND. but this seems to work 
 
 	// Menu processing
@@ -52,11 +52,11 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	}
 	else if (res == mcoFullScreen)
 	{
-		app.ProcessCommand(mcoFullScreen);
+		app->ProcessCommand(mcoFullScreen);
 	}
 	else if (res == mcoMonitorsMode)
 	{
-		app.ProcessCommand(mcoMonitorsMode);
+		app->ProcessCommand(mcoMonitorsMode);
 	}
 	else if (mapMenu.find(res) != mapMenu.end())
 	{
@@ -68,8 +68,8 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 		if (m_mapMonitors.find(m_vectMonitors[iMonitor]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[iMonitor]])
 		{
 			m_mapMonitors[m_vectMonitors[iMonitor]]->ProcessMenuCommand(res);
-			app.CheckOptions();
-			app.m_painter.Redraw();
+			app->CheckOptions();
+			app->m_painter.Redraw();
 		}
 	}
 }

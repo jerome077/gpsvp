@@ -68,7 +68,7 @@ void CGDIPainter::StartPolyline(UInt uiType, const tchar_t * wcName)
 	static std::tstring wstrReplace;
 	if (wcName && (uiType >= 0x20 && uiType <= 0x25))
 	{
-		wstrReplace = app.HeightFromFeet(wcName);
+		wstrReplace = app->HeightFromFeet(wcName);
 		m_wcName = wstrReplace.c_str();
 	}
 	else
@@ -321,13 +321,6 @@ void CGDIPainter::BeginPaintLite(VP::DC hdc)
 	m_iCurrentButton = m_srWindow.bottom - 20;
 }
 
-void CGDIPainter::PrepareScales()
-{
-	m_gpCenterCache = m_gpCenter();
-	m_uiScale10Cache = m_ruiScale10();
-	m_lXScale100 = cos100(m_gpCenterCache.lat);
-}
-
 void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree360, bool fLowCenter)
 {
 	m_rotate = iDegree360;
@@ -345,9 +338,9 @@ void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree36
 	if (m_fBottomBar)
 	{
 		if (IsVertical())
-			m_iBottomBar = (m_srWindow.bottom - m_srWindow.top) / (app.m_Options[mcoLargeMonitors] ? 7 : 10);
+			m_iBottomBar = (m_srWindow.bottom - m_srWindow.top) / (app->m_Options[mcoLargeMonitors] ? 7 : 10);
 		else
-			m_iBottomBar = (m_srWindow.right - m_srWindow.left) / (app.m_Options[mcoLargeMonitors] ? 3 : 4);
+			m_iBottomBar = (m_srWindow.right - m_srWindow.left) / (app->m_Options[mcoLargeMonitors] ? 3 : 4);
 	}
 	else
 		m_iBottomBar = 0;
@@ -586,7 +579,7 @@ void CGDIPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * w
 		std::tstring wstrNameReplace;
 		if (uiType == 0x6616 || uiType == 0x6200 || uiType == 0x6300)
 		{
-			wstrNameReplace = app.HeightFromFeet(wcName);
+			wstrNameReplace = app->HeightFromFeet(wcName);
 			wcName = wstrNameReplace.c_str();
 		}
 		ScreenSize ssLabel;
@@ -940,7 +933,7 @@ void CGDIPainter::PaintScale()
 	ScreenPoint start = ScreenPoint(sr.left, sr.bottom - 1);
 	double dScale = double(IntDistance(m_gpCenter(), ScreenToGeo(GeoToScreen(m_gpCenter()) + ScreenDiff(2000,0)))) / 2000;
 	int type = 0x202;
-	for (double * l = lengths[app.m_riMetrics()]; *l; ++l)
+	for (double * l = lengths[app->m_riMetrics()]; *l; ++l)
 	{
 		ScreenPoint finish(start);
 		int length = int(start.x + *l / dScale);
@@ -958,7 +951,7 @@ void CGDIPainter::PaintScale()
 	return;
 	
 	int iWidth = 40;
-	if (app.m_Options[mcoLargeFonts])
+	if (app->m_Options[mcoLargeFonts])
 		iWidth *= 2;
 	double dDist = IntDistance(m_gpCenter(), ScreenToGeo(GeoToScreen(m_gpCenter()) + ScreenDiff(2000,0))) / 50;
 	ScreenPoint pt1 = ScreenPoint(m_srWindow.left, m_srWindow.bottom) + ScreenDiff(10, -10);
@@ -1015,7 +1008,7 @@ void CGDIPainter::GetUnknownTypes(IListAcceptor * pAcceptor)
 			it != m_setUnknownTypes.end(); ++it)
 	{
 		tchar_t wstrType[100];
-		stprintf(wstrType, 100, L("%d, 0x%04x, %s"), *it, *it, app.m_TypeInfo.PointType(*it).c_str());
+		stprintf(wstrType, 100, L("%d, 0x%04x, %s"), *it, *it, app->m_TypeInfo.PointType(*it).c_str());
 		pAcceptor->AddItem(wstrType, *it);
 	}
 }

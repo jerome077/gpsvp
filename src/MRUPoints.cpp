@@ -53,14 +53,14 @@ void CMRUPoints::Navigate(ScreenPoint pt, HWND hWnd)
 	unsigned int res = mMenu.Popup(pt.x, pt.y, hWnd);
 	if (res == iCount)
 	{
-		app.ToolsWaypoints();
+		app->ToolsWaypoints();
 		return;
 	}
 	for (it = m_points.begin(), iCount = 1; it != m_points.end(); ++it, ++iCount)
 	{
 		if (iCount == res)
 		{
-			app.Navigate(it->gp, it->wstrName.c_str());
+			app->Navigate(it->gp, it->wstrName.c_str());
 			break;
 		}
 	}

@@ -45,7 +45,7 @@ void CAtlas::Add(const tchar_t * wcFilename, IPainter * pPainter)
 	if (!pPainter->WillPaint(m_imgFiles.back().first.GetRect()))
 		pPainter->SetView(m_imgFiles.back().first.GetCenter(), true);
 #ifndef LINUX
-	app.CheckMenu();
+	app->CheckMenu();
 #endif
 }
 void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPainter * pStatusPainter)
@@ -214,7 +214,7 @@ void CAtlas::CloseMapByID(int iMap)
 			m_imgFiles.erase(it);
 			Save();
 #ifndef LINUX
-			app.CheckMenu();
+			app->CheckMenu();
 #endif
 			return;
 		}
@@ -320,6 +320,6 @@ void CAtlas::CloseAll()
 	m_imgFiles.clear();
 	Save();
 #ifndef LINUX
-	app.CheckMenu();
+	app->CheckMenu();
 #endif
 }

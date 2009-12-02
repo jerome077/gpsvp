@@ -94,10 +94,6 @@ public:
 	ScreenRectSet m_srsPoints;
 
 	virtual bool on_expose_event(GdkEventExpose* event);
-	GeoPoint m_gpCenterCache;
-	long m_lXScale100;
-	int m_uiScale10Cache;
-	void PrepareScales();
 	struct RGB
 	{
 		RGB() : r(0), g(0), b(0) {};

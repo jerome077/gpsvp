@@ -437,16 +437,16 @@ void TrafficNodes::Data::Fix(const GeoPoint & gp, unsigned long ulTime)
 
 void TrafficNodes::Data::Paint(IPainter * p, bool fTrafficFlags) const
 {
-	if (app.m_Options[mcoDebugMode])
+	if (app->m_Options[mcoDebugMode])
 	{
 		m_Splitter.Paint(p);
 	}
-	//if (app.m_Options[mcoShowTrafficNodes])
+	//if (app->m_Options[mcoShowTrafficNodes])
 	//{
 	//	for (TrafficPoints::const_iterator it = m_Points.begin(); it != m_Points.end(); ++it)
 	//		p->PaintPoint(0xfffd, it->p, 0);
 	//}
-	if (app.m_Options[mcoShowTrafficInformation])
+	if (app->m_Options[mcoShowTrafficInformation])
 	{
 		for (Traffic::const_iterator it = m_Traffic.begin(); it != m_Traffic.end(); ++it)
 		{
@@ -505,13 +505,13 @@ std::string TrafficNodes::GetRequest(const GeoPoint & gp)
 	char request[1000];
 	if (m_pData->m_fRefresh)
 	{
-		sprintf(request, "http://%s/GetTraffic2.php?lat=%d&lng=%d", app.GetServerName(), gp.lat24(), gp.lon24());
+		sprintf(request, "http://%s/GetTraffic2.php?lat=%d&lng=%d", app->GetServerName(), gp.lat24(), gp.lon24());
 		return request;
 	}
 	if (m_pData->m_fTrafficLoaded && !m_pData->m_TrafficLegs.empty())
 	{
 		const TrafficLeg & leg = m_pData->m_TrafficLegs.front();
-		sprintf(request, "http://%s/TrafficLeg3.php?flat=%d&flng=%d&tlat=%d&tlng=%d&speed=%d", app.GetServerName(),
+		sprintf(request, "http://%s/TrafficLeg3.php?flat=%d&flng=%d&tlat=%d&tlng=%d&speed=%d", app->GetServerName(),
 			leg.gpFrom.lat24(), leg.gpFrom.lon24(), leg.gpTo.lat24(), leg.gpTo.lon24(), int(leg.dSpeed));
 		return request;
 	}

@@ -797,16 +797,16 @@ void CSun::Fix(const CTimeMonitor & monTime, const GeoPoint & p)
 				m_monDaytime = I("Day");
 			else
 				m_monDaytime = I("Night");
-			if (app.m_Options[mcoAutoLight])
+			if (app->m_Options[mcoAutoLight])
 			{
 				bool fToSet = !fDay;
 				if (!m_fSet || fToSet != m_fLastSet)
 				{
 					m_fSet = true;
 					m_fLastSet = fToSet;
-					if (app.m_Options[mcoLowLight] != fToSet)
+					if (app->m_Options[mcoLowLight] != fToSet)
 					{
-						app.ProcessCommand(mcoLowLight);
+						app->ProcessCommand(mcoLowLight);
 					}
 				}
 			}

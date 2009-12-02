@@ -9,25 +9,22 @@ void CGTKPainter::NoFix() {
 	std::cerr << "NoDix" << std::endl;
 }
 
-CMapApp app;
-
-int main(int argc, char ** argv)
+void CGTKPainter::Init(HWND hWnd, HKEY hRegKey)
 {
-	Gtk::Main    toolkit (argc, argv);
-	CGTKPainter dp;
+	std::cerr << "CGTKPainter::Init" << std::endl;
+	AutoLock l;
+	CScreenToGeo::Init(hWnd, hRegKey);
 
+#ifndef LINUX
+	m_fBottomBar = false;
+	m_fFullScreen = false;
+#endif // LINUX
 
-	while (*++argv)
-		dp.AddMap(*argv);
-	// Glib::Thread::create(sigc::mem_fun(&dp, &DumpPainter::ThreadRoutine), true);
- 	Gtk::Main::run (dp);
- 	// toolkit.run(dp);
-
-	return 0;
+	m_PolygonTools[0x100].m_hPen = CPen(0, 1, RGB(0x00, 0x00, 0x00));
+	m_PolygonTools[0x100].m_hBrush = CBrush(RGB(0x00, 0x00, 0xff));
+	m_PolygonTools[0x101].m_hPen = CPen(0, 1, RGB(0x00, 0x00, 0x00));
+	m_PolygonTools[0x101].m_hBrush = CBrush(RGB(0xff, 0x00, 0x00));
 }
-
-
-void CGTKPainter::Init(HKEY, HWND) {}
 void CGTKPainter::RedrawMonitors() {}
 void CGTKPainter::SetShowMonitors(bool fShow) {}
 bool CGTKPainter::IsFullScreen() {return false;}
@@ -61,7 +58,6 @@ CGTKPainter::CGTKPainter()
 	InitTools("Resources/Normal.vpc");
 	m_fExiting = false;
 	
-	Glib::thread_init();
 	signal_expose_event().connect(sigc::mem_fun(this, &CGTKPainter::on_expose_event), false);
 	signal_scroll_event().connect(sigc::mem_fun(this, &CGTKPainter::on_scroll));
 	signal_button_press_event().connect(sigc::mem_fun(this, &CGTKPainter::on_press));
@@ -289,7 +285,7 @@ bool CGTKPainter::on_expose_event(GdkEventExpose* event)
 	cr->line_to(0, 0);
 	cr->fill_preserve();
 	
-	a.BeginPaint(m_uiScale10Cache, this, this);
+	a.BeginPaint(GetScale10C(), this, this);
 	a.PaintMapPlaceholders(this);
 	a.Paint(maskPolygons, true);
 	a.Paint(maskPolylines, true);
@@ -299,12 +295,6 @@ bool CGTKPainter::on_expose_event(GdkEventExpose* event)
 	static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(get_window());
 	get_window()->draw_drawable(dc, pixmap, 0, 0, 0, 0, width, height);
 	return true;
-}
-void CGTKPainter::PrepareScales()
-{
-	m_gpCenterCache = m_gpCenter;
-	m_uiScale10Cache = m_ruiScale10;
-	m_lXScale100 = cos100(m_gpCenterCache.lat);
 }
 
 void CGTKPainter::InitToolsCommon()

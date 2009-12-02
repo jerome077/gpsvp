@@ -585,7 +585,7 @@ CWaypoints::CPoint & CWaypoints::ById(int id)
 // ---------------------------------------------------------------
 std::tstring CWaypoints::GetCreator()
 {
-	return app.GetGpsVPVersion().AswstringWithName();
+	return app->GetGpsVPVersion().AswstringWithName();
 }
 // ---------------------------------------------------------------
 void CWaypoints::BeginUpdate()
