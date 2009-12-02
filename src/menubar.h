@@ -69,7 +69,9 @@ public:
 	}
 	CMenu & GetMenu() { return m_mMenu; }
 	CKeymap & GetKeymap() {return m_mMenu.GetKeymap(); }
+#ifndef LINUX
 	CScreenButtons & GetButtons() { return m_mMenu.GetButtons(); }
+#endif // LINUX
 };
 #endif
 

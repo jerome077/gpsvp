@@ -17,9 +17,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <list>
 #include <map>
+#include "PlatformDef.h"
+#include "Common.h"
 
 class CMonitorSet;
-class CMenuBar;
+class CMenu;
 
 class COptionSet
 {
@@ -29,10 +31,12 @@ class COptionSet
 public:
 	COptionSet();
 	~COptionSet();
+#ifndef LINUX
 	void Init(HKEY hKey, CMonitorSet * pMonitorSet);
+#endif // LINUX
 	void AddOption(const tchar_t * wcLabel, const tchar_t * wcRegName, bool fDefault, int iCommand);
-	void CheckMenu(CMenuBar & menuBar);
-	bool ProcessCommand(int iCommand, CMenuBar & menuBar);
+	void CheckMenu(CMenu& menu);
+	bool ProcessCommand(int iCommand, CMenu & menu);
 	bool operator [] (int iCommand);
 };
 

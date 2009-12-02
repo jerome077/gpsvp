@@ -15,6 +15,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef MONITORSET_H
 #define MONITORSET_H
 
+#include <map>
+#include <vector>
 #include "Menu.h"
 #include "Monitors.h"
 
@@ -69,13 +71,13 @@ public:
 		std::vector<Byte> data;
 		DWORD ulTotalLen = 0;
 		DWORD dwType = REG_BINARY;
-		RegQueryValueEx(m_hRegKey, T("Monitors"), 0, &dwType, 0, &ulTotalLen);
+		RegQueryValueEx(m_hRegKey, L("Monitors"), 0, &dwType, 0, &ulTotalLen);
 		if (ulTotalLen > 0)
 		{
 			if (dwType != REG_BINARY)
 				return;
 			data.resize(ulTotalLen);
-			if (RegQueryValueEx(m_hRegKey, T("Monitors"), 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
+			if (RegQueryValueEx(m_hRegKey, L("Monitors"), 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
 				return;
 			m_vectMonitors.clear();
 			unsigned int uiPos = 0;
@@ -104,8 +106,8 @@ public:
 			data.insert(data.end(), (const Byte*)&wstrFilename.c_str()[0], (const Byte*)&wstrFilename.c_str()[0] + sizeof(tchar_t) * len); 
 		}
 		tchar_t buf[1000];
-		stprintf(buf, 1000, T("%d"), data.size());
-		RegSetValueEx(m_hRegKey, T("Monitors"), 0, REG_BINARY, &data[0], data.size());
+		stprintf(buf, 1000, L("%d"), data.size());
+		RegSetValueEx(m_hRegKey, L("Monitors"), 0, REG_BINARY, &data[0], data.size());
 #endif
 	}
 	void Decrease(UInt uiDiff)

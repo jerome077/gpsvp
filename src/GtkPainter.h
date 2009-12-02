@@ -1,191 +1,217 @@
 #ifndef gtkpainter_h
 #define gtkpainter_h
 
+#include <iostream>
+#include <gtkmm.h>
+#include <hildonmm.h>
+#include <map>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
+
+#include "Common.h"
+#include "Header.h"
+#include "IPainter.h"
+#include "PlatformDef.h"
+#include "Atlas.h"
+#include "NMEAParser.h"
 #include "GeoPoint.h"
 #include "RegValues.h"
 #include "Monitors.h"
+#include "IPainter.h"
+#include "ScreenToGeo.h"
 
 typedef void* HWND;
 
-
-struct ScreenPoint
+class CGTKPainter
+	: public IMonitorPainter
+	, public IButtonPainter
+	, public CScreenToGeo
+	, public Hildon::Window
+	, public IGPSClient
+	, public IStatusPainter
 {
-	ScreenPoint(int x_, int y_) : x(x_), y(y_) {}
-	ScreenPoint() : x(0), y(0) {}
-	int x, y;
-};
-
-struct ScreenSize
-{
-	int cx,cy;
-	ScreenSize() {}
-	ScreenSize(long x, long y) { cx = x; cy = y; }
-};
-
-struct ScreenRect
-{
-	int left, right, top, bottom;
-	ScreenRect(){};
-	// ScreenRect(const RECT & rc){ *(RECT*)this = rc;};
-	ScreenRect(const ScreenPoint & sp, const ScreenSize & ss)
-	{
-		left = sp.x;
-		top = sp.y;
-		right = sp.x + ss.cx;
-		bottom = sp.y + ss.cy;
-	}
-	void Init(const ScreenPoint & pt)
-	{
-		left = pt.x;
-		right = pt.x;
-		top = pt.y;
-		bottom = pt.y;
-	}
-	void Append(const ScreenPoint & pt)
-	{
-		if (pt.x < left)
-			left = pt.x;
-		else if (pt.x > right)
-			right = pt.x;
-		if (pt.y < top)
-			top = pt.y;
-		else if (pt.y > bottom)
-			bottom = pt.y;
-	}
-	bool Intersect(const ScreenRect & a)
-	{
-		if (a.top > bottom) return false;
-		if (a.bottom < top) return false;
-		if (a.left > right) return false;
-		if (a.right < left) return false;
-		return true;
-	}
-	bool IntersectHard(const ScreenRect & a)
-	{
-		if (a.top > (top + bottom) / 2) return false;
-		if (a.bottom < top) return false;
-		if (a.left > (right + left) / 2) return false;
-		if (a.right < left) return false;
-		return true;
-	}
-	int Side(const ScreenPoint & pt) const
-	{
-		if (pt.x > right)
-			return 1;
-		if (pt.x < left)
-			return 2;
-		if (pt.y > bottom)
-			return 3;
-		if (pt.y < top)
-			return 4;
-		return 0;
-	}
-	int Width()
-	{
-		return right - left;
-	}
-	int Height()
-	{
-		return bottom - top;
-	}
-	ScreenPoint Center()
-	{
-		return ScreenPoint((right + left) / 2, (top + bottom) / 2);
-	}
-	int mymax(int a, int b) { return (a>b)?a:b; }
-	int mymin(int a, int b) { return (a<b)?a:b; }
-	void Trim(const ScreenRect & r)
-	{
-		if (right > r.right)
-			right = mymax(left, r.right);
-		if (left < r.left)
-			left = mymin(right, r.left);
-		if (bottom > r.bottom)
-			bottom = mymax(top, r.bottom);
-		if (top < r.top)
-			top = mymin(bottom, r.top);
-	}
-};
-
-struct ScreenDiff
-{
-	ScreenDiff(const ScreenDiff & d) { dx = d.dx; dy = d.dy; }
-	ScreenDiff(int x, int y) : dx(x), dy(y) {}
-	bool Null() {return dx == 0.0 && dy == 0.0;}
-	int dx;
-	int dy;
-	void operator *=(int i) {dx*=i; dy*=i;}
-	void operator /=(int i) {dx/=i; dy/=i;}
-};
-
-inline ScreenPoint & operator -= (ScreenPoint & pt, const ScreenDiff & d)
-{
-	pt.x -= d.dx;
-	pt.y -= d.dy;
-	return pt;
-}
-
-inline ScreenPoint operator - (ScreenPoint pt, const ScreenDiff & d)
-{
-	return pt -= d;
-}
-
-inline ScreenPoint & operator += (ScreenPoint & pt, const ScreenDiff & d)
-{
-	pt.x += d.dx;
-	pt.y += d.dy;
-	return pt;
-}
-
-inline ScreenPoint operator + (ScreenPoint pt, const ScreenDiff & d)
-{
-	return pt += d;
-}
-
-inline ScreenDiff operator - (ScreenPoint a, ScreenPoint b)
-{
-	return ScreenDiff(a.x - b.x, a.y - b.y);
-}
-
-class CGTKPainter : public IMonitorPainter
-{
+private:
+	CAtlas a;
 public:
 	void Init(HKEY, HWND);
-    void Redraw();
-    const GeoPoint GetCenter();
-	//! Zoom view in
-	void ZoomIn();
-	//! Zoom view out
-	void ZoomOut();
-	//! Move view center left
-	void Left();
-	//! Move view center right
-	void Right();
-	//! Move view center up
-	void Up();
-	//! Move view center down
-	void Down();
-	//! Move view center by random vector
-	void Move(ScreenDiff d);
-	void OnTimer();
 	void RedrawMonitors();
 	void SetShowMonitors(bool fShow);
 	bool IsFullScreen();
 	void SetFullScreen(bool fFull);
-	void ResetManualMode();
-	bool ManualMode();
-	int GetScale();
-	void PrepareScales();
-	double GetXScale();
-	bool IsVertical();
 	void BeginPaint();
+	void EndPaint();
+	void PaintScale();
+	void PaintStatusLine(const tchar_t * wcName);
+	void PaintLowMemory(const tchar_t * wcString1, const tchar_t * wcString2);
+	void PaintStatusIcon(int iIcon);;
+	void PaintCompass();;
+	ScreenRect GetMonitorsBar();
+	void ClearButtons();;
 
 	//IMonitorPainter
 	void DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText);
 	void DrawMonitorLabel(const tchar_t * wcLabel);
-	const ScreenPoint& GetMonitorSize();
+	ScreenPoint GetMonitorSize();
 	void DrawBar(const ScreenRect & srBar);
 	void SetCurrentMonitor(const ScreenRect & srRect, bool fActive);
+
+	// IButtonPainter
+	void AddButton(const tchar_t * wcLabel, int iCommand, bool fSelected);
+
+
+	CGTKPainter();
+	~CGTKPainter();
+	void AddMap(const tchar_t * name);
+	bool polygon;
+	UInt type;
+	const tchar_t * name;
+	std::vector<ScreenPoint> m_pointList;
+	virtual void StartPolygon(UInt uiType, const tchar_t * wcName);
+	virtual void StartPolyline(UInt uiType, const tchar_t * wcName);
+	Cairo::TextExtents m_LabelSize;
+	void CalculateLabelSize();
+	virtual void FinishObject();
+	void AddPoint(const ScreenPoint & p);
+	virtual void AddPoint(const GeoPoint & gp);
+	virtual bool WillPaint(const GeoRect & rect);
+	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName);
+	virtual void SetLabelMandatory();
+	virtual GeoRect GetRect();
+	
+	int iDegree360;
+	GeoPoint m_gpCenter;
+	int m_ruiScale10;
+
+	Cairo::RefPtr<Cairo::Context> cr;
+	Glib::RefPtr<Gdk::Pixmap> pixmap;
+	bool started;
+	int m_cos100;
+	int m_sin100;
+	ScreenPoint m_spWindowCenter;
+	ScreenRect m_srWindow;
+	ScreenRectSet m_srsPoints;
+
+	virtual bool on_expose_event(GdkEventExpose* event);
+	GeoPoint m_gpCenterCache;
+	long m_lXScale100;
+	int m_uiScale10Cache;
+	void PrepareScales();
+	struct RGB
+	{
+		RGB() : r(0), g(0), b(0) {};
+		RGB(int r_, int g_, int b_) : r(r_), g(g_), b(b_) {};
+		int r,g,b;
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			cr->set_source_rgb(double(r)/255, double(g)/255, double(b)/255);
+		}
+	};
+	struct CPen
+	{
+		CPen() : style(-1), width(0), color(RGB(0,0,0)) {};
+		CPen(int style_, int width_, RGB color_) : style(style_), width(width_), color(color_) {};
+		operator bool() const {return style != -1;}
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			if (style)
+			{
+				static std::vector<double> dashes;
+				dashes.resize(1);
+				dashes[0] = 3;
+				cr->set_dash(dashes, 0);
+			}
+			else
+				cr->unset_dash();
+			cr->set_line_width(width);
+			color.Set(cr);
+		}
+		int style;
+		int width;
+		RGB color;
+	};
+	
+	struct CBrush
+	{
+		CBrush() : color(RGB(0,0,0)) {};
+		CBrush(RGB color_) : color(color_) {};
+		RGB color;
+		void Set(Cairo::RefPtr<Cairo::Context> &cr)
+		{
+			color.Set(cr);
+		}
+	};
+	CPen m_hDefaultPen;
+	CBrush m_hDefaultBrush;
+	
+	struct PolygonTools
+	{ 
+		CPen m_hPen;
+		CBrush m_hBrush;
+	};
+	typedef std::map<UInt, PolygonTools> PolygonToolMap;
+	PolygonToolMap m_PolygonTools;
+
+	struct PointTools
+	{
+		// HICON m_hIcon;
+		// HBITMAP m_hBmp;
+		Cairo::RefPtr<Cairo::ImageSurface> s;
+		int m_iDiffX;
+		int m_iDiffY;
+
+		PointTools() : m_iDiffX(0), m_iDiffY(0) {};
+	};
+	typedef std::map<UInt, PointTools> PointToolMap;
+	PointToolMap m_PointTools;
+	
+	struct PolylineTools
+	{
+		CPen first;
+		CPen second;
+	};
+	typedef std::map<UInt, PolylineTools> PolylineToolMap;
+	PolylineToolMap m_PolylinePens;
+	
+	RGB m_crBg;
+	CBrush m_hBgBrush;
+	RGB m_crText;
+	CPen m_hCursorPen;
+	CBrush m_hCursorBrush;
+	
+	void InitToolsCommon();
+	void InitTools(const tchar_t * strFilename);
+	void ParseString(const char * buff, const std::fnstring & wstrBase);
+	bool on_scroll(GdkEventScroll * event);
+	int orig_x, orig_y;
+	bool pressed;
+	bool on_press(GdkEventButton* event);
+	bool on_release(GdkEventButton* event);
+	bool on_motion(GdkEventMotion* event);
+	void Move(ScreenDiff d);
+	
+	enum { 
+		ciMinZoom = 1,		//!< Minimum zoom
+		ciMaxZoom = 100000	//!< Maximum zoom
+	};
+	void Redraw();
+	
+	virtual void PaintText(const tchar_t * wcText);
+	virtual void SetProgressItems(int iLevel, int iCount);
+	virtual void SetProgress(int iLevel, int iProgress);
+	virtual void Advance(int iLevel);
+
+	int m_hPortFile;
+	CNMEAParser m_NMEAParser;
+	bool m_fExiting;
+	std::string m_rsPort;
+
+	void NoFix();
+	void Fix(GeoPoint gp, double, double dHDOP);
+	void NoVFix();
+	void VFix(double dAltitude, double);
+	void SetConnectionStatus(enumConnectionStatus iStatus);
 };
 
 #endif // gtkpainter_h

@@ -21,6 +21,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #	include "GDIPainter.h"
 #endif
 #include "GeoPoint.h"
+#include "screenpoint.h"
+typedef void* HWND;
 
 class CMRUPoints
 {

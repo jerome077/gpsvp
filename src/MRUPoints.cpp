@@ -49,8 +49,8 @@ void CMRUPoints::Navigate(ScreenPoint pt, HWND hWnd)
 	int iCount;
 	for (it = m_points.begin(), iCount = 1; it != m_points.end() && iCount <= cnMaxPoints; ++it, ++iCount)
 		mMenu.CreateItem(it->wstrName.c_str(), iCount);
-	mMenu.CreateItem(L("Full list ..."), iCount);
-	DWORD res = mMenu.Popup(pt.x, pt.y, hWnd);
+	mMenu.CreateItem(I("Full list ..."), iCount);
+	unsigned int res = mMenu.Popup(pt.x, pt.y, hWnd);
 	if (res == iCount)
 	{
 		app.ToolsWaypoints();

@@ -12,6 +12,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 */
 
 
+#include "MapApp.h"
+
 #define INITGUID
 #ifndef LINUX
 #	include <winsock2.h>
@@ -36,7 +38,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #		include <shlobj.h>
 #	endif
 #endif
-#include "MapApp.h"
 #ifdef UNDER_CE
 #	include <devload.h>
 #endif
@@ -86,13 +87,13 @@ class CNmeaCommandsDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("NMEA commands"));
+		SetWindowText(hDlg, I("NMEA commands"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("Command"), 400, 0);
+		m_list.AddColumn(I("Command"), 400, 0);
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Save"), dmcSave);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Save"), dmcSave);
 		SetSubWindowProc(m_list.HWnd());
 	}
 	virtual void WindowPosChanged(HWND hDlg)
@@ -113,7 +114,7 @@ class CNmeaCommandsDlg : public CMADialog
 			{
 				tchar_t strFile[MAX_PATH + 1] = {0};
 				OPENFILENAME of;
-				app.FillOpenFileName(&of, hDlg, L("Text\0*.txt\0"), strFile, false,false);
+				app.FillOpenFileName(&of, hDlg, I("Text\0*.txt\0"), strFile, false,false);
 				if (GetSaveFileName(&of))
 				{
 					app.m_NMEAParser.SaveCommands(strFile);
@@ -138,12 +139,12 @@ class CUnknownPointTypesDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Unknown point types"));
+		SetWindowText(hDlg, I("Unknown point types"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("Type"), 200, 0);
+		m_list.AddColumn(I("Type"), 200, 0);
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), IDOK);
 		SetSubWindowProc(m_list.HWnd());
 	}
 	virtual void WindowPosChanged(HWND hDlg)
@@ -183,7 +184,7 @@ public:
 	std::tstring m_strValue;
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Property"));
+		SetWindowText(hDlg, I("Property"));
 
 		m_name.Create(hDlg);
 		m_value.Create(hDlg);
@@ -191,25 +192,25 @@ public:
 		switch (m_iType)
 		{
 		case CWaypoints::nsGPX:
-			AddItem(hDlg, CText(hDlg, L("Type: Standard GPX")));
+			AddItem(hDlg, CText(hDlg, I("Type: Standard GPX")));
 			break;
 		case CWaypoints::nsVP:
-			AddItem(hDlg, CText(hDlg, L("Type: Specific gpsVP")));
+			AddItem(hDlg, CText(hDlg, I("Type: Specific gpsVP")));
 			break;
 		case CWaypoints::nsOSM:
-			AddItem(hDlg, CText(hDlg, L("Type: OpenStreetMap Tag")));
+			AddItem(hDlg, CText(hDlg, I("Type: OpenStreetMap Tag")));
 			break;
 		}
-		AddItem(hDlg, CText(hDlg, L("Name:")));
+		AddItem(hDlg, CText(hDlg, I("Name:")));
 		AddItem(hDlg, m_name);
-		AddItem(hDlg, CText(hDlg, L("Value:")));
+		AddItem(hDlg, CText(hDlg, I("Value:")));
 		AddItem(hDlg, m_value);
 		
 		m_name.SetText(m_strName.c_str());
 		m_value.SetText(m_strValue.c_str());
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Cancel"), dmcCancel);
 	}
 	virtual void Command(HWND hDlg, int iCommand)
 	{
@@ -279,7 +280,7 @@ public:
 		for(int i=0, iEnd=wptEditor.GetPropertyCount(); i<iEnd; i++)
 		{
 			std::auto_ptr<CWaypoints::CPointProp> prop (wptEditor.GetPropertyByIndex(i));
-			std::tstring name = (CWaypoints::nsOSM == prop->Namespace()) ? T("osm:")+prop->Name() : prop->Name();
+			std::tstring name = (CWaypoints::nsOSM == prop->Namespace()) ? L("osm:")+prop->Name() : prop->Name();
 			m_TextControls.push_back(CText(m_hDialog, name.c_str()));
 			AddItem(m_hDialog, m_TextControls.back());
 			m_EditTextControls.push_back(CEditText());
@@ -299,7 +300,7 @@ public:
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Waypoint properties"));
+		SetWindowText(hDlg, I("Waypoint properties"));
 #ifndef UNDER_CE
 		ShowScrollBar(hDlg,SB_VERT,TRUE);
 #endif
@@ -322,11 +323,11 @@ public:
 	};
 	void CreateSubMenuCopyTags(CMenu & basemenu)
 	{
-		CMenu & mmCopyTags = basemenu.CreateSubMenu(L("Copy Tags"));
+		CMenu & mmCopyTags = basemenu.CreateSubMenu(I("Copy Tags"));
 		int modelsCount = app.GetWaypoints().GetWaypointModelCount();
 		if (0 == modelsCount)
 		{
-			std::tstring itemName = L("No wpt beginning with ")+WPT_MODEL_PREFIX;
+			std::tstring itemName = I("No wpt beginning with ")+WPT_MODEL_PREFIX;
 			mmCopyTags.CreateItem(itemName.c_str(), -1);
 		}
 		else
@@ -344,18 +345,18 @@ public:
 		if (!bWithOSM)
 		{
 			SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), dmcOK);
-			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
+			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), dmcOK);
+			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Cancel"), dmcCancel);
 		}
 		else
 		{
 			SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_MENU);
-			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), dmcOK);
-			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Menu"), 0);
+			m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), dmcOK);
+			m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Menu"), 0);
 			CMenu & menu = m_MenuBar.GetMenu();
-			menu.CreateItem(L("Cancel"), dmcCancel);
-			menu.CreateItem(L("Delete tag"), dmcWaypointDeleteProp);
-			menu.CreateItem(L("New OSM tag"), dmcWaypointNewOSMTag);
+			menu.CreateItem(I("Cancel"), dmcCancel);
+			menu.CreateItem(I("Delete tag"), dmcWaypointDeleteProp);
+			menu.CreateItem(I("New OSM tag"), dmcWaypointNewOSMTag);
 			CreateSubMenuCopyTags(menu);
 		}
 	}
@@ -425,7 +426,7 @@ public:
 					SaveControlsToPoint(m_ClonedPoint);
 					CWaypoints::CPointEditor wptEditor = m_ClonedPoint.GetEditor();
 					if (!wptEditor.RemovePropertyByIndex(idx))
-						MessageBox(0, L("Only OSM Tags can be deleted"), L("Delete Tag"), MB_ICONINFORMATION);
+						MessageBox(0, I("Only OSM Tags can be deleted"), I("Delete Tag"), MB_ICONINFORMATION);
 					wptEditor.Commit();
 					RecreateControls(hDlg, m_ClonedPoint, false);
 				}
@@ -482,17 +483,17 @@ public:
 		m_channel.Create(hDlg);
 		m_name.Create(hDlg);
 
-		AddItem(hDlg, CText(hDlg, L("Secret channel:")));
+		AddItem(hDlg, CText(hDlg, I("Secret channel:")));
 		AddItem(hDlg, m_channel);
-		AddItem(hDlg, CText(hDlg, L("Your name:")));
+		AddItem(hDlg, CText(hDlg, I("Your name:")));
 		AddItem(hDlg, m_name);
 		
 		m_channel.SetText(app.m_team.GetChannel().c_str());
 		m_name.SetText(app.m_team.GetName().c_str());
 		m_channel.SetFocus();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Cancel"), dmcCancel);
 	}
 	virtual void Command(HWND hDlg, int iCommand)
 	{
@@ -533,23 +534,23 @@ class CMapsDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Maps"));
+		SetWindowText(hDlg, I("Maps"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("Filename"), 500, 0);
+		m_list.AddColumn(I("Filename"), 500, 0);
 
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_MENU);
 		SetSubWindowProc(m_list.HWnd());
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Menu"), 0);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Menu"), 0);
 		CMenu & menu = m_MenuBar.GetMenu();
-		menu.CreateItem(L("Unload"), dmcUnload);
-		menu.CreateItem(L("Activate/deactivate"), dmcToggleActive);
-		menu.CreateItem(L("Center on map"), dmcCenter);
-		menu.CreateItem(L("Information"), dmcInfo);
-		menu.CreateItem(L("Unload all"), dmcUnloadAll);
+		menu.CreateItem(I("Unload"), dmcUnload);
+		menu.CreateItem(I("Activate/deactivate"), dmcToggleActive);
+		menu.CreateItem(I("Center on map"), dmcCenter);
+		menu.CreateItem(I("Information"), dmcInfo);
+		menu.CreateItem(I("Unload all"), dmcUnloadAll);
 		if (app.m_Options[mcoDebugMode])
-			menu.CreateItem(L("Dump"), dmcDump);
+			menu.CreateItem(I("Dump"), dmcDump);
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
@@ -613,17 +614,17 @@ class CMapsDlg : public CMADialog
 			{
 				const CIMGFile & img = app.GetAtlas().ById(iSelected);
 				std::tstring info;
-				info += L("Filename: ");
+				info += I("Filename: ");
 				info += img.GetFilename();
-				info += T("\n");
-				info += L("Loaded: ");
-				info += img.IsLoaded() ? L("Yes") : L("No");
-				info += T("\n");
-				MessageBox(0, info.c_str(), L("Map information"), MB_ICONINFORMATION);
+				info += L("\n");
+				info += I("Loaded: ");
+				info += img.IsLoaded() ? I("Yes") : I("No");
+				info += L("\n");
+				MessageBox(0, info.c_str(), I("Map information"), MB_ICONINFORMATION);
 			}
 			return;
 		case dmcUnloadAll:
-			if (MessageBox(hDlg, L("Are you sure"), L("Unload all"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+			if (MessageBox(hDlg, I("Are you sure"), I("Unload all"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 			{
 				app.GetAtlas().CloseAll();
 				app.m_painter.Redraw();
@@ -660,13 +661,13 @@ class CSearchResultsDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Search results"));
+		SetWindowText(hDlg, I("Search results"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("Place"), 500, 0);
+		m_list.AddColumn(I("Place"), 500, 0);
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("To map"), dmcToMap);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Close"), dmcClose);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("To map"), dmcToMap);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Close"), dmcClose);
 		SetSubWindowProc(m_list.HWnd());
 	}
 	virtual void WindowPosChanged(HWND hDlg)
@@ -712,12 +713,12 @@ class CSearchOSMDlg : public CMADialog
 	CEditText m_query;
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Search OpenStreetMap.org"));
+		SetWindowText(hDlg, I("Search OpenStreetMap.org"));
 		m_query.Create(hDlg);
-		m_query.SetText(T(""));
+		m_query.SetText(L(""));
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Search"), dmcSearch);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Close"), dmcClose);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Search"), dmcSearch);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Close"), dmcClose);
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
@@ -755,7 +756,7 @@ class CSearchOSMDlg : public CMADialog
 				(*to) = 0;
 				std::string url = "http://www.frankieandshadow.com/osm/search.xml?find=";
 				url += quoted;
-				app.SetSearchURL(url.c_str());
+				app.SetSearchURI(url.c_str());
 				EndDialog(hDlg, 0);
 				return;
 			}
@@ -777,13 +778,13 @@ class CTracksDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Tracks"));
+		SetWindowText(hDlg, I("Tracks"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("File name"), 500, 0);
+		m_list.AddColumn(I("File name"), 500, 0);
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Unload"), dmcUnload);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Unload"), dmcUnload);
 		SetSubWindowProc(m_list.HWnd());
 	}
 	virtual void WindowPosChanged(HWND hDlg)
@@ -844,14 +845,14 @@ class CSettingsDlg : public CMADialog
 	void AddComboItem(int iCombo, int iItem, int iToSelect)
 	{
 		tchar_t wstrBuf[100];
-		sprintf(wstrBuf, 100, T("%d"), iItem);
+		sprintf(wstrBuf, 100, L("%d"), iItem);
 		int index = SendDlgItemMessage(m_hDialog, iCombo, CB_ADDSTRING, 0, LPARAM(wstrBuf));
 		if (iItem == iToSelect)
 			SendDlgItemMessage(m_hDialog, iCombo, CB_SETCURSEL, index, 0);
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Settings"));
+		SetWindowText(hDlg, I("Settings"));
 		m_port.Create(hDlg, false);
 //#ifdef UNDER_CE
 //		tchar_t buff[1000];
@@ -867,21 +868,21 @@ class CSettingsDlg : public CMADialog
 		tchar_t buff[1000];
 		for (int i = 0; i <= 20; ++i)
 		{
-			stprintf(buff, 1000, T("COM%d:"), i);
+			stprintf(buff, 1000, L("COM%d:"), i);
 			m_port.AddItem(buff, app.m_rsPort().c_str());			
 		}
 //#endif
 		m_port.SetText(app.m_rsPort().c_str());
 
 		m_portSpeed.Create(hDlg, false);
-		m_portSpeed.AddItem(T("Default"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("2400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("4800"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("9600"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("14400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("19200"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("38400"), app.m_rsPortSpeed().c_str());
-		m_portSpeed.AddItem(T("57600"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("Default"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("2400"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("4800"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("9600"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("14400"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("19200"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("38400"), app.m_rsPortSpeed().c_str());
+		m_portSpeed.AddItem(L("57600"), app.m_rsPortSpeed().c_str());
 		m_portSpeed.SetText(app.m_rsPortSpeed().c_str());
 
 		m_trackstep.Create(hDlg, false);
@@ -897,16 +898,16 @@ class CSettingsDlg : public CMADialog
 		m_proxy.SetText(app.m_rsProxy().c_str());
 
 		m_coordformat.Create(hDlg, false);
-		m_coordformat.AddItem(T("N37°27'35\")");
-		m_coordformat.AddItem(T("N37°27.8743'"));
-		m_coordformat.AddItem(T("N37.278742°"));
-		m_coordformat.AddItem(T("+37.278742"));
-		m_coordformat.AddItem(T("N37°27'35.64\")");
-		m_coordformat.AddItem(T("UTM (experimental)"));
+		m_coordformat.AddItem(L("N37°27'35\")");
+		m_coordformat.AddItem(L("N37°27.8743'"));
+		m_coordformat.AddItem(L("N37.278742°"));
+		m_coordformat.AddItem(L("+37.278742"));
+		m_coordformat.AddItem(L("N37°27'35.64\")");
+		m_coordformat.AddItem(L("UTM (experimental)"));
 		m_coordformat.Select(app.m_riCoordFormat());
 
 		m_utmZone.Create(hDlg, false);
-		m_utmZone.AddItem(T("Automatic"));
+		m_utmZone.AddItem(L("Automatic"));
 		for(int i=1;i<=60;i++)
 			m_utmZone.AddItem((tchar_t *)UTMZoneToLongText(i).c_str());
 		for(int i=-1;i>=-60;i--)
@@ -916,39 +917,39 @@ class CSettingsDlg : public CMADialog
 		m_utmZone.Select(utmZoneIndex);
 
 		m_metrics.Create(hDlg, false);
-		m_metrics.AddItem(L("Metric"));
-		m_metrics.AddItem(L("Nautical"));
-		m_metrics.AddItem(L("Imperial"));
+		m_metrics.AddItem(I("Metric"));
+		m_metrics.AddItem(I("Nautical"));
+		m_metrics.AddItem(I("Imperial"));
 		m_metrics.Select(app.m_riMetrics());
 
 		m_GeoidMode.Create(hDlg, false);
-		m_GeoidMode.AddItem(T("Auto"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(T("Always"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(T("Never"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(T("User"), app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(T("Sirf"), app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Auto"), app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Always"), app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Never"), app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("User"), app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem(L("Sirf"), app.m_rsGeoidMode().c_str());
 		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
 
-		AddItem(hDlg, CText(hDlg, L("Port:")));
+		AddItem(hDlg, CText(hDlg, I("Port:")));
 		AddItem(hDlg, m_port);
-		AddItem(hDlg, CText(hDlg, L("Port speed:")));
+		AddItem(hDlg, CText(hDlg, I("Port speed:")));
 		AddItem(hDlg, m_portSpeed);
-		AddItem(hDlg, CText(hDlg, L("Track step:")));
+		AddItem(hDlg, CText(hDlg, I("Track step:")));
 		AddItem(hDlg, m_trackstep);
-		AddItem(hDlg, CText(hDlg, L("Proxy server (user:pass@host:port):")));
+		AddItem(hDlg, CText(hDlg, I("Proxy server (user:pass@host:port):")));
 		AddItem(hDlg, m_proxy);
-		AddItem(hDlg, CText(hDlg, L("Coordinates format:")));
+		AddItem(hDlg, CText(hDlg, I("Coordinates format:")));
 		AddItem(hDlg, m_coordformat);
-		AddItem(hDlg, CText(hDlg, L("UTM Zone:")));
+		AddItem(hDlg, CText(hDlg, I("UTM Zone:")));
 		AddItem(hDlg, m_utmZone);
-		AddItem(hDlg, CText(hDlg, L("Metric system:")));
+		AddItem(hDlg, CText(hDlg, I("Metric system:")));
 		AddItem(hDlg, m_metrics);
-		AddItem(hDlg, CText(hDlg, L("Geoid Separation mode:")));
+		AddItem(hDlg, CText(hDlg, I("Geoid Separation mode:")));
 		AddItem(hDlg, m_GeoidMode);
 		
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Cancel"), dmcCancel);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Ok"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Cancel"), dmcCancel);
 	}
 	void ApplySettings(HWND hDlg)
 	{
@@ -970,8 +971,10 @@ class CSettingsDlg : public CMADialog
 			fStartListening = true;
 		}
 
+#ifndef LINUX
 		if (fStartListening)
 			app.StartListening();
+#endif // LINUX
 
 		m_trackstep.GetText(buff, cnMaxStr);
 		app.m_riTrackStep.Set(tcstol(buff, 0, 10));
@@ -980,8 +983,8 @@ class CSettingsDlg : public CMADialog
 		if (app.m_riCoordFormat() != index)
 		{
 			app.m_riCoordFormat.Set(index);
-			app.m_monLongitude.SetIdL(T("Longitude"), CoordLabelLon());
-			app.m_monLatitude.SetIdL(T("Latitude"), CoordLabelLat());
+			app.m_monLongitude.SetIdL(L("Longitude"), CoordLabelLon());
+			app.m_monLatitude.SetIdL(L("Latitude"), CoordLabelLat());
 		}
 
 		index = m_utmZone.GetCurSel();
@@ -996,7 +999,9 @@ class CSettingsDlg : public CMADialog
 		{
 			app.m_rsProxy = buff;
 		}
+#ifndef LINUX
 		CHttpRequest::SetProxy(app.m_rsProxy());
+#endif // LINUX
 
 		m_GeoidMode.GetText(buff, cnMaxStr);
 		if (app.m_rsGeoidMode() != buff)
@@ -1029,9 +1034,9 @@ class CWaypointsDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Waypoints"));
+		SetWindowText(hDlg, I("Waypoints"));
 		m_list.Create(hDlg, true);
-		m_list.AddColumn(L("Name"), 400, 0);
+		m_list.AddColumn(I("Name"), 400, 0);
 		FillList();
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_MENU);
 		CreateMenu();
@@ -1052,20 +1057,20 @@ class CWaypointsDlg : public CMADialog
 	};
 	void CreateMenu()
 	{
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Menu"), 0);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), IDOK);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Menu"), 0);
 		CMenu & menu = m_MenuBar.GetMenu();
-		menu.CreateItem(L("Properties"), dmcWaypointsProperies);
-		menu.CreateItem(L("To map"), dmcWaypointsToMap);
-		menu.CreateItem(L("Delete"), dmcWaypointsDelete);
-		menu.CreateItem(L("Navigate"), dmcWaypointsNavigate);
-		CMenu & radius = menu.CreateSubMenu(L("Radius"));
-		radius.CreateItem(L("10 km"), dmcWaypointsRadius10);
-		radius.CreateItem(L("50 km"), dmcWaypointsRadius50);
-		radius.CreateItem(L("100 km"), dmcWaypointsRadius100);
-		radius.CreateItem(L("500 km"), dmcWaypointsRadius500);
-		radius.CreateItem(L("Infinite"), dmcWaypointsRadiusInf);
-		menu.CreateItem(L("Export waypoint"), dmcExportWaypoint);
+		menu.CreateItem(I("Properties"), dmcWaypointsProperies);
+		menu.CreateItem(I("To map"), dmcWaypointsToMap);
+		menu.CreateItem(I("Delete"), dmcWaypointsDelete);
+		menu.CreateItem(I("Navigate"), dmcWaypointsNavigate);
+		CMenu & radius = menu.CreateSubMenu(I("Radius"));
+		radius.CreateItem(I("10 km"), dmcWaypointsRadius10);
+		radius.CreateItem(I("50 km"), dmcWaypointsRadius50);
+		radius.CreateItem(I("100 km"), dmcWaypointsRadius100);
+		radius.CreateItem(I("500 km"), dmcWaypointsRadius500);
+		radius.CreateItem(I("Infinite"), dmcWaypointsRadiusInf);
+		menu.CreateItem(I("Export waypoint"), dmcExportWaypoint);
 		CheckMenu();
 	}
 	void CheckMenu()
@@ -1137,7 +1142,7 @@ class CWaypointsDlg : public CMADialog
 			{
 				if (idx >= 0)
 				{
-					if (MessageBox(hDlg, L("Are you sure"), L("Delete waypoint"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+					if (MessageBox(hDlg, I("Are you sure"), I("Delete waypoint"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 					{
 						app.GetWaypoints().DeleteByID(idx);
 						m_list.RemoveSelected();
@@ -1210,15 +1215,15 @@ class CKeymapDlg : public CMADialog
 	}
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Key map"));
+		SetWindowText(hDlg, I("Key map"));
 		m_list.Create(hDlg, false);
-		m_list.AddColumn(L("Key"), 60, 0);
-		m_list.AddColumn(L("Action"), 300, 1);
+		m_list.AddColumn(I("Key"), 60, 0);
+		m_list.AddColumn(I("Action"), 300, 1);
 		FillList();
 		SetSubWindowProc(m_list.HWnd());
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
-		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Done"), dmcOk);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Set key"), dmcSetKey);
+		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Done"), dmcOk);
+		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Set key"), dmcSetKey);
 	}
 	virtual void WindowPosChanged(HWND hDlg)
 	{
@@ -1268,7 +1273,7 @@ class CKeymapDlg : public CMADialog
 	}
 };
 
-#endif
+#endif // LINUX
 
 #ifndef LINUX
 LRESULT CALLBACK MADlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1300,8 +1305,8 @@ DWORD WINAPI HttpThreadRoutine(LPVOID pArg)
 #endif
 
 #define LG(x) \
-	if (fWriteLog){tchar_t wcFilename[1000];stprintf(wcFilename, 1000, T("%s\\Connection.log"), m_rsTrackFolder().c_str());\
-	FILE * log = wfopen(wcFilename, T("at"));\
+	if (fWriteLog){tchar_t wcFilename[1000];stprintf(wcFilename, 1000, L("%s\\Connection.log"), m_rsTrackFolder().c_str());\
+	FILE * log = wfopen(wcFilename, L("at"));\
 	if (log) {SYSTEMTIME st;GetLocalTime(&st);\
 	fprintf(log, "%02d:%02d:%02d.%03d: ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);\
 	x;fclose(log);}}
@@ -1384,7 +1389,7 @@ void CMapApp::ThreadRoutine()
 				AutoLock l;
 				if (!m_wstrReplayNMEA.empty())
 				{
-					fileReplayNMEA = wfopen(m_wstrReplayNMEA.c_str(), T("rb"));
+					fileReplayNMEA = wfopen(m_wstrReplayNMEA.c_str(), L("rb"));
 				}
 			}
 			Byte buffer[10];
@@ -1422,7 +1427,7 @@ void CMapApp::ThreadRoutine()
 				Sleep(1000);
 				{
 					LG(fprintf(log, "Port is %S\n", m_rsPort().c_str()))
-					if (m_rsPort() != T(""))
+					if (m_rsPort() != L(""))
 					{
 						m_hPortFile = CreateFile(m_rsPort().c_str(), 
 							GENERIC_READ, 0, 0, OPEN_EXISTING,
@@ -1543,6 +1548,7 @@ void CMapApp::ThreadRoutine()
 	}
 };
 
+#ifndef LINUX
 void CMapApp::StartListening()
 {
 	if (m_hPortThread)
@@ -1555,6 +1561,7 @@ void CMapApp::StartListening()
 	m_fExiting = false;
 	m_hPortThread = CreateThread(0, 10000, &::ThreadRoutine, this, 0, 0);
 }
+#endif LINUX
 
 void CMapApp::StartHttpThread()
 {
@@ -1585,12 +1592,16 @@ CMapApp::CMapApp()
 #ifndef LINUX
 	m_pRasterMapPainter = new CGMPainter();
 #endif
+#ifndef LINUX
 	InitCoreDll();
+#endif // LINUX
 }
 
 CMapApp::~CMapApp() 
 {
+#ifndef LINUX
 	CHttpRequest::CleanupSocketsIfNecessary();
+#endif // LINUX
 #ifdef UNDER_CE
 	if (m_hCoreDll) {
 		m_pfnGetIdleTime = NULL;
@@ -1727,8 +1738,8 @@ public:
 		if (m_iCount >= m_iNextNotification)
 		{
 			tchar_t text[100];
-			stprintf(text, 100, L("Parsed %d files"), m_iCount);
-			MessageBox(0, text, L("Info"), MB_ICONINFORMATION);
+			stprintf(text, 100, I("Parsed %d files"), m_iCount);
+			MessageBox(0, text, I("Info"), MB_ICONINFORMATION);
 			m_iNextNotification += m_iNextNotification / 2; 
 		}
 #endif
@@ -1744,7 +1755,7 @@ void CMapApp::FillOpenFileName(OPENFILENAME * of, HWND hwndOwner, tchar_t * wstr
 	of->lStructSize = sizeof(*of);
 	of->lpstrFilter = wstrFilter;
 #ifndef UNDER_CE
-	of->lpstrInitialDir = T(".");
+	of->lpstrInitialDir = L(".");
 #endif
 	of->lpstrFile = strFile;
 	of->nMaxFile = MAX_PATH + 1;
@@ -1763,18 +1774,18 @@ void CMapApp::FileIndexDirectory()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("All files\0*.*\0"), strFile, false, false);
+	FillOpenFileName(&of, m_hWnd, I("All files\0*.*\0"), strFile, false, false);
 	if (GetOpenFileName(&of))
 	{
 		std::tstring dir = strFile;
-		dir.resize(dir.find_last_of(T("/\\")) + 1);
+		dir.resize(dir.find_last_of(L("/\\")) + 1);
 
 		CIndex idx;
 
 		idx.SetFolder(dir.c_str());
 
 		WIN32_FIND_DATA ffd;
-		HANDLE h = FindFirstFile((dir + T("*.img")).c_str(), &ffd);
+		HANDLE h = FindFirstFile((dir + L("*.img")).c_str(), &ffd);
 		while (h)
 		{
 			idx.AddFile(ffd.cFileName);
@@ -1790,7 +1801,7 @@ void CMapApp::FileOpenMap()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Map files\0*.img\0\0"), strFile, false, true); 
+	FillOpenFileName(&of, m_hWnd, I("Map files\0*.img\0\0"), strFile, false, true); 
 	if (GetOpenFileName(&of))
 	{
 		m_atlas.Add(strFile, &m_painter);
@@ -1808,7 +1819,7 @@ void CMapApp::ReplayNMEA()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("All files\0*.*\0\0"), strFile, false, true); 
+	FillOpenFileName(&of, m_hWnd, I("All files\0*.*\0\0"), strFile, false, true); 
 	if (GetOpenFileName(&of))
 	{
 		m_wstrReplayNMEA = strFile;
@@ -1819,7 +1830,7 @@ void CMapApp::ReplayNMEA()
 void CMapApp::FileCloseAllMaps()
 {
 #ifndef LINUX
-	if (MessageBox(m_hWnd, L("Are you sure"), L("Unload all"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+	if (MessageBox(m_hWnd, I("Are you sure"), I("Unload all"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 	{
 		GetAtlas().CloseAll();
 		m_painter.Redraw();
@@ -1833,24 +1844,24 @@ void CMapApp::FileOpenMapFolder()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 #ifdef UNDER_CE
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, T("\0"), strFile, true, true);
+	FillOpenFileName(&of, m_hWnd, L("\0"), strFile, true, true);
 	if (GetOpenFileName(&of))
 	{
 #else
 	BROWSEINFO bi;
 	memset(&bi, 0, sizeof(bi));
 	bi.hwndOwner = m_hWnd;
-	bi.lpszTitle = L("Open map folder");
+	bi.lpszTitle = I("Open map folder");
 	bi.pszDisplayName = strFile;
 	LPITEMIDLIST pl = SHBrowseForFolder(&bi);
 	if (pl && SHGetPathFromIDList(pl, strFile))
 	{
 #endif
 		WIN32_FIND_DATA ffd;
-		HANDLE h = FindFirstFile((std::tstring(strFile) + T("\\*.img")).c_str(), &ffd);
+		HANDLE h = FindFirstFile((std::tstring(strFile) + L("\\*.img")).c_str(), &ffd);
 		while (h)
 		{
-			m_atlas.Add((std::tstring(strFile) + T("\\") + ffd.cFileName).c_str(), &m_painter);
+			m_atlas.Add((std::tstring(strFile) + L("\\") + ffd.cFileName).c_str(), &m_painter);
 			if (!FindNextFile(h, &ffd))
 				break;
 		}
@@ -1868,12 +1879,12 @@ void CMapApp::ExportWaypoint(int id, HWND hWnd)
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, false);
+	FillOpenFileName(&of, hWnd, I("Waypoint files\0*.wpt\0"), strFile, false, false);
 	if (GetOpenFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".wpt")))
-			wcscpy(strFile + iLen, T(".wpt"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".wpt")))
+			wcscpy(strFile + iLen, L(".wpt"));
 		CWaypoints points;
 		points.Read(strFile);
 		points.AddPoint(m_Waypoints.ById(id));
@@ -1885,15 +1896,15 @@ void CMapApp::FileOpenWaypoints()
 {
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
-	sprintf(strFile, 1000, T("%s"), m_Waypoints.GetFilename().c_str());
+	sprintf(strFile, 1000, L("%s"), m_Waypoints.GetFilename().c_str());
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		m_Waypoints.Read(strFile);
 		if (!m_Waypoints.CanWrite())
 		{
-			MessageBox(m_hWnd, L("This isn't a gpsvp file. Please use the import function."), L("Not a gpsVP file"), MB_OK | MB_ICONEXCLAMATION);
+			MessageBox(m_hWnd, I("This isn't a gpsvp file. Please use the import function."), I("Not a gpsVP file"), MB_OK | MB_ICONEXCLAMATION);
 			// Back to the previous file
 			m_Waypoints.Read(m_rsWaypointsFile().c_str());
 		}
@@ -1912,14 +1923,14 @@ void CMapApp::FileNewWaypointsWPT()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	sprintf(strFile, MAX_PATH, T("Wpt-%04d-%02d-%02d-%02d-%02d.wpt"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	sprintf(strFile, MAX_PATH, L("Wpt-%04d-%02d-%02d-%02d-%02d.wpt"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.wpt\0"), strFile, false, false, true);
 	if (GetSaveFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".wpt")))
-			wcscpy(strFile + iLen, T(".wpt"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".wpt")))
+			wcscpy(strFile + iLen, L(".wpt"));
 		CWaypoints newPoints;
 		newPoints.WriteWPT(strFile);
 		m_Waypoints.Read(strFile);
@@ -1934,14 +1945,14 @@ void CMapApp::FileNewWaypointsGPX()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	stprintf(strFile, MAX_PATH, T("Wpt-%04d-%02d-%02d-%02d-%02d.gpx"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	stprintf(strFile, MAX_PATH, L("Wpt-%04d-%02d-%02d-%02d-%02d.gpx"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.gpx\0"), strFile, false, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.gpx\0"), strFile, false, false, true);
 	if (GetSaveFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".gpx")))
-			wcscpy(strFile + iLen, T(".gpx"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".gpx")))
+			wcscpy(strFile + iLen, L(".gpx"));
 		CWaypoints newPoints;
 #ifndef LINUX
 		newPoints.WriteGPX(strFile);
@@ -1958,7 +1969,7 @@ void CMapApp::FileImportWaypoints()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.wpt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		CWaypoints t;
@@ -1975,14 +1986,14 @@ void CMapApp::FileExportWaypointsWPT()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	stprintf(strFile, MAX_PATH, T("Exported_wpt-%04d-%02d-%02d-%02d-%02d.wpt"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	stprintf(strFile, MAX_PATH, L("Exported_wpt-%04d-%02d-%02d-%02d-%02d.wpt"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.wpt\0"), strFile, false, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.wpt\0"), strFile, false, false, true);
 	if (GetSaveFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".wpt")))
-			wcscpy(strFile + iLen, T(".wpt"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".wpt")))
+			wcscpy(strFile + iLen, L(".wpt"));
 		CWaypoints newPoints;
 		newPoints.SetNameWPT(strFile);
 		newPoints.Import(m_Waypoints); // Import also write the file
@@ -1995,14 +2006,14 @@ void CMapApp::FileExportWaypointsGPX()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	stprintf(strFile, MAX_PATH, T("Exported_wpt-%04d-%02d-%02d-%02d-%02d.gpx"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	stprintf(strFile, MAX_PATH, L("Exported_wpt-%04d-%02d-%02d-%02d-%02d.gpx"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Waypoint files\0*.gpx\0"), strFile, false, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Waypoint files\0*.gpx\0"), strFile, false, false, true);
 	if (GetSaveFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".gpx")))
-			wcscpy(strFile + iLen, T(".gpx"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".gpx")))
+			wcscpy(strFile + iLen, L(".gpx"));
 		CWaypoints newPoints;
 		newPoints.SetNameGPX(strFile);
 		newPoints.Import(m_Waypoints); // Import also write the file
@@ -2015,14 +2026,14 @@ void CMapApp::FileExportWaypointsOSM()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	stprintf(strFile, MAX_PATH, T("gpsvp-wpt-%04d-%02d-%02d-%02d-%02d.osm"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	stprintf(strFile, MAX_PATH, L("gpsvp-wpt-%04d-%02d-%02d-%02d-%02d.osm"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("OpenStreetMap files\0*.osm\0"), strFile, false, false, true);
+	FillOpenFileName(&of, m_hWnd, I("OpenStreetMap files\0*.osm\0"), strFile, false, false, true);
 	if (GetSaveFileName(&of))
 	{
 		int iLen = wcslen(strFile);
-		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, T(".osm")))
-			wcscpy(strFile + iLen, T(".osm"));
+		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - 4, L(".osm")))
+			wcscpy(strFile + iLen, L(".osm"));
 		m_Waypoints.WriteOSM(strFile);
 	}
 #endif
@@ -2037,7 +2048,7 @@ void CMapApp::FileNextColors()
 {
 #ifndef LINUX
 	if (!m_rsToolsFile().empty())
-		m_rsToolsFile = T("");
+		m_rsToolsFile = L("");
 	else
 		m_riScheme.Set((m_riScheme() + 1) % 2);
 	m_painter.InitTools(m_riScheme());
@@ -2050,7 +2061,7 @@ void CMapApp::FileOpenColors()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Color scheme files\0*.vpc\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Color scheme files\0*.vpc\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		m_painter.InitTools(m_riScheme());
@@ -2065,7 +2076,7 @@ void CMapApp::FileCloseColors()
 {
 #ifndef LINUX
 	m_painter.InitTools(m_riScheme());
-	m_rsToolsFile = T("");
+	m_rsToolsFile = L("");
 	m_painter.Redraw();
 	CheckMenu();
 #endif
@@ -2075,11 +2086,11 @@ void CMapApp::FileOpenTranslation()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Translation files\0*.vpl\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Translation files\0*.vpl\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		m_rsTranslationFile = strFile;
-		MessageBox(0, L("Language settings will be applied after restart"), L("Language settings"), MB_ICONINFORMATION);
+		MessageBox(0, I("Language settings will be applied after restart"), I("Language settings"), MB_ICONINFORMATION);
 		CheckMenu();
 	}
 #endif
@@ -2087,8 +2098,8 @@ void CMapApp::FileOpenTranslation()
 void CMapApp::FileCloseTranslation()
 {
 #ifndef LINUX
-	m_rsTranslationFile = T("");
-	MessageBox(0, L("Language settings will be applied after restart"), L("Language settings"), MB_ICONINFORMATION);
+	m_rsTranslationFile = L("");
+	MessageBox(0, I("Language settings will be applied after restart"), I("Language settings"), MB_ICONINFORMATION);
 	CheckMenu();
 #endif
 }
@@ -2097,7 +2108,7 @@ void CMapApp::FileOpenTrack()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt;*.gpx\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Track files\0*.plt;*.gpx\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		if (m_Tracks.OpenTracks(strFile))
@@ -2123,14 +2134,14 @@ void CMapApp::OptionsSetTrackFolder()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 #ifdef UNDER_CE
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, T("\0"), strFile, true, true);
+	FillOpenFileName(&of, m_hWnd, L("\0"), strFile, true, true);
 	if (GetOpenFileName(&of))
 	{
 #else
 	BROWSEINFO bi;
 	memset(&bi, 0, sizeof(bi));
 	bi.hwndOwner = m_hWnd;
-	bi.lpszTitle = L("Set track folder");
+	bi.lpszTitle = I("Set track folder");
 	bi.pszDisplayName = strFile;
 	LPITEMIDLIST pl = SHBrowseForFolder(&bi);
 	if (pl && SHGetPathFromIDList(pl, strFile))
@@ -2147,14 +2158,14 @@ void CMapApp::SetRasterMapFolder()
 	tchar_t strFile[MAX_PATH + 1] = {0};
 #ifdef UNDER_CE
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, T("\0"), strFile, true, true);
+	FillOpenFileName(&of, m_hWnd, L("\0"), strFile, true, true);
 	if (GetOpenFileName(&of))
 	{
 #else
 	BROWSEINFO bi;
 	memset(&bi, 0, sizeof(bi));
 	bi.hwndOwner = m_hWnd;
-	bi.lpszTitle = L("Open map folder");
+	bi.lpszTitle = I("Open map folder");
 	bi.pszDisplayName = strFile;
 	LPITEMIDLIST pl = SHBrowseForFolder(&bi);
 	if (pl && SHGetPathFromIDList(pl, strFile))
@@ -2211,115 +2222,117 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 	HKEY hRegKey = 0;
 #ifndef LINUX
 #ifdef RegCreateKey
-	RegCreateKey(HKEY_CURRENT_USER, T("Software\\Vsevolod Shorin\\VSMapViewer"), &hRegKey);
+	RegCreateKey(HKEY_CURRENT_USER, L("Software\\Vsevolod Shorin\\VSMapViewer"), &hRegKey);
 #else
-	RegCreateKeyEx(HKEY_CURRENT_USER, T("Software\\Vsevolod Shorin\\VSMapViewer"), 0, T(""), 0, 0, 0, &hRegKey, 0);
+	RegCreateKeyEx(HKEY_CURRENT_USER, L("Software\\Vsevolod Shorin\\VSMapViewer"), 0, L(""), 0, 0, 0, &hRegKey, 0);
 #endif
 #endif // LINUX
 #ifndef LINUX
-	m_rsTranslationFile.Init(hRegKey, T("TranslationFile"));
-	if (m_rsTranslationFile() != T(""))
+	m_rsTranslationFile.Init(hRegKey, L("TranslationFile"));
+	if (m_rsTranslationFile() != L(""))
 		m_dict.Read(m_rsTranslationFile().c_str());
 #endif
 #ifndef LINUX
-	m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Context menu"), mcContextMenu);
-	m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Menu"), 0);
+	m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, I("Context menu"), mcContextMenu);
+	m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, I("Menu"), 0);
 #endif
 #ifndef LINUX
 	m_MonitorSet.Init(hRegKey);
 	m_atlas.Init(hRegKey);
 #endif
-	m_rsWaypointsFile.Init(hRegKey, T("WaypointsFile"));
-	m_rsToolsFile.Init(hRegKey, T("ToolsFile"));
-	m_riScheme.Init(hRegKey, T("ToolsResource"), 0);
-	m_rsTrackFolder.Init(hRegKey, T("TrackFolder"));
+	m_rsWaypointsFile.Init(hRegKey, L("WaypointsFile"));
+	m_rsToolsFile.Init(hRegKey, L("ToolsFile"));
+	m_riScheme.Init(hRegKey, L("ToolsResource"), 0);
+	m_rsTrackFolder.Init(hRegKey, L("TrackFolder"));
 
+#ifndef LINUX
 	m_Options.Init(hRegKey, &m_MonitorSet);
-	m_Options.AddOption(L("Follow cursor"), T("FollowCursor"), true, mcoFollowCursor);
-	m_Options.AddOption(L("Show monitor bar"), T("ShowMonitors"), true, mcoShowMonitorBar);
-	m_Options.AddOption(L("Show POIs"), T("ShowPOIs"), true, mcoShowPOIs);
-	m_Options.AddOption(L("Show waypoints"), T("ShowWaypoints"), true, mcoShowWaypoints);
-	m_Options.AddOption(L("Show area labels"), T("ShowPolygonLabels"), true, mcoShowPolygonLabels);
-	m_Options.AddOption(L("Show outline only"), T("ShowAreaAsOutline"), false, mcoShowAreaAsOutline);
-	m_Options.AddOption(L("Show unknown types"), T("ShowUnknownTypes"), true, mcoShowUnknownTypes);
-	m_Options.AddOption(L("Rotate map by course"), T("RotateMap"), false, mcoRotateMap);
-	m_Options.AddOption(L("Show road name"), T("ShowRoadName"), true, mcoShowRoadName);
-	m_Options.AddOption(L("Show area name"), T("ShowAreaName"), true, mcoShowAreaName);
-	m_Options.AddOption(L("Monitors mode"), T("MonitorsMode"), false, mcoMonitorsMode);
-	m_Options.AddOption(L("Buffer output"), T("Buffer"), true, mcoBuffered);
-	m_Options.AddOption(L("Sound"), T("Sound"), true, mcoSound);
-	m_Options.AddOption(L("Warn on GPS loss"), T("WarnNoGPS"), false, mcoWarnNoGPS);
-	m_Options.AddOption(L("Keep backlight"), T("KeepBacklight"), false, mcoKeepBacklight);
-	m_Options.AddOption(L("Keep device on"), T("KeepDeviceOn"), true, mcoKeepDeviceOn);
-	m_Options.AddOption(L("Allow internet connection"), T("AllowInternet"), true, mcoAllowInternet);
-	m_Options.AddOption(L("Use proxy server"), T("EnableProxy"), false, mcoUseProxy);
-	m_Options.AddOption(L("Connect"), T("Connect"), true, mcoConnect);
-	m_Options.AddOption(L("Show center"), T("ShowCenter"), true, mcoShowCenter);
-	m_Options.AddOption(L("Refresh traffic on startup"), T("TrafficOnStartup"), false, mcoRefreshTrafficOnStartup);
-	// m_Options.AddOption(L("Show traffic nodes"), T("ShowTrafficNodes"), false, mcoShowTrafficNodes);
-	m_Options.AddOption(L("Download Google maps"), T("DownloadGoogleMaps"), false, mcoDownloadGoogleMaps);
-	m_Options.AddOption(L("Download all lower levels"), T("DownloadLowerLevels"), false, mcoDownloadLowerLevels);
-	m_Options.AddOption(L("Cache auto delete"), T("CacheAutoDelete"), false, mcoRasterCacheAutoDelete);
-	m_Options.AddOption(L("Show Garmin maps"), T("ShowGarminMaps"), true, mcoShowGarminMaps);
-	m_Options.AddOption(L("Prefer Google zoom levels"), T("GoogleZoomLevels"), false, mcoGoogleZoomLevels);
-	m_Options.AddOption(L("Invert satellite images"), T("InvertSatelliteImages"), false, mcoInvertSatelliteImages);
-	m_Options.AddOption(L("Show fastest way"), T("ShowFastestWay"), true, mcoShowFastestWay);
-	m_Options.AddOption(L("Show traffic information"), T("ShowTrafficInformation"), true, mcoShowTrafficInformation);
-	m_Options.AddOption(L("Use test server"), T("TestServer"), false, mcoTestServer);
-	m_Options.AddOption(L("Show traffic flags"), T("TrafficFlags"), false, mcoTrafficFlags);
-	m_Options.AddOption(L("Large monitors"), T("LargeMonitors"), false, mcoLargeMonitors);
-	m_Options.AddOption(L("Automatic light"), T("AutomaticLight"), false, mcoAutoLight);
-	m_Options.AddOption(L("Large fonts"), T("LargeFonts"), hiRes, mcoLargeFonts);
-	m_Options.AddOption(L("Show Sun azimuth"), T("ShowSunAz"), false, mcoShowSunAz);
+#endif // LINUX
+	m_Options.AddOption(I("Follow cursor"), L("FollowCursor"), true, mcoFollowCursor);
+	m_Options.AddOption(I("Show monitor bar"), L("ShowMonitors"), true, mcoShowMonitorBar);
+	m_Options.AddOption(I("Show POIs"), L("ShowPOIs"), true, mcoShowPOIs);
+	m_Options.AddOption(I("Show waypoints"), L("ShowWaypoints"), true, mcoShowWaypoints);
+	m_Options.AddOption(I("Show area labels"), L("ShowPolygonLabels"), true, mcoShowPolygonLabels);
+	m_Options.AddOption(I("Show outline only"), L("ShowAreaAsOutline"), false, mcoShowAreaAsOutline);
+	m_Options.AddOption(I("Show unknown types"), L("ShowUnknownTypes"), true, mcoShowUnknownTypes);
+	m_Options.AddOption(I("Rotate map by course"), L("RotateMap"), false, mcoRotateMap);
+	m_Options.AddOption(I("Show road name"), L("ShowRoadName"), true, mcoShowRoadName);
+	m_Options.AddOption(I("Show area name"), L("ShowAreaName"), true, mcoShowAreaName);
+	m_Options.AddOption(I("Monitors mode"), L("MonitorsMode"), false, mcoMonitorsMode);
+	m_Options.AddOption(I("Buffer output"), L("Buffer"), true, mcoBuffered);
+	m_Options.AddOption(I("Sound"), L("Sound"), true, mcoSound);
+	m_Options.AddOption(I("Warn on GPS loss"), L("WarnNoGPS"), false, mcoWarnNoGPS);
+	m_Options.AddOption(I("Keep backlight"), L("KeepBacklight"), false, mcoKeepBacklight);
+	m_Options.AddOption(I("Keep device on"), L("KeepDeviceOn"), true, mcoKeepDeviceOn);
+	m_Options.AddOption(I("Allow internet connection"), L("AllowInternet"), true, mcoAllowInternet);
+	m_Options.AddOption(I("Use proxy server"), L("EnableProxy"), false, mcoUseProxy);
+	m_Options.AddOption(I("Connect"), L("Connect"), true, mcoConnect);
+	m_Options.AddOption(I("Show center"), L("ShowCenter"), true, mcoShowCenter);
+	m_Options.AddOption(I("Refresh traffic on startup"), L("TrafficOnStartup"), false, mcoRefreshTrafficOnStartup);
+	// m_Options.AddOption(I("Show traffic nodes"), L("ShowTrafficNodes"), false, mcoShowTrafficNodes);
+	m_Options.AddOption(I("Download Google maps"), L("DownloadGoogleMaps"), false, mcoDownloadGoogleMaps);
+	m_Options.AddOption(I("Download all lower levels"), L("DownloadLowerLevels"), false, mcoDownloadLowerLevels);
+	m_Options.AddOption(I("Cache auto delete"), L("CacheAutoDelete"), false, mcoRasterCacheAutoDelete);
+	m_Options.AddOption(I("Show Garmin maps"), L("ShowGarminMaps"), true, mcoShowGarminMaps);
+	m_Options.AddOption(I("Prefer Google zoom levels"), L("GoogleZoomLevels"), false, mcoGoogleZoomLevels);
+	m_Options.AddOption(I("Invert satellite images"), L("InvertSatelliteImages"), false, mcoInvertSatelliteImages);
+	m_Options.AddOption(I("Show fastest way"), L("ShowFastestWay"), true, mcoShowFastestWay);
+	m_Options.AddOption(I("Show traffic information"), L("ShowTrafficInformation"), true, mcoShowTrafficInformation);
+	m_Options.AddOption(I("Use test server"), L("TestServer"), false, mcoTestServer);
+	m_Options.AddOption(I("Show traffic flags"), L("TrafficFlags"), false, mcoTrafficFlags);
+	m_Options.AddOption(I("Large monitors"), L("LargeMonitors"), false, mcoLargeMonitors);
+	m_Options.AddOption(I("Automatic light"), L("AutomaticLight"), false, mcoAutoLight);
+	m_Options.AddOption(I("Large fonts"), L("LargeFonts"), hiRes, mcoLargeFonts);
+	m_Options.AddOption(I("Show Sun azimuth"), L("ShowSunAz"), false, mcoShowSunAz);
 
-	m_fTrafficAgreement.Init(hRegKey, T("TrafficAgreement"), false);
+	m_fTrafficAgreement.Init(hRegKey, L("TrafficAgreement"), false);
 	
 	if (m_Options[mcoRefreshTrafficOnStartup])
 		m_TrafficNodes.RefreshTrafficData();
 #ifndef SMARTPHONE
-	m_Options.AddOption(L("Show screen buttons"), T("ShowScreenButtons"), true, mcoScreenButtons);
+	m_Options.AddOption(I("Show screen buttons"), L("ShowScreenButtons"), true, mcoScreenButtons);
 #endif // !SMARTPHONE
 #ifdef SMARTPHONE
-	m_Options.AddOption(L("Low light"), T("LowLight"), false, mcoLowLight);
+	m_Options.AddOption(I("Low light"), L("LowLight"), false, mcoLowLight);
 #endif // SMARTPHONE
 #ifdef SMARTPHONE
-	m_Options.AddOption(L("Turn bluetooth on"), T("BluetoothOn"), false, mcoBluetoothOn);
+	m_Options.AddOption(I("Turn bluetooth on"), L("BluetoothOn"), false, mcoBluetoothOn);
 #endif // SMARTPHONE
-	m_Options.AddOption(L("Full screen"), T("FullScreen"), false, mcoFullScreen);
-	m_Options.AddOption(L("Debug mode"), T("DebugMode"), false, mcoDebugMode);
-	m_Options.AddOption(L("Write connection log"), T("WriteConnectionLog"), false, mcoWriteConnectionLog);
-	m_Options.AddOption(L("Keep memory low"), T("LowMemory"), true, mcoLowMemory);
-	m_Options.AddOption(L("Write track"), T("WriteTrack"), true, mcoWriteTrack);
-	m_Options.AddOption(L("Show current track"), T("ShowCurrentTrack"), true, mcoShowCurrentTrack);
-	m_Options.AddOption(L("Quick read gpx (no time)"), T("QuickReadGPX"), false, mcoQuickReadGPXTrack);	
-	m_Options.AddOption(L("Highlight maps"), T("ShowDetailMaps"), true, mcoShowDetailMaps);
-	m_Options.AddOption(L("Direct paint"), T("DirectPaint"), false, mcoDirectPaint);
+	m_Options.AddOption(I("Full screen"), L("FullScreen"), false, mcoFullScreen);
+	m_Options.AddOption(I("Debug mode"), L("DebugMode"), false, mcoDebugMode);
+	m_Options.AddOption(I("Write connection log"), L("WriteConnectionLog"), false, mcoWriteConnectionLog);
+	m_Options.AddOption(I("Keep memory low"), L("LowMemory"), true, mcoLowMemory);
+	m_Options.AddOption(I("Write track"), L("WriteTrack"), true, mcoWriteTrack);
+	m_Options.AddOption(I("Show current track"), L("ShowCurrentTrack"), true, mcoShowCurrentTrack);
+	m_Options.AddOption(I("Quick read gpx (no time)"), L("QuickReadGPX"), false, mcoQuickReadGPXTrack);	
+	m_Options.AddOption(I("Highlight maps"), L("ShowDetailMaps"), true, mcoShowDetailMaps);
+	m_Options.AddOption(I("Direct paint"), L("DirectPaint"), false, mcoDirectPaint);
 
 	if (!m_Options[mcoDebugMode])
 	{
 		
 	}
 
-	m_riTrackStep.Init(hRegKey, T("TrackStep"), 1);
-	m_riCoordFormat.Init(hRegKey, T("CoordinateFormat"), 0);
-	m_riUTMZone.Init(hRegKey, T("UTMZone"), 0);
-	m_riMetrics.Init(hRegKey, T("MetricSystem"), 0);
-	m_riWaypointsRadius.Init(hRegKey, T("WaypointsRadius"), 40000000);
-	m_riDetail.Init(hRegKey, T("Detail"), 0);
-	m_riConnectPeriodMin.Init(hRegKey, T("ConnectPeriod"), 0);
-	m_riTrackFormat.Init(hRegKey, T("TrackFormat"), 0);
-	m_gpNavigate.Init(hRegKey, T("NavigatePoint"), GeoPoint(0,0));
-	m_fNavigate.Init(hRegKey, T("Navigate"), false);
+	m_riTrackStep.Init(hRegKey, L("TrackStep"), 1);
+	m_riCoordFormat.Init(hRegKey, L("CoordinateFormat"), 0);
+	m_riUTMZone.Init(hRegKey, L("UTMZone"), 0);
+	m_riMetrics.Init(hRegKey, L("MetricSystem"), 0);
+	m_riWaypointsRadius.Init(hRegKey, L("WaypointsRadius"), 40000000);
+	m_riDetail.Init(hRegKey, L("Detail"), 0);
+	m_riConnectPeriodMin.Init(hRegKey, L("ConnectPeriod"), 0);
+	m_riTrackFormat.Init(hRegKey, L("TrackFormat"), 0);
+	m_gpNavigate.Init(hRegKey, L("NavigatePoint"), GeoPoint(0,0));
+	m_fNavigate.Init(hRegKey, L("Navigate"), false);
 #ifndef LINUX
 	m_MRUPoints.Init(hRegKey);
-	m_rsPort.Init(hRegKey, T("Port"));
-	m_rsPortSpeed.Init(hRegKey, T("PortSpeed"));
+	m_rsPort.Init(hRegKey, L("Port"));
+	m_rsPortSpeed.Init(hRegKey, L("PortSpeed"));
 	if (m_rsPortSpeed().empty())
-		m_rsPortSpeed = T("Default");
-	m_rsCurrentFolder.Init(hRegKey, T(""));
-	m_rsProxy.Init(hRegKey,T("Proxy"));
+		m_rsPortSpeed = L("Default");
+	m_rsCurrentFolder.Init(hRegKey, L(""));
+	m_rsProxy.Init(hRegKey,L("Proxy"));
 #endif // LINUX
-	m_rsGeoidMode.Init(hRegKey, T("GeoidMode"));
+	m_rsGeoidMode.Init(hRegKey, L("GeoidMode"));
 #ifndef LINUX
 	GetKeymap().Init(hRegKey);
 	GetButtons().Init(hRegKey);
@@ -2328,115 +2341,117 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 
 	m_painter.Init(hWnd, hRegKey);
 
-	m_monDistance.SetIdL(T("Distance"));
+	m_monDistance.SetIdL(L("Distance"));
 	m_MonitorSet.AddMonitor(&m_monDistance);
 
-	m_monAzimuth.SetIdL(T("Azimuth"));
+	m_monAzimuth.SetIdL(L("Azimuth"));
 	m_MonitorSet.AddMonitor(&m_monAzimuth);
 	
-	m_monCourse.SetIdL(T("Course"));
+	m_monCourse.SetIdL(L("Course"));
 	m_MonitorSet.AddMonitor(&m_monCourse);
 	
-	//m_monTrackDistance.SetIdL(T("Track distance")));
+	//m_monTrackDistance.SetIdL(L("Track distance")));
 	//m_MonitorSet.AddMonitor(&m_monTrackDistance);
 
 #ifndef LINUX
 	m_NMEAParser.InitMonitors(m_MonitorSet, hRegKey, m_Options[mcoDebugMode]);
 #endif
 
-	m_monSatellites.SetIdL(T("Satellites"));
+	m_monSatellites.SetIdL(L("Satellites"));
 	m_monSatellites.SetParser(&m_NMEAParser);
 	m_MonitorSet.AddMonitor(&m_monSatellites);
 
-	m_monInternet.SetIdL(T("Internet"));
+	m_monInternet.SetIdL(L("Internet"));
 	m_monInternet.SetTextCopySrc(CTextMonitor::TEXTCOPY_SRCURL);
 	m_MonitorSet.AddMonitor(&m_monInternet);
 
-	m_monHDOP.SetIdL(T("HDOP"));
+	m_monHDOP.SetIdL(L("HDOP"));
 	m_MonitorSet.AddMonitor(&m_monHDOP);
 
-	m_monAltitude.SetIdL(T("Altitude"));
+	m_monAltitude.SetIdL(L("Altitude"));
 	m_MonitorSet.AddMonitor(&m_monAltitude);
-	m_monSeparation.SetIdL(T("Geoid Separation"));
-	//m_monSeparation.SetRegistry(hRegKey, T("GeoidSeparation"));
+	m_monSeparation.SetIdL(L("Geoid Separation"));
+	//m_monSeparation.SetRegistry(hRegKey, L("GeoidSeparation"));
 	m_MonitorSet.AddMonitor(&m_monSeparation);
 	
-	m_monLongitude.SetIdL(T("Longitude"), CoordLabelLon());
+	m_monLongitude.SetIdL(L("Longitude"), CoordLabelLon());
 	m_monLongitude.SetLinkedLatitude(&m_monLatitude);
 	m_MonitorSet.AddMonitor(&m_monLongitude);
-	m_monLatitude.SetIdL(T("Latitude"), CoordLabelLat());
+	m_monLatitude.SetIdL(L("Latitude"), CoordLabelLat());
 	m_monLatitude.SetLinkedLongitude(&m_monLongitude);
 	m_MonitorSet.AddMonitor(&m_monLatitude);
 
 #ifndef LINUX
-	m_monMemory.SetIdL(T("Memory"));
+	m_monMemory.SetIdL(L("Memory"));
 	m_MonitorSet.AddMonitor(&m_monMemory);
 #endif // LINUX
 
-	m_monDLRemaining.SetIdL(T("Download queue"));
+	m_monDLRemaining.SetIdL(L("Download queue"));
 	m_MonitorSet.AddMonitor(&m_monDLRemaining);
 
 #ifndef LINUX
-	m_monDataIn.SetIdL(T("Data in"));
+	m_monDataIn.SetIdL(L("Data in"));
 	m_monDataIn = 0;
 	m_MonitorSet.AddMonitor(&m_monDataIn);
 
-	m_monDataOut.SetIdL(T("Data out"));
+	m_monDataOut.SetIdL(L("Data out"));
 	m_monDataOut = 0;
 	m_MonitorSet.AddMonitor(&m_monDataOut);
 
-	m_monDataTotal.SetIdL(T("Data total"));
+	m_monDataTotal.SetIdL(L("Data total"));
 	m_monDataTotal = 0;
 	m_MonitorSet.AddMonitor(&m_monDataTotal);
 
-	m_monBattery.SetIdL(T("Battery"));
+	m_monBattery.SetIdL(L("Battery"));
 	m_MonitorSet.AddMonitor(&m_monBattery);
 #endif // LINUX
 
 	if (m_Options[mcoDebugMode]) {
-		m_monCPU.SetIdL(T("CPU"));
+		m_monCPU.SetIdL(L("CPU"));
 		m_MonitorSet.AddMonitor(&m_monCPU);
 	}
 
-	m_monOdometerTotal.SetIdL(T("Odo total"));
-	m_monOdometerTotal.SetRegistry(hRegKey, T("OdometerTotal"));
+	m_monOdometerTotal.SetIdL(L("Odo total"));
+	m_monOdometerTotal.SetRegistry(hRegKey, L("OdometerTotal"));
 	m_MonitorSet.AddMonitor(&m_monOdometerTotal);
 
-	m_monOdometer1.SetIdL(T("Odo 1"));
+	m_monOdometer1.SetIdL(L("Odo 1"));
 	m_monOdometer1.SetResetable();
-	m_monOdometer1.SetRegistry(hRegKey, T("Odometer1"));
+	m_monOdometer1.SetRegistry(hRegKey, L("Odometer1"));
 	m_MonitorSet.AddMonitor(&m_monOdometer1);
 
-	m_monOdometer2.SetIdL(T("Odo 2"));
+	m_monOdometer2.SetIdL(L("Odo 2"));
 	m_monOdometer2.SetResetable();
-	m_monOdometer2.SetRegistry(hRegKey, T("Odometer2"));
+	m_monOdometer2.SetRegistry(hRegKey, L("Odometer2"));
 	m_MonitorSet.AddMonitor(&m_monOdometer2);
 
+#ifndef LINUX
 	if (m_Options[mcoDebugMode])
 	{
 		for (int i = 0; i < sizeof(m_monProfile) / sizeof(m_monProfile[0]); ++i)
 		{
 			tchar_t buff[100];
-			stprintf(buff, 100, T("Profile %d"), i);
+			stprintf(buff, 100, L("Profile %d"), i);
 			m_monProfile[i].SetIdL(buff);
 			m_MonitorSet.AddMonitor(&m_monProfile[i]);
 		}
 	}
+#endif // LINUX
 
-	m_monSleepCounter.SetIdL(T("Pause timer"));
+	m_monSleepCounter.SetIdL(L("Pause timer"));
 	m_MonitorSet.AddMonitor(&m_monSleepCounter);
 
-	m_Sun.m_monSunrise.SetIdL(T("Sunrise"));
+	m_Sun.m_monSunrise.SetIdL(L("Sunrise"));
 	m_MonitorSet.AddMonitor(&m_Sun.m_monSunrise);
 
-	m_Sun.m_monDaytime.SetIdL(T("Daytime"));
+	m_Sun.m_monDaytime.SetIdL(L("Daytime"));
 	m_MonitorSet.AddMonitor(&m_Sun.m_monDaytime);
 
-	m_Sun.m_monSunset.SetIdL(T("Sunset"));
+	m_Sun.m_monSunset.SetIdL(L("Sunset"));
 	m_MonitorSet.AddMonitor(&m_Sun.m_monSunset);
 
 	if (m_rsWaypointsFile().empty())
-		m_rsWaypointsFile = T("\\My Documents\\Waypoints.wpt");
+		m_rsWaypointsFile = L("\\My Documents\\Waypoints.wpt");
 	m_Waypoints.Read(m_rsWaypointsFile().c_str());
 #ifndef LINUX
 	m_painter.InitTools(m_riScheme());
@@ -2462,11 +2477,11 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 	m_fCheckLatestVersion = false;
 
 #ifndef LINUX
-	m_rsRasterMapFolder.Init(hRegKey, T("RasterMapFolder"));
+	m_rsRasterMapFolder.Init(hRegKey, L("RasterMapFolder"));
 	if (!m_rsRasterMapFolder().empty())
 		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
 	// Only after loading the list of WMS-Maps
-	m_riGMapType.Init(hRegKey, T("GMapType"), gtMap);
+	m_riGMapType.Init(hRegKey, L("GMapType"), gtMap);
 	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
 		m_riGMapType.Set(0);
 #endif
@@ -2475,15 +2490,17 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 
 	m_CurTrack.Init();
 
+#ifndef LINUX
 	StartListening();
 	StartHttpThread();
+#endif // LINUX
 
 	InitMenu();
 
 #ifndef LINUX
 	if (m_pRasterMapPainter->NeedRelocateFiles())
 	{
-		if (IDYES == MessageBox(m_hWnd, L("Google maps cache structure has changed. Do you want to move old files to new structure? It may take some time."), L("Google maps files"), MB_ICONWARNING | MB_YESNO))
+		if (IDYES == MessageBox(m_hWnd, I("Google maps cache structure has changed. Do you want to move old files to new structure? It may take some time."), I("Google maps files"), MB_ICONWARNING | MB_YESNO))
 		{
 			m_pRasterMapPainter->RelocateFiles();
 		}
@@ -2496,8 +2513,8 @@ void CMapApp::OnTimer()
 	if (!m_wstrVersionMessage.empty())
 	{
 		std::tstring wstrVersionMessage = m_wstrVersionMessage;
-		m_wstrVersionMessage = T("");
-		MessageBox(m_hWnd, wstrVersionMessage.c_str(), T("gpsVP.com"), MB_ICONINFORMATION);
+		m_wstrVersionMessage = L("");
+		MessageBox(m_hWnd, wstrVersionMessage.c_str(), L("gpsVP.com"), MB_ICONINFORMATION);
 	}
 #endif // LINUX
 	m_painter.OnTimer();
@@ -2553,7 +2570,7 @@ void CMapApp::CheckOptions()
 		}
 		else
 		{
-			m_hPwrReq = SetPowerRequirement(TEXT("BKL1:"), D0, POWER_NAME, NULL, 0);	
+			m_hPwrReq = SetPowerRequirement(Text("BKL1:"), D0, POWER_NAME, NULL, 0);	
 		}
 	}
 #endif
@@ -2626,7 +2643,7 @@ public:
 		if (iProgress != m_iProgress)
 		{
 			m_iProgress = iProgress;
-			PaintText((IntToText(m_iProgress) + T("%")).c_str(), true);
+			PaintText((IntToText(m_iProgress) + L("%")).c_str(), true);
 		}
 	}
 private:
@@ -2748,6 +2765,8 @@ void CMapApp::Paint()
 				hdc = m_screenBuffer.GetContext(hdcScreen, srWindow.right - srWindow.left, srWindow.bottom - srWindow.top);
 			else
 				hdc = hdcScreen;
+#else
+			bool fOnlyMonitors = false;
 #endif // LINUX
 		
 #ifndef LINUX
@@ -2768,10 +2787,12 @@ void CMapApp::Paint()
 					if (!m_painter.ManualMode())
 						fLowCenter = true;
 				}
+#ifndef LINUX
 				m_painter.BeginPaint(m_hWnd, hdc, m_painter.GetScreenRect(), degree, fLowCenter);
 				m_painter.SetShowUnknownTypes(fShowUnknownTypes);
 				m_painter.SetShowPolygonLabels(fShowPolygonLabels);
 				m_painter.SetShowAreaAsOutline(fShowAreaAsOutline);
+#endif // LINUX
 			}
 
 			if (!fOnlyMonitors)
@@ -2781,8 +2802,12 @@ void CMapApp::Paint()
 					UInt uiScale = PrepareScale(m_painter.GetScale());
 					if (fShowGarminMaps)
 					{
+#ifndef LINUX
 						CStatusPainter statuspainter(m_hWnd, m_painter.GetFontCache());
 						m_atlas.BeginPaint(uiScale, &m_painter, &statuspainter);
+#else
+						m_atlas.BeginPaint(uiScale, &m_painter, NULL);
+#endif // LINUX
 						if (fShowDetailMaps)
 							m_atlas.PaintMapPlaceholders(&m_painter);
 					}
@@ -2793,16 +2818,22 @@ void CMapApp::Paint()
 #endif
 					if (fShowGarminMaps)
 					{
+#ifndef LINUX
 						dwTmp = GetTickCount(); m_monProfile[0] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 						m_atlas.Paint(maskPolygons, fDirectPaint);
+#ifndef LINUX
 						dwTmp = GetTickCount(); m_monProfile[1] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 						m_atlas.Paint(maskPolylines, fDirectPaint);
+#ifndef LINUX
 						dwTmp = GetTickCount(); m_monProfile[2] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 					}
 				}
 				else
 				{
-					m_painter.PaintLowMemory(L("Memory low!"), m_fMemoryVeryLow ? L("Track disabled") : L("Map disabled."));
+					m_painter.PaintLowMemory(I("Memory low!"), m_fMemoryVeryLow ? I("Track disabled") : I("Map disabled."));
 				}
 				{
 					AutoLock l;
@@ -2817,16 +2848,22 @@ void CMapApp::Paint()
 						trit->PaintUnlocked(&m_painter, 0xfc);
 					}
 				}
+#ifndef LINUX
 				dwTmp = GetTickCount(); m_monProfile[3] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 				m_TrackCompetition.Paint(&m_painter);
 				if (fShowWaypoints)
 					m_Waypoints.Paint(&m_painter, (m_fFix ? &gpCursor : 0));
 				m_TrafficNodes.Paint(&m_painter, m_Options[mcoTrafficFlags]);
+#ifndef LINUX
 				dwTmp = GetTickCount(); m_monProfile[4] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 				if (!m_fMemoryLow && fShowPOIs && fShowGarminMaps)
 				{
 					m_atlas.Paint(maskPoints, fDirectPaint);
+#ifndef LINUX
 					dwTmp = GetTickCount(); m_monProfile[5] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 				}
 				if (fShowCurrentTrack)
 				{
@@ -2839,10 +2876,12 @@ void CMapApp::Paint()
 						m_CurTrack.SetCompetition(GeoPoint(), 0);
 					m_CurTrack.PaintUnlocked(&m_painter, 0xff);
 				}
+#ifndef LINUX
 				dwTmp = GetTickCount(); m_monProfile[6] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 				m_painter.PaintScale();
 				if (!app.m_searchurl.empty())
-					m_painter.PaintStatusLine(L("Searching ..."));
+					m_painter.PaintStatusLine(I("Searching ..."));
 				if (!m_fMemoryLow)
 				{
 					if (fShowRoadName && m_fFix)
@@ -2861,24 +2900,30 @@ void CMapApp::Paint()
 				if (m_Options[mcoDebugMode])
 				{
 					tchar_t buffer[1000];
-					stprintf(buffer, 1000, T("%S"), request.c_str());
+					stprintf(buffer, 1000, L("%S"), request.c_str());
 					m_painter.PaintStatusLine(buffer);
 				}
 				PaintCursor(gpCursor, fCursorVisible);
+#ifndef LINUX
 				m_painter.PaintStatusIcon(m_iConnectionStatus);
+#endif // LINUX
 				m_painter.PaintCompass();
 			}
 			UpdateMonitors();
 			m_MonitorSet.PaintMonitors(&m_painter, m_painter.GetMonitorsBar(), false, m_painter.IsVertical(), fLargeMonitors);
 #ifndef SMARTPHONE
+#ifndef LINUX
 			m_painter.ClearButtons();
 			if (m_Options[mcoScreenButtons])
 			{
 				GetButtons().Paint(&m_painter);
 			}
+#endif // LINUX
 #endif
 
+#ifndef LINUX
 			dwTmp = GetTickCount(); m_monProfile[7] = dwTmp - dwTimer; dwTimer = dwTmp;
+#endif // LINUX
 			if (fBuffered)
 			{
 #if defined(SMARTPHONE) && defined(AC_SRC_OVER)
@@ -2912,12 +2957,14 @@ void CMapApp::Paint()
 				}
 				else
 #endif // SMARTPHONE
+#ifndef LINUX
 				{
 					hdcScreen.BitBlt(ps.rcPaint.left, ps.rcPaint.top,
 						ps.rcPaint.right - ps.rcPaint.left,
 						ps.rcPaint.bottom - ps.rcPaint.top,
 						hdc, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
 				}
+#endif // LINUX
 			}
 			if (fLowMemory && fShowGarminMaps)
 				m_atlas.Trim(m_painter.GetRect());
@@ -2926,7 +2973,7 @@ void CMapApp::Paint()
 	}
 	catch(...)
 	{
-		// MessageBox(0, L("Error"), L("Error"), 0);
+		// MessageBox(0, I("Error"), I("Error"), 0);
 	}
 }
 
@@ -2988,12 +3035,14 @@ void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 #ifdef UNDER_CE
 	// We check the option first not to check for proximity in vain
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
-		PlaySound(T("ProximitySound"), g_hInst, SND_RESOURCE | SND_ASYNC);
+		PlaySound(L("ProximitySound"), g_hInst, SND_RESOURCE | SND_ASYNC);
 #endif // UNDER_CE
+#ifndef LINUX
 	m_TrafficNodes.Fix(gp, GetTickCount());
 	m_TrackCompetition.Fix(gp, GetTickCount());
 	m_Sun.Fix(m_NMEAParser.GetTimeMonitor(), gp);
 	m_team.Fix(gp, GetTickCount());
+#endif // LINUX
 }
 
 void CMapApp::VFix(double dAltitude, double dSeparation)
@@ -3026,6 +3075,7 @@ void CMapApp::UpdateMonitors()
 			// m_monTrackDistance.Reset();
 		}
 	}
+#ifndef LINUX
 	{
 		MEMORYSTATUS ms;
 		ms.dwLength = sizeof(ms);
@@ -3041,6 +3091,7 @@ void CMapApp::UpdateMonitors()
 		m_fMemoryLow = (ms.dwAvailPhys < cnMinMemory);
 		m_fMemoryVeryLow = (ms.dwAvailPhys < cnCriticalMemory);
 	}
+#endif // LINUX
 	{
 #if !defined(BARECE) && !defined(LINUX)
 #if defined(UNDER_CE)
@@ -3056,6 +3107,7 @@ void CMapApp::UpdateMonitors()
 			m_monBattery = status.BatteryLifePercent;
 #endif
 	}
+#ifndef LINUX
 	{
 #ifdef UNDER_CE
 		if (m_pfnGetIdleTime) {
@@ -3094,6 +3146,7 @@ void CMapApp::UpdateMonitors()
 			m_monCPU.Reset();
 		}
 	}
+#endif // LINUX
 
 	m_monInternet = m_wstrHttpStatus.c_str();
 #ifndef LINUX
@@ -3116,6 +3169,7 @@ int CMapApp::AddPointCenter(tchar_t * wcName)
 	return m_Waypoints.AddPoint(m_painter.GetCenter(), (m_monAltitude.IsSet() ? int(m_monAltitude.Get()) : -777), wcName, 0);
 }
 
+#ifndef LINUX
 void CMapApp::SetMenu(HWND hWndMenu)
 {
 	m_MenuBar.SetMenuBar(hWndMenu);
@@ -3125,252 +3179,260 @@ void CMapApp::SetMenu(HMENU hMenu)
 {
 	m_MenuBar.SetMenu(hMenu);
 }
+#endif //  LINUX
 
 void CMapApp::InitMenu()
 {
+#ifndef LINUX
 	CMenu & mMenu = m_MenuBar.GetMenu();
+#else
+	CMenu mMenu;
+#endif //  LINUX
 	{
-		CMenu & mmMaps = mMenu.CreateSubMenu(L("Maps"));
+		CMenu & mmMaps = mMenu.CreateSubMenu(I("Maps"));
 		{
-			CMenu & mmGarminMaps = mmMaps.CreateSubMenu(L("Garmin maps"));
+			CMenu & mmGarminMaps = mmMaps.CreateSubMenu(I("Garmin maps"));
 			{
-				CMenu & mmDetail = mmGarminMaps.CreateSubMenu(L("Detail"));
-				mmDetail.CreateItem(L("Decrease detail"), mcDecreaseDetail);
-				mmDetail.CreateItem(L("Increase detail"), mcIncreaseDetail);
+				CMenu & mmDetail = mmGarminMaps.CreateSubMenu(I("Detail"));
+				mmDetail.CreateItem(I("Decrease detail"), mcDecreaseDetail);
+				mmDetail.CreateItem(I("Increase detail"), mcIncreaseDetail);
 				mmDetail.CreateBreak();
-				mmDetail.CreateItem(L("Set lowest detail"), mcSetDetail1);
-				mmDetail.CreateItem(L("Set low detail"), mcSetDetail2);
-				mmDetail.CreateItem(L("Set normal detail"), mcSetDetail3);
-				mmDetail.CreateItem(L("Set high detail"), mcSetDetail4);
-				mmDetail.CreateItem(L("Set highest detail"), mcSetDetail5);
+				mmDetail.CreateItem(I("Set lowest detail"), mcSetDetail1);
+				mmDetail.CreateItem(I("Set low detail"), mcSetDetail2);
+				mmDetail.CreateItem(I("Set normal detail"), mcSetDetail3);
+				mmDetail.CreateItem(I("Set high detail"), mcSetDetail4);
+				mmDetail.CreateItem(I("Set highest detail"), mcSetDetail5);
 			}
-			mmGarminMaps.CreateItem(L("Map list"), mcMapList);
-			mmGarminMaps.CreateItem(L("Open map"), mcOpenMap);
-			mmGarminMaps.CreateItem(L("Open map folder"), mcOpenMapFolder);
-			mmGarminMaps.CreateItem(L("Unload all maps"), mcCloseAllMaps);
+			mmGarminMaps.CreateItem(I("Map list"), mcMapList);
+			mmGarminMaps.CreateItem(I("Open map"), mcOpenMap);
+			mmGarminMaps.CreateItem(I("Open map folder"), mcOpenMapFolder);
+			mmGarminMaps.CreateItem(I("Unload all maps"), mcCloseAllMaps);
 			mmGarminMaps.CreateBreak();
-			mmGarminMaps.CreateItem(L("Show Garmin maps"), mcoShowGarminMaps);
-			mmGarminMaps.CreateItem(L("Show POIs"), mcoShowPOIs);
-			mmGarminMaps.CreateItem(L("Highlight detailed maps"), mcoShowDetailMaps);
-			mmGarminMaps.CreateItem(L("Show unknown types"), mcoShowUnknownTypes);
-			mmGarminMaps.CreateItem(L("Show area labels"), mcoShowPolygonLabels);
-			mmGarminMaps.CreateItem(L("Show road name"), mcoShowRoadName);
-			mmGarminMaps.CreateItem(L("Show area name"), mcoShowAreaName);
-			mmGarminMaps.CreateItem(L("Show only outline"), mcoShowAreaAsOutline);
+			mmGarminMaps.CreateItem(I("Show Garmin maps"), mcoShowGarminMaps);
+			mmGarminMaps.CreateItem(I("Show POIs"), mcoShowPOIs);
+			mmGarminMaps.CreateItem(I("Highlight detailed maps"), mcoShowDetailMaps);
+			mmGarminMaps.CreateItem(I("Show unknown types"), mcoShowUnknownTypes);
+			mmGarminMaps.CreateItem(I("Show area labels"), mcoShowPolygonLabels);
+			mmGarminMaps.CreateItem(I("Show road name"), mcoShowRoadName);
+			mmGarminMaps.CreateItem(I("Show area name"), mcoShowAreaName);
+			mmGarminMaps.CreateItem(I("Show only outline"), mcoShowAreaAsOutline);
 		}
 		{
-			CMenu & mmGoogleMaps = mmMaps.CreateSubMenu(L("Raster maps"));
+#ifndef LINUX
+			CMenu & mmGoogleMaps = mmMaps.CreateSubMenu(I("Raster maps"));
 			{
-				CMenu & mmMapType = mmGoogleMaps.CreateSubMenu(L("Raster map type"));
-				mmMapType.CreateItem(L("Previous map type"), mcPrevGMapType);
-				mmMapType.CreateItem(L("Next map type"), mcNextGMapType);
+				CMenu & mmMapType = mmGoogleMaps.CreateSubMenu(I("Raster map type"));
+				mmMapType.CreateItem(I("Previous map type"), mcPrevGMapType);
+				mmMapType.CreateItem(I("Next map type"), mcNextGMapType);
 				mmMapType.CreateBreak();
-				mmMapType.CreateItem(L("None"), mcGMapType + gtNone);
-				mmMapType.CreateItem(L("OpenStreetMap.org map"), mcGMapType + gtOsm);
-				mmMapType.CreateItem(L("Google.com map"), mcGMapType + gtMap);
-				mmMapType.CreateItem(L("Google.com satellite"), mcGMapType + gtSatellite);
-				// mmMapType.CreateItem(L("Google.com hybrid"), mcGMapType + gtHybrid);
-				mmMapType.CreateItem(L("Google.com topo"), mcGMapType + gtTopo);
+				mmMapType.CreateItem(I("None"), mcGMapType + gtNone);
+				mmMapType.CreateItem(I("OpenStreetMap.org map"), mcGMapType + gtOsm);
+				mmMapType.CreateItem(I("Google.com map"), mcGMapType + gtMap);
+				mmMapType.CreateItem(I("Google.com satellite"), mcGMapType + gtSatellite);
+				// mmMapType.CreateItem(I("Google.com hybrid"), mcGMapType + gtHybrid);
+				mmMapType.CreateItem(I("Google.com topo"), mcGMapType + gtTopo);
 				// mmMapType.EnableMenuItem(mcGMapType + gtHybrid, false);
-				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
-				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
-				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
+				mmMapType.CreateItem(I("Live.com map"), mcGMapType + gtMSMap);
+				mmMapType.CreateItem(I("Live.com satellite"), mcGMapType + gtMSSat);
+				mmMapType.CreateItem(I("Live.com hybrid"), mcGMapType + gtMSHyb);
 				InitMenuAllWMSMaps(mmMapType);
 			}
 			{
-				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
-				mmDownloadMaps.CreateItem(L("Add current view"), mcDownlRasterAddCurrentView);
-				mmDownloadMaps.CreateItem(L("Start with current zoom"), mcDownlRasterStartWithCurZoom);
-				mmDownloadMaps.CreateItem(L("By track"), mcDownlRasterByTrack);
+				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(I("Download maps"));
+				mmDownloadMaps.CreateItem(I("Add current view"), mcDownlRasterAddCurrentView);
+				mmDownloadMaps.CreateItem(I("Start with current zoom"), mcDownlRasterStartWithCurZoom);
+				mmDownloadMaps.CreateItem(I("By track"), mcDownlRasterByTrack);
 				mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
 				mmDownloadMaps.CreateBreak();
-				mmDownloadMaps.CreateItem(L("Download all lower levels"), mcoDownloadLowerLevels);
+				mmDownloadMaps.CreateItem(I("Download all lower levels"), mcoDownloadLowerLevels);
 				// mmDownloadMaps.EnableMenuItem(mcoDownloadLowerLevels, false);
 			}
 			{
-				CMenu & mmMaintMaps = mmGoogleMaps.CreateSubMenu(L("Cache maintenance"));
-				mmMaintMaps.CreateItem(L("Delete from cache"), mcRastMapsDeleteFromCache);
+				CMenu & mmMaintMaps = mmGoogleMaps.CreateSubMenu(I("Cache maintenance"));
+				mmMaintMaps.CreateItem(I("Delete from cache"), mcRastMapsDeleteFromCache);
 				mmMaintMaps.EnableMenuItem(mcRastMapsDeleteFromCache, false);
 				mmMaintMaps.CreateBreak();
-				mmMaintMaps.CreateItem(L("Cache auto delete"), mcoRasterCacheAutoDelete);
+				mmMaintMaps.CreateItem(I("Cache auto delete"), mcoRasterCacheAutoDelete);
 				mmMaintMaps.EnableMenuItem(mcoRasterCacheAutoDelete, false);
 			}
-			mmGoogleMaps.CreateItem(L("Set raster cache folder"), mcSetGoogleMapsFolder);
+			mmGoogleMaps.CreateItem(I("Set raster cache folder"), mcSetGoogleMapsFolder);
 			mmGoogleMaps.CreateBreak();
-			mmGoogleMaps.CreateItem(L("Prefer Google zoom levels"), mcoGoogleZoomLevels);
-			mmGoogleMaps.CreateItem(L("Enable raster downloading"), mcoDownloadGoogleMaps);
-			mmGoogleMaps.CreateItem(L("Invert satellite images"), mcoInvertSatelliteImages);		
+			mmGoogleMaps.CreateItem(I("Prefer Google zoom levels"), mcoGoogleZoomLevels);
+			mmGoogleMaps.CreateItem(I("Enable raster downloading"), mcoDownloadGoogleMaps);
+			mmGoogleMaps.CreateItem(I("Invert satellite images"), mcoInvertSatelliteImages);		
+#endif // LINUX
 		}
 		{
-			CMenu & mmSearch = mmMaps.CreateSubMenu(L("Search"));
-			mmSearch.CreateItem(L("Search OpenStreetMap.org"), mcSearchOSM);
-			mmSearch.CreateItem(L("Search results"), mcSearchResults);
+			CMenu & mmSearch = mmMaps.CreateSubMenu(I("Search"));
+			mmSearch.CreateItem(I("Search OpenStreetMap.org"), mcSearchOSM);
+			mmSearch.CreateItem(I("Search results"), mcSearchResults);
 		}
-		mmMaps.CreateItem(L("About maps"), mcAboutMaps);
+		mmMaps.CreateItem(I("About maps"), mcAboutMaps);
 	}
 	{
-		CMenu & mmTracks = mMenu.CreateSubMenu(L("Tracks"));
-		mmTracks.CreateItem(L("Open track"), mcOpenTrack);
-		mmTracks.CreateItem(L("Track list"), mcTrackList);
-		mmTracks.CreateItem(L("Start new track"), mcNewTrack);
-		mmTracks.CreateItem(L("Set track folder"), mcSetTrackFolder);
+		CMenu & mmTracks = mMenu.CreateSubMenu(I("Tracks"));
+		mmTracks.CreateItem(I("Open track"), mcOpenTrack);
+		mmTracks.CreateItem(I("Track list"), mcTrackList);
+		mmTracks.CreateItem(I("Start new track"), mcNewTrack);
+		mmTracks.CreateItem(I("Set track folder"), mcSetTrackFolder);
 		mmTracks.CreateBreak();
-		mmTracks.CreateItem(L("Write track"), mcoWriteTrack);
-		mmTracks.CreateItem(L("Show current track"), mcoShowCurrentTrack);
-		mmTracks.CreateItem(L("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
+		mmTracks.CreateItem(I("Write track"), mcoWriteTrack);
+		mmTracks.CreateItem(I("Show current track"), mcoShowCurrentTrack);
+		mmTracks.CreateItem(I("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
 		{
-			CMenu & mmTrackFormat = mmTracks.CreateSubMenu(L("Track format"));
-			mmTrackFormat.CreateItem(L("plt"), mcTrackFormatPLT);
-			mmTrackFormat.CreateItem(L("gpx"), mcTrackFormatGPX);
+			CMenu & mmTrackFormat = mmTracks.CreateSubMenu(I("Track format"));
+			mmTrackFormat.CreateItem(I("plt"), mcTrackFormatPLT);
+			mmTrackFormat.CreateItem(I("gpx"), mcTrackFormatGPX);
 		}
 	}
 	{
-		CMenu & mmWaypoints = mMenu.CreateSubMenu(L("Waypoints"));
+		CMenu & mmWaypoints = mMenu.CreateSubMenu(I("Waypoints"));
 		{
-			CMenu & mmSelectWaypointsFile = mmWaypoints.CreateSubMenu(L("Select waypoints file"));
-			mmSelectWaypointsFile.CreateItem(L("Existing file"), mcOpenWaypoints);
-			mmSelectWaypointsFile.CreateItem(L("New WPT file"), mcNewWaypointsWPT);
-			mmSelectWaypointsFile.CreateItem(L("New GPX file"), mcNewWaypointsGPX);
+			CMenu & mmSelectWaypointsFile = mmWaypoints.CreateSubMenu(I("Select waypoints file"));
+			mmSelectWaypointsFile.CreateItem(I("Existing file"), mcOpenWaypoints);
+			mmSelectWaypointsFile.CreateItem(I("New WPT file"), mcNewWaypointsWPT);
+			mmSelectWaypointsFile.CreateItem(I("New GPX file"), mcNewWaypointsGPX);
 		}
-		mmWaypoints.CreateItem(L("Add waypoint"), mcAddWaypoint);
-		mmWaypoints.CreateItem(L("Waypoints list"), mcWaypointsList);
+		mmWaypoints.CreateItem(I("Add waypoint"), mcAddWaypoint);
+		mmWaypoints.CreateItem(I("Waypoints list"), mcWaypointsList);
 		{
-			CMenu & mmImportExportWpt = mmWaypoints.CreateSubMenu(L("Import/Export"));
-			mmImportExportWpt.CreateItem(L("Import"), mcImportWaypoints);
-			mmImportExportWpt.CreateItem(L("Export as WPT"), mcExportWaypointsWPT);
-			mmImportExportWpt.CreateItem(L("Export as GPX"), mcExportWaypointsGPX);
-			mmImportExportWpt.CreateItem(L("Export as OSM"), mcExportWaypointsOSM);
+			CMenu & mmImportExportWpt = mmWaypoints.CreateSubMenu(I("Import/Export"));
+			mmImportExportWpt.CreateItem(I("Import"), mcImportWaypoints);
+			mmImportExportWpt.CreateItem(I("Export as WPT"), mcExportWaypointsWPT);
+			mmImportExportWpt.CreateItem(I("Export as GPX"), mcExportWaypointsGPX);
+			mmImportExportWpt.CreateItem(I("Export as OSM"), mcExportWaypointsOSM);
 		}
 		mmWaypoints.CreateBreak();
-		mmWaypoints.CreateItem(L("Show waypoints"), mcoShowWaypoints);
+		mmWaypoints.CreateItem(I("Show waypoints"), mcoShowWaypoints);
 	}
 	{
-		CMenu & mmNavigation = mMenu.CreateSubMenu(L("Navigation"));
+		CMenu & mmNavigation = mMenu.CreateSubMenu(I("Navigation"));
 		{
-			CMenu & mmTraffic = mmNavigation.CreateSubMenu(L("Traffic online (beta)"));
-			mmTraffic.CreateItem(L("Refresh traffic information"), mcRefreshTraffic);
-			mmTraffic.CreateItem(L("About traffic"), mcAboutTraffic);
+			CMenu & mmTraffic = mmNavigation.CreateSubMenu(I("Traffic online (beta)"));
+			mmTraffic.CreateItem(I("Refresh traffic information"), mcRefreshTraffic);
+			mmTraffic.CreateItem(I("About traffic"), mcAboutTraffic);
 			mmTraffic.CreateBreak();
-			mmTraffic.CreateItem(L("Refresh traffic on startup"), mcoRefreshTrafficOnStartup);
-			// mmTraffic.CreateItem(L("Show traffic nodes"), mcoShowTrafficNodes);
-			mmTraffic.CreateItem(L("Show fastest way"), mcoShowFastestWay);
-			mmTraffic.CreateItem(L("Show traffic information"), mcoShowTrafficInformation);
+			mmTraffic.CreateItem(I("Refresh traffic on startup"), mcoRefreshTrafficOnStartup);
+			// mmTraffic.CreateItem(I("Show traffic nodes"), mcoShowTrafficNodes);
+			mmTraffic.CreateItem(I("Show fastest way"), mcoShowFastestWay);
+			mmTraffic.CreateItem(I("Show traffic information"), mcoShowTrafficInformation);
 			if (m_Options[mcoDebugMode]) {
-				mmTraffic.CreateItem(L("Use test server"), mcoTestServer);
-				mmTraffic.CreateItem(L("Show traffic flags"), mcoTrafficFlags);
+				mmTraffic.CreateItem(I("Use test server"), mcoTestServer);
+				mmTraffic.CreateItem(I("Show traffic flags"), mcoTrafficFlags);
 			}
 		}
-		mmNavigation.CreateItem(L("Navigate recent"), mcNavigateRecent);
-		mmNavigation.CreateItem(L("Stop navigating"), mcStopNavigating);
-		mmNavigation.CreateItem(L("Show Sun azimuth"), mcoShowSunAz);
+		mmNavigation.CreateItem(I("Navigate recent"), mcNavigateRecent);
+		mmNavigation.CreateItem(I("Stop navigating"), mcStopNavigating);
+		mmNavigation.CreateItem(I("Show Sun azimuth"), mcoShowSunAz);
 	}
 	{
-		CMenu & mmDisplay = mMenu.CreateSubMenu(L("Display"));
+		CMenu & mmDisplay = mMenu.CreateSubMenu(I("Display"));
 		{
-			CMenu & mmView = mmDisplay.CreateSubMenu(L("View"));
-			mmView.CreateItem(L("Zoom in"), mcZoomIn);
-			mmView.CreateItem(L("Zoom out"), mcZoomOut);
-			mmView.CreateItem(L("Left"), mcLeft);
-			mmView.CreateItem(L("Right"), mcRight);
-			mmView.CreateItem(L("Up"), mcUp);
-			mmView.CreateItem(L("Down"), mcDown);
+			CMenu & mmView = mmDisplay.CreateSubMenu(I("View"));
+			mmView.CreateItem(I("Zoom in"), mcZoomIn);
+			mmView.CreateItem(I("Zoom out"), mcZoomOut);
+			mmView.CreateItem(I("Left"), mcLeft);
+			mmView.CreateItem(I("Right"), mcRight);
+			mmView.CreateItem(I("Up"), mcUp);
+			mmView.CreateItem(I("Down"), mcDown);
 			mmView.CreateBreak();
-			mmView.CreateItem(L("Follow cursor"), mcoFollowCursor);
+			mmView.CreateItem(I("Follow cursor"), mcoFollowCursor);
 		}
 		{
-			CMenu & mmMonitorBar = mmDisplay.CreateSubMenu(L("Monitor bar"));
-			mmMonitorBar.CreateItem(L("Previous monitors row"), mcPrevMonitorsRow);
-			mmMonitorBar.CreateItem(L("Next monitors row"), mcNextMonitorsRow);
+			CMenu & mmMonitorBar = mmDisplay.CreateSubMenu(I("Monitor bar"));
+			mmMonitorBar.CreateItem(I("Previous monitors row"), mcPrevMonitorsRow);
+			mmMonitorBar.CreateItem(I("Next monitors row"), mcNextMonitorsRow);
 			mmMonitorBar.CreateBreak();
-			mmMonitorBar.CreateItem(L("Show monitor bar"), mcoShowMonitorBar);
-			mmMonitorBar.CreateItem(L("Large monitors"), mcoLargeMonitors);
+			mmMonitorBar.CreateItem(I("Show monitor bar"), mcoShowMonitorBar);
+			mmMonitorBar.CreateItem(I("Large monitors"), mcoLargeMonitors);
 		}
-		mmDisplay.CreateItem(L("Open color scheme"), mcOpenColors);
-		mmDisplay.CreateItem(L("Close color scheme"), mcCloseColors);
+		mmDisplay.CreateItem(I("Open color scheme"), mcOpenColors);
+		mmDisplay.CreateItem(I("Close color scheme"), mcCloseColors);
 
 		mmDisplay.CreateBreak();
-		mmDisplay.CreateItem(L("Monitors mode"), mcoMonitorsMode);
-		mmDisplay.CreateItem(L("Full screen"), mcoFullScreen);
-		mmDisplay.CreateItem(L("Show center"), mcoShowCenter);
-		mmDisplay.CreateItem(L("Rotate map by course"), mcoRotateMap); 
+		mmDisplay.CreateItem(I("Monitors mode"), mcoMonitorsMode);
+		mmDisplay.CreateItem(I("Full screen"), mcoFullScreen);
+		mmDisplay.CreateItem(I("Show center"), mcoShowCenter);
+		mmDisplay.CreateItem(I("Rotate map by course"), mcoRotateMap); 
 #ifndef SMARTPHONE
-		mmDisplay.CreateItem(L("Show screen buttons"), mcoScreenButtons);
+		mmDisplay.CreateItem(I("Show screen buttons"), mcoScreenButtons);
 #endif // !SMARTPHONE
 #ifdef SMARTPHONE
-		mmDisplay.CreateItem(L("Low light"), mcoLowLight);
+		mmDisplay.CreateItem(I("Low light"), mcoLowLight);
 #endif // SMARTPHONE
-		mmDisplay.CreateItem(L("Large fonts"), mcoLargeFonts);
+		mmDisplay.CreateItem(I("Large fonts"), mcoLargeFonts);
 	}
 	{
-		CMenu & mmGPS = mMenu.CreateSubMenu(L("GPS"));
+		CMenu & mmGPS = mMenu.CreateSubMenu(I("GPS"));
 		{
-			CMenu & mmTeam = mmGPS.CreateSubMenu(L("Team GPS"));
-			mmTeam.CreateItem(L("Settings"), mcTeamSettings);
-			mmTeam.CreateItem(L("Update now"), mcTeamUpdateNow);
+			CMenu & mmTeam = mmGPS.CreateSubMenu(I("Team GPS"));
+			mmTeam.CreateItem(I("Settings"), mcTeamSettings);
+			mmTeam.CreateItem(I("Update now"), mcTeamUpdateNow);
 			mmTeam.CreateBreak();
-			mmTeam.CreateItem(L("Update periodically"), mcTeamUpdatePeriodically);
+			mmTeam.CreateItem(I("Update periodically"), mcTeamUpdatePeriodically);
 		}
 		{
-			CMenu & mmPeriod = mmGPS.CreateSubMenu(L("Connect period"));
-			mmPeriod.CreateItem(L("Always"), mcConnectPeriod0);
-			mmPeriod.CreateItem(L("1 minute"), mcConnectPeriod1);
-			mmPeriod.CreateItem(L("2 minutes"), mcConnectPeriod2);
-			mmPeriod.CreateItem(L("4 minutes"), mcConnectPeriod4);
-			mmPeriod.CreateItem(L("9 minutes"), mcConnectPeriod9);
+			CMenu & mmPeriod = mmGPS.CreateSubMenu(I("Connect period"));
+			mmPeriod.CreateItem(I("Always"), mcConnectPeriod0);
+			mmPeriod.CreateItem(I("1 minute"), mcConnectPeriod1);
+			mmPeriod.CreateItem(I("2 minutes"), mcConnectPeriod2);
+			mmPeriod.CreateItem(I("4 minutes"), mcConnectPeriod4);
+			mmPeriod.CreateItem(I("9 minutes"), mcConnectPeriod9);
 		}
-		mmGPS.CreateItem(L("Synchronize time"), mcSetTime);
-		mmGPS.CreateItem(L("Dump to file"), mcDumpNMEA);
+		mmGPS.CreateItem(I("Synchronize time"), mcSetTime);
+		mmGPS.CreateItem(I("Dump to file"), mcDumpNMEA);
 		mmGPS.CreateBreak();
-		mmGPS.CreateItem(L("Connect GPS"), mcoConnect);
-		mmGPS.CreateItem(L("Warn on GPS loss"), mcoWarnNoGPS); 
+		mmGPS.CreateItem(I("Connect GPS"), mcoConnect);
+		mmGPS.CreateItem(I("Warn on GPS loss"), mcoWarnNoGPS); 
 #ifdef SMARTPHONE
-		mmGPS.CreateItem(L("Turn bluetooth on"), mcoBluetoothOn);
-		mmGPS.CreateItem(L("Automatic light"), mcoAutoLight);
+		mmGPS.CreateItem(I("Turn bluetooth on"), mcoBluetoothOn);
+		mmGPS.CreateItem(I("Automatic light"), mcoAutoLight);
 #endif // SMARTPHONE
 	}
 	{
-		CMenu & mmSetup = mMenu.CreateSubMenu(L("Setup"));
-		mmSetup.CreateItem(L("Settings"), mcSettings);
-		mmSetup.CreateItem(L("Keymap"), mcKeymap);
-		mmSetup.CreateItem(L("Register file types"), mcRegisterFileTypes);
-		mmSetup.CreateItem(L("Open translation"), mcOpenTranslation);
-		mmSetup.CreateItem(L("Close translation"), mcCloseTranslation);
+		CMenu & mmSetup = mMenu.CreateSubMenu(I("Setup"));
+		mmSetup.CreateItem(I("Settings"), mcSettings);
+		mmSetup.CreateItem(I("Keymap"), mcKeymap);
+		mmSetup.CreateItem(I("Register file types"), mcRegisterFileTypes);
+		mmSetup.CreateItem(I("Open translation"), mcOpenTranslation);
+		mmSetup.CreateItem(I("Close translation"), mcCloseTranslation);
 		mmSetup.CreateBreak();
-		mmSetup.CreateItem(L("Sound"), mcoSound);
-		mmSetup.CreateItem(L("Keep backlight"), mcoKeepBacklight);
-		mmSetup.CreateItem(L("Keep memory low"), mcoLowMemory);
+		mmSetup.CreateItem(I("Sound"), mcoSound);
+		mmSetup.CreateItem(I("Keep backlight"), mcoKeepBacklight);
+		mmSetup.CreateItem(I("Keep memory low"), mcoLowMemory);
 #ifndef SMARTPHONE
-		mmSetup.CreateItem(L("Keep device on"), mcoKeepDeviceOn);
+		mmSetup.CreateItem(I("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
-		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternet);
-		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);
+		mmSetup.CreateItem(I("Allow internet connection"), mcoAllowInternet);
+		mmSetup.CreateItem(I("Use proxy server"), mcoUseProxy);
 	}
 	{
-		CMenu & mmHelp = mMenu.CreateSubMenu(L("Help"));
-		mmHelp.CreateItem(L("About"), mcAbout);
-		mmHelp.CreateItem(L("Check newer versions online"), mcCheckLatestVersion);
+		CMenu & mmHelp = mMenu.CreateSubMenu(I("Help"));
+		mmHelp.CreateItem(I("About"), mcAbout);
+		mmHelp.CreateItem(I("Check newer versions online"), mcCheckLatestVersion);
 	}
-	mMenu.CreateItem(L("Exit"), mcExit);
+	mMenu.CreateItem(I("Exit"), mcExit);
 	if (m_Options[mcoDebugMode])
 	{
-		CMenu & mSubMenu = mMenu.CreateSubMenu(L("Debug"));
-		mSubMenu.CreateItem(L("NMEA commands"), mcDebugNmeaCommands);
-		mSubMenu.CreateItem(L("Cursor here"), mcDebugCursorHere);
-		mSubMenu.CreateItem(L("No fix"), mcDebugNoFix);
-		mSubMenu.CreateItem(L("Show times"), mcDebugShowTimes);
-		mSubMenu.CreateItem(L("Unknown point types"), mcUnknownPointTypes);
-		mSubMenu.CreateItem(L("Replay track"), mcReplayTrack);
-		mSubMenu.CreateItem(L("Replay NMEA sequence"), mcReplayNMEA);
+		CMenu & mSubMenu = mMenu.CreateSubMenu(I("Debug"));
+		mSubMenu.CreateItem(I("NMEA commands"), mcDebugNmeaCommands);
+		mSubMenu.CreateItem(I("Cursor here"), mcDebugCursorHere);
+		mSubMenu.CreateItem(I("No fix"), mcDebugNoFix);
+		mSubMenu.CreateItem(I("Show times"), mcDebugShowTimes);
+		mSubMenu.CreateItem(I("Unknown point types"), mcUnknownPointTypes);
+		mSubMenu.CreateItem(I("Replay track"), mcReplayTrack);
+		mSubMenu.CreateItem(I("Replay NMEA sequence"), mcReplayNMEA);
 		mSubMenu.CreateBreak();
-		mSubMenu.CreateItem(L("Buffer output"), mcoBuffered);
-		mSubMenu.CreateItem(L("Debug mode"), mcoDebugMode);
-		mSubMenu.CreateItem(L("Write connection log"), mcoWriteConnectionLog);
-		mSubMenu.CreateItem(L("Direct paint"), mcoDirectPaint);
+		mSubMenu.CreateItem(I("Buffer output"), mcoBuffered);
+		mSubMenu.CreateItem(I("Debug mode"), mcoDebugMode);
+		mSubMenu.CreateItem(I("Write connection log"), mcoWriteConnectionLog);
+		mSubMenu.CreateItem(I("Direct paint"), mcoDirectPaint);
 	}
-	GetKeymap().AddAction(mcContextMenu, L("Context menu"));
-
+#ifndef LINUX
+	GetKeymap().AddAction(mcContextMenu, I("Context menu"));
 	GetKeymap().Load();
 	GetButtons().Load();
+#endif // LINUX
 	CheckMenu();
 }
 
@@ -3387,8 +3449,12 @@ void CMapApp::InitMenuAllWMSMaps(CMenu& baseMenu)
 
 void CMapApp::CheckMenu()
 {
+#ifndef LINUX
 	CMenu & menu = m_MenuBar.GetMenu();
-	m_Options.CheckMenu(m_MenuBar);
+#else
+	CMenu menu;
+#endif // LINUX
+	m_Options.CheckMenu(menu);
 	for (int i = mcSetDetail1; i <= mcSetDetail5; ++i)
 		menu.CheckMenuItem(i, m_riDetail() == (i - mcSetDetail3));
 
@@ -3469,59 +3535,75 @@ void CMapApp::PaintCursor(const GeoPoint & gp, bool fCursorVisible)
 
 void CMapApp::ToolsWaypoints()
 {
+#ifndef LINUX
 	static CWaypointsDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::OptionsSettings()
 {
+#ifndef LINUX
 	static CSettingsDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::TeamSettings()
 {
+#ifndef LINUX
 	static CTeamSettingsDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::OptionsKeymap()
 {
+#ifndef LINUX
 	static CKeymapDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::DebugNmeaCommands()
 {
+#ifndef LINUX
 	static CNmeaCommandsDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::DebugUnknownPointTypes()
 {
+#ifndef LINUX
 	static CUnknownPointTypesDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 void CMapApp::ToolsMaps()
 {
+#ifndef LINUX
 	static CMapsDlg dlg;
 	g_pNextDialog = &dlg;
 	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc);
+#endif // LINUX
 }
 
 bool CMapApp::ToolsWaypointProperties(int iPoint)
 {
+#ifndef LINUX
 	static CWaypointPropertiesDlg dlg;
 	dlg.m_iWaypoint = iPoint;
 	g_pNextDialog = &dlg;
 	return DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, m_hWnd, (DLGPROC)MADlgProc) != 0;
+#endif // LINUX
 }
 
 void CMapApp::AddOdometer(double dDist)
@@ -3531,9 +3613,11 @@ void CMapApp::AddOdometer(double dDist)
 	m_monOdometerTotal += dDist;
 }
 
-bool CMapApp::ProcessCommand(WPARAM wp)
+bool CMapApp::ProcessCommand(unsigned int wp)
 {
+#ifndef LINUX
 	wp = m_MenuBar.CheckCommand(wp);
+#endif // LINUX
     switch (wp)
     {
 		case mcExit:
@@ -3611,41 +3695,47 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcTrackList:
 			ToolsTracks();
 			break;
+#ifndef LINUX
 		case mcSearchResults:
 			if (m_Found.Empty())
-				MessageBox(m_hWnd, L("Nothing found"), L("Search results"), MB_ICONINFORMATION | MB_OK);
+				MessageBox(m_hWnd, I("Nothing found"), I("Search results"), MB_ICONINFORMATION | MB_OK);
 			else
 				SearchResults();
 			break;
 		case mcSearchOSM:
 			SearchOSM();
 			break;
+#endif // LINUX
 		case mcStopNavigating:
 			app.ToolsStopNavigating();
 			break;
 		case  mcSetTrackFolder:
 			OptionsSetTrackFolder();
 			break;
+#ifndef LINUX
 		case mcAddWaypoint:
 			{
 				tchar_t wcPoint[1000];
 				SYSTEMTIME st;
 				GetLocalTime(&st);
-				stprintf(wcPoint, 1000, T("%04d.%02d.%02d %02d:%02d:%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+				stprintf(wcPoint, 1000, L("%04d.%02d.%02d %02d:%02d:%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 				int id = AddPointCenter(wcPoint);
 				if (!ToolsWaypointProperties(id))
 					m_Waypoints.DeleteByID(id);
 			}
 			break;
+#endif // LINUX
 		case mcRefreshTraffic:
 			m_TrafficNodes.RefreshTrafficData();
 			break;
+#ifndef LINUX
 		case mcAboutTraffic:
-			MessageBox(m_hWnd, L("To read about road traffic please visit http://gpsvp.com/?cat=10"), L("About traffic"), MB_ICONINFORMATION);
+			MessageBox(m_hWnd, I("To read about road traffic please visit http://gpsvp.com/?cat=10"), I("About traffic"), MB_ICONINFORMATION);
 			break;
 		case mcAboutMaps:
-			MessageBox(m_hWnd, L("To read about maps for gpsVP please visit http://gpsvp.com/?cat=12"), L("About maps"), MB_ICONINFORMATION);
+			MessageBox(m_hWnd, I("To read about maps for gpsVP please visit http://gpsvp.com/?cat=12"), I("About maps"), MB_ICONINFORMATION);
 			break;
+#endif // LINUX
 		case mcWaypointsList:
 			ToolsWaypoints();
 			break;
@@ -3698,26 +3788,6 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcSetDetail2:
 		case mcSetDetail3:
 		case mcSetDetail4:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
-		case mcSetDetail5:
 		case mcSetDetail5:
 			SetDetail(int(wp) - mcSetDetail3);
 			break;
@@ -3783,9 +3853,11 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcReplayNMEA:
 			ReplayNMEA();
 			break;
+#ifndef LINUX
 		case mcSetGoogleMapsFolder:
 			SetRasterMapFolder();
 			break;
+#endif // LINUX
 		case mcTrackFormatPLT:
 			SetTrackFormat(0);
 			break;
@@ -3802,6 +3874,7 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 					SetGMapType(iNewType);
 					break;
 				}
+#ifndef LINUX
 				if (m_Options.ProcessCommand(wp, m_MenuBar))
 				{
 					switch (wp) {
@@ -3812,6 +3885,7 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 					CheckOptions();
 					m_painter.Redraw();
 				}
+#endif // LINUX
 			}
     }
 	return true;
@@ -3853,6 +3927,7 @@ void CMapApp::PrevMonitorsRow()
 
 void CMapApp::ContextMenu()
 {
+#ifndef LINUX
 	ScreenPoint sp;
 	{
 		if (m_Options[mcoMonitorsMode])
@@ -3861,10 +3936,12 @@ void CMapApp::ContextMenu()
 			sp = m_painter.GetScreenCenter();
 	}
 	ContextMenu(sp);
+#endif // LINUX
 }
 
 void CMapApp::ContextMenu(ScreenPoint sp)
 {
+#ifndef LINUX
 	int iButton = m_painter.CheckButton(sp);
 	if (!m_Options[mcoMonitorsMode] && iButton != -1)
 	{
@@ -3881,88 +3958,88 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 
 		if (m_Options[mcoShowGarminMaps])
 		{
-			CMenu & mmGarmin = mmMenu.CreateSubMenu(L("Garmin map"));
+			CMenu & mmGarmin = mmMenu.CreateSubMenu(I("Garmin map"));
 
 			pinfo = FindNearestPoint(sp, m_painter.GetScale() * 50 / 10);
 			if (pinfo.fPresent)
 			{
-				CMenu & mmPointMenu = mmGarmin.CreateSubMenu((L("POI: ") + pinfo.GetDescription()).c_str());
-				mmPointMenu.CreateItem(L("Center"), 21);
-				mmPointMenu.CreateItem(L("Navigate"), 23);
-				mmPointMenu.CreateItem(L("Info"), 24);
+				CMenu & mmPointMenu = mmGarmin.CreateSubMenu((I("POI: ") + pinfo.GetDescription()).c_str());
+				mmPointMenu.CreateItem(I("Center"), 21);
+				mmPointMenu.CreateItem(I("Navigate"), 23);
+				mmPointMenu.CreateItem(I("Info"), 24);
 			}
 			else
 			{
-				mmGarmin.CreateItem(L("No POI near"), -1);
+				mmGarmin.CreateItem(I("No POI near"), -1);
 			}
 
 			linfo = FindNearestPolyline(m_painter.ScreenToGeo(sp), m_painter.GetScale() * 50 / 10);
 			if (linfo.fPresent)
-				mmGarmin.CreateItem((L("Line: ") + linfo.GetDescription()).c_str(), 30);
+				mmGarmin.CreateItem((I("Line: ") + linfo.GetDescription()).c_str(), 30);
 			else
-				mmGarmin.CreateItem(L("No polyline near"), -1);
+				mmGarmin.CreateItem(I("No polyline near"), -1);
 
 			pginfo = FindPolygon(m_painter.ScreenToGeo(sp));
 			if (pginfo.fPresent)
-				mmGarmin.CreateItem((L("Area: ") + pginfo.GetDescription()).c_str(), 40);
+				mmGarmin.CreateItem((I("Area: ") + pginfo.GetDescription()).c_str(), 40);
 			else
-				mmGarmin.CreateItem(L("No area here"), -1);
+				mmGarmin.CreateItem(I("No area here"), -1);
 		}
 		else
 		{
-			mmMenu.CreateItem(L("Garmin maps disabled"), -1);
+			mmMenu.CreateItem(I("Garmin maps disabled"), -1);
 		}
 
 		int nPointID = m_Waypoints.GetNearestPoint(m_painter.ScreenToGeo(sp), m_painter.GetScale() * 50 / 10);
 		if (nPointID >= 0)
 		{
 			CMenu & mmNearestMenu = mmMenu.CreateSubMenu(m_Waypoints.GetLabelByID(nPointID).c_str());
-			mmNearestMenu.CreateItem(L("Properties"), 10);
-			mmNearestMenu.CreateItem(L("Center"), 11);
-			mmNearestMenu.CreateItem(L("Delete"), 12);
-			mmNearestMenu.CreateItem(L("Navigate"), 13);
-			mmNearestMenu.CreateItem(L("Info"), 14);
-			mmNearestMenu.CreateItem(L("Move here"), 15);
-			mmNearestMenu.CreateItem(L("Export"), 16);
+			mmNearestMenu.CreateItem(I("Properties"), 10);
+			mmNearestMenu.CreateItem(I("Center"), 11);
+			mmNearestMenu.CreateItem(I("Delete"), 12);
+			mmNearestMenu.CreateItem(I("Navigate"), 13);
+			mmNearestMenu.CreateItem(I("Info"), 14);
+			mmNearestMenu.CreateItem(I("Move here"), 15);
+			mmNearestMenu.CreateItem(I("Export"), 16);
 		}
 		else
 		{
-			mmMenu.CreateItem(L("No waypoints near"), -1);
+			mmMenu.CreateItem(I("No waypoints near"), -1);
 		}
 
-		mmMenu.CreateItem(L("Add point here"), 1);
-		mmMenu.CreateItem(L("Navigate here"), 2);
+		mmMenu.CreateItem(I("Add point here"), 1);
+		mmMenu.CreateItem(I("Navigate here"), 2);
 
 		if (m_Options[mcoFullScreen])
-			mmMenu.CreateItem(L("Full screen off"), 4);
+			mmMenu.CreateItem(I("Full screen off"), 4);
 		else
-			mmMenu.CreateItem(L("Full screen"), 4);
+			mmMenu.CreateItem(I("Full screen"), 4);
 		if (m_Options[mcoFollowCursor] && m_painter.ManualMode() && m_fFix)
-			mmMenu.CreateItem(L("Restore follow cursor"), 6);
+			mmMenu.CreateItem(I("Restore follow cursor"), 6);
 		else
-			mmMenu.CreateItem(L("Restore follow cursor"), -1);
+			mmMenu.CreateItem(I("Restore follow cursor"), -1);
 
 		if (m_TrackCompetition.IsStarted())
-			mmMenu.CreateItem(L("Stop track competition"), 8);
+			mmMenu.CreateItem(I("Stop track competition"), 8);
 		else
-			mmMenu.CreateItem(L("Start track competition here"), 7);
+			mmMenu.CreateItem(I("Start track competition here"), 7);
 
 		//if (m_Options[mcoDebugMode])
-		//	mmMenu.CreateItem(L("Navigate azimuth"), 5);
+		//	mmMenu.CreateItem(I("Navigate azimuth"), 5);
 		if (m_Options[mcoDebugMode])
-			mmMenu.CreateItem(L("Debug: cursor here"), 3);
+			mmMenu.CreateItem(I("Debug: cursor here"), 3);
 
 
 #ifndef LINUX
-		CMenu & mmRaster = mmMenu.CreateSubMenu(L("Raster map"));
+		CMenu & mmRaster = mmMenu.CreateSubMenu(I("Raster map"));
 		double m_dummyScale;
 		if (GeoPoint(0, 0) != m_pRasterMapPainter->GetDemoPoint(enumGMapType(m_riGMapType()), m_dummyScale))
 		{
-			mmRaster.CreateItem(L("Go to demo point"), 51);
+			mmRaster.CreateItem(I("Go to demo point"), 51);
 		}
 		else
 		{
-			mmRaster.CreateItem(L("No demo point"), -1);
+			mmRaster.CreateItem(I("No demo point"), -1);
 		}
 #endif
 		
@@ -3977,14 +4054,14 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 				tchar_t wcPoint[1000];
 				SYSTEMTIME st;
 				GetLocalTime(&st);
-				stprintf(wcPoint, 1000, T("%04d.%02d.%02d %02d:%02d:%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+				stprintf(wcPoint, 1000, L("%04d.%02d.%02d %02d:%02d:%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 				int id = AddPointScreen(sp, wcPoint);
 				if (!ToolsWaypointProperties(id))
 					m_Waypoints.DeleteByID(id);
 				break;
 			}
 		case 2:
-			Navigate(sp, L("Screen"));
+			Navigate(sp, I("Screen"));
 			break;
 		case 3:
 			{
@@ -4029,7 +4106,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			m_painter.Redraw();
 			break;
 		case 12:
-			if (MessageBox(m_hWnd, L("Are you sure"), L("Delete waypoint"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+			if (MessageBox(m_hWnd, I("Are you sure"), I("Delete waypoint"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
 			{
 				m_Waypoints.DeleteByID(nPointID);
 				m_painter.Redraw();
@@ -4043,13 +4120,13 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			{
 				CWaypoints::CPoint & p = m_Waypoints.ById(nPointID);
 				CoordToText(p.Longitude(), p.Latitude(), wstrLon, wstrLat);
-				MessageBox(0, (std::tstring(T(""))
-					+ L("Name: ") + p.GetLabel()
-					+ T("\n") + L("Latitude: ") + wstrLat
-					+ T("\n") + L("Longitude: ") + wstrLon
-					+ T("\n") + L("Altitude: ") + DoubleToText(p.GetAltitude())
+				MessageBox(0, (std::tstring(L(""))
+					+ I("Name: ") + p.GetLabel()
+					+ L("\n") + I("Latitude: ") + wstrLat
+					+ L("\n") + I("Longitude: ") + wstrLon
+					+ L("\n") + I("Altitude: ") + DoubleToText(p.GetAltitude())
 					).c_str(),
-					L("Waypoint info"),MB_ICONINFORMATION);
+					I("Waypoint info"),MB_ICONINFORMATION);
 			}
 			break;
 		case 15:
@@ -4069,28 +4146,28 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			break;
 		case 24:
 			CoordToText(Degree(pinfo.gp.lon), Degree(pinfo.gp.lat), wstrLon, wstrLat);
-			MessageBox(0, (std::tstring(T(""))
-				+ L("Name: ") + pinfo.wstrName
-				+ T("\n") + L("Type: ") + m_TypeInfo.PointType(pinfo.uiType)
-				+ T("\n") + L("Code: ") + IntToHex(pinfo.uiType)
-				+ T("\n") + L("Latitude: ") + wstrLat
-				+ T("\n") + L("Longitude: ") + wstrLon
+			MessageBox(0, (std::tstring(L(""))
+				+ I("Name: ") + pinfo.wstrName
+				+ L("\n") + I("Type: ") + m_TypeInfo.PointType(pinfo.uiType)
+				+ L("\n") + I("Code: ") + IntToHex(pinfo.uiType)
+				+ L("\n") + I("Latitude: ") + wstrLat
+				+ L("\n") + I("Longitude: ") + wstrLon
 				).c_str(),
-				L("Point info"),MB_ICONINFORMATION);
+				I("Point info"),MB_ICONINFORMATION);
 			break;
 		case 30:
-			MessageBox(0, (std::tstring(T(""))
-				+ L("Name: ") + linfo.wstrName
-				+ T("\n") + L("Type: ") + m_TypeInfo.PolylineType(linfo.uiType)
+			MessageBox(0, (std::tstring(L(""))
+				+ I("Name: ") + linfo.wstrName
+				+ L("\n") + I("Type: ") + m_TypeInfo.PolylineType(linfo.uiType)
 				).c_str(),
-				L("Line info"),MB_ICONINFORMATION);
+				I("Line info"),MB_ICONINFORMATION);
 			break;
 		case 40:
-			MessageBox(0, (std::tstring(T(""))
-				+ L("Name: ") + pginfo.wstrName
-				+ T("\n") + L("Type: ") + m_TypeInfo.PolygonType(pginfo.uiType)
+			MessageBox(0, (std::tstring(L(""))
+				+ I("Name: ") + pginfo.wstrName
+				+ L("\n") + I("Type: ") + m_TypeInfo.PolygonType(pginfo.uiType)
 				).c_str(),
-				L("Area info"),MB_ICONINFORMATION);
+				I("Area info"),MB_ICONINFORMATION);
 			break;
 #ifndef LINUX
 		case 51:
@@ -4107,6 +4184,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		m_MonitorSet.ContextMenu(m_hWnd, sp);
 		m_painter.Redraw();
 	}
+#endif // LINUX
 }
 
 class CObjectFinder : public IPainter
@@ -4165,7 +4243,7 @@ public:
 		if (uiType == 75)
 			return;
 		m_uiType = uiType;
-		m_wcName = wcName ? wcName : T("");
+		m_wcName = wcName ? wcName : L("");
 		m_fPolygon = true;
 		m_fStarted = false;
 		m_fInside = false;
@@ -4176,7 +4254,7 @@ public:
 	virtual void StartPolyline(UInt uiType, const tchar_t * wcName)
 	{
 		m_uiType = uiType;
-		m_wcName = wcName ? wcName : T("");
+		m_wcName = wcName ? wcName : L("");
 		m_fPolyline = true;
 		m_fStarted = false;
 		m_dDistance = 40000000;
@@ -4456,9 +4534,9 @@ void CMapApp::ProcessCmdLineElement(const tchar_t * wcCmdLine)
 	std::tstring wstrExtention = wstrCmdLine.substr(wstrCmdLine.length() - 4, 4);
 	for (std::tstring::iterator it = wstrExtention.begin(); it != wstrExtention.end(); ++it)
 		*it = towlower(*it);
-	if (wstrExtention == T(".img"))
+	if (wstrExtention == L(".img"))
 		m_atlas.Add(wstrCmdLine.c_str(), &m_painter);
-	if (wstrExtention == T(".plt"))
+	if (wstrExtention == L(".plt"))
 	{
 		if (m_Tracks.OpenTracks(wstrCmdLine))
 		{
@@ -4467,9 +4545,11 @@ void CMapApp::ProcessCmdLineElement(const tchar_t * wcCmdLine)
 		m_painter.Redraw();
 
 	}
-	if (wstrExtention == T(".vpc"))
+#ifndef LINUX
+	if (wstrExtention == L(".vpc"))
 		m_painter.InitTools(wstrCmdLine.c_str());
-	if (wstrExtention == T(".wpt"))
+#endif // LINUX
+	if (wstrExtention == L(".wpt"))
 	{
 		CWaypoints t;
 		t.Read(wstrCmdLine.c_str());
@@ -4485,6 +4565,7 @@ void CMapApp::NewTrack()
 void CMapApp::Exit()
 {
 	m_fExiting = true;
+#ifndef LINUX
 	m_fStopHttpThread = true;
 	if (WAIT_TIMEOUT == WaitForSingleObject(m_hPortThread, 5000))
 		TerminateThread(m_hPortThread, 0);
@@ -4492,6 +4573,7 @@ void CMapApp::Exit()
 	if (WAIT_TIMEOUT == WaitForSingleObject(m_hHttpThread, 5000))
 		TerminateThread(m_hHttpThread, 0);
 	CloseHandle(m_hHttpThread);
+#endif // LINUX
 	m_painter.SetFullScreen(false);
 #ifdef SMARTPHONE
 	if (m_fBluetoothWasTurnedOn)
@@ -4520,43 +4602,49 @@ bool IsConnectedStatus(IGPSClient::enumConnectionStatus iStatus)
 
 void CMapApp::SetConnectionStatus(enumConnectionStatus iStatus)
 {
+#ifndef LINUX
 	if (iStatus != m_iConnectionStatus)
 	{
 #ifdef UNDER_CE
 		if (IsConnectedStatus(m_iConnectionStatus) != IsConnectedStatus(iStatus) && m_Options[mcoWarnNoGPS] && m_Options[mcoSound])
-			PlaySound(T("ProximitySound"), g_hInst, SND_RESOURCE | SND_ASYNC);
+			PlaySound(L("ProximitySound"), g_hInst, SND_RESOURCE | SND_ASYNC);
 #endif // UNDER_CE
 		m_painter.Redraw();
 		m_iConnectionStatus = iStatus;
 	}
+#endif // LINUX
 }
 void CMapApp::RegisterFileTypes()
 {
-	RegisterFileType(T(".img"), T("gpsVP map file"), T("gpsVPMap"), m_wstrProgName.c_str());
-	RegisterFileType(T(".plt"), T("gpsVP track file"), T("gpsVPTrack"), m_wstrProgName.c_str());
-	RegisterFileType(T(".wpt"), T("gpsVP waypoints file"), T("gpsVPWaypoints"), m_wstrProgName.c_str());
-	RegisterFileType(T(".vpc"), T("gpsVP colors file"), T("gpsVPColors"), m_wstrProgName.c_str());
+#ifndef LINUX
+	RegisterFileType(L(".img"), L("gpsVP map file"), L("gpsVPMap"), m_wstrProgName.c_str());
+	RegisterFileType(L(".plt"), L("gpsVP track file"), L("gpsVPTrack"), m_wstrProgName.c_str());
+	RegisterFileType(L(".wpt"), L("gpsVP waypoints file"), L("gpsVPWaypoints"), m_wstrProgName.c_str());
+	RegisterFileType(L(".vpc"), L("gpsVP colors file"), L("gpsVPColors"), m_wstrProgName.c_str());
+#endif // LINUX
 }
 void CMapApp::About()
 {
+#ifndef LINUX
 	tchar_t buffer[10000];
-	stprintf(buffer, 10000, T("%s %S\n%s %S\n%s.\n%s"),
-		L("gpsVP version"), g_gpsVPVersion.AsString().c_str(), L("Built on"), __DATE__, 
-		L("GPS navigation software for PCs, handhelds and smartphones"),
-		T("Copyright (c) 2005-2008, Vsevolod E. Shorin\nAll rights reserved.\n\n")
-		T("Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n")
-		T("* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n")
-		T("* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n")
-		T("* Neither the name of Vsevolod E. Shopin nor the names of contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\n")
-		T("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \")AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
+	stprintf(buffer, 10000, L("%s %S\n%s %S\n%s.\n%s"),
+		I("gpsVP version"), g_gpsVPVersion.AsString().c_str(), I("Built on"), __DATE__, 
+		I("GPS navigation software for PCs, handhelds and smartphones"),
+		L("Copyright (c) 2005-2008, Vsevolod E. Shorin\nAll rights reserved.\n\n")
+		L("Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n")
+		L("* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n")
+		L("* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n")
+		L("* Neither the name of Vsevolod E. Shopin nor the names of contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\n")
+		L("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \")AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n")
 		);
-	MessageBox(m_hWnd, buffer, L("About"), MB_ICONINFORMATION);
+	MessageBox(m_hWnd, buffer, I("About"), MB_ICONINFORMATION);
+#endif // LINUX
 }
 
 std::tstring CMapApp::HeightFromFeet(const tchar_t * wcOriginal)
 {
 	if (!wcOriginal || !wcOriginal[0])
-		return T("");
+		return L("");
 	for (const tchar_t * wc = wcOriginal; *wc; ++wc)
 	{
 		if (!iswdigit(*wc))
@@ -4566,6 +4654,7 @@ std::tstring CMapApp::HeightFromFeet(const tchar_t * wcOriginal)
 	return HeightToText(dValue * cdFoot);
 }
 
+#ifndef LINUX
 CKeymap & CMapApp::GetKeymap() 
 {
 	return m_MenuBar.GetKeymap();
@@ -4575,32 +4664,41 @@ CScreenButtons & CMapApp::GetButtons()
 {
 	return m_MenuBar.GetButtons();
 }
+#endif // LINUX
 
 Dict & GetDict()
 {
+#ifndef LINUX
 	return app.GetDict();
+#else
+	static Dict dict;
+	return dict;
+#endif // LINUX
 }
 
 void CMapApp::ReplayTrack()
 {
+#ifndef LINUX
 	AutoLock l;
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Track files\0*.plt\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		m_ReplayTrack.ReadPLT(strFile);
 	}
+#endif // LINUX
 }
 
 void CMapApp::DumpNMEA()
 {
+#ifndef LINUX
 	AutoLock l;
 	if (m_NMEAParser.GetFilename().empty())
 	{
 		tchar_t strFile[MAX_PATH + 1] = {0};
 		OPENFILENAME of;
-		FillOpenFileName(&of, m_hWnd, L("All files\0*.*\0"), strFile, false, false);
+		FillOpenFileName(&of, m_hWnd, I("All files\0*.*\0"), strFile, false, false);
 		if (GetSaveFileName(&of))
 		{
 			m_NMEAParser.SetFilename(strFile);
@@ -4608,9 +4706,10 @@ void CMapApp::DumpNMEA()
 	}
 	else
 	{
-		m_NMEAParser.SetFilename(T(""));
+		m_NMEAParser.SetFilename(L(""));
 	}
 	CheckMenu();
+#endif // LINUX
 }
 
 #ifndef LINUX
@@ -4619,7 +4718,7 @@ void CMapApp::HttpThreadRoutine()
 	HANDLE h = 0;
 	{
 		AutoLock l;
-		m_wstrHttpStatus = T("Idle");
+		m_wstrHttpStatus = L("Idle");
 	}
 
 	
@@ -4659,7 +4758,7 @@ void CMapApp::HttpThreadRoutine()
 				request = m_TrafficNodes.GetRequest(m_painter.GetCenter());
 				if (!request.empty() && ! m_fTrafficAgreement)
 				{
-					int res = MessageBox(m_hWnd, L("By accepting this you agree to the following: gpsVP is allowed to transfer some information about your movement to server, where the information is used to calculate traffic situation. The impersonated result belongs to Vsevolod Shorin and is publicly available via gpsVP."), L("Traffic information"), MB_OKCANCEL | MB_ICONEXCLAMATION);
+					int res = MessageBox(m_hWnd, I("By accepting this you agree to the following: gpsVP is allowed to transfer some information about your movement to server, where the information is used to calculate traffic situation. The impersonated result belongs to Vsevolod Shorin and is publicly available via gpsVP."), I("Traffic information"), MB_OKCANCEL | MB_ICONEXCLAMATION);
 					if (res == IDOK)
 					{
 						m_fTrafficAgreement.Set(true);
@@ -4713,7 +4812,7 @@ void CMapApp::HttpThreadRoutine()
 					h = 0;
 					{
 						AutoLock l;
-						m_wstrHttpStatus = L("Error");
+						m_wstrHttpStatus = I("Error");
 					}
 					for (int i = 0; i < 60 && !m_fStopHttpThread; ++i )
 						Sleep(1000);
@@ -4732,14 +4831,14 @@ void CMapApp::HttpThreadRoutine()
 				if (res != S_OK)
 				{
 					AutoLock l;
-					m_wstrHttpStatus = L("Error");
+					m_wstrHttpStatus = I("Error");
 					for (int i = 0; i < 60 && !m_fStopHttpThread; ++i )
 						Sleep(1000);
 					return;
 				}
 				{
 					AutoLock l;
-					m_wstrHttpStatus = T("Connecting");
+					m_wstrHttpStatus = L("Connecting");
 				}
 			}
 #endif // BARECE
@@ -4748,7 +4847,7 @@ void CMapApp::HttpThreadRoutine()
 			{
 				{
 					AutoLock l;
-					m_wstrHttpStatus = T("Requesting");
+					m_wstrHttpStatus = L("Requesting");
 				}
 				CHttpRequest req(0);
 				CHttpRequest::m_useProxy=m_Options[mcoUseProxy];
@@ -4761,7 +4860,7 @@ void CMapApp::HttpThreadRoutine()
 					ErrorWaitingTime = 1;
 					{
 						AutoLock l;
-						m_wstrHttpStatus = T("Ok");
+						m_wstrHttpStatus = L("Ok");
 					}
 					if (request_source == 3)
 					{
@@ -4771,7 +4870,7 @@ void CMapApp::HttpThreadRoutine()
 					else if (request_source == 1)
 					{
 						tchar_t buffer[10000];
-						stprintf(buffer, 10000, T("%.*S"), req.GetSize(), req.GetResult());
+						stprintf(buffer, 10000, L("%.*S"), req.GetSize(), req.GetResult());
 						m_wstrVersionMessage = buffer;
 						m_fCheckLatestVersion = false;
 					}
@@ -4798,12 +4897,12 @@ void CMapApp::HttpThreadRoutine()
 				{
 					{
 						AutoLock l;
-						m_wstrHttpStatus = T("Error");
+						m_wstrHttpStatus = L("Error");
 					}
 					if (request_source == 4)
 					{
 						m_searchurl = "";
-						MessageBox(m_hWnd, L("Search failed"), L("Search"), MB_OK | MB_ICONERROR);
+						MessageBox(m_hWnd, I("Search failed"), I("Search"), MB_OK | MB_ICONERROR);
 					}
 					for (int i = 0; i < ErrorWaitingTime && !m_fStopHttpThread; ++i )
 						Sleep(1000);
@@ -4866,7 +4965,7 @@ void CMapApp::DRMByTrack()
 #ifndef LINUX
 	tchar_t strFile[MAX_PATH + 1] = {0};
 	OPENFILENAME of;
-	FillOpenFileName(&of, m_hWnd, L("Track files\0*.plt\0"), strFile, false, true);
+	FillOpenFileName(&of, m_hWnd, I("Track files\0*.plt\0"), strFile, false, true);
 	if (GetOpenFileName(&of))
 	{
 		CTrack track;
@@ -4879,13 +4978,14 @@ void CMapApp::DRMByTrack()
 #endif
 }
 
+#ifndef LINUX
 void CMapApp::InitCoreDll()
 {
 #ifdef UNDER_CE
-	m_hCoreDll = LoadLibrary(T("coredll.dll"));
+	m_hCoreDll = LoadLibrary(L("coredll.dll"));
 	if (m_hCoreDll) {
 		m_pfnGetIdleTime = 
-			(GetIdleTimeProc) GetProcAddress(m_hCoreDll, T("GetIdleTime"));
+			(GetIdleTimeProc) GetProcAddress(m_hCoreDll, L("GetIdleTime"));
 		if (m_pfnGetIdleTime) {
 			m_dwLastTickTimer = GetTickCount();
 			m_dwLastIdleTick = (*m_pfnGetIdleTime)();
@@ -4914,18 +5014,21 @@ void CMapApp::InitCoreDll()
 	}
 #endif
 }
+#endif // LINUX
 
-void CMapApp::SetSearchURL(const char * url)
+void CMapApp::SetSearchURI(const char * url)
 {
 	m_searchurl = url;
 }
 
 void CMapApp::AddSearchResult(const std::string & name, const std::string & lat, const std::string & lon)
 {
+#ifndef LINUX
 	tchar_t buffer[1001];
 	int res = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), name.length(), buffer, 1000);
 	buffer[res] = 0;
 	m_Found.AddPoint(CWaypoints::CPoint(myatof(lon.c_str()), myatof(lat.c_str()),0, buffer));
+#endif // LINUX
 }
 
 void CMapApp::ProcessOSMSearchResult(const char * data, int size)

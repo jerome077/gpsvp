@@ -58,7 +58,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 		CMenu & CreateSubMenu(const tchar_t * wcLabel)
 		{
 			HMENU hSubMenu = CreatePopupMenu();
-			AppendMenu(m_hMenu, MF_STRING | MF_POPUP | MF_ENABLED, UINT(hSubMenu), wcLabel);
+			AppendMenu(m_hMenu, MF_STRING | MF_POPUP | MF_ENABLED, UInt(hSubMenu), wcLabel);
 			m_listSubMenus.push_back(new CMenu);
 			m_listSubMenus.back()->Init(hSubMenu);
 			m_listSubMenus.back()->SetOwner(this);
@@ -69,7 +69,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 			if (iCommand >= 0)
 			{
 				GetKeymap().AddAction(iCommand, wcLabel);
+#ifndef LINUX
 				GetButtons().AddAction(iCommand, wcLabel);
+#endif // LINUX
 				AppendMenu(m_hMenu, MF_STRING | MF_ENABLED, iCommand, wcLabel);
 			}
 			else
@@ -93,12 +95,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 				return m_pOwner->GetKeymap();
 			return m_Keymap;
 		}
+#ifndef LINUX
 		CScreenButtons & GetButtons()
 		{
 			if (m_pOwner)
 				return m_pOwner->GetButtons();
 			return m_buttons;
 		}
+#endif // LINUX
 		void SetOwner(CMenu * pOwner)
 		{
 			m_pOwner = pOwner;
@@ -126,8 +130,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 		}
 	};
 #else
+	typedef void* HWND;
 	class CMenu
 	{
+	std::list<CMenu> Submenus;
+	public:
+		void Init() {}
+		CMenu & CreateSubMenu(const tchar_t * wcLabel) {Submenus.push_back(CMenu()); return Submenus.back();}
+		void CreateItem(const tchar_t * wcLabel, int iCommand) {};
+		void CreateBreak() {};
+		void CheckMenuItem(int iId, bool fCheck) {};
+		void EnableMenuItem(int iId, bool fCheck) {};
+		IListAcceptor* GetListAcceptor() {return NULL;}
+		unsigned int Popup(int x, int y, HWND) {return 0xbadd;};
 	};
 #endif
 

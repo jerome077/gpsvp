@@ -24,9 +24,9 @@ CNMEAParser::CNMEAParser() :
 	m_pClient(0)
 {
 #ifndef LINUX
-	m_monStatus = T("-");
+	m_monStatus = L("-");
 	m_monTime.Reset();
-	m_monRawTime = T("-");
+	m_monRawTime = L("-");
 #endif
 }
 
@@ -70,9 +70,9 @@ void CNMEAParser::CommandComplete()
 			m_pClient->NoFix();
 			m_pClient->SetConnectionStatus(IGPSClient::csNoFix);
 #ifndef LINUX
-			m_monStatus = L("No fix");
+			m_monStatus = I("No fix");
 			m_monTime.Reset();
-			m_monRawTime = T("-");
+			m_monRawTime = L("-");
 #endif
 		}
 		else
@@ -129,7 +129,7 @@ void CNMEAParser::CommandComplete()
 			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), 0, dHDOP);
 #endif // LINUX
 #ifndef LINUX
-			m_monStatus = L("Fix");
+			m_monStatus = I("Fix");
 #endif
 			m_pClient->SetConnectionStatus(IGPSClient::csFix);
 		}
@@ -194,7 +194,7 @@ void CNMEAParser::AddData(const Byte * data, UInt uiLen)
 			i -= toWrite;
 			if (m_fileBufferPos == 4096)
 			{
-				FILE * file = wfopen(m_wstrFilename.c_str(), T("ab"));
+				FILE * file = wfopen(m_wstrFilename.c_str(), L("ab"));
 				if (file)
 				{
 					fwrite(m_fileBuffer, 1, m_fileBufferPos, file);
@@ -252,9 +252,9 @@ void CNMEAParser::NewStream()
 #ifndef LINUX
 	AutoLock l;
 	m_dSpeed.Reset();
-	m_monStatus = L("No");
+	m_monStatus = I("No");
 	m_monTime.Reset();
-	m_monRawTime = T("-");
+	m_monRawTime = L("-");
 #endif
 	m_pClient->NoFix();
 	m_pClient->NoVFix();
@@ -265,7 +265,7 @@ void CNMEAParser::ConnectionDisabled()
 {
 #ifndef LINUX
 	AutoLock l;
-	m_monStatus = L("Disabled");
+	m_monStatus = I("Disabled");
 #endif
 	m_pClient->SetConnectionStatus(IGPSClient::csDisabled);
 }
@@ -279,7 +279,7 @@ void CNMEAParser::GetList(IListAcceptor * pAcceptor)
 	{
 #ifndef LINUX
 		tchar_t wstr[1000];
-		stprintf(wstr, 1000, T("%S"), it->second.c_str());
+		stprintf(wstr, 1000, L("%S"), it->second.c_str());
 		pAcceptor->AddItem(wstr, 0);
 #else
 		pAcceptor->AddItem(it->second.c_str(), 0);
@@ -290,7 +290,7 @@ void CNMEAParser::SaveCommands(const tchar_t * wstrFilename)
 {
 #ifndef LINUX
 	AutoLock l;
-	FILE * pFile = wfopen(wstrFilename, T("wt"));
+	FILE * pFile = wfopen(wstrFilename, L("wt"));
 	if (!pFile)
 		return;
 	for (std::map<std::string, std::string>::iterator it = m_mapCommands.begin(); it != m_mapCommands.end(); ++it)
@@ -302,9 +302,9 @@ void CNMEAParser::Pause()
 {
 #ifndef LINUX
 	AutoLock l;
-	m_monStatus = L("Paused");
+	m_monStatus = I("Paused");
 	m_monTime.Reset();
-	m_monRawTime = T("-");
+	m_monRawTime = L("-");
 #endif
 	m_pClient->SetConnectionStatus(IGPSClient::csPaused);
 	ResetCommand();
@@ -341,25 +341,25 @@ void CNMEAParser::PaintSatellites(IMonitorPainter * pPainter)
 void CNMEAParser::InitMonitors(CMonitorSet & set, HKEY hRegKey, bool fDebugMode)
 {
 	AutoLock l;
-	m_dSpeed.SetIdL(T("Speed"));
+	m_dSpeed.SetIdL(L("Speed"));
 	set.AddMonitor(&m_dSpeed);
 
-	m_dMaxSpeed.SetIdL(T("Max speed"));
-	m_dMaxSpeed.SetRegistry(hRegKey, T("MaxSpeed"));
+	m_dMaxSpeed.SetIdL(L("Max speed"));
+	m_dMaxSpeed.SetRegistry(hRegKey, L("MaxSpeed"));
 	m_dMaxSpeed.SetResetable();
 	set.AddMonitor(&m_dMaxSpeed);
 
-	m_monStatus.SetIdL(T("Connection"));
+	m_monStatus.SetIdL(L("Connection"));
 	set.AddMonitor(&m_monStatus);
 
-	m_monTime.SetIdL(T("GPS time"));
+	m_monTime.SetIdL(L("GPS time"));
 	set.AddMonitor(&m_monTime);
 
-	m_monGPSData.SetIdL(T("GPS data"));
+	m_monGPSData.SetIdL(L("GPS data"));
 	set.AddMonitor(&m_monGPSData);
 	m_monGPSData = 0;
 
-	m_monRawTime.SetIdL(T("Raw GPS time"));
+	m_monRawTime.SetIdL(L("Raw GPS time"));
 	if (fDebugMode)
 		set.AddMonitor(&m_monRawTime);
 }

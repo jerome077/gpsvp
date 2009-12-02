@@ -32,6 +32,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GeoPoint.h"
 #include "FontCache.h"
 #include "vpGDI.h"
+#include "ScreenToGeo.h"
 #ifdef UNDER_CE
 #	include <aygshell.h>
 #ifndef NO_COMMAND_BAR
@@ -55,7 +56,7 @@ public:
 };
 
 //! Painter, which uses GDI to paint
-class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPainter
+class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPainter, public CScreenToGeo
 {
 	//! List of points for painting poly- objec
 	myvector<ScreenPoint, 10000> m_pointList;
@@ -63,19 +64,6 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	unsigned int m_uiType;
 	//! Limiting rectangle for current poly-object
 	ScreenRect m_curRect;
-	//! View center
-	CRegScalar<GeoPoint, REG_BINARY> m_gpCenter;
-	GeoPoint m_gpCenterCache;
-	GeoPoint m_gpCenterView;
-	int m_rotate; // the map on screen is rotated m_rotate degrees CCW
-	int m_sin100;
-	int m_cos100;
-	bool m_fViewSet;
-	//! Scale in garmin points per screen point
-	CRegScalar<int, REG_DWORD> m_ruiScale10;
-	int m_uiScale10Cache;
-	//! Scale of x axis for the latitude
-	long m_lXScale100;
 	//! Are we painting polygon {or polyline)
 	bool m_fPolygon;
 	//! Default pen
@@ -120,17 +108,9 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	PointToolMap m_PointTools;
 	//! Map of polyline tools
 	PolylineToolMap m_PolylinePens;
-	//! coordinate of window center
-	ScreenPoint m_spWindowCenter;
-	//! Window rect
-	ScreenRect m_srWindow;
 	//! Device context handle for painting
 	VP::DC m_hdc;
 
-	enum { 
-		ciMinZoom = 1,		//!< Minimum zoom
-		ciMaxZoom = 100000	//!< Maximum zoom
-	};
 	const tchar_t * m_wcName;
 	SIZE m_LabelSize;
 	Int m_iWriteSegment;
@@ -159,9 +139,7 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	int m_iCurrentStatusIcon;
 	CGDIPainter & operator = (const CGDIPainter &);
 	bool m_fFullScreen;
-	bool m_fVertical;
 	CFontCache m_FontCache;
-	int m_iManualTimer;
 	int m_iCurrentButton;
 	typedef std::list<std::pair<ScreenRect, int> > Buttons;
 	Buttons m_buttons;
@@ -178,35 +156,17 @@ public:
 	virtual void FinishObject();
 	virtual void AddPoint(const GeoPoint & pt);
 	virtual bool WillPaint(const GeoRect & rect);
-	virtual void SetView(const GeoPoint & gpCenter, bool fManual);
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gpPoint, const tchar_t * wcName);
 	virtual void SetLabelMandatory();
 	virtual GeoRect GetRect();
 
 	
-	void AddPoint(ScreenPoint pt);
 	//! Init before painting
 	void BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree360, bool fLowCenter);
 	void BeginPaintLite(VP::DC hdc);
 	void EndPaint();
 	//! Initialize tools
 	void InitTools(const tchar_t * strFilename);
-	//! Zoom view in
-	void ZoomIn();
-	//! Zoom view out
-	void ZoomOut();
-	//! Move view center left
-	void Left();
-	//! Move view center right
-	void Right();
-	//! Move view center up
-	void Up();
-	//! Move view center down
-	void Down();
-	//! Move view center by random vector
-	void Move(ScreenDiff d);
-	//! Get-method for m_uiScale
-	int GetScale() {return m_ruiScale10();}
 	//! Check if rectangle intersects window
 	bool WillPaint(const ScreenRect & rect);
 	bool WillPaint(const ScreenPoint & pt);
@@ -215,14 +175,7 @@ public:
 	void CalculateLabelSize();
 	void Redraw();
 	void RedrawMonitors();
-	GeoPoint ScreenToGeo(const ScreenPoint & pt);
-	ScreenPoint GeoToScreen(const GeoPoint & pt);
-	ScreenRect GeoToScreen(const GeoRect & rect);
-	GeoRect ScreenToGeo(const ScreenRect & rect);
-	int GetScreenRotationAngle() {return m_rotate;}
-	const GeoPoint GetCenter();
 	void PaintScale();
-
 	void PaintStatusLine(const tchar_t * wcName);
 	void PaintLowMemory(const tchar_t * wcString1, const tchar_t * wcString2);
 	virtual void DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText);
@@ -240,7 +193,6 @@ public:
 	virtual ScreenRect GetMonitorsBar();
 	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive);
 	void GetUnknownTypes(IListAcceptor * pAcceptor);
-	ScreenRect GetScreenRect(){return m_srWindow;}
 	ScreenPoint GetScreenCenter(){return m_spWindowCenter;}
 	ScreenPoint GetActiveMonitorCenter(){return m_srActiveMonitor.Center();}
 	void PaintStatusIcon(int iIcon);
@@ -248,10 +200,6 @@ public:
 	void InitToolsCommon();
 	void InitTools(int iScheme);
 	bool IsFullScreen(){return m_fFullScreen;}
-	bool IsVertical(){return m_fVertical;}
-	void OnTimer() {AutoLock l; if (m_iManualTimer > 0) --m_iManualTimer;}
-	bool ManualMode() {AutoLock l; return m_iManualTimer > 0;}
-	void ResetManualMode() {AutoLock l; m_iManualTimer = 0;}
 	virtual void AddButton(const tchar_t * wcLabel, int iCommand, bool fSelected);
 	void ClearButtons();
 	int CheckButton(const ScreenPoint & sp);
@@ -260,7 +208,6 @@ public:
 	void SetShowUnknownTypes(bool f) {m_fShowUnknownTypes = f;}
 	void SetShowPolygonLabels(bool f) {m_fShowPolygonLabels = f;}
 	void SetShowAreaAsOutline(bool f) {m_fShowAreaAsOutline = f;}
-	double GetXScale();
 	void SetXScale(double scale);
 	void PrepareScales();
 };

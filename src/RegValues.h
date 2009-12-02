@@ -19,7 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef LINUX
 #	include <windows.h>
 #endif
-
+#include "PlatformDef.h"
 #include "Lock.h"
 
 #ifndef LINUX
@@ -56,7 +56,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 			DWORD lType;
 			if (0 != RegQueryValueEx(m_hKey, m_wstrKey.c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
 			{
-				if (0 != RegQueryValueEx(m_hKey, (m_wstrKey + T("Def")).c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
+				if (0 != RegQueryValueEx(m_hKey, (m_wstrKey + L("Def")).c_str(), 0, &lType, (unsigned char *)&buff, &lLen))
 				{
 					m_Value = wcDefault;
 					return;
@@ -106,16 +106,16 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 		const tchar_t * wcFileType, const tchar_t * wcProgName)
 	{
 		HKEY hKey;
-		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcExtention, 0, T(""), 0, 0, 0, &hKey, 0);
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcExtention, 0, L(""), 0, 0, 0, &hKey, 0);
 		MyRegSetValueString(hKey, NULL, wcFileType);
-		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcFileType, 0, T(""), 0, 0, 0, &hKey, 0);
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, wcFileType, 0, L(""), 0, 0, 0, &hKey, 0);
 		MyRegSetValueString(hKey, NULL, wcDescription);
-		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + T("\\shell\\open\\command")).c_str(), 
-			0, T(""), 0, 0, 0, &hKey, 0);
-		MyRegSetValueString(hKey, NULL, (std::tstring(T("\"")) + wcProgName + T("\" \"%1\"")).c_str());
-		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + T("\\DefaultIcon")).c_str(), 
-			0, T(""), 0, 0, 0, &hKey,0);
-		MyRegSetValueString(hKey, NULL, (std::tstring(T("")) + wcProgName + T(",0")).c_str());
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + L("\\shell\\open\\command")).c_str(), 
+			0, L(""), 0, 0, 0, &hKey, 0);
+		MyRegSetValueString(hKey, NULL, (std::tstring(L("\"")) + wcProgName + L("\" \"%1\"")).c_str());
+		RegCreateKeyEx(HKEY_CLASSES_ROOT, (std::tstring(wcFileType) + L("\\DefaultIcon")).c_str(), 
+			0, L(""), 0, 0, 0, &hKey,0);
+		MyRegSetValueString(hKey, NULL, (std::tstring(L("")) + wcProgName + L(",0")).c_str());
 	}
 #else
 	typedef void* HKEY;
@@ -130,7 +130,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	};
 
 	enum RegType {
-		REG_BINARY
+		REG_BINARY,
+		REG_DWORD
 	};
 	template <class T, RegType type>
 	class CRegScalar

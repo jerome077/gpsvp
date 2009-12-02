@@ -16,17 +16,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #define MONITORS_H
 
 #include "RegValues.h"
+#include "Common.h"
 
 class CNMEAParser;
 class IMonitorPainter;
 class ScreenRect;
 class ScreenPoint;
+class IListAcceptor;
 
 struct IMonitorPainter
 {
 	virtual void DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText) = 0;
 	virtual void DrawMonitorLabel(const tchar_t * wcLabel) = 0;
-	virtual const ScreenPoint& GetMonitorSize() = 0;
+	virtual ScreenPoint GetMonitorSize() = 0;
 	virtual void DrawBar(const ScreenRect & srBar) = 0;
 	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive) = 0;
 };
@@ -103,12 +105,12 @@ public:
 			iMinute = (iMinute + 60 * 24) %60;
 #endif
 			if (m_fShowDate)
-				stprintf(buff, 20, T("%04d.%02d.%02d"), m_iYear, m_iMonth, m_iDay);
+				stprintf(buff, 20, L("%04d.%02d.%02d"), m_iYear, m_iMonth, m_iDay);
 			else
-				stprintf(buff, 20, T("%02d:%02d:%02d"), iHour, iMinute, m_iSecond);
+				stprintf(buff, 20, L("%02d:%02d:%02d"), iHour, iMinute, m_iSecond);
 		}
 		else
-			stprintf(buff, 20, T("-"));
+			stprintf(buff, 20, L("-"));
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), buff);
 	}
 	void Set(double dHour)
@@ -187,7 +189,7 @@ private:
 public:
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? MemoryToText(m_ulValue).c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? MemoryToText(m_ulValue).c_str() : L("-"));
 	}
 	CMemoryMonitor & operator = (unsigned long ul)
 	{
@@ -212,8 +214,8 @@ public:
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
 		tchar_t buffer[10];
-		stprintf(buffer, 10, T("%d%%"), m_bValue);
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? buffer : T("-"));
+		stprintf(buffer, 10, L("%d%%"), m_bValue);
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? buffer : L("-"));
 	}
 	CPercentMonitor & operator = (unsigned char b)
 	{
@@ -255,7 +257,6 @@ public:
 	virtual void ProcessMenuCommand(int i);
 };
 
-#ifndef LINUX
 class COptionMonitor : public CMonitorBase
 {
 private:
@@ -276,15 +277,14 @@ public:
 	}
 	virtual void PrepareContextMenu(IListAcceptor * pMenu)
 	{
-		pMenu->AddItem(L("Toggle option"), cnToggleCmd);
+		pMenu->AddItem(I("Toggle option"), cnToggleCmd);
 	}
 	virtual void ProcessMenuCommand(int i)
 	{
 		if (i == cnToggleCmd)
-			(*this) = !m_Value;
+			(*this) = !m_Value();
 	}
 };
-#endif
 
 class CAzimuthMonitor : public CMonitorBase
 {
@@ -318,7 +318,7 @@ public:
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
 		AutoLock l;
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DoubleToText(m_dValue, m_iDigits).c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DoubleToText(m_dValue, m_iDigits).c_str() : L("-"));
 	}
 	CDoubleMonitor & operator = (double d)
 	{
@@ -357,7 +357,7 @@ public:
 	virtual void PrepareContextMenu(IListAcceptor * pMenu)
 	{
 		if (m_fResetable)
-			pMenu->AddItem(T("Reset"), cnResetCmd);
+			pMenu->AddItem(L("Reset"), cnResetCmd);
 	}
 	virtual void ProcessMenuCommand(int i)
 	{
@@ -386,7 +386,7 @@ public:
 	{
 		std::tstring wstrLon, wstrLat;
 		CoordToText(m_monLinkedLongitude->Get(), m_dValue, wstrLon, wstrLat);
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLat.c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLat.c_str() : L("-"));
 	}
 };
 
@@ -400,7 +400,7 @@ public:
 	{
 		std::tstring wstrLon, wstrLat;
 		CoordToText(m_dValue, m_monLinkedLatitude->Get(), wstrLon, wstrLat);
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLon.c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? wstrLon.c_str() : L("-"));
 	}
 };
 
@@ -422,7 +422,7 @@ public:
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
 		AutoLock l;
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DistanceToText(m_dValue).c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? DistanceToText(m_dValue).c_str() : L("-"));
 	}
 };
 
@@ -432,7 +432,7 @@ public:
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
 		AutoLock l;
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? HeightToText(m_dValue).c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? HeightToText(m_dValue).c_str() : L("-"));
 	}
 };
 
@@ -441,7 +441,7 @@ class CSpeedMonitor : public CDoubleMonitor
 	virtual void Paint(IMonitorPainter * pPainter)
 	{
 		AutoLock l;
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? SpeedToText(m_dValue).c_str() : T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_fSet ? SpeedToText(m_dValue).c_str() : L("-"));
 	}
 };
 

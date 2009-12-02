@@ -794,9 +794,9 @@ void CSun::Fix(const CTimeMonitor & monTime, const GeoPoint & p)
 				hour += 24;
 			bool fDay = (hour < set);
 			if (fDay)
-				m_monDaytime = L("Day");
+				m_monDaytime = I("Day");
 			else
-				m_monDaytime = L("Night");
+				m_monDaytime = I("Night");
 			if (app.m_Options[mcoAutoLight])
 			{
 				bool fToSet = !fDay;

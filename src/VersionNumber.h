@@ -62,11 +62,11 @@ public:
 	CVersionNumber(const std::tstring& sVersion)
 		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
 	{
-		size_t found1 = sVersion.find(T("."));
+		size_t found1 = sVersion.find(L("."));
 		if (std::string::npos != found1)
 		{
 			m_MainVersion = _wtoi(sVersion.substr(0, found1).c_str());
-			size_t found2 = sVersion.find(T("."), found1+1);
+			size_t found2 = sVersion.find(L("."), found1+1);
 			if (std::string::npos != found2)
 			{
 				m_SubVersion = _wtoi(sVersion.substr(found1+1, found2-found1-1).c_str());
@@ -99,7 +99,7 @@ public:
 	std::tstring AswstringWithName() const
 	{
 		tchar_t buffer[128];
-	    stprintf(buffer, 128, T("gpsVP %d.%d.%d"), m_MainVersion, m_SubVersion, m_SubSubVersion);
+	    stprintf(buffer, 128, L("gpsVP %d.%d.%d"), m_MainVersion, m_SubVersion, m_SubSubVersion);
 		return buffer;
     }
 	// ---------------------------------------------------------------

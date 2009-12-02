@@ -22,11 +22,11 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 	mmPopupMenu.Init();
 
 	// Monitor specific submenu
-	CMenu & mmMonitors = mmPopupMenu.CreateSubMenu(L("Change"));
+	CMenu & mmMonitors = mmPopupMenu.CreateSubMenu(I("Change"));
 	if (m_mapMonitors.find(m_vectMonitors[iMonitor]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[iMonitor]])
 		m_mapMonitors[m_vectMonitors[iMonitor]]->PrepareContextMenu(mmPopupMenu.GetListAcceptor());
 	int i = 1;
-	mmMonitors.CreateItem(L("None"), 0xbadd);
+	mmMonitors.CreateItem(I("None"), 0xbadd);
 	mmMonitors.CreateBreak();
 	for (std::map<std::tstring, IMonitor *>::iterator it = m_mapMonitors.begin(); it != m_mapMonitors.end(); ++it)
 	{
@@ -37,17 +37,17 @@ void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
 
 	// Other non monitor menu items
 	mmPopupMenu.CreateBreak();
-	mmPopupMenu.CreateItem(L("Full screen"), mcoFullScreen);
+	mmPopupMenu.CreateItem(I("Full screen"), mcoFullScreen);
 	mmPopupMenu.CheckMenuItem(mcoFullScreen, app.m_Options[mcoFullScreen]);
-	mmPopupMenu.CreateItem(L("Monitors Mode"), mcoMonitorsMode);
+	mmPopupMenu.CreateItem(I("Monitors Mode"), mcoMonitorsMode);
 	mmPopupMenu.CheckMenuItem(mcoMonitorsMode, app.m_Options[mcoMonitorsMode]);
 	// I think I should be using MF_CHECKED | MF_BYCOMMAND. but this seems to work 
 
 	// Menu processing
-	DWORD res = mmPopupMenu.Popup(pt.x, pt.y, hWnd);
+	unsigned int res = mmPopupMenu.Popup(pt.x, pt.y, hWnd);
 	if (res == 0xbadd)
 	{
-		m_vectMonitors[iMonitor] = T("");
+		m_vectMonitors[iMonitor] = L("");
 		Save();
 	}
 	else if (res == mcoFullScreen)

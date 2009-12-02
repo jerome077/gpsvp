@@ -29,7 +29,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif // LINUX
 
 // Waypoints with a name beginning with this prefix are considered as models for other waypoints
-const std::tstring WPT_MODEL_PREFIX = T("~");
+const std::tstring WPT_MODEL_PREFIX = L("~");
 bool isWptModel(const std::tstring& WaypointName);
 
 
@@ -51,8 +51,8 @@ public:
 	{
 	public:
 		virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-		virtual std::tstring Name() const { return T(""); };
-		virtual std::tstring Value() const { return T(""); };
+		virtual std::tstring Name() const { return L(""); };
+		virtual std::tstring Value() const { return L(""); };
 		virtual bool DeleteAllowed() const { return false; };
 		virtual void SetValue(const std::tstring& aValue) {};
 		virtual void SetName(const std::tstring& aValue) {};
@@ -162,7 +162,7 @@ public:
 			CLongitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 			CLongitudeProp(const CLongitudeProp& source) : m_pt(source.m_pt), m_ptEditor(source.m_ptEditor) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual std::tstring Name() const { return CoordLabelLon()+T(":"); };
+			virtual std::tstring Name() const { return CoordLabelLon()+L(":"); };
 			virtual std::tstring Value() const
 			{
 				std::tstring wstrLon, wstrLat;
@@ -180,7 +180,7 @@ public:
 			CLatitudeProp(CPoint& aPt, CPointEditor& aPtEditor) : m_pt(aPt), m_ptEditor(aPtEditor) {};
 //			CLatitudeProp(const CLatitudeProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual std::tstring Name() const { return CoordLabelLat()+T(":"); };
+			virtual std::tstring Name() const { return CoordLabelLat()+L(":"); };
 			virtual std::tstring Value() const
 			{
 				std::tstring wstrLon, wstrLat;
@@ -197,7 +197,7 @@ public:
 			CNameProp(CPoint& aPt) : m_pt(aPt) {};
 			CNameProp(const CNameProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual std::tstring Name() const { return L("Label:"); };
+			virtual std::tstring Name() const { return I("Label:"); };
 			virtual std::tstring Value() const { return m_pt.GetLabel(); };
 			virtual void SetValue(const std::tstring& aValue) { m_pt.SetLabel(aValue.c_str()); };
 		};
@@ -209,7 +209,7 @@ public:
 			CAltitudeProp(CPoint& aPt) : m_pt(aPt) {};
 			CAltitudeProp(const CAltitudeProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsGPX; };
-			virtual std::tstring Name() const { return L("Altitude:"); };
+			virtual std::tstring Name() const { return I("Altitude:"); };
 			virtual std::tstring Value() const { return IntToText(m_pt.GetAltitude()); };
 			virtual void SetValue(const std::tstring& aValue) { 	tchar_t *end;
 															int i = tcstol(aValue.c_str(), &end, 10);
@@ -224,7 +224,7 @@ public:
 			CRadiusProp(CPoint& aPt) : m_pt(aPt) {};
 			CRadiusProp(const CRadiusProp& source) : m_pt(source.m_pt) {};
 			virtual enumWaypointPropNameSpace Namespace() const { return nsVP; };
-			virtual std::tstring Name() const { return L("Radius:"); };
+			virtual std::tstring Name() const { return I("Radius:"); };
 			virtual std::tstring Value() const { return IntToText(m_pt.GetRadius()); };
 			virtual void SetValue(const std::tstring& aValue) { 	tchar_t *end;
 															int i = tcstol(aValue.c_str(), &end, 10);

@@ -84,14 +84,20 @@ UInt GetInt16(Byte * pbStart);
 
 #ifdef LINUX
 #	define tchar_t char
-#	define T(x) x
+#	define L(x) x
 #	define stprintf snprintf
+#	define stscanf sscanf
+#	define tcschr strchr
 #	define tcstol strtol
+#	define tcsnicmp strncasecmp
 #else
 #	define tchar_t tchar_t
-#	define T(x) (L##x)
+#	define L(x) (L##x)
 #	define stprintf swprintf
+#	define stscanf swscanf
+#	define tcschr wcschr
 #	define tcstol wcstol
+#	define tcsnicmp _wcsnicmp
 #endif
 
 

@@ -21,9 +21,9 @@ struct COptionSet::Option
 {
 	COptionMonitor value;
 	int iCommand;
-	void CheckMenuItem(CMenuBar & menubar)
+	void CheckMenuItem(CMenu & menu)
 	{
-		menubar.GetMenu().CheckMenuItem(iCommand, value());
+		menu.CheckMenuItem(iCommand, value());
 	}
 };
 
@@ -33,51 +33,57 @@ struct COptionSet::Data
 	OptionList m_listOptions;
 	typedef std::map<int, Option*> Commands;
 	Commands m_Commands;
+#ifndef LINUX
 	HMENU m_hMenu;
 	HKEY m_hRegKey;
+#endif // LINUX
 	CMonitorSet * m_pMonitorSet;
 };
 
 COptionSet::COptionSet() : m_data(new Data) {};
 COptionSet::~COptionSet() {delete m_data;}
 
+#ifndef LINUX
 void COptionSet::Init(HKEY hKey, CMonitorSet * pMonitorSet)
 {
 	AutoLock l;
 	m_data->m_hRegKey = hKey;
 	m_data->m_pMonitorSet = pMonitorSet;
 }
+#endif // LINUX
 
-void COptionSet::AddOption(tchar_t * wcLabel, tchar_t * wcRegName, bool fDefault, int iCommand)
+void COptionSet::AddOption(const tchar_t * wcLabel, const tchar_t * wcRegName, bool fDefault, int iCommand)
 {
 	AutoLock l;
 	m_data->m_listOptions.push_back(Option());
 	Option & option = m_data->m_listOptions.back();
 	option.iCommand = iCommand;
 	option.value.SetIdL(wcLabel);
+#ifndef LINUX
 	if (wcRegName)
 		option.value.SetRegistry(m_data->m_hRegKey, wcRegName, fDefault);
 	else
+#endif // LINUX
 		option.value = fDefault;
 	// m_pMonitorSet->AddMonitor(&option.value);
 	m_data->m_Commands[iCommand] = &option;
 }
 
-void COptionSet::CheckMenu(CMenuBar & menuBar)
+void COptionSet::CheckMenu(CMenu& menu)
 {
 	AutoLock l;
 	for (Data::OptionList::iterator it = m_data->m_listOptions.begin(); it != m_data->m_listOptions.end(); ++it)
-		it->CheckMenuItem(menuBar);
+		it->CheckMenuItem(menu);
 }
 
-bool COptionSet::ProcessCommand(int iCommand, CMenuBar & menuBar)
+bool COptionSet::ProcessCommand(int iCommand, CMenu & menu)
 {
 	AutoLock l;
 	Data::Commands::iterator it = m_data->m_Commands.find(iCommand);
 	if (it == m_data->m_Commands.end())
 		return false;
 	it->second->value = !it->second->value();
-	it->second->CheckMenuItem(menuBar);
+	it->second->CheckMenuItem(menu);
 	return true;
 }
 

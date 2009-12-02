@@ -24,34 +24,37 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 void CSatellitesMonitor::Paint(IMonitorPainter * pPainter)
 {
 	pPainter->DrawMonitorLabel(m_wstrLabel.c_str());
+#ifndef LINUX
 	m_pNMEAParser->PaintSatellites(pPainter);
+#endif // LINUX
 }
 
 void CAzimuthMonitor::Paint(IMonitorPainter * pPainter)
 {
 	if (m_fSet)
 	{
-		std::tstring str = IntToText(m_iValue) + T("°");
+		std::tstring str = IntToText(m_iValue) + L("°");
 		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), str.c_str());
 	}
 	else
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), T("-"));
+		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), L("-"));
 }
 
 void CTimeMonitor::PrepareContextMenu(IListAcceptor * pMenu)
 {
 	if (m_fSet)
-		pMenu->AddItem(L("Set time"), cnSetTimeCmd);
-	pMenu->AddItem(L("Toggle show date"), cnShowDateCmd);
+		pMenu->AddItem(I("Set time"), cnSetTimeCmd);
+	pMenu->AddItem(I("Toggle show date"), cnShowDateCmd);
 }
 
 void COptionMonitor::Paint(IMonitorPainter * pPainter)
 {
-	pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_Value() ? L("Yes") : L("No"));
+	pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_Value() ? I("Yes") : I("No"));
 }
 
 void CTextMonitor::ProcessMenuCommand(int i)
 {
+#ifndef LINUX
 	if (i == cnCopyText) {
 		if (m_enTCSrc == TEXTCOPY_SRCURL) {
 			//
@@ -66,14 +69,17 @@ void CTextMonitor::ProcessMenuCommand(int i)
 			}
 		}
 	}
+#endif // LINUX
 }
 
 void CTextMonitor::PrepareContextMenu(IListAcceptor * pMenu)
 {
+#ifndef LINUX
 	if (m_enTCSrc == TEXTCOPY_SRCURL) {
 		if ((m_strURL = app.m_request).empty()) {
 		} else {
-			pMenu->AddItem(L("Copy URL"), cnCopyText);
+			pMenu->AddItem(I("Copy URL"), cnCopyText);
 		}
 	}
+#endif // LINUX
 }

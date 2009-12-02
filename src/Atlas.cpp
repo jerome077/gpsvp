@@ -68,7 +68,7 @@ void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPain
 	if (iMapsToRead > 0 && pStatusPainter)
 	{
 		tchar_t buff[1000];
-		stprintf(buff, 1000, ((iMapsToRead == 1) ? L("Reading a map") : L("Reading %d maps")), iMapsToRead);
+		stprintf(buff, 1000, ((iMapsToRead == 1) ? I("Reading a map") : I("Reading %d maps")), iMapsToRead);
 		pStatusPainter->PaintText(buff);
 		pStatusPainter->SetProgressItems(0, iMapsToRead);
 	}
@@ -160,7 +160,7 @@ void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 		if (*l > m_uiBestBits)				
 		{
 			std::fnstring wstrName = it->first.GetFilename();
-			std::fnstring::size_type slash = wstrName.find_last_of(T("\\/"));
+			std::fnstring::size_type slash = wstrName.find_last_of(L("\\/"));
 			if (slash != std::tstring::npos)
 				wstrName = wstrName.substr(slash + 1);
 			pPainter->StartPolygon(0xff, wstrName.c_str());
@@ -194,7 +194,7 @@ void CAtlas::GetList(IListAcceptor * pAcceptor)
 {
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
-		pAcceptor->AddItem(((it->second ? T("+ ") : T("- ")) + it->first.GetFilename()).c_str(), it->first.GetID());
+		pAcceptor->AddItem(((it->second ? L("+ ") : L("- ")) + it->first.GetFilename()).c_str(), it->first.GetID());
 	}
 }
 void CAtlas::GetListUpdateCurrent(int iSelected, IListAcceptor * pAcceptor)
@@ -202,7 +202,7 @@ void CAtlas::GetListUpdateCurrent(int iSelected, IListAcceptor * pAcceptor)
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
 		if (it->first.GetID() == iSelected)
-			pAcceptor->UpdateCurrent(((it->second ? T("+ ") : T("- ")) + it->first.GetFilename()).c_str());
+			pAcceptor->UpdateCurrent(((it->second ? L("+ ") : L("- ")) + it->first.GetFilename()).c_str());
 	}
 }
 void CAtlas::CloseMapByID(int iMap)
@@ -239,11 +239,11 @@ void CAtlas::Load()
 	std::vector<Byte> data;
 	DWORD ulTotalLen = 0;
 	DWORD dwType = REG_BINARY;
-	std::tstring wstrKey = T("Atlas");
+	std::tstring wstrKey = L("Atlas");
 	RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	if (!ulTotalLen)
 	{
-		wstrKey = T("AtlasDef");
+		wstrKey = L("AtlasDef");
 		RegQueryValueEx(m_hRegKey, wstrKey.c_str(), 0, &dwType, 0, &ulTotalLen);
 	}
 	if (ulTotalLen > 0)
@@ -294,9 +294,9 @@ void CAtlas::Save()
 		data.insert(data.end(), (const Byte*)&flag, (const Byte*)&flag + sizeof(flag));
 	}
 	if (data.size() > 0)
-		RegSetValueEx(m_hRegKey, T("Atlas"), 0, REG_BINARY, &data[0], data.size());
+		RegSetValueEx(m_hRegKey, L("Atlas"), 0, REG_BINARY, &data[0], data.size());
 	else
-		RegSetValueEx(m_hRegKey, T("Atlas"), 0, REG_BINARY, 0, 0);
+		RegSetValueEx(m_hRegKey, L("Atlas"), 0, REG_BINARY, 0, 0);
 #endif
 }
 const CIMGFile & CAtlas::ById(int id)

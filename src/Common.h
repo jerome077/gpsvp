@@ -67,7 +67,7 @@ std::tstring MemoryToText(unsigned long ulMemory);
 inline std::tstring a2w(const char * s)
 {
 	tchar_t buff[1000];
-	stprintf(buff, 1000, T("%S"), s);
+	stprintf(buff, 1000, L("%S"), s);
 	return std::tstring(buff);
 }
 
@@ -100,7 +100,7 @@ enum enumObjTypes
 template <class T>
 T abs(T val)
 {
-	return (val > T(0)) ? val : -val;
+	return (val > L(0)) ? val : -val;
 }
 
 inline int int_sqrt(int input)
@@ -130,7 +130,7 @@ static const double cdYard = 0.9144;
 static const double pi = 3.1415926535897932;
 std::fnstring MakeFilename(const std::fnstring & name, const std::fnstring & basename);
 
-#define L(x) (GetDict().Translate(T(x)))
+#define I(x) (GetDict().Translate(L(x)))
 
 class Dict
 {

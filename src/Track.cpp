@@ -28,9 +28,11 @@ void CTrack::AddPoint(GeoPoint pt, double timeUTC, double dHDOP)
 	}
 	else
 	{
+#ifndef LINUX
 		SYSTEMTIME stTime;
 		GetSystemTime(&stTime);
 		SystemTimeToVariantTime(&stTime, &dTimeUTC);
+#endif // LINUX
 	}
 
 	m_dLastTimeUTC = dTimeUTC;
@@ -122,6 +124,7 @@ void CTrack::WritePLT(GeoPoint pt, double dTimeUTC)
 
 void CTrack::WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP)
 {
+#ifndef LINUX
 	// Output std::string to file
 	if (m_fBeginTrack && !m_fBeginFile)
 		m_iBufferPos += _snprintf(m_writeBuffer + m_iBufferPos, 1024, "</trkseg><trkseg>\r\n");
@@ -140,6 +143,7 @@ void CTrack::WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP)
 
 	// Since a point was added, the track should continue
 	m_fBeginFile = false;
+#endif // LINUX
 }
 
 void CTrack::PaintUnlocked(IPainter * pPainter, unsigned int uiType)
@@ -172,7 +176,7 @@ void CTrack::CreateFile()
 	// Track should begin
 	m_fBeginTrack = true;
 	m_fTrackPresent = false;
-	m_wstrFilenameInt = T("");
+	m_wstrFilenameInt = L("");
 	switch (app.m_riTrackFormat())
 	{
 	case tfPLT:
@@ -221,7 +225,7 @@ void CTrack::FlushPLT(int iSize)
 {
 	if (m_fWriting && m_fTrackPresent)
 	{
-		FILE * pFile = wfopen(GetFileName(), T("ab"));
+		FILE * pFile = wfopen(GetFileName(), L("ab"));
 		if (pFile)
 		{
 			fwrite(m_writeBuffer, 1, iSize, pFile);
@@ -232,6 +236,7 @@ void CTrack::FlushPLT(int iSize)
 
 void CTrack::FlushGPX(int iSize)
 {
+#ifndef LINUX
 	static const char* sCloseXml = "</trkseg></trk></gpx>";
 	static const DWORD iCloseLength = strlen(sCloseXml);
 	if (m_fWriting && m_fTrackPresent)
@@ -250,6 +255,7 @@ void CTrack::FlushGPX(int iSize)
 			CloseHandle(hFile);
 		}
 	}
+#endif // LINUX
 }
 
 //! Tell the track that it is broken (missing points)
@@ -265,7 +271,7 @@ void CTrack::Read(const std::tstring& wstrFilename)
 	AutoLock l;
 	std::tstring wstrExt = wstrFilename.substr(wstrFilename.length()-4, 4);
 #ifndef LINUX
-	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
+	if (0 == _wcsnicmp(wstrExt.c_str(), L(".gpx"), 4))
 		ReadFirstTrackFromGPX(wstrFilename);
 	else
 #endif // LINUX
@@ -275,7 +281,7 @@ void CTrack::Read(const std::tstring& wstrFilename)
 #ifndef LINUX
 void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::tstring& wstrFilename)
 {
-	m_wstrFilenameExt = apTrack->getName() + T(" - ") + wstrFilename; 
+	m_wstrFilenameExt = apTrack->getName() + L(" - ") + wstrFilename; 
 	std::auto_ptr<CGPXTrackSeg> apTrackSeg = apTrack->firstTrackSeg();
 	while (!apTrackSeg->eof())
 	{
@@ -311,13 +317,13 @@ void CTrack::ReadFirstTrackFromGPX(const std::tstring& wstrFilename)
 	}
 	catch (CGPXFileReader::Error e)
 	{
-		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
+		MessageBox(NULL, (I("Error while reading track: ")+e()).c_str(), I("GPX read error"), MB_ICONEXCLAMATION);
 	}
 #ifndef LINUX
 	catch (_com_error e)
 	{
-		MessageBox(NULL, (std::tstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
-			       L("GPX read error"), MB_ICONEXCLAMATION);
+		MessageBox(NULL, (std::tstring(I("Error while reading track: "))+e.ErrorMessage()).c_str(),
+			       I("GPX read error"), MB_ICONEXCLAMATION);
 	}
 #endif // LINUX
 }
@@ -327,7 +333,7 @@ void CTrack::ReadPLT(const std::tstring& wstrFilename)
 {
 	m_wstrFilenameExt = wstrFilename;
 	char buff[100];
-	FILE * pFile = wfopen(wstrFilename.c_str(), T("rt"));
+	FILE * pFile = wfopen(wstrFilename.c_str(), L("rt"));
 	if (!pFile)
 		return;
 	std::vector<long> vRecord;
@@ -403,25 +409,29 @@ void CTrack::SetCompressable()
 
 const tchar_t * CTrack::GetFileName()
 {
-	if (m_wstrFilenameInt == T(""))
+#ifndef LINUX
+	if (m_wstrFilenameInt == L(""))
 	{
 		tchar_t wcFilename[50];
 		SYSTEMTIME st;
 		GetLocalTime(&st);
-		stprintf(wcFilename, 50, T("%04d.%02d.%02d-%02d.%02d.%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+		stprintf(wcFilename, 50, L("%04d.%02d.%02d-%02d.%02d.%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 		switch (m_CurrentTrackFormat)
 		{
 		case tfPLT:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + T("\\") + wcFilename + T(".plt");		
+			m_wstrFilenameInt = app.m_rsTrackFolder() + L("\\") + wcFilename + L(".plt");		
 			break;
 		case tfGPX:
-			m_wstrFilenameInt = app.m_rsTrackFolder() + T("\\") + wcFilename + T(".gpx");
+			m_wstrFilenameInt = app.m_rsTrackFolder() + L("\\") + wcFilename + L(".gpx");
 			char cFilename[50];
 			sprintf(cFilename, "%04d.%02d.%02d-%02d.%02d.%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 			m_strGPXName = cFilename;
 			break;
 		}
 	}
+#else
+	m_wstrFilenameInt = "track";
+#endif // LINUX
 	return m_wstrFilenameInt.c_str();
 }
 
@@ -486,7 +496,7 @@ bool CTrackList::OpenTracks(const std::tstring& wstrFile)
 {
 	std::tstring wstrExt = wstrFile.substr(wstrFile.length()-4, 4);
 #ifndef LINUX
-	if (0 == _wcsnicmp(wstrExt.c_str(), T(".gpx"), 4))
+	if (0 == _wcsnicmp(wstrExt.c_str(), L(".gpx"), 4))
 		return OpenTracksGPX(wstrFile);
 	else
 #endif // LINUX
@@ -520,7 +530,7 @@ bool CTrackList::OpenTracksGPX(const std::tstring& wstrFile)
 			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
 			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
 			if (apTrack->eof())
-				MessageBox(NULL, L("No track in this file"), L("GPX read error"), MB_ICONEXCLAMATION);
+				MessageBox(NULL, I("No track in this file"), I("GPX read error"), MB_ICONEXCLAMATION);
 			while (!apTrack->eof())
 			{
 				m_Tracks.push_back(CTrack());
@@ -537,13 +547,13 @@ bool CTrackList::OpenTracksGPX(const std::tstring& wstrFile)
 	}
 	catch (CGPXFileReader::Error e)
 	{
-		MessageBox(NULL, (L("Error while reading track: ")+e()).c_str(), L("GPX read error"), MB_ICONEXCLAMATION);
+		MessageBox(NULL, (I("Error while reading track: ")+e()).c_str(), I("GPX read error"), MB_ICONEXCLAMATION);
 	}
 #ifndef LINUX
 	catch (_com_error e)
 	{
-		MessageBox(NULL, (std::tstring(L("Error while reading track: "))+e.ErrorMessage()).c_str(),
-			       L("GPX read error"), MB_ICONEXCLAMATION);
+		MessageBox(NULL, (std::tstring(I("Error while reading track: "))+e.ErrorMessage()).c_str(),
+			       I("GPX read error"), MB_ICONEXCLAMATION);
 	}
 #endif // LINUX
 	return Result;

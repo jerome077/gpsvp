@@ -342,10 +342,9 @@ void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree36
 
 	// Get client rect
 	GetClientRect(hWnd, &m_srWindow);
-	m_fVertical = m_srWindow.right - m_srWindow.left < m_srWindow.bottom - m_srWindow.top;
 	if (m_fBottomBar)
 	{
-		if (m_fVertical)
+		if (IsVertical())
 			m_iBottomBar = (m_srWindow.bottom - m_srWindow.top) / (app.m_Options[mcoLargeMonitors] ? 7 : 10);
 		else
 			m_iBottomBar = (m_srWindow.right - m_srWindow.left) / (app.m_Options[mcoLargeMonitors] ? 3 : 4);
@@ -353,7 +352,7 @@ void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree36
 	else
 		m_iBottomBar = 0;
 	
-	if (m_fVertical)
+	if (IsVertical())
 		m_srWindow.bottom -= m_iBottomBar;
 	else
 		m_srWindow.right -= m_iBottomBar;
@@ -383,29 +382,6 @@ void CGDIPainter::BeginPaint(HWND hWnd, VP::DC hdc, RECT srRegion, int iDegree36
 	m_fShowAreaAsOutline = true;
 	m_iStatusLineOffset = 0;
 }
-void CGDIPainter::SetView(const GeoPoint & gp, bool fManual)
-{
-	AutoLock l;
-	if (fManual && app.m_Options[mcoFollowCursor])
-		m_iManualTimer = 60;
-	else if (m_iManualTimer > 0)
-		return;
-	GeoPoint actual = gp;
-	const int cnMaxLat = 0x1B << (GPWIDTH - 7); // ~75 degrees
-	const int cnMaxLon = 1 << (GPWIDTH - 1);
-	if (actual.lat > cnMaxLat)
-		actual.lat = cnMaxLat;
-	if (actual.lat < -cnMaxLat)
-		actual.lat = -cnMaxLat;
-	if (actual.lon > cnMaxLon)
-		actual.lon = cnMaxLon;
-	if (actual.lon < -cnMaxLon)
-		actual.lon = -cnMaxLon;
-
-	m_gpCenterView = actual;
-	m_fViewSet = true;
-	Redraw();
-}
 
 void CGDIPainter::InitTools(int iScheme)
 {
@@ -414,7 +390,7 @@ void CGDIPainter::InitTools(int iScheme)
 
 	InitToolsCommon();
 	HRSRC hResource;
-	hResource = FindResource(m_hResourceInst, T("VPC1"), RT_RCDATA);
+	hResource = FindResource(m_hResourceInst, L("VPC1"), RT_RCDATA);
 	HGLOBAL hGlobal = LoadResource(m_hResourceInst, hResource);
 	DWORD dwSize = SizeofResource(m_hResourceInst, hResource);
 	char * data = (char *)LockResource(hGlobal);
@@ -435,7 +411,7 @@ void CGDIPainter::InitTools(int iScheme)
 	}
 	if (iScheme == 1)
 	{
-		hResource = FindResource(m_hResourceInst, T("VPC2"), RT_RCDATA);
+		hResource = FindResource(m_hResourceInst, L("VPC2"), RT_RCDATA);
 		HGLOBAL hGlobal = LoadResource(m_hResourceInst, hResource);
 		char * data = (char *)LockResource(hGlobal);
 		char * from = data;
@@ -461,7 +437,7 @@ void CGDIPainter::InitTools(const tchar_t * strFilename)
 	InitToolsCommon();
 
 	char buff[100];
-	FILE * pFile = wfopen(strFilename, T("rt"));
+	FILE * pFile = wfopen(strFilename, L("rt"));
 	if (pFile == NULL)
 		return;
 	while(fgets(buff, sizeof(buff), pFile) != 0)
@@ -471,52 +447,6 @@ void CGDIPainter::InitTools(const tchar_t * strFilename)
 
 	if (pFile != NULL)
 		fclose(pFile);
-}
-
-void CGDIPainter::ZoomIn()
-{
-	if (m_ruiScale10() == ciMinZoom)
-		return;
-	// Decrease scale twice
-	// Correct if minimum reached
-	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10() / 2));
-	Redraw();
-}
-void CGDIPainter::ZoomOut()
-{
-	if (m_ruiScale10() == ciMaxZoom)
-		return;
-	// Increase scale twice
-	// Correct if maximum reached
-	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10() * 2));
-	Redraw();
-}
-void CGDIPainter::Left()
-{
-	// Move view left by 30 screen points
-	Move(ScreenDiff(30, 0));
-}
-void CGDIPainter::Right()
-{
-	// Move view right by 30 screen points
-	Move(ScreenDiff(-30, 0));
-}
-void CGDIPainter::Up()
-{
-	// Move view up by 30 screen points
-	Move(ScreenDiff(0, 30));
-}
-void CGDIPainter::Down()
-{
-	// Move view down by 30 screen points
-	Move(ScreenDiff(0, -30));
-}
-void CGDIPainter::Move(ScreenDiff d)
-{
-	if (d.Null() == true)
-		return;
-	// Move view by given number of screen points
-	SetView(ScreenToGeo(m_spWindowCenter - d), true);
 }
 
 bool CGDIPainter::WillPaint(const ScreenRect & rect)
@@ -541,7 +471,7 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	m_hWnd = hWnd;
 	m_hResourceInst = g_hInst;
 
-	m_gpCenter.Init(hRegKey, T("Center"), GeoPoint(0, 0));
+	m_gpCenter.Init(hRegKey, L("Center"), GeoPoint(0, 0));
 	if(abs(m_gpCenter().lon) > 1 << (GPWIDTH - 1) || abs(m_gpCenter().lat) > 1 << (GPWIDTH - 2))
 	{
 		// If Center is out of bounds try to guess the rigth value 
@@ -556,7 +486,7 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 		m_gpCenter.Set(GeoPoint(lon, lat));
 	}
 	m_fViewSet = false;
-	m_ruiScale10.Init(hRegKey, T("ScaleD"), 500);
+	m_ruiScale10.Init(hRegKey, L("ScaleD"), 500);
 	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10()));
 	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10()));
 
@@ -565,7 +495,6 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 	m_fFullScreen = false;
 	m_srWindow.Init(ScreenPoint(0,0));
 	m_srWindow.Append(ScreenPoint(1,1));
-	m_iManualTimer = 0;
 
 	m_PolygonTools[0x100].m_hPen = CreatePen(PS_SOLID, 1, RGB(0x00, 0x00, 0x00));
 	m_PolygonTools[0x100].m_hBrush = CreateSolidBrush(RGB(0x00, 0x00, 0xff));
@@ -739,7 +668,7 @@ void CGDIPainter::ParseString(const char * buff, const std::tstring & wstrBase)
 			}
 		case maskPoints:
 			{
-				if (vRecord.size() == 4 && wstrRecord != T(""))
+				if (vRecord.size() == 4 && wstrRecord != L(""))
 				{
 					PointTools & pt = m_PointTools[vRecord[1]];
 					pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
@@ -752,7 +681,7 @@ void CGDIPainter::ParseString(const char * buff, const std::tstring & wstrBase)
 					pt.m_iDiffX = vRecord[2];
 					pt.m_iDiffY = vRecord[3];
 				}
-				if (vRecord.size() == 2 && wstrRecord != T(""))
+				if (vRecord.size() == 2 && wstrRecord != L(""))
 				{
 					PointTools & pt = m_PointTools[vRecord[1]];
 					pt.m_hIcon = (HICON)LoadImage(m_hResourceInst, wstrRecord.c_str(), IMAGE_ICON, 32, 32, 0);
@@ -827,11 +756,11 @@ void CGDIPainter::InitToolsCommon()
 	m_hDefaultBrush = CreateSolidBrush(RGB(0xff, 0x0, 0x0));
 	// Prepare font structures
 
-	m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, T("satelliteno"), IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, T("satellitenofix"), IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, T("satelliteyes"), IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, T("satellitewait"), IMAGE_ICON, 32, 32, 0);
-	m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, T("satellitedisabled"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[1] = (HICON)LoadImage(m_hResourceInst, L("satelliteno"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[2] = (HICON)LoadImage(m_hResourceInst, L("satellitenofix"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[3] = (HICON)LoadImage(m_hResourceInst, L("satelliteyes"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[4] = (HICON)LoadImage(m_hResourceInst, L("satellitewait"), IMAGE_ICON, 32, 32, 0);
+	m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, L("satellitedisabled"), IMAGE_ICON, 32, 32, 0);
 }
 
 GeoRect CGDIPainter::GetRect() 
@@ -897,7 +826,7 @@ void CGDIPainter::DrawBar(const ScreenRect & srBar)
 ScreenRect CGDIPainter::GetMonitorsBar()
 {
 	ScreenRect res;
-	if (m_fVertical)
+	if (IsVertical())
 	{
 		res.Init(ScreenPoint(m_srWindow.left, m_srWindow.bottom));
 		res.Append(ScreenPoint(m_srWindow.right, m_srWindow.bottom + m_iBottomBar));
@@ -978,7 +907,7 @@ void CGDIPainter::SetFullScreen(bool fFull)
 		SetForegroundWindow(m_hWnd);
 		SHFullScreen(m_hWnd, SHFS_HIDETASKBAR | SHFS_HIDESIPBUTTON | SHFS_HIDESTARTICON);
 #ifdef SMARTPHONE
-		HWND hwndTray = FindWindow(T("Tray"), 0);
+		HWND hwndTray = FindWindow(L("Tray"), 0);
 		if (hwndTray)
 			ShowWindow(hwndTray, SW_HIDE);
 #endif // SMARTPHONE
@@ -989,7 +918,7 @@ void CGDIPainter::SetFullScreen(bool fFull)
 		rectWin = m_rectLastWinSize;
 		rectCB = m_rectLastCBSize;
 #ifdef SMARTPHONE
-		HWND hwndTray = FindWindow(T("Tray"), 0);
+		HWND hwndTray = FindWindow(L("Tray"), 0);
 		if (hwndTray)
 			ShowWindow(hwndTray, SW_SHOW);
 #endif // SMARTPHONE
@@ -1001,93 +930,6 @@ void CGDIPainter::SetFullScreen(bool fFull)
 #endif
 }
 
-GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
-{
-	AutoLock l;
-	GeoPoint res;
-	int dx1 = (pt.x - m_spWindowCenter.x);
-	int dy1 = (pt.y - m_spWindowCenter.y);
-
-	int dx2;
-	int dy2;
-	if (m_cos100 != 100 || m_sin100 != 0)
-	{
-		dx2 = (dx1 * m_cos100 - dy1 * m_sin100) / 100;
-		dy2 = (dx1 * m_sin100 + dy1 * m_cos100) / 100;
-	}
-	else
-	{
-		dx2 = dx1;
-		dy2 = dy1;
-	}
-
-	//res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
-	//res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
-	res = GeoPoint(
-		int(((__int64)(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
-		int(-((__int64)(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
-	res.lon += m_gpCenter().lon;
-	res.lat += m_gpCenter().lat;
-	return res;
-}
-ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
-{
-	AutoLock l;
-	ScreenPoint res;
-	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
-	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
-
-	int dx2;
-	int dy2;
-	if (m_cos100 != 100 || m_sin100 != 0)
-	{
-		dx2 = (dx1 * m_cos100 + dy1 * m_sin100) / 100;
-		dy2 = (- dx1 * m_sin100 + dy1 * m_cos100) / 100;
-	}
-	else
-	{
-		dx2 = dx1;
-		dy2 = dy1;
-	}
-
-	int dx = dx2 + m_spWindowCenter.x;
-	int dy = dy2 + m_spWindowCenter.y;
-
-	if (dx > 1000000) dx = 1000000;
-	if (dx < -1000000) dx = -1000000;
-	if (dy > 1000000) dy = 1000000;
-	if (dy < -1000000) dy = -1000000;
-
-	res.x = dx;
-	res.y = dy;
-	return res;
-}
-ScreenRect CGDIPainter::GeoToScreen(const GeoRect & rect)
-{
-	ScreenRect res;
-	res.Init(GeoToScreen(GeoPoint(rect.minLon, rect.minLat)));
-	res.Append(GeoToScreen(GeoPoint(rect.maxLon, rect.maxLat)));
-	res.Append(GeoToScreen(GeoPoint(rect.minLon, rect.maxLat)));
-	res.Append(GeoToScreen(GeoPoint(rect.maxLon, rect.minLat)));
-	return res;
-}
-GeoRect CGDIPainter::ScreenToGeo(const ScreenRect & rect)
-{
-	GeoRect res;
-	GeoPoint gp1 = ScreenToGeo(ScreenPoint(rect.left, rect.top));
-	GeoPoint gp2 = ScreenToGeo(ScreenPoint(rect.left, rect.bottom));
-	GeoPoint gp3 = ScreenToGeo(ScreenPoint(rect.right, rect.top));
-	GeoPoint gp4 = ScreenToGeo(ScreenPoint(rect.right, rect.bottom));
-	res.minLat = (std::min)((std::min)(gp1.lat, gp2.lat), (std::min)(gp3.lat, gp4.lat));
-	res.minLon = (std::min)((std::min)(gp1.lon, gp2.lon), (std::min)(gp3.lon, gp4.lon));
-	res.maxLat = (std::max)((std::max)(gp1.lat, gp2.lat), (std::max)(gp3.lat, gp4.lat));
-	res.maxLon = (std::max)((std::max)(gp1.lon, gp2.lon), (std::max)(gp3.lon, gp4.lon));
-	return res;
-}
-const GeoPoint CGDIPainter::GetCenter() 
-{
-	return m_gpCenter();
-}
 void CGDIPainter::PaintScale()
 {
 	static double lengths0[] = {10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 0};
@@ -1173,7 +1015,7 @@ void CGDIPainter::GetUnknownTypes(IListAcceptor * pAcceptor)
 			it != m_setUnknownTypes.end(); ++it)
 	{
 		tchar_t wstrType[100];
-		stprintf(wstrType, 100, T("%d, 0x%04x, %s"), *it, *it, app.m_TypeInfo.PointType(*it).c_str());
+		stprintf(wstrType, 100, L("%d, 0x%04x, %s"), *it, *it, app.m_TypeInfo.PointType(*it).c_str());
 		pAcceptor->AddItem(wstrType, *it);
 	}
 }
@@ -1197,11 +1039,6 @@ void CGDIPainter::PaintCompass()
 	m_hdc.SelectObject(m_PolygonTools[0x101].m_hBrush);
 	m_hdc.Polygon(&m_pointList[0], 3);
 	m_iCurrentStatusIcon += 32;
-}
-
-double CGDIPainter::GetXScale() 
-{ 
-	return double(m_uiScale10Cache) / m_lXScale100 * 10;
 }
 
 void CGDIPainter::SetXScale(double scale)

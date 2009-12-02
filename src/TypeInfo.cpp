@@ -36,7 +36,7 @@ std::tstring GetLabel(char * pos)
 {
 	while (*pos && *pos != '\r' && *pos != '\n' && *pos != '\t') ++pos;
 	if (*pos != '\t')
-		return T("");
+		return L("");
 	++pos;
 	char * start = pos;
 	while (*pos && *pos != '\r' && *pos != '\n') ++pos;
@@ -48,7 +48,7 @@ std::tstring GetLabel(char * pos)
 
 void CTypeInfo::Parse(HINSTANCE hInst)
 {
-	HRSRC hResource = FindResource(hInst, T("Types"), RT_RCDATA);
+	HRSRC hResource = FindResource(hInst, L("Types"), RT_RCDATA);
 	HGLOBAL hGlobal = LoadResource(hInst, hResource);
 	char * data = (char *)LockResource(hGlobal);
 	if (data)
@@ -120,7 +120,7 @@ std::tstring CTypeInfo::PointType(int iType)
 			return it2->second;
 		return it1->second.wstrLabel;
 	}
-	return std::tstring(L("Unknown type")) + T(" (") + IntToText(iType) + T(")");
+	return std::tstring(I("Unknown type")) + L(" (") + IntToText(iType) + L(")");
 }
 
 std::tstring CTypeInfo::PolylineType(int iType)
@@ -128,7 +128,7 @@ std::tstring CTypeInfo::PolylineType(int iType)
 	GenericTypes::iterator it = m_PolylineTypes.find(iType);
 	if (it != m_PolylineTypes.end())
 		return it->second;
-	return std::tstring(L("Unknown type"))+ T(" (") + IntToText(iType) + T(")");
+	return std::tstring(I("Unknown type"))+ L(" (") + IntToText(iType) + L(")");
 }
 
 std::tstring CTypeInfo::PolygonType(int iType)
@@ -136,5 +136,5 @@ std::tstring CTypeInfo::PolygonType(int iType)
 	GenericTypes::iterator it = m_PolygonTypes.find(iType);
 	if (it != m_PolygonTypes.end())
 		return it->second;
-	return std::tstring(L("Unknown type"))+ T(" (") + IntToText(iType) + T(")");
+	return std::tstring(I("Unknown type"))+ L(" (") + IntToText(iType) + L(")");
 }

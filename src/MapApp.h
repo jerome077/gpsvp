@@ -15,14 +15,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef MAPAPP_H
 #define MAPAPP_H
 
-#define DONT_DEFINE_MIN
-#include "Common.h"
-#include "Header.h"
 #ifndef LINUX
 #	include "GDIPainter.h"
 #else
 #	include "GtkPainter.h"
 #endif
+#define DONT_DEFINE_MIN
+#include "Common.h"
+#include "Header.h"
 #include "FileDialogs.h"
 #include "Track.h"
 #include "NMEAParser.h"
@@ -53,8 +53,8 @@ struct ObjectInfo
 	ObjectInfo() : fPresent(false) {}
 	std::tstring GetDescription()
 	{
-		if (wstrName == T(""))
-			return L("(No label)");
+		if (wstrName == L(""))
+			return I("(No label)");
 		return wstrName;
 	}
 };
@@ -237,19 +237,23 @@ public:
 	void SetGMapType(int type);
 	void FileIndexDirectory();
 	void OptionsSetTrackFolder();
+#ifndef LINUX
 	void SetRasterMapFolder();
+#endif // LINUX
 	void DRMAddCurrentView();
 	void DRMStartWithCurrentZoom();
 	void DRMByTrack();
 	void InitCoreDll();
 
-	void Create(HWND hWnd, tchar_t * wcHome = T("./"));
+	void Create(HWND hWnd, tchar_t * wcHome = L("./"));
 	void InitMenu();
 	void InitMenuAllWMSMaps(CMenu& baseMenu);
 	// void SetWMSMapType(WPARAM wp);
 	void Paint();
 	void ThreadRoutine();
+#ifndef LINUX
 	void StartListening();
+#endif // LINUX
 	void CloseTrack(Int iIndex);
 	CWaypoints & GetWaypoints() {return m_Waypoints;}
 	CKeymap & GetKeymap();
@@ -346,7 +350,7 @@ public:
 		}
 	}
 	std::tstring HeightFromFeet(const tchar_t * wcOriginal);
-	const tchar_t * GetTitle() {return T("gpsVP");}
+	const tchar_t * GetTitle() {return L("gpsVP");}
 	void ExportWaypoint(int id, HWND hWnd);
 	Dict & GetDict() {return m_dict;}
 	void ReplayTrack();
@@ -357,7 +361,7 @@ public:
 	std::tstring m_wstrHttpStatus;
 	CRegScalar<bool, REG_BINARY> m_fTrafficAgreement;
 	const char * GetServerName();
-	void SetSearchURL(const char * url);
+	void SetSearchURI(const char * url);
 	void ProcessOSMSearchResult(const char * data, int size);
 	void AddSearchResult(const std::string & name, const std::string & lat, const std::string & lon);
 	const CVersionNumber& GetGpsVPVersion();
