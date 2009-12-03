@@ -6,12 +6,10 @@ CGTKPainter::~CGTKPainter()
 }
 
 void CGTKPainter::NoFix() {
-	std::cerr << "NoDix" << std::endl;
 }
 
 void CGTKPainter::Init(HWND hWnd, HKEY hRegKey)
 {
-	std::cerr << "CGTKPainter::Init" << std::endl;
 	AutoLock l;
 	CScreenToGeo::Init(hWnd, hRegKey);
 
@@ -34,7 +32,7 @@ void CGTKPainter::BeginPaint()
 	int width, height;
 	get_window()->get_size(width, height);
 	CScreenToGeo::BeginPaint(width, height);
-	std::cerr << "CGTKPainter::BeginPaint" << std::endl;
+	m_srsPoints.Reset();
 	m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
 	m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
 	
@@ -229,7 +227,6 @@ void CGTKPainter::FinishObject()
 };
 void CGTKPainter::AddPoint(const ScreenPoint & p)
 {
-	// std::cerr << "AddPoint (" << p.x << "," << p.y << ")" << std::endl;
 	if (started)
 		cr->line_to(p.x, p.y);
 	else
@@ -266,25 +263,12 @@ void CGTKPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * w
 			cr->paint();
 		}
 	}
-	else
-	{
-		// std::cerr << "Not found" << std::endl;
-	}
 }
-void CGTKPainter::SetLabelMandatory() { std::cerr << "SetLabelMandatory" << std::endl; };
-GeoRect CGTKPainter::GetRect() { std::cerr << "GetRect" << std::endl;};
+void CGTKPainter::SetLabelMandatory() { };
 
 bool CGTKPainter::on_expose_event(GdkEventExpose* event)
 {
 	app->Paint();
-	/*
-	a.BeginPaint(GetScale10C(), this, this);
-	a.PaintMapPlaceholders(this);
-	a.Paint(maskPolygons, true);
-	a.Paint(maskPolylines, true);
-	m_srsPoints.Reset();
-	a.Paint(maskPoints, true);
-	*/
 	return true;
 }
 

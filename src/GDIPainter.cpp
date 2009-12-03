@@ -756,11 +756,6 @@ void CGDIPainter::InitToolsCommon()
 	m_mapIcons[5] = (HICON)LoadImage(m_hResourceInst, L("satellitedisabled"), IMAGE_ICON, 32, 32, 0);
 }
 
-GeoRect CGDIPainter::GetRect() 
-{
-	return ScreenToGeo(m_srWindow);
-}
-
 void CGDIPainter::DrawTextMonitor(const tchar_t * wcLabel, const tchar_t * wcText)
 {
 	ScreenRect &sr = m_srCurrentMonitor;

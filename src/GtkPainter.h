@@ -28,7 +28,7 @@ class CGTKPainter
 	: public IMonitorPainter
 	, public IButtonPainter
 	, public CScreenToGeo
-	, public Hildon::Window
+	, public Gtk::DrawingArea
 	, public IGPSClient
 	, public IStatusPainter
 {
@@ -77,7 +77,6 @@ public:
 	virtual void AddPoint(const GeoPoint & gp);
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName);
 	virtual void SetLabelMandatory();
-	virtual GeoRect GetRect();
 	
 	int iDegree360;
 	GeoPoint m_gpCenter;

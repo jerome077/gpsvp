@@ -97,7 +97,6 @@ public:
     }
     ScreenPoint GeoToScreen(const GeoPoint & pt)
     {
-        // std::cerr << "GeoToScreen, " << m_uiScale10Cache << std::endl;
         AutoLock l;
         ScreenPoint res;
         int dx1 = int((int64_t)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
@@ -265,19 +264,19 @@ public:
     }
     bool WillPaint(const GeoRect & rect) { 
         ScreenRect sRect = GeoToScreen(rect);
-        std::cerr << rect.minLon << ',' << rect.minLat << ',' << rect.maxLon << ',' << rect.maxLat << std::endl;
-        std::cerr << sRect.top << ',' << sRect.left << ',' << sRect.bottom << ',' << sRect.right << std::endl;
         GeoRect grScreen = ScreenToGeo(m_srWindow);
         bool i1 = m_srWindow.Intersect(sRect);
         bool i2 = grScreen.Intersect(rect);
         if (i1 && i2)
         {
-            std::cerr << "WillPaint: true" << std::endl;
             return true;
         }
-        std::cerr << "WillPaint: false" << std::endl;
         return false;
     };
+    GeoRect GetRect() 
+    {
+        return ScreenToGeo(m_srWindow);
+    }
 };
 
 #endif // screentogeo_h

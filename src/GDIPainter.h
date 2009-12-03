@@ -158,7 +158,6 @@ public:
 	virtual bool WillPaint(const GeoRect & rect);
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gpPoint, const tchar_t * wcName);
 	virtual void SetLabelMandatory();
-	virtual GeoRect GetRect();
 
 	
 	//! Init before painting

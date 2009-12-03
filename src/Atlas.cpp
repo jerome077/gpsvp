@@ -31,25 +31,21 @@ void CAtlas::Init(HKEY hRegKey)
 
 void CAtlas::Add(const tchar_t * wcFilename, IPainter * pPainter)
 {
-	std::cout << "CAtlas::Add(" << wcFilename << ")" << std::endl;
 	for (FileList::iterator it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
 		if (it->first.GetFilename() == wcFilename)
 		{
-			std::cerr << "Duplicate" << std::endl;
 			return;
 		}
 	}
 	m_imgFiles.push_back(std::make_pair(CIMGFile(), true));
 	if (!m_imgFiles.back().first.Parse(wcFilename))
 	{
-		std::cerr << "Cannot parse" << std::endl;
 		m_imgFiles.pop_back();
 		return;
 	}
 	Save();
 	if (!pPainter->WillPaint(m_imgFiles.back().first.GetRect())) {
-		std::cerr << "Would not paint" << std::endl;
 		pPainter->SetView(m_imgFiles.back().first.GetCenter(), true);
 	}
 #ifndef LINUX
@@ -58,7 +54,6 @@ void CAtlas::Add(const tchar_t * wcFilename, IPainter * pPainter)
 }
 void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPainter * pStatusPainter)
 {
-	std::cerr << "CAtlas::BeginPaint" << std::endl;
 	m_uiScale10 = uiScale10;
 	m_pPainter = pPainter;
 
@@ -155,7 +150,6 @@ void CAtlas::BeginPaint(unsigned int uiScale10, IPainter * pPainter, IStatusPain
 }
 void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 {
-	std::cerr << "CAtlas::PaintMapPlaceholders" << std::endl;
 	FileList::iterator it;
 	for (it = m_imgFiles.begin(); it != m_imgFiles.end(); ++it)
 	{
@@ -186,18 +180,14 @@ void CAtlas::PaintMapPlaceholders(IPainter * pPainter)
 }
 void CAtlas::Paint(UInt uiObjectTypes, bool fDirectPaint)
 {
-	std::cerr << "CAtlas::Paint(" << uiObjectTypes << ")" << std::endl;
 	std::list<CIMGFile *>::iterator it;
 	for (it = m_listToPaint.begin(); it != m_listToPaint.end(); ++it)
 	{
-		std::cerr << ".";
 		if (!m_pPainter->WillPaint((*it)->GetRect())) {
-			std::cerr << "-";
 			continue;
 		}
 		(*it)->Paint(m_pPainter, m_uiBestBits, uiObjectTypes, fDirectPaint);
 	}
-	std::cerr << std::endl;
 }
 void CAtlas::Trim(const GeoRect &rect)
 {
