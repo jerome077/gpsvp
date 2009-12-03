@@ -2738,6 +2738,8 @@ void CMapApp::Paint()
 				hdc = hdcScreen;
 
 			m_painter.BeginPaint(m_hWnd, hdc, ps.rcPaint, 0, false);
+#else
+			m_painter.BeginPaint();
 #endif // LINUX
 			UpdateMonitors();
 			m_MonitorSet.PaintMonitors(&m_painter, srWindow, true, m_painter.IsVertical(), fLargeMonitors);
@@ -2792,6 +2794,8 @@ void CMapApp::Paint()
 				m_painter.SetShowUnknownTypes(fShowUnknownTypes);
 				m_painter.SetShowPolygonLabels(fShowPolygonLabels);
 				m_painter.SetShowAreaAsOutline(fShowAreaAsOutline);
+#else
+				m_painter.BeginPaint();
 #endif // LINUX
 			}
 

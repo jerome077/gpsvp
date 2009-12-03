@@ -29,8 +29,37 @@ void CGTKPainter::RedrawMonitors() {}
 void CGTKPainter::SetShowMonitors(bool fShow) {}
 bool CGTKPainter::IsFullScreen() {return false;}
 void CGTKPainter::SetFullScreen(bool fFull) {}
-void CGTKPainter::BeginPaint() {}
-void CGTKPainter::EndPaint() {}
+void CGTKPainter::BeginPaint()
+{
+	int width, height;
+	get_window()->get_size(width, height);
+	CScreenToGeo::BeginPaint(width, height);
+	std::cerr << "CGTKPainter::BeginPaint" << std::endl;
+	m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
+	m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
+	
+	// GdkWindow* window = event->window;
+	
+
+	pixmap = Gdk::Pixmap::create(get_window(), width, height);
+	// pixmap->set_colormap(window->get_colormap());
+	cr = pixmap->create_cairo_context();
+	// window->create_cairo_context();
+	cr->set_source_rgb(1, 1, 1);
+	cr->begin_new_path();
+	cr->move_to(0, 0);
+	cr->line_to(width, 0);
+	cr->line_to(width, height);
+	cr->line_to(0, height);
+	cr->line_to(0, 0);
+	cr->fill_preserve();
+}
+void CGTKPainter::EndPaint()
+{
+	cr.clear();
+	static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(get_window());
+	get_window()->draw_drawable(dc, pixmap, 0, 0, 0, 0, GetWindowRect().right, GetWindowRect().bottom);
+}
 void CGTKPainter::PaintScale() {}
 void CGTKPainter::PaintStatusLine(const tchar_t * wcName) {};
 void CGTKPainter::PaintLowMemory(const tchar_t * wcString1, const tchar_t * wcString2){}
@@ -212,20 +241,6 @@ void CGTKPainter::AddPoint(const GeoPoint & gp)
 { 
 	AddPoint(GeoToScreen(gp));
 };
-bool CGTKPainter::WillPaint(const GeoRect & rect) { 
-	ScreenRect sRect = GeoToScreen(rect);
-	// std::cerr << sRect.top << ',' << sRect.left << ',' << sRect.bottom << ',' << sRect.right << std::endl;
-	GeoRect grScreen = ScreenToGeo(m_srWindow);
-	bool i1 = m_srWindow.Intersect(sRect);
-	bool i2 = grScreen.Intersect(rect);
-	if (i1 && i2)
-	{
-		// std::cerr << "WillPaint: true" << std::endl;
-		return true;
-	}
-	// std::cerr << "WillPaint: false" << std::endl;
-	return false;
-};
 void CGTKPainter::PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName) 
 { 
 	ScreenPoint sp = GeoToScreen(gp);
@@ -261,39 +276,15 @@ GeoRect CGTKPainter::GetRect() { std::cerr << "GetRect" << std::endl;};
 
 bool CGTKPainter::on_expose_event(GdkEventExpose* event)
 {
-	PrepareScales();
-	m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
-	m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
-	
-	GdkWindow* window = event->window;
-	int width, height;
-	gdk_drawable_get_size(window, &width, &height);
-	m_spWindowCenter = ScreenPoint(width / 2, height / 2);
-	m_srWindow.Init(ScreenPoint(0, 0));
-	m_srWindow.Append(ScreenPoint(width, height));
-
-	pixmap = Gdk::Pixmap::create(get_window(), width, height);
-	// pixmap->set_colormap(window->get_colormap());
-	cr = pixmap->create_cairo_context();
-	// window->create_cairo_context();
-	cr->set_source_rgb(1, 1, 1);
-	cr->begin_new_path();
-	cr->move_to(0, 0);
-	cr->line_to(width, 0);
-	cr->line_to(width, height);
-	cr->line_to(0, height);
-	cr->line_to(0, 0);
-	cr->fill_preserve();
-	
+	app->Paint();
+	/*
 	a.BeginPaint(GetScale10C(), this, this);
 	a.PaintMapPlaceholders(this);
 	a.Paint(maskPolygons, true);
 	a.Paint(maskPolylines, true);
 	m_srsPoints.Reset();
 	a.Paint(maskPoints, true);
-	cr.clear();
-	static Glib::RefPtr<Gdk::GC> dc = Gdk::GC::create(get_window());
-	get_window()->draw_drawable(dc, pixmap, 0, 0, 0, 0, width, height);
+	*/
 	return true;
 }
 
@@ -504,7 +495,7 @@ bool CGTKPainter::on_motion(GdkEventMotion* event)
 }
 void CGTKPainter::Move(ScreenDiff d)
 {
-	SetView(ScreenToGeo(m_spWindowCenter - d), true);
+	SetView(ScreenToGeo(GetWindowCenter() - d), true);
 }
 
 void CGTKPainter::Redraw()

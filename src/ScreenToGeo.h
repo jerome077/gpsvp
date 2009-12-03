@@ -97,7 +97,7 @@ public:
     }
     ScreenPoint GeoToScreen(const GeoPoint & pt)
     {
-        std::cerr << "GeoToScreen, " << m_uiScale10Cache << std::endl;
+        // std::cerr << "GeoToScreen, " << m_uiScale10Cache << std::endl;
         AutoLock l;
         ScreenPoint res;
         int dx1 = int((int64_t)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
@@ -243,9 +243,41 @@ public:
         m_lXScale100 = cos100(m_gpCenterCache.lat);
     }
     const GeoPoint& GetCenterC() {return m_gpCenterCache;}
+    const ScreenPoint& GetWindowCenter() {return m_spWindowCenter;}
+    const ScreenRect& GetWindowRect() {return m_srWindow;}
     const UInt GetScale10C() {return m_uiScale10Cache;}
     const long GetXScale100C() {return m_lXScale100;}
-
+    void BeginPaint(int width, int height)
+    {
+        m_spWindowCenter = ScreenPoint(width / 2, height / 2);
+        m_srWindow.Init(ScreenPoint(0, 0));
+        m_srWindow.Append(ScreenPoint(width, height));
+        int iDegree360 = 0;
+        if (m_fViewSet)
+        {
+            m_gpCenter.Set(m_gpCenterView);
+        }
+        m_cos100 = int(cos(double(iDegree360) / 180 * pi) * 100);
+        m_sin100 = int(sin(double(iDegree360) / 180 * pi) * 100);
+		m_spWindowCenter = ScreenPoint((m_srWindow.right + m_srWindow.left) / 2,
+			(m_srWindow.bottom + m_srWindow.top) / 2);
+        PrepareScales();
+    }
+    bool WillPaint(const GeoRect & rect) { 
+        ScreenRect sRect = GeoToScreen(rect);
+        std::cerr << rect.minLon << ',' << rect.minLat << ',' << rect.maxLon << ',' << rect.maxLat << std::endl;
+        std::cerr << sRect.top << ',' << sRect.left << ',' << sRect.bottom << ',' << sRect.right << std::endl;
+        GeoRect grScreen = ScreenToGeo(m_srWindow);
+        bool i1 = m_srWindow.Intersect(sRect);
+        bool i2 = grScreen.Intersect(rect);
+        if (i1 && i2)
+        {
+            std::cerr << "WillPaint: true" << std::endl;
+            return true;
+        }
+        std::cerr << "WillPaint: false" << std::endl;
+        return false;
+    };
 };
 
 #endif // screentogeo_h

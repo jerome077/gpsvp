@@ -75,7 +75,6 @@ public:
 	virtual void FinishObject();
 	void AddPoint(const ScreenPoint & p);
 	virtual void AddPoint(const GeoPoint & gp);
-	virtual bool WillPaint(const GeoRect & rect);
 	virtual void PaintPoint(UInt uiType, const GeoPoint & gp, const tchar_t * wcName);
 	virtual void SetLabelMandatory();
 	virtual GeoRect GetRect();
@@ -89,8 +88,6 @@ public:
 	bool started;
 	int m_cos100;
 	int m_sin100;
-	ScreenPoint m_spWindowCenter;
-	ScreenRect m_srWindow;
 	ScreenRectSet m_srsPoints;
 
 	virtual bool on_expose_event(GdkEventExpose* event);

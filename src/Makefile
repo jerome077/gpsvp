@@ -1,6 +1,6 @@
 all: GtkPainter
 
-CXXFLAGS = -O3 -DLINUX -DUSE_STDIO_H -fexec-charset=cp1251 -finput-charset=cp1251 -Wno-deprecated `pkg-config gtkmm-2.4 hildonmm --cflags` -ggdb
+CXXFLAGS = -Wshadow -O0 -DLINUX -DUSE_STDIO_H -fexec-charset=cp1251 -finput-charset=cp1251 -Wno-deprecated `pkg-config gtkmm-2.4 hildonmm --cflags` -ggdb
 LDFLAGS = `pkg-config gtkmm-2.4 hildonmm --libs` `pkg-config gthread-2.0 --libs` -ggdb
 
 OBJS = TreSubfile.o SubDivision.o SubFile.o MapLevel.o \
