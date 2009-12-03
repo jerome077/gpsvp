@@ -68,6 +68,7 @@ inline int sign(int i)
 CMenuBar m_MenuBar;
 extern HINSTANCE g_hInst;
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
+#else
 #endif
 
 const CVersionNumber g_gpsVPVersion(0, 4, 19);
@@ -3190,7 +3191,7 @@ void CMapApp::InitMenu()
 #ifndef LINUX
 	CMenu & mMenu = m_MenuBar.GetMenu();
 #else
-	CMenu mMenu;
+	CMenu & mMenu = m_Menu;
 #endif //  LINUX
 	{
 		CMenu & mmMaps = mMenu.CreateSubMenu(I("Maps"));

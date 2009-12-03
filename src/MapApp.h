@@ -70,6 +70,7 @@ public:
 	CGDIPainter m_painter;
 #else
 	CGTKPainter m_painter;
+	CMenu m_Menu;
 #endif
 	CRegString m_rsWaypointsFile;
 	CRegString m_rsToolsFile;

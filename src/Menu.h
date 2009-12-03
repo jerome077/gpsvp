@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
@@ -131,13 +132,33 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	};
 #else
 	typedef void* HWND;
-	class CMenu
+#	include <gtkmm.h>
+	class CMenu : public Gtk::Menu
 	{
-	std::list<CMenu> Submenus;
+		std::list<CMenu*> Submenus;
+		std::list<Gtk::MenuItem*> Subitems;
+		CMenu(const CMenu&);
 	public:
+		CMenu(){}
 		void Init() {}
-		CMenu & CreateSubMenu(const tchar_t * wcLabel) {Submenus.push_back(CMenu()); return Submenus.back();}
-		void CreateItem(const tchar_t * wcLabel, int iCommand) {};
+		CMenu & CreateSubMenu(const tchar_t * wcLabel)
+		{
+			CMenu* menu = new CMenu();
+			Gtk::MenuItem* item = new Gtk::MenuItem(wcLabel);
+			Submenus.push_back(menu);
+			Subitems.push_back(item);
+			append(*item);
+			item->set_submenu(*menu);
+			show_all_children();
+			return *menu;
+		}
+		void CreateItem(const tchar_t * wcLabel, int iCommand)
+		{
+			Gtk::MenuItem* item = new Gtk::MenuItem(wcLabel);
+			Subitems.push_back(item);
+			append(*item);
+			show_all_children();
+		}
 		void CreateBreak() {};
 		void CheckMenuItem(int iId, bool fCheck) {};
 		void EnableMenuItem(int iId, bool fCheck) {};
