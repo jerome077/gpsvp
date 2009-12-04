@@ -1588,6 +1588,7 @@ CMapApp::CMapApp()
 	, m_fMemoryVeryLow(false)
 	, m_NMEAParser()
 	, m_Options()
+	, m_Menu(this)
 {
 	m_NMEAParser.SetClient(this);
 #ifndef LINUX
@@ -3457,7 +3458,7 @@ void CMapApp::CheckMenu()
 #ifndef LINUX
 	CMenu & menu = m_MenuBar.GetMenu();
 #else
-	CMenu menu;
+	CMenu & menu = m_Menu;
 #endif // LINUX
 	m_Options.CheckMenu(menu);
 	for (int i = mcSetDetail1; i <= mcSetDetail5; ++i)

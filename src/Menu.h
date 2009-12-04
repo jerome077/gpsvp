@@ -133,18 +133,41 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #else
 	typedef void* HWND;
 #	include <gtkmm.h>
+	struct ICommandAcceptor
+	{
+		virtual void OnCommand(int command) = 0;
+	};
+	class CMenuItem : public Gtk::MenuItem
+	{
+		ICommandAcceptor* Acceptor;
+		int Command;
+	public:
+		CMenuItem(const char* label, ICommandAcceptor* acceptor, int command)
+			: Gtk::MenuItem(label)
+			, Acceptor(acceptor)
+			, Command(command)
+		{
+			signal_activate().connect(sigc::mem_fun(*this, &CMenuItem::on_click));
+		}
+		void on_click()
+		{
+			if (Acceptor && Command)
+				Acceptor->OnCommand(Command);
+		}
+	};
 	class CMenu : public Gtk::Menu
 	{
 		std::list<CMenu*> Submenus;
-		std::list<Gtk::MenuItem*> Subitems;
+		std::list<CMenuItem*> Subitems;
 		CMenu(const CMenu&);
+		ICommandAcceptor* Acceptor;
 	public:
-		CMenu(){}
+		CMenu(ICommandAcceptor* acceptor = 0) : Acceptor(acceptor) {}
 		void Init() {}
 		CMenu & CreateSubMenu(const tchar_t * wcLabel)
 		{
-			CMenu* menu = new CMenu();
-			Gtk::MenuItem* item = new Gtk::MenuItem(wcLabel);
+			CMenu* menu = new CMenu(Acceptor);
+			CMenuItem* item = new CMenuItem(wcLabel, 0, 0);
 			Submenus.push_back(menu);
 			Subitems.push_back(item);
 			append(*item);
@@ -154,7 +177,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 		}
 		void CreateItem(const tchar_t * wcLabel, int iCommand)
 		{
-			Gtk::MenuItem* item = new Gtk::MenuItem(wcLabel);
+			CMenuItem* item = new CMenuItem(wcLabel, Acceptor, iCommand);
 			Subitems.push_back(item);
 			append(*item);
 			show_all_children();

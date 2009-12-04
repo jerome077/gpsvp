@@ -61,7 +61,7 @@ struct ObjectInfo
 
 class CGMPainter;
 
-class CMapApp : public IGPSClient
+class CMapApp : public IGPSClient, public ICommandAcceptor
 {
 private:
 	Dict m_dict;
@@ -300,6 +300,7 @@ public:
 	CAtlas & GetAtlas() {return m_atlas;}
 	int GetTrackStep() {return m_riTrackStep();}
 	bool ProcessCommand(unsigned int wp);
+	void OnCommand(int i) {ProcessCommand(i);}
 	void ProcessWMHIBERNATE();
 	void SetDetail(int iDetail);
 	int PrepareScale(unsigned int uiScale10)

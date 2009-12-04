@@ -9,7 +9,7 @@ OBJS = TreSubfile.o SubDivision.o SubFile.o MapLevel.o \
 	MapApp.o Common.o OptionSet.o Track.o WayPoints.o Lock.o ScreenPoint.o GtkPainter.o \
 	Traffic.o GeoPoint.o MonitorSet.o TrackCompetition.o Monitors.o MRUPoints.o MaemoMain.o
 
-Mapapp.o: GtkPainter.h ScreenToGeo.h
+Mapapp.o: GtkPainter.h ScreenToGeo.h Menu.h
 
 GtkPainter: ${OBJS}
 	g++ ${LDFLAGS} -o GtkPainter ${OBJS}
