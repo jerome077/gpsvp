@@ -37,6 +37,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #		include <winuser.h>
 #		include <shlobj.h>
 #	endif
+#else
+#	include <hildon-fmmm.h>
 #endif
 #ifdef UNDER_CE
 #	include <devload.h>
@@ -1572,13 +1574,15 @@ void CMapApp::StartHttpThread()
 
 #endif
 
-CMapApp::CMapApp()
+CMapApp::CMapApp(Hildon::Window& window)
 	: m_fMoving(false)
 	, m_hWnd(0)
 #ifndef LINUX
 	, m_hPortThread(0)
 	, m_hHttpThread(0)
 	, m_hPortFile(0)
+#else
+	, m_window(window)
 #endif
 	, m_wstrCmdLine(0)
 #ifndef LINUX
@@ -1812,6 +1816,18 @@ void CMapApp::FileOpenMap()
 	else
 	{
 		int err = GetLastError();
+	}
+#else
+	Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
+
+	int response = dialog.run();
+	dialog.hide();
+
+	if (response == Gtk::RESPONSE_OK)
+	{
+		std::string filename = dialog.get_filename();
+		m_atlas.Add(filename.c_str(), &m_painter);
+		m_painter.Redraw();
 	}
 #endif
 }

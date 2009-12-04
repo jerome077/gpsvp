@@ -22,8 +22,6 @@
 #include "IPainter.h"
 #include "ScreenToGeo.h"
 
-typedef void* HWND;
-
 class CGTKPainter
 	: public IMonitorPainter
 	, public IButtonPainter
