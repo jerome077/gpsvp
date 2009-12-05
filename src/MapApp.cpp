@@ -1818,7 +1818,56 @@ void CMapApp::FileOpenMap()
 		int err = GetLastError();
 	}
 #else
-	Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
+  Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
+ 
+  // Add filters, so that only certain file types can be selected:
+
+  Gtk::FileFilter filter_text;
+  filter_text.set_name("Text Files");
+  filter_text.add_mime_type("text/plain");
+  dialog.add_filter(filter_text);
+
+  Gtk::FileFilter filter_cpp;
+  filter_cpp.set_name("C/C++ Files");
+  filter_cpp.add_mime_type("text/x-c");
+  filter_cpp.add_mime_type("text/x-c++");
+  filter_cpp.add_mime_type("text/x-c-header");
+  dialog.add_filter(filter_cpp);
+  
+  Gtk::FileFilter filter_any;
+  filter_any.set_name("Any Files");
+  filter_any.add_pattern("*");
+  dialog.add_filter(filter_any);
+
+  //Show the dialog and wait for a user response:
+  int response = dialog.run();
+
+  //Handle the response:
+  switch(response)
+  {
+    case(Gtk::RESPONSE_OK):
+    {
+      std::cout << "Open clicked." << std::endl;
+
+      //Notice that this is a std::string, not a Glib::ustring:
+      std::string filename = dialog.get_filename();
+      std::cout << "File selected: " <<  filename << std::endl;
+      break;
+    }
+    case(Gtk::RESPONSE_CANCEL):
+    {
+      std::cout << "Cancel clicked." << std::endl;
+      break;
+    }
+    default:
+    {
+      std::cout << "Unexpected button clicked." << std::endl;
+      break;
+    }
+  }
+
+/*
+  	Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
 
 	int response = dialog.run();
 	dialog.hide();
@@ -1829,6 +1878,7 @@ void CMapApp::FileOpenMap()
 		m_atlas.Add(filename.c_str(), &m_painter);
 		m_painter.Redraw();
 	}
+*/
 #endif
 }
 
