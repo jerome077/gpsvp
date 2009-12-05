@@ -155,32 +155,35 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 				Acceptor->OnCommand(Command);
 		}
 	};
-	class CMenu : public Gtk::Menu
+	class CMenu
 	{
+		Gtk::MenuShell* Menu;
 		std::list<CMenu*> Submenus;
 		std::list<CMenuItem*> Subitems;
 		CMenu(const CMenu&);
 		ICommandAcceptor* Acceptor;
 	public:
-		CMenu(ICommandAcceptor* acceptor = 0) : Acceptor(acceptor) {}
+		CMenu(Gtk::MenuShell* menu, ICommandAcceptor* acceptor = 0) : Menu(menu), Acceptor(acceptor) {}
+		CMenu(ICommandAcceptor* acceptor = 0) : Menu(new Gtk::Menu), Acceptor(acceptor) {}
 		void Init() {}
 		CMenu & CreateSubMenu(const tchar_t * wcLabel)
 		{
-			CMenu* menu = new CMenu(Acceptor);
+			Gtk::Menu* gtkMenu = new Gtk::Menu;
+			CMenu* menu = new CMenu(gtkMenu, Acceptor);
 			CMenuItem* item = new CMenuItem(wcLabel, 0, 0);
 			Submenus.push_back(menu);
 			Subitems.push_back(item);
-			append(*item);
-			item->set_submenu(*menu);
-			show_all_children();
+			Menu->append(*item);
+			item->set_submenu(*gtkMenu);
+			Menu->show_all_children();
 			return *menu;
 		}
 		void CreateItem(const tchar_t * wcLabel, int iCommand)
 		{
 			CMenuItem* item = new CMenuItem(wcLabel, Acceptor, iCommand);
 			Subitems.push_back(item);
-			append(*item);
-			show_all_children();
+			Menu->append(*item);
+			Menu->show_all_children();
 		}
 		void CreateBreak() {};
 		void CheckMenuItem(int iId, bool fCheck) {};

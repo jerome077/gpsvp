@@ -38,7 +38,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #		include <shlobj.h>
 #	endif
 #else
-#	include <hildon-fmmm.h>
+#	ifdef HILDON
+#		include <hildon-fmmm.h>
+#	endif
 #endif
 #ifdef UNDER_CE
 #	include <devload.h>
@@ -1574,7 +1576,7 @@ void CMapApp::StartHttpThread()
 
 #endif
 
-CMapApp::CMapApp(Hildon::Window& window)
+CMapApp::CMapApp(LinuxWindow& window)
 	: m_fMoving(false)
 	, m_hWnd(0)
 #ifndef LINUX
@@ -1592,7 +1594,11 @@ CMapApp::CMapApp(Hildon::Window& window)
 	, m_fMemoryVeryLow(false)
 	, m_NMEAParser()
 	, m_Options()
+#ifdef HILDON
 	, m_Menu(this)
+#else
+	, m_Menu(&m_menuBar, this)
+#endif
 {
 	m_NMEAParser.SetClient(this);
 #ifndef LINUX
@@ -1818,67 +1824,27 @@ void CMapApp::FileOpenMap()
 		int err = GetLastError();
 	}
 #else
-  Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
- 
-  // Add filters, so that only certain file types can be selected:
+	Gtk::FileChooserDialog dialog("Please choose a folder", Gtk::FILE_CHOOSER_ACTION_OPEN);
+	dialog.set_transient_for(m_window);
 
-  Gtk::FileFilter filter_text;
-  filter_text.set_name("Text Files");
-  filter_text.add_mime_type("text/plain");
-  dialog.add_filter(filter_text);
+	//Add response buttons the the dialog:
+	dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	dialog.add_button(I("Open"), Gtk::RESPONSE_OK);
 
-  Gtk::FileFilter filter_cpp;
-  filter_cpp.set_name("C/C++ Files");
-  filter_cpp.add_mime_type("text/x-c");
-  filter_cpp.add_mime_type("text/x-c++");
-  filter_cpp.add_mime_type("text/x-c-header");
-  dialog.add_filter(filter_cpp);
-  
-  Gtk::FileFilter filter_any;
-  filter_any.set_name("Any Files");
-  filter_any.add_pattern("*");
-  dialog.add_filter(filter_any);
+	Gtk::FileFilter filter_any;
+	filter_any.set_name("Garmin maps");
+	filter_any.add_pattern("*.img");
+	dialog.add_filter(filter_any);
 
-  //Show the dialog and wait for a user response:
-  int response = dialog.run();
+	int result = dialog.run();
 
-  //Handle the response:
-  switch(response)
-  {
-    case(Gtk::RESPONSE_OK):
-    {
-      std::cout << "Open clicked." << std::endl;
-
-      //Notice that this is a std::string, not a Glib::ustring:
-      std::string filename = dialog.get_filename();
-      std::cout << "File selected: " <<  filename << std::endl;
-      break;
-    }
-    case(Gtk::RESPONSE_CANCEL):
-    {
-      std::cout << "Cancel clicked." << std::endl;
-      break;
-    }
-    default:
-    {
-      std::cout << "Unexpected button clicked." << std::endl;
-      break;
-    }
-  }
-
-/*
-  	Hildon::FileChooserDialog dialog(m_window, Gtk::FILE_CHOOSER_ACTION_OPEN);
-
-	int response = dialog.run();
-	dialog.hide();
-
-	if (response == Gtk::RESPONSE_OK)
+	//Handle the response:
+	if (result == Gtk::RESPONSE_OK)
 	{
 		std::string filename = dialog.get_filename();
 		m_atlas.Add(filename.c_str(), &m_painter);
 		m_painter.Redraw();
 	}
-*/
 #endif
 }
 
@@ -2926,8 +2892,8 @@ void CMapApp::Paint()
 				m_TrackCompetition.Paint(&m_painter);
 				if (fShowWaypoints)
 					m_Waypoints.Paint(&m_painter, (m_fFix ? &gpCursor : 0));
-				m_TrafficNodes.Paint(&m_painter, m_Options[mcoTrafficFlags]);
 #ifndef LINUX
+				m_TrafficNodes.Paint(&m_painter, m_Options[mcoTrafficFlags]);
 				dwTmp = GetTickCount(); m_monProfile[4] = dwTmp - dwTimer; dwTimer = dwTmp;
 #endif // LINUX
 				if (!m_fMemoryLow && fShowPOIs && fShowGarminMaps)

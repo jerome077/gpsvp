@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <gtkmm.h>
-#include <hildonmm.h>
+#ifdef HILDON
+#	include <hildonmm.h>
+#endif
 #include <map>
 #include <sys/stat.h>
 #include <fcntl.h>

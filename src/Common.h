@@ -66,9 +66,13 @@ std::tstring SpeedToText(double dDistance);
 std::tstring MemoryToText(unsigned long ulMemory);
 inline std::tstring a2w(const char * s)
 {
+#ifndef LINUX
 	tchar_t buff[1000];
 	stprintf(buff, 1000, L("%S"), s);
 	return std::tstring(buff);
+#else
+	return s;
+#endif // LINUX
 }
 
 struct IListAcceptor

@@ -60,7 +60,13 @@ struct ObjectInfo
 };
 
 class CGMPainter;
-class Hildon::Window;
+#ifdef HILDON
+	class Hildon::Window;
+	typedef Hildon::Window LinuxWindow;
+#else
+	class Gtk::Window;
+	typedef Gtk::Window LinuxWindow;
+#endif
 
 class CMapApp : public IGPSClient, public ICommandAcceptor
 {
@@ -87,7 +93,11 @@ public:
 	HWND m_hWnd;
 #ifndef LINUX
 #else
-	Hildon::Window& m_window;
+	LinuxWindow& m_window;
+#ifdef HILDON
+#else
+	Gtk::MenuBar m_menuBar;
+#endif
 #endif // LINUX
 	std::tstring m_wstrHome;
 	CTrackList m_Tracks;
@@ -203,7 +213,7 @@ public:
 	std::tstring m_wstrVersionMessage;
 
 public:
-	CMapApp(Hildon::Window& window);
+	CMapApp(LinuxWindow& window);
 	~CMapApp();
 	virtual void NoFix();
 	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP);

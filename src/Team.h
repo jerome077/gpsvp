@@ -37,7 +37,11 @@ public:
 		if (update) {
 			char url[10000];
 			// Maybe, change coordinate format to signed decimal floats? (Possible locale problems.)
+#ifndef LINUX
 			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%S&channel=%S&lat=%d&lng=%d", name.c_str(), channel.c_str(), gpCurrent.lat24(), gpCurrent.lon24());
+#else
+			sprintf(url, "http://gpsvp.com/TeamGPS.php?name=%s&channel=%s&lat=%d&lng=%d", name.c_str(), channel.c_str(), gpCurrent.lat24(), gpCurrent.lon24());
+#endif
 			return url;
 		}
 		return "";
