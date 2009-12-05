@@ -159,7 +159,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	{
 		Gtk::MenuShell* Menu;
 		std::list<CMenu*> Submenus;
-		std::list<CMenuItem*> Subitems;
+		std::list<Gtk::MenuItem*> Subitems;
 		CMenu(const CMenu&);
 		ICommandAcceptor* Acceptor;
 	public:
@@ -185,7 +185,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 			Menu->append(*item);
 			Menu->show_all_children();
 		}
-		void CreateBreak() {};
+		void CreateBreak()
+		{
+			Gtk::SeparatorMenuItem* item = new Gtk::SeparatorMenuItem();
+			Subitems.push_back(item);
+			Menu->append(*item);
+			Menu->show_all_children();
+		};
 		void CheckMenuItem(int iId, bool fCheck) {};
 		void EnableMenuItem(int iId, bool fCheck) {};
 		IListAcceptor* GetListAcceptor() {return NULL;}
