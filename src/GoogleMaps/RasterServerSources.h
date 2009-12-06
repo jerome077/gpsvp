@@ -154,9 +154,9 @@ public:
 			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		fnchar_t filename[MAX_PATH];
+		tchar_t filename[MAX_PATH];
 
-		fnsprintf(filename, FN("x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
+		tsprintf(filename, L("x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gmap");
@@ -181,9 +181,9 @@ public:
 			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		fnchar_t filename[MAX_PATH];
+		tchar_t filename[MAX_PATH];
 
-		fnsprintf(filename, FN("x=%d&y=%d&zoom=%d.jpg"), gfdata.X, gfdata.Y, gfdata.level);
+		tsprintf(filename, L("x=%d&y=%d&zoom=%d.jpg"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"gtopo");
@@ -208,9 +208,9 @@ public:
 			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		fnchar_t filename[MAX_PATH];
+		tchar_t filename[MAX_PATH];
 
-		fnsprintf(filename, FN("%S.jpg"), GetSatelliteBlockName(gfdata).c_str());
+		tsprintf(filename, L("%S.jpg"), GetSatelliteBlockName(gfdata).c_str());
 		name = filename;
 		// wsprintf(zoomname, L"level=%d", name.length() - 4); // 4 = length(.jpg)
 
@@ -245,9 +245,9 @@ public:
 			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		fnchar_t filename[MAX_PATH];
+		tchar_t filename[MAX_PATH];
 
-		fnsprintf(filename, FN("%s%S%s"), GetMapType().c_str(), GetBlockName(gfdata).c_str(), GetFileExtension().c_str());
+		tsprintf(filename, L("%s%S%s"), GetMapType().c_str(), GetBlockName(gfdata).c_str(), GetFileExtension().c_str());
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
@@ -334,9 +334,9 @@ public:
 			const GEOFILE_DATA& gfdata, std::fnstring &path, std::fnstring &name, const std::wstring root
 		)
 	{
-		fnchar_t filename[MAX_PATH];
+		tchar_t filename[MAX_PATH];
 
-		fnsprintf(filename, FN("osm-x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
+		tsprintf(filename, L("osm-x=%d&y=%d&zoom=%d.png"), gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
 		return GetDiskGenericFileName(gfdata, root, path, L"osm");

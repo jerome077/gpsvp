@@ -54,9 +54,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "menubar.h"
 
 #include "HttpClient.h"
-#ifndef LINUX
-#	include "GoogleMaps/GMPainter.h"
-#endif
+#include "GoogleMaps/GMPainter.h"
 #include "VersionNumber.h"
 
 #ifndef LINUX
@@ -2315,7 +2313,9 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 	m_Options.AddOption(I("Use test server"), L("TestServer"), false, mcoTestServer);
 	m_Options.AddOption(I("Show traffic flags"), L("TrafficFlags"), false, mcoTrafficFlags);
 	m_Options.AddOption(I("Large monitors"), L("LargeMonitors"), false, mcoLargeMonitors);
+#ifdef SMARTPHONE
 	m_Options.AddOption(I("Automatic light"), L("AutomaticLight"), false, mcoAutoLight);
+#endif // SMARTPHONE
 	m_Options.AddOption(I("Large fonts"), L("LargeFonts"), hiRes, mcoLargeFonts);
 	m_Options.AddOption(I("Show Sun azimuth"), L("ShowSunAz"), false, mcoShowSunAz);
 
@@ -2333,7 +2333,11 @@ void CMapApp::Create(HWND hWnd, tchar_t * wcHome)
 	m_Options.AddOption(I("Turn bluetooth on"), L("BluetoothOn"), false, mcoBluetoothOn);
 #endif // SMARTPHONE
 	m_Options.AddOption(I("Full screen"), L("FullScreen"), false, mcoFullScreen);
+#ifndef LINUX
 	m_Options.AddOption(I("Debug mode"), L("DebugMode"), false, mcoDebugMode);
+#else // LINUX
+	m_Options.AddOption(I("Debug mode"), L("DebugMode"), true, mcoDebugMode);
+#endif // LINUX
 	m_Options.AddOption(I("Write connection log"), L("WriteConnectionLog"), false, mcoWriteConnectionLog);
 	m_Options.AddOption(I("Keep memory low"), L("LowMemory"), true, mcoLowMemory);
 	m_Options.AddOption(I("Write track"), L("WriteTrack"), true, mcoWriteTrack);
@@ -3235,28 +3239,27 @@ void CMapApp::InitMenu()
 				mmDetail.CreateItem(I("Decrease detail"), mcDecreaseDetail);
 				mmDetail.CreateItem(I("Increase detail"), mcIncreaseDetail);
 				mmDetail.CreateBreak();
-				mmDetail.CreateItem(I("Set lowest detail"), mcSetDetail1);
-				mmDetail.CreateItem(I("Set low detail"), mcSetDetail2);
-				mmDetail.CreateItem(I("Set normal detail"), mcSetDetail3);
-				mmDetail.CreateItem(I("Set high detail"), mcSetDetail4);
-				mmDetail.CreateItem(I("Set highest detail"), mcSetDetail5);
+				mmDetail.CreateCheckItem(I("Set lowest detail"), mcSetDetail1);
+				mmDetail.CreateCheckItem(I("Set low detail"), mcSetDetail2);
+				mmDetail.CreateCheckItem(I("Set normal detail"), mcSetDetail3);
+				mmDetail.CreateCheckItem(I("Set high detail"), mcSetDetail4);
+				mmDetail.CreateCheckItem(I("Set highest detail"), mcSetDetail5);
 			}
 			mmGarminMaps.CreateItem(I("Map list"), mcMapList);
 			mmGarminMaps.CreateItem(I("Open map"), mcOpenMap);
 			mmGarminMaps.CreateItem(I("Open map folder"), mcOpenMapFolder);
 			mmGarminMaps.CreateItem(I("Unload all maps"), mcCloseAllMaps);
 			mmGarminMaps.CreateBreak();
-			mmGarminMaps.CreateItem(I("Show Garmin maps"), mcoShowGarminMaps);
-			mmGarminMaps.CreateItem(I("Show POIs"), mcoShowPOIs);
-			mmGarminMaps.CreateItem(I("Highlight detailed maps"), mcoShowDetailMaps);
-			mmGarminMaps.CreateItem(I("Show unknown types"), mcoShowUnknownTypes);
-			mmGarminMaps.CreateItem(I("Show area labels"), mcoShowPolygonLabels);
-			mmGarminMaps.CreateItem(I("Show road name"), mcoShowRoadName);
-			mmGarminMaps.CreateItem(I("Show area name"), mcoShowAreaName);
-			mmGarminMaps.CreateItem(I("Show only outline"), mcoShowAreaAsOutline);
+			mmGarminMaps.CreateCheckItem(I("Show Garmin maps"), mcoShowGarminMaps);
+			mmGarminMaps.CreateCheckItem(I("Show POIs"), mcoShowPOIs);
+			mmGarminMaps.CreateCheckItem(I("Highlight detailed maps"), mcoShowDetailMaps);
+			mmGarminMaps.CreateCheckItem(I("Show unknown types"), mcoShowUnknownTypes);
+			mmGarminMaps.CreateCheckItem(I("Show area labels"), mcoShowPolygonLabels);
+			mmGarminMaps.CreateCheckItem(I("Show road name"), mcoShowRoadName);
+			mmGarminMaps.CreateCheckItem(I("Show area name"), mcoShowAreaName);
+			mmGarminMaps.CreateCheckItem(I("Show only outline"), mcoShowAreaAsOutline);
 		}
 		{
-#ifndef LINUX
 			CMenu & mmGoogleMaps = mmMaps.CreateSubMenu(I("Raster maps"));
 			{
 				CMenu & mmMapType = mmGoogleMaps.CreateSubMenu(I("Raster map type"));
@@ -3282,7 +3285,7 @@ void CMapApp::InitMenu()
 				mmDownloadMaps.CreateItem(I("By track"), mcDownlRasterByTrack);
 				mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
 				mmDownloadMaps.CreateBreak();
-				mmDownloadMaps.CreateItem(I("Download all lower levels"), mcoDownloadLowerLevels);
+				mmDownloadMaps.CreateCheckItem(I("Download all lower levels"), mcoDownloadLowerLevels);
 				// mmDownloadMaps.EnableMenuItem(mcoDownloadLowerLevels, false);
 			}
 			{
@@ -3290,15 +3293,14 @@ void CMapApp::InitMenu()
 				mmMaintMaps.CreateItem(I("Delete from cache"), mcRastMapsDeleteFromCache);
 				mmMaintMaps.EnableMenuItem(mcRastMapsDeleteFromCache, false);
 				mmMaintMaps.CreateBreak();
-				mmMaintMaps.CreateItem(I("Cache auto delete"), mcoRasterCacheAutoDelete);
+				mmMaintMaps.CreateCheckItem(I("Cache auto delete"), mcoRasterCacheAutoDelete);
 				mmMaintMaps.EnableMenuItem(mcoRasterCacheAutoDelete, false);
 			}
 			mmGoogleMaps.CreateItem(I("Set raster cache folder"), mcSetGoogleMapsFolder);
 			mmGoogleMaps.CreateBreak();
-			mmGoogleMaps.CreateItem(I("Prefer Google zoom levels"), mcoGoogleZoomLevels);
-			mmGoogleMaps.CreateItem(I("Enable raster downloading"), mcoDownloadGoogleMaps);
-			mmGoogleMaps.CreateItem(I("Invert satellite images"), mcoInvertSatelliteImages);		
-#endif // LINUX
+			mmGoogleMaps.CreateCheckItem(I("Prefer Google zoom levels"), mcoGoogleZoomLevels);
+			mmGoogleMaps.CreateCheckItem(I("Enable raster downloading"), mcoDownloadGoogleMaps);
+			mmGoogleMaps.CreateCheckItem(I("Invert satellite images"), mcoInvertSatelliteImages);		
 		}
 		{
 			CMenu & mmSearch = mmMaps.CreateSubMenu(I("Search"));
@@ -3314,13 +3316,13 @@ void CMapApp::InitMenu()
 		mmTracks.CreateItem(I("Start new track"), mcNewTrack);
 		mmTracks.CreateItem(I("Set track folder"), mcSetTrackFolder);
 		mmTracks.CreateBreak();
-		mmTracks.CreateItem(I("Write track"), mcoWriteTrack);
-		mmTracks.CreateItem(I("Show current track"), mcoShowCurrentTrack);
-		mmTracks.CreateItem(I("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
+		mmTracks.CreateCheckItem(I("Write track"), mcoWriteTrack);
+		mmTracks.CreateCheckItem(I("Show current track"), mcoShowCurrentTrack);
+		mmTracks.CreateCheckItem(I("Quick read gpx (no time)"), mcoQuickReadGPXTrack);
 		{
 			CMenu & mmTrackFormat = mmTracks.CreateSubMenu(I("Track format"));
-			mmTrackFormat.CreateItem(I("plt"), mcTrackFormatPLT);
-			mmTrackFormat.CreateItem(I("gpx"), mcTrackFormatGPX);
+			mmTrackFormat.CreateCheckItem(I("plt"), mcTrackFormatPLT);
+			mmTrackFormat.CreateCheckItem(I("gpx"), mcTrackFormatGPX);
 		}
 	}
 	{
@@ -3341,7 +3343,7 @@ void CMapApp::InitMenu()
 			mmImportExportWpt.CreateItem(I("Export as OSM"), mcExportWaypointsOSM);
 		}
 		mmWaypoints.CreateBreak();
-		mmWaypoints.CreateItem(I("Show waypoints"), mcoShowWaypoints);
+		mmWaypoints.CreateCheckItem(I("Show waypoints"), mcoShowWaypoints);
 	}
 	{
 		CMenu & mmNavigation = mMenu.CreateSubMenu(I("Navigation"));
@@ -3350,17 +3352,18 @@ void CMapApp::InitMenu()
 			mmTraffic.CreateItem(I("Refresh traffic information"), mcRefreshTraffic);
 			mmTraffic.CreateItem(I("About traffic"), mcAboutTraffic);
 			mmTraffic.CreateBreak();
-			mmTraffic.CreateItem(I("Refresh traffic on startup"), mcoRefreshTrafficOnStartup);
+			mmTraffic.CreateCheckItem(I("Refresh traffic on startup"), mcoRefreshTrafficOnStartup);
 			// mmTraffic.CreateItem(I("Show traffic nodes"), mcoShowTrafficNodes);
-			mmTraffic.CreateItem(I("Show fastest way"), mcoShowFastestWay);
-			mmTraffic.CreateItem(I("Show traffic information"), mcoShowTrafficInformation);
+			mmTraffic.CreateCheckItem(I("Show fastest way"), mcoShowFastestWay);
+			mmTraffic.CreateCheckItem(I("Show traffic information"), mcoShowTrafficInformation);
 			if (m_Options[mcoDebugMode]) {
-				mmTraffic.CreateItem(I("Use test server"), mcoTestServer);
-				mmTraffic.CreateItem(I("Show traffic flags"), mcoTrafficFlags);
+				mmTraffic.CreateCheckItem(I("Use test server"), mcoTestServer);
+				mmTraffic.CreateCheckItem(I("Show traffic flags"), mcoTrafficFlags);
 			}
 		}
 		mmNavigation.CreateItem(I("Navigate recent"), mcNavigateRecent);
 		mmNavigation.CreateItem(I("Stop navigating"), mcStopNavigating);
+		mmNavigation.CreateBreak();
 		mmNavigation.CreateItem(I("Show Sun azimuth"), mcoShowSunAz);
 	}
 	{
@@ -3374,31 +3377,31 @@ void CMapApp::InitMenu()
 			mmView.CreateItem(I("Up"), mcUp);
 			mmView.CreateItem(I("Down"), mcDown);
 			mmView.CreateBreak();
-			mmView.CreateItem(I("Follow cursor"), mcoFollowCursor);
+			mmView.CreateCheckItem(I("Follow cursor"), mcoFollowCursor);
 		}
 		{
 			CMenu & mmMonitorBar = mmDisplay.CreateSubMenu(I("Monitor bar"));
 			mmMonitorBar.CreateItem(I("Previous monitors row"), mcPrevMonitorsRow);
 			mmMonitorBar.CreateItem(I("Next monitors row"), mcNextMonitorsRow);
 			mmMonitorBar.CreateBreak();
-			mmMonitorBar.CreateItem(I("Show monitor bar"), mcoShowMonitorBar);
-			mmMonitorBar.CreateItem(I("Large monitors"), mcoLargeMonitors);
+			mmMonitorBar.CreateCheckItem(I("Show monitor bar"), mcoShowMonitorBar);
+			mmMonitorBar.CreateCheckItem(I("Large monitors"), mcoLargeMonitors);
 		}
 		mmDisplay.CreateItem(I("Open color scheme"), mcOpenColors);
 		mmDisplay.CreateItem(I("Close color scheme"), mcCloseColors);
 
 		mmDisplay.CreateBreak();
-		mmDisplay.CreateItem(I("Monitors mode"), mcoMonitorsMode);
-		mmDisplay.CreateItem(I("Full screen"), mcoFullScreen);
-		mmDisplay.CreateItem(I("Show center"), mcoShowCenter);
-		mmDisplay.CreateItem(I("Rotate map by course"), mcoRotateMap); 
+		mmDisplay.CreateCheckItem(I("Monitors mode"), mcoMonitorsMode);
+		mmDisplay.CreateCheckItem(I("Full screen"), mcoFullScreen);
+		mmDisplay.CreateCheckItem(I("Show center"), mcoShowCenter);
+		mmDisplay.CreateCheckItem(I("Rotate map by course"), mcoRotateMap); 
 #ifndef SMARTPHONE
-		mmDisplay.CreateItem(I("Show screen buttons"), mcoScreenButtons);
+		mmDisplay.CreateCheckItem(I("Show screen buttons"), mcoScreenButtons);
 #endif // !SMARTPHONE
 #ifdef SMARTPHONE
-		mmDisplay.CreateItem(I("Low light"), mcoLowLight);
+		mmDisplay.CreateCheckItem(I("Low light"), mcoLowLight);
 #endif // SMARTPHONE
-		mmDisplay.CreateItem(I("Large fonts"), mcoLargeFonts);
+		mmDisplay.CreateCheckItem(I("Large fonts"), mcoLargeFonts);
 	}
 	{
 		CMenu & mmGPS = mMenu.CreateSubMenu(I("GPS"));
@@ -3407,24 +3410,24 @@ void CMapApp::InitMenu()
 			mmTeam.CreateItem(I("Settings"), mcTeamSettings);
 			mmTeam.CreateItem(I("Update now"), mcTeamUpdateNow);
 			mmTeam.CreateBreak();
-			mmTeam.CreateItem(I("Update periodically"), mcTeamUpdatePeriodically);
+			mmTeam.CreateCheckItem(I("Update periodically"), mcTeamUpdatePeriodically);
 		}
 		{
 			CMenu & mmPeriod = mmGPS.CreateSubMenu(I("Connect period"));
-			mmPeriod.CreateItem(I("Always"), mcConnectPeriod0);
-			mmPeriod.CreateItem(I("1 minute"), mcConnectPeriod1);
-			mmPeriod.CreateItem(I("2 minutes"), mcConnectPeriod2);
-			mmPeriod.CreateItem(I("4 minutes"), mcConnectPeriod4);
-			mmPeriod.CreateItem(I("9 minutes"), mcConnectPeriod9);
+			mmPeriod.CreateCheckItem(I("Always"), mcConnectPeriod0);
+			mmPeriod.CreateCheckItem(I("1 minute"), mcConnectPeriod1);
+			mmPeriod.CreateCheckItem(I("2 minutes"), mcConnectPeriod2);
+			mmPeriod.CreateCheckItem(I("4 minutes"), mcConnectPeriod4);
+			mmPeriod.CreateCheckItem(I("9 minutes"), mcConnectPeriod9);
 		}
 		mmGPS.CreateItem(I("Synchronize time"), mcSetTime);
 		mmGPS.CreateItem(I("Dump to file"), mcDumpNMEA);
 		mmGPS.CreateBreak();
-		mmGPS.CreateItem(I("Connect GPS"), mcoConnect);
-		mmGPS.CreateItem(I("Warn on GPS loss"), mcoWarnNoGPS); 
+		mmGPS.CreateCheckItem(I("Connect GPS"), mcoConnect);
+		mmGPS.CreateCheckItem(I("Warn on GPS loss"), mcoWarnNoGPS); 
 #ifdef SMARTPHONE
-		mmGPS.CreateItem(I("Turn bluetooth on"), mcoBluetoothOn);
-		mmGPS.CreateItem(I("Automatic light"), mcoAutoLight);
+		mmGPS.CreateCheckItem(I("Turn bluetooth on"), mcoBluetoothOn);
+		mmGPS.CreateCheckItem(I("Automatic light"), mcoAutoLight);
 #endif // SMARTPHONE
 	}
 	{
@@ -3435,14 +3438,14 @@ void CMapApp::InitMenu()
 		mmSetup.CreateItem(I("Open translation"), mcOpenTranslation);
 		mmSetup.CreateItem(I("Close translation"), mcCloseTranslation);
 		mmSetup.CreateBreak();
-		mmSetup.CreateItem(I("Sound"), mcoSound);
-		mmSetup.CreateItem(I("Keep backlight"), mcoKeepBacklight);
-		mmSetup.CreateItem(I("Keep memory low"), mcoLowMemory);
+		mmSetup.CreateCheckItem(I("Sound"), mcoSound);
+		mmSetup.CreateCheckItem(I("Keep backlight"), mcoKeepBacklight);
+		mmSetup.CreateCheckItem(I("Keep memory low"), mcoLowMemory);
 #ifndef SMARTPHONE
-		mmSetup.CreateItem(I("Keep device on"), mcoKeepDeviceOn);
+		mmSetup.CreateCheckItem(I("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
-		mmSetup.CreateItem(I("Allow internet connection"), mcoAllowInternet);
-		mmSetup.CreateItem(I("Use proxy server"), mcoUseProxy);
+		mmSetup.CreateCheckItem(I("Allow internet connection"), mcoAllowInternet);
+		mmSetup.CreateCheckItem(I("Use proxy server"), mcoUseProxy);
 	}
 	{
 		CMenu & mmHelp = mMenu.CreateSubMenu(I("Help"));
@@ -3461,10 +3464,10 @@ void CMapApp::InitMenu()
 		mSubMenu.CreateItem(I("Replay track"), mcReplayTrack);
 		mSubMenu.CreateItem(I("Replay NMEA sequence"), mcReplayNMEA);
 		mSubMenu.CreateBreak();
-		mSubMenu.CreateItem(I("Buffer output"), mcoBuffered);
-		mSubMenu.CreateItem(I("Debug mode"), mcoDebugMode);
-		mSubMenu.CreateItem(I("Write connection log"), mcoWriteConnectionLog);
-		mSubMenu.CreateItem(I("Direct paint"), mcoDirectPaint);
+		mSubMenu.CreateCheckItem(I("Buffer output"), mcoBuffered);
+		mSubMenu.CreateCheckItem(I("Debug mode"), mcoDebugMode);
+		mSubMenu.CreateCheckItem(I("Write connection log"), mcoWriteConnectionLog);
+		mSubMenu.CreateCheckItem(I("Direct paint"), mcoDirectPaint);
 	}
 #ifndef LINUX
 	GetKeymap().AddAction(mcContextMenu, I("Context menu"));

@@ -86,6 +86,7 @@ UInt GetInt16(Byte * pbStart);
 #	define tchar_t char
 #	define L(x) x
 #	define stprintf snprintf
+#	define tsprintf sprintf
 #	define stscanf sscanf
 #	define tcschr strchr
 #	define tcstol strtol

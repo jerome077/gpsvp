@@ -22,6 +22,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #	ifdef USE_GDI_PLUS
 #		include <gdiplus.h>
 #	endif // USE_GDI_PLUS
+#else
+#	include "../GtkPainter.h"
 #endif
 #include <list>
 #include "../VersionNumber.h"
@@ -82,7 +84,7 @@ public:
 	void ProcessWMHIBERNATE();
 	// Level - 0 .. 18
 	// DC, rect - where to draw
-	int Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
+	int Paint(HDC dc, const ScreenRect& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
 	bool RotationAllowed();
 
 	void PostponeVersionUpdate();
@@ -106,7 +108,7 @@ public:
 	void SetKeepMemoryLow(bool value);
 
 protected:
-	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
+	int DrawSegment(HDC dc, const ScreenRect &srcrect, const ScreenRect &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
 	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
 		long *pnInCacheCount, bool bJustCount);

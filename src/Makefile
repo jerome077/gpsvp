@@ -12,7 +12,7 @@ OBJS = TreSubfile.o SubDivision.o SubFile.o MapLevel.o \
 
 # OBJS = test.o
 
-Mapapp.o: GtkPainter.h ScreenToGeo.h Menu.h
+MapApp.o: GtkPainter.h ScreenToGeo.h Menu.h
 
 GtkPainter: ${OBJS}
 	g++ ${LDFLAGS} -o GtkPainter ${OBJS}

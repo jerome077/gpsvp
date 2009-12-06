@@ -133,21 +133,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #else
 	typedef void* HWND;
 #	include <gtkmm.h>
+#	include <iostream>
 	struct ICommandAcceptor
 	{
 		virtual void OnCommand(int command) = 0;
 	};
-	class CMenuItem : public Gtk::MenuItem
+	class CMenuItem
 	{
 		ICommandAcceptor* Acceptor;
 		int Command;
 	public:
-		CMenuItem(const char* label, ICommandAcceptor* acceptor, int command)
-			: Gtk::MenuItem(label)
-			, Acceptor(acceptor)
+		CMenuItem(ICommandAcceptor* acceptor, int command)
+			: Acceptor(acceptor)
 			, Command(command)
 		{
-			signal_activate().connect(sigc::mem_fun(*this, &CMenuItem::on_click));
 		}
 		void on_click()
 		{
@@ -160,29 +159,59 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 		Gtk::MenuShell* Menu;
 		std::list<CMenu*> Submenus;
 		std::list<Gtk::MenuItem*> Subitems;
+		std::map<int, Gtk::CheckMenuItem*> CheckItems;
+		std::list<CMenuItem*> Commands;
 		CMenu(const CMenu&);
 		ICommandAcceptor* Acceptor;
+		CMenu* MasterMenu;
 	public:
 		CMenu(Gtk::MenuShell* menu, ICommandAcceptor* acceptor = 0) : Menu(menu), Acceptor(acceptor) {}
 		CMenu(ICommandAcceptor* acceptor = 0) : Menu(new Gtk::Menu), Acceptor(acceptor) {}
+		void SetMasterMenu(CMenu* menu)
+		{
+			MasterMenu = menu;
+		}
 		void Init() {}
 		CMenu & CreateSubMenu(const tchar_t * wcLabel)
 		{
 			Gtk::Menu* gtkMenu = new Gtk::Menu;
 			CMenu* menu = new CMenu(gtkMenu, Acceptor);
-			CMenuItem* item = new CMenuItem(wcLabel, 0, 0);
+			menu->SetMasterMenu(this);
+			Gtk::MenuItem* gtkItem = new Gtk::MenuItem(wcLabel);
 			Submenus.push_back(menu);
-			Subitems.push_back(item);
-			Menu->append(*item);
-			item->set_submenu(*gtkMenu);
+			Subitems.push_back(gtkItem);
+			
+			Menu->append(*gtkItem);
+			gtkItem->set_submenu(*gtkMenu);
 			Menu->show_all_children();
 			return *menu;
 		}
 		void CreateItem(const tchar_t * wcLabel, int iCommand)
 		{
-			CMenuItem* item = new CMenuItem(wcLabel, Acceptor, iCommand);
-			Subitems.push_back(item);
-			Menu->append(*item);
+			CMenuItem* item = new CMenuItem(Acceptor, iCommand);
+			Gtk::MenuItem* gtkItem = new Gtk::MenuItem(wcLabel);
+			Subitems.push_back(gtkItem);
+			Commands.push_back(item);
+			gtkItem->signal_activate().connect(sigc::mem_fun(*item, &CMenuItem::on_click));
+			Menu->append(*gtkItem);
+			Menu->show_all_children();
+		}
+		void AddCheckItem(int command, Gtk::CheckMenuItem* item)
+		{
+			if (MasterMenu)
+				MasterMenu->AddCheckItem(command, item);
+			else
+				CheckItems[command] = item;
+		}
+		void CreateCheckItem(const tchar_t * wcLabel, int iCommand)
+		{
+			CMenuItem* item = new CMenuItem(Acceptor, iCommand);
+			Gtk::CheckMenuItem* gtkItem = new Gtk::CheckMenuItem(wcLabel);
+			Subitems.push_back(gtkItem);
+			Commands.push_back(item);
+			AddCheckItem(iCommand, gtkItem);
+			gtkItem->signal_activate().connect(sigc::mem_fun(*item, &CMenuItem::on_click));
+			Menu->append(*gtkItem);
 			Menu->show_all_children();
 		}
 		void CreateBreak()
@@ -191,8 +220,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 			Subitems.push_back(item);
 			Menu->append(*item);
 			Menu->show_all_children();
-		};
-		void CheckMenuItem(int iId, bool fCheck) {};
+		}
+		void CheckMenuItem(int iId, bool fCheck)
+		{
+			if (!CheckItems[iId])
+				return;
+			CheckItems[iId]->set_active(fCheck);
+		}
 		void EnableMenuItem(int iId, bool fCheck) {};
 		IListAcceptor* GetListAcceptor() {return NULL;}
 		unsigned int Popup(int x, int y, HWND) {return 0xbadd;};
