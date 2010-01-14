@@ -1135,19 +1135,26 @@ void CGDIPainter::AddButton(const wchar_t * wcLabel, int iCommand, bool fSelecte
 {
 	HFONT f = m_FontCache.GetFont(5, 0);
 	ScreenSize size;
+	int nVBtnSpace = 2; // Vertical space (pixels) between screen buttons
+	int nVSizeAdd = 10; // Add more pixels under and above text (for easier finger operation)
 	m_hdc.SelectObject(f);
 	m_hdc.getTextExtentPoint(wcLabel, &size);
-	m_iCurrentButton -= size.cy + 6;
+	int nVRectSize = size.cy + nVSizeAdd;
+	m_iCurrentButton -= nVRectSize + nVBtnSpace + 2; // 2 is two thin lines
 	m_hdc.SelectObject(m_hBgBrush);
 	m_hdc.SelectObject(m_hCursorPen);
-	m_hdc.RoundRect(m_srWindow.right - size.cx - 5, m_iCurrentButton + 1, m_srWindow.right - 1, m_iCurrentButton + size.cy + 5, 8, 8);
+	m_hdc.RoundRect(
+		m_srWindow.right - size.cx - 5, m_iCurrentButton - 1,
+		m_srWindow.right - 1,           m_iCurrentButton + nVRectSize + 1, 
+		8, 8);
 	m_hdc.SetTextColor(fSelected ? RGB(127, 127, 127) : m_crText);
 	m_hdc.SetBkMode(0);
-	m_hdc.ExtTextOut(m_srWindow.right - size.cx - 3, m_iCurrentButton + 3, 0, 0, wcLabel, 0);
+	m_hdc.ExtTextOut(m_srWindow.right - size.cx - 3, m_iCurrentButton + nVSizeAdd/2, 0, 0, wcLabel, 0);
 
+	size.cy += nVSizeAdd - 1;
 	m_buttons.push_back(
 		std::make_pair(
-			ScreenRect(ScreenPoint(m_srWindow.right - size.cx - 3, m_iCurrentButton + 3), size),
+			ScreenRect(ScreenPoint(m_srWindow.right - size.cx - 3, m_iCurrentButton), size),
 			iCommand
 		));
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2005-2008, Vsevolod E. Shorin
 All rights reserved.
 
@@ -356,10 +356,9 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		}
 
 		// Move file from temporary to proper location
-		bool res = DeleteFile(filename.c_str());
-		res = MoveFile(tmpfilename.c_str(), filename.c_str());
+		bool res = (DeleteFile(filename.c_str()) != 0);
+		res = (MoveFile(tmpfilename.c_str(), filename.c_str()) != 0);
 
-		// На всякий случай, вдруг поместили...
 		m_setToDownload.erase(gfdata);
 	}
 
@@ -426,7 +425,7 @@ bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring ws
 				RelocateFilesInDir(wstrCurPath + L"/" + fd.cFileName, newpath);
 			}
 		} else {
-			// File: разобрать имя на фрагменты [??? parse file name into segments]
+		// Parse file name into segments
 			bool bNameParsed = false;
 			for (long i=gtMap, iEnd=GetGMapCount(); i<iEnd; i++) {
 				if (m_vecRMS[i]->IsGoodFileName(data, fd.cFileName)) {
@@ -551,9 +550,7 @@ bool CGMFileHolder::NeedRelocateFiles()
 {
 	bool bResult = false;
 
-	// Пока в бетах (0.4.4 и 0.4.5) было только "zoom=%d" в корне директории с картами.
-	// На всякий случай - и gmap/zoom тоже, мало ли, вдруг VShorin себе так наскачивал.
-	// Их и проверяем.
+	// This checks are for 0.4.4 and 0.4.5 betas only.
 	wchar_t *pBadWildcards[] = {
 		L"\\zoom*", 
 		L"\\gmap\\zoom*"
