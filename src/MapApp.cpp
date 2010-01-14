@@ -3224,6 +3224,7 @@ void CMapApp::InitMenu()
 
 	GetKeymap().Load();
 	GetButtons().Load();
+	GetButtons().Save();
 	CheckMenu();
 }
 
