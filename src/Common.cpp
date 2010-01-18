@@ -643,6 +643,34 @@ bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime)
 	return true;
 }
 
+std::wstring UTCTimeToLocalTimeText(unsigned long ulTimeUTC)
+{
+	double dTimeUTC = double(ulTimeUTC) / (24. * 60. * 60.);
+	double dLocalTime;
+	UTCVariantTimeToLocalVariantTime(dTimeUTC, dLocalTime);
+	SYSTEMTIME st;
+	VariantTimeToSystemTime(dLocalTime, &st);
+	wchar_t wc[1000];
+	swprintf(wc, 1000, L"%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+	return wc;
+}
+
+std::wstring DurationToText(long iDuration)
+{
+	wchar_t wc[1000];
+	long iMinute = iDuration / 60;
+	long iSecond = iDuration - iMinute * 60;
+	long iHour = iMinute / 60;
+	iMinute -= iHour * 60;
+	long iDay = iHour / 24;
+	iHour -= iDay * 24;
+	if (iDay > 0)
+		swprintf(wc, 1000, L"%d days %02d:%02d:%02d", iDay, iHour, iMinute, iSecond);
+	else
+		swprintf(wc, 1000, L"%02d:%02d:%02d", iHour, iMinute, iSecond);
+	return wc;
+}
+
 // ---------------------------------------------------------------
 
 // Calculation based on explaination from Steven Dutch on http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM

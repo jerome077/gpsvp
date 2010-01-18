@@ -22,9 +22,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 // 24 <= GPWIDTH <= 30
 #define GPWIDTH (30)
 
+// Earth radius in meters
+#define EARTH_RAD 6372795
+
 struct GeoPoint
 {
-	GeoPoint() {};
+	GeoPoint() : lon(0), lat(0) {};
 	GeoPoint(int igLongitude, int igLatitude) : lon(igLongitude), lat(igLatitude){}
 	GeoPoint(double dLongitude, double dLatitude) : lon (FromDegree(dLongitude)), lat(FromDegree(dLatitude)) {}
 	int lon;
@@ -45,6 +48,11 @@ struct GeoPoint
 	{
 		return !operator ==(pt);
 	}
+	GeoPoint operator + (const GeoPoint & pt) const
+	{
+		return GeoPoint(lon+pt.lon, lat+pt.lat);
+	}
+	bool IsNull() const {return lon == 0 && lat == 0;}
 };
 
 #define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) << (GPWIDTH - 24), (iLatitude24) << (GPWIDTH - 24))
@@ -151,5 +159,12 @@ inline int IntDistance(const GeoPoint & gp1, const GeoPoint & gp2)
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2);
 // Return azimuth in degrees (to the right from the North)
 int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo);
+// Return azimuth in radians
+double AzimuthRadian(const GeoPoint & llPointFrom, const GeoPoint & llPointTo);
+
+// Return the distance from point gp to the line going through gp1 and gp2
+double CrossTrackDoubleDistance(const GeoPoint& gp1, const GeoPoint& gp2, const GeoPoint & gp);
+// Return the distance from point gp to the segment [gp1, gp2]
+double DoubleDistanceToSegment(const GeoPoint & gp, const GeoPoint& gp1, const GeoPoint& gp2);
 
 #endif // GEOPOINT_H

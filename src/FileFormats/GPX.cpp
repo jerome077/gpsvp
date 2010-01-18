@@ -202,7 +202,8 @@ CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader)
 		m_pReader(pReader),
 		mLongitude(0.0),
 		mLatitude(0.0),
-		mUTCTime(0.0)
+		mUTCTime(0.0),
+		mAltitude(-777.0)
 {
 	// Read longitude and latitude
 	try
@@ -259,6 +260,22 @@ CGPXTrackPoint::CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader)
 		catch (_com_error e)
 		{
 			mUTCTime = 0.0;
+		}
+	}
+	// Read time
+	if (m_pReader->getReadAltitude()) // quite long => only if option set
+	{
+		try
+		{
+			XmlNode pEleNode = m_pNode->selectSingleNode(L"ele");
+			if (pEleNode)
+			{
+				mAltitude = myatof((const char*)pEleNode->text);
+			}
+		}
+		catch (_com_error e)
+		{
+			mAltitude = -777.0;
 		}
 	}
 }

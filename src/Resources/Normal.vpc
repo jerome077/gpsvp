@@ -108,14 +108,25 @@
 40 26 00 00 FF 1 1
 # Power line
 40 29 00 00 00 1 1
-# Track
+# Track (selected part)
 40 FF FF 00 FF 0 4
 # Vector
 40 FE 7F 7F 7F 1 3 FF FF FF 1 1
 # Scale
 40 FD FF FF FF 0 4 00 00 00 1 2 
-# Old track
+# Old track (selected part)
 40 FC 77 00 77 0 3
+# Old track, not selected part
+40 FB C0 C0 C0 0 3
+# Track, not selected part
+40 FA 80 80 80 0 4
+# Route
+40 F9 FF 00 00 0 3 FF FF FF 1 1
+# Route, part in edition
+40 F8 FF 00 00 0 3 FF FF FF 0 1
+# Route, not selected part
+40 F7 80 80 80 0 3 FF 00 00 1 1
+
 # Bad vector
 40 200 7F 7F 7F 1 3 FF FF FF 1 1
 # Good vector

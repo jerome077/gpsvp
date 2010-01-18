@@ -215,22 +215,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				ScreenPoint pt(LOWORD(lParam), HIWORD(lParam));
 				ScreenToClient(hWnd, &pt);
-				ScreenPoint center = app.m_painter.GetScreenCenter();
-				ScreenDiff sd = center - pt;
 				
 				int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
 				if (zDelta > 0)
-				{
-					sd /= 2;
-					app.m_painter.Move(sd);
-					app.ViewZoomIn();
-				}
+					app.m_painter.ZoomIn(pt);
 				if (zDelta < 0)
-				{
-					sd *= -1;
-					app.m_painter.Move(sd);
-					app.ViewZoomOut();
-				}
+					app.m_painter.ZoomOut(pt);
 			}
 			break;
 		default:

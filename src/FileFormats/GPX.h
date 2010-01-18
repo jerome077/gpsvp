@@ -148,6 +148,7 @@ class CGPXTrackPoint: public CDOMGPXElem
 protected:
 	double mLongitude, mLatitude;
 	double mUTCTime;
+	double mAltitude;
 	CGPXFileReader* m_pReader;
 	friend class CGPXTrackSeg;
 	CGPXTrackPoint(XmlNode pNode, CGPXFileReader* pReader);
@@ -155,6 +156,7 @@ public:
 	virtual double getLongitude() { return mLongitude; };
 	virtual double getLatitude()  { return mLatitude; };
 	virtual double getUTCTime()   { return mUTCTime; }; // as "VariantTime"
+	virtual double getAltitude()  { return mAltitude; }; // as "VariantTime"
 };
 
 // ---------------------------------------------------------------
@@ -243,6 +245,8 @@ public:
 	// quite long and only useful for the track competition feature.
 	bool getReadTime() { return m_bReadTime; };
 	void setReadTime(bool bValue) { m_bReadTime = bValue; };
+	bool getReadAltitude() { return m_bReadAltitude; };
+	void setReadAltitude(bool bValue) { m_bReadAltitude = bValue; };
 
 private:
 	std::wstring m_filename;
@@ -250,7 +254,7 @@ private:
 	XmlNode m_pElemGPX;
 	static WaypointIterator m_WaypointEnd;
 	XmlNodeList m_pXMLTrackNodeList;
-	bool m_bReadTime;
+	bool m_bReadTime, m_bReadAltitude;
 };
 
 // ---------------------------------------------------------------

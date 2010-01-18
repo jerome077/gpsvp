@@ -49,7 +49,8 @@ void CTrack::AddPoint(GeoPoint pt, double timeUTC, double dHDOP)
 	m_gpLastpoint = pt;
 	m_fTrackPresent = true;
 	// Add it to list
-	m_Track.back().push_back(TrackPoint(pt, ulTimeUTC));
+	int iAltitude = (m_fAltitude)?int(m_dAltitude + 0.5):NO_iALTITUDE;
+	m_Track.back().push_back(TrackPoint(pt, ulTimeUTC, iAltitude));
 	++m_nPointCount;
 	// If we are writing to a file
 	if(m_fWriting)
@@ -142,23 +143,70 @@ void CTrack::WriteGPX(GeoPoint pt, double dTimeUTC, double dHDOP)
 	m_fBeginFile = false;
 }
 
-void CTrack::PaintUnlocked(IPainter * pPainter, unsigned int uiType)
+CTrack::track_t not_selected_track_t(CTrack::track_t uiType)
 {
+	// NB: track types corresponds to color definitions in *.vpc
+	switch (uiType)
+	{
+	case CTrack::typeCurrentTrack:		return CTrack::typeCurrentTrack_NotSelected;
+	case CTrack::typeOldTrack:			return CTrack::typeOldTrack_NotSelected;
+	case CTrack::typeRoute:				return CTrack::typeRoute_NotSelected;
+	case CTrack::typeRouteInEdition:	return CTrack::typeRoute_NotSelected;
+	default:							return uiType;
+	}
+}
+
+UInt track_t2UInt(CTrack::track_t uiType, bool bSelectedPart)
+{
+	return (bSelectedPart) ? uiType : not_selected_track_t(uiType);
+}
+
+bool CTrack::IsSelectedPart(int iPointIndex)
+{
+	return (  (iPointIndex >= m_StartCursor)
+		   && ((-1 == m_EndCursor) || (iPointIndex <= m_EndCursor))
+		   );
+}
+
+void CTrack::PaintUnlocked(IPainter * pPainter, track_t uiType)
+{
+	int currentIndex = 0;
+	bool bWasSelectedPart = IsSelectedPart(currentIndex);
 	StartTimes::iterator itTimeUTC = m_startTimesUTC.begin();
 	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
 	{
 		if (!itSeg->empty())
 		{
-			// Now we use polylines with type 0xff
-			pPainter->StartPolyline(uiType /*(m_wstrFilename.empty() ? 0xfc : 0xff)*/, 0);
+			bool bSelectedPart = IsSelectedPart(currentIndex);
+			pPainter->StartPolyline(track_t2UInt(uiType, bSelectedPart), 0);
 			// Add all the points
 			for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
 			{
+				// Start of the selected part
+				if (bSelectedPart && !bWasSelectedPart)
+				{
+					pPainter->AddPoint(it->gp);
+					// New polyline with color change
+					pPainter->FinishObject();
+					pPainter->StartPolyline(track_t2UInt(uiType, bSelectedPart), 0);
+				}
+				// Draw track
 				pPainter->AddPoint(it->gp);
 				if (itTimeUTC != m_startTimesUTC.end() && *itTimeUTC + m_ulCompetitionTime <= it->timeUTC)
 				{
 					pPainter->PaintPoint(0x10003, it->gp, 0);
 					++itTimeUTC;
+				}
+				bWasSelectedPart = bSelectedPart;
+				++currentIndex;
+				bSelectedPart = IsSelectedPart(currentIndex);
+				// End of the selected part
+				if (bWasSelectedPart && !bSelectedPart)
+				{
+					// New polyline with color change
+					pPainter->FinishObject();
+					pPainter->StartPolyline(track_t2UInt(uiType, bSelectedPart), 0);
+					pPainter->AddPoint(it->gp);
 				}
 			}
 			// And paint the polyline
@@ -233,7 +281,7 @@ void CTrack::FlushPLT(int iSize)
 void CTrack::FlushGPX(int iSize)
 {
 	static const char* sCloseXml = "</trkseg></trk></gpx>";
-	static const DWORD iCloseLength = strlen(sCloseXml);
+	static const LONG iCloseLength = strlen(sCloseXml);
 	if (m_fWriting && m_fTrackPresent)
 	{
 		HANDLE hFile = ::CreateFile(GetFileName(), (GENERIC_READ | GENERIC_WRITE),
@@ -241,7 +289,7 @@ void CTrack::FlushGPX(int iSize)
 							        OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (INVALID_HANDLE_VALUE != hFile)
 		{
-			DWORD fileSize = GetFileSize(hFile, NULL);
+			LONG fileSize = GetFileSize(hFile, NULL);
 			if (fileSize >= iCloseLength)
 				SetFilePointer(hFile, -LONG(iCloseLength), 0, FILE_END);
 			DWORD dwWritten;
@@ -273,23 +321,27 @@ void CTrack::Read(const std::wstring& wstrFilename)
 }
 
 #ifndef UNDER_WINE
-void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrFilename)
+void CTrack::ReadGPX(const std::auto_ptr<CGPXTrack>& apTrack, const std::wstring& wstrTrackname)
 {
-	m_wstrFilenameExt = apTrack->getName() + L" - " + wstrFilename; 
+	m_wstrFilenameExt = wstrTrackname; 
 	std::auto_ptr<CGPXTrackSeg> apTrackSeg = apTrack->firstTrackSeg();
 	while (!apTrackSeg->eof())
 	{
+		Break();	// New segment (don't do anything if the previous segment has no point)
 		std::auto_ptr<CGPXTrackPoint> apTrackPoint = apTrackSeg->firstTrackPoint();
 		while (!apTrackPoint->eof())
 		{
+			double dAltitude = apTrackPoint->getAltitude();
+			if (-777 == dAltitude)
+				ResetAltitude();
+			else
+				SetAltitude(dAltitude);
 			AddPoint(GeoPoint(FromDegree(apTrackPoint->getLongitude()),
 							  FromDegree(apTrackPoint->getLatitude())
 							  ), apTrackPoint->getUTCTime());
 			apTrackPoint = apTrackSeg->nextTrackPoint();
 		}
 		apTrackSeg = apTrack->nextTrackSeg();
-		if (!apTrackSeg->eof())
-			Break();
 	}
 }
 #endif
@@ -361,6 +413,14 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 			double dLocalTime = myatof(listParts[4].c_str());
 			LocalVariantTimeToUTCVariantTime(dLocalTime, dTimeUTC);
 		}
+		if (listParts.size() >= 4)
+		{
+			double dAltitude = myatof(listParts[4].c_str());
+			if (-777 == dAltitude)
+				ResetAltitude();
+			else
+				SetAltitude(dAltitude);
+		}
 		if (listParts.size() >= 2)
 		{
 			double dLatitude = myatof(listParts[0].c_str());
@@ -369,17 +429,17 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 		}
 	}
 }
-const std::wstring CTrack::GetExtFilename()
+const std::wstring CTrack::GetExtFilename() const
 {
 	AutoLock l;
 	return m_wstrFilenameExt;
 }
-bool CTrack::IsPresent()
+bool CTrack::IsPresent() const
 {
 	AutoLock l;
 	return m_fTrackPresent;
 }
-GeoPoint CTrack::GetLastPoint()
+GeoPoint CTrack::GetLastPoint() const
 {
 	AutoLock l;
 	return m_gpLastpoint;
@@ -474,6 +534,459 @@ void CTrack::SetCompetition(const GeoPoint & gp, unsigned long ulCompetitionTime
 	}
 }
 
+// Returns index of the nearest point on the track + the distance in iDistance.
+// Returns -1 for the last point (so that the track can grow and the point stay at the end).
+int CTrack::FindNearestPointIndex(const GeoPoint & gp, int& iDistance)
+{
+	int currentIndex = 0, nearestIndex = -1;
+	iDistance = INT_MAX; 
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			int d = IntDistance(it->gp, gp);
+			if (d < iDistance)
+			{
+				iDistance = d;
+				nearestIndex = currentIndex;
+			}
+			++currentIndex;
+		}
+	}
+	if (nearestIndex >= m_nPointCount)	nearestIndex = -1;
+	return nearestIndex;
+}
+
+// Returns the index of the nearest segment:
+// * Index of a segment = index of the second point of the segment: 1 for the first one...
+// * Returns 0 if the point seems to be before the first segment.
+// * Returns -1 if the projection is after the last segment.
+// * Considers gaps as normal segments
+// * returns the next target in NextPoint: 2nd point of the segment or end point
+int CTrack::FindNearestSegmentIndex(const GeoPoint & gp, GeoPoint& NextPoint)
+{
+	int currentIndex = 0, nearestIndex = 0;
+	// Track is empty => -1 and no point
+	if ((m_Track.begin() == m_Track.end()) || (m_Track.begin()->begin() == m_Track.begin()->end()))
+		return -1;  
+	// Check the distance to the first point:
+	GeoPoint gp1 = m_Track.begin()->begin()->gp;
+	double dDistance = DoubleDistance(gp1, gp);
+	NextPoint = gp1;
+	// Check the distance to each segment:
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			if (gp1 != it->gp)
+			{
+				double d = DoubleDistanceToSegment(gp, gp1, it->gp);
+				if (d < dDistance)
+				{
+					dDistance = d;
+					nearestIndex = currentIndex;
+					NextPoint = it->gp;
+				}
+				gp1 = it->gp;
+			}
+			++currentIndex;
+		}
+	}
+	// Check the distance to the last point:
+	double d = DoubleDistance(gp1, gp);
+	if (d <= dDistance) // might be egal
+	{
+		dDistance = d;
+		nearestIndex = -1;
+		NextPoint = gp1;
+	}
+	return nearestIndex;
+}
+
+// Index -1 will add the point at the end
+void CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
+{
+	if (-1 == iNextPointIndex)
+	{
+		AddPoint(gp, 0);
+		return;
+	}
+	int currentIndex = 0;
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			if (currentIndex == iNextPointIndex)
+			{
+				itSeg->insert(it, TrackPoint(gp, 0, NO_iALTITUDE));
+				++m_nPointCount;
+				return;
+			}
+			++currentIndex;
+		}
+	}
+}
+
+void CTrack::ErasePoint(int iPointIndex)
+{
+	int currentIndex = 0;
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			if (currentIndex == iPointIndex)
+			{
+				itSeg->erase(it);
+				--m_nPointCount;
+				return;
+			}
+			++currentIndex;
+		}
+	}
+}
+
+int CTrack::GetInfoCount() const
+{
+	return 7;
+}
+
+std::wstring CTrack::GetInfo(int infoIndex) const
+{
+	std::wstring NL = L"\n";
+	std::wstring SEP = L", ";
+	switch (infoIndex)
+	{
+	case 0:
+		return std::wstring(L("Name")) + L": " + GetExtFilename();
+	case 1:
+		return std::wstring(L("Point count")) + L": " + IntToText(m_nPointCount);
+	case 2:
+		{
+			std::wstring sResult = std::wstring(L"-- ") + L("Raw lengths") + L" --";
+			double dFullLength, dPartLength, dFullGapLength, dPartGapLength;
+			int iSegmentCount;
+			CalcLengthsUnlocked(m_StartCursor, m_EndCursor, 0,
+				                dFullLength, dPartLength, dFullGapLength, dPartGapLength, iSegmentCount);
+			sResult += NL + L("Full") + L": " + DistanceToText(dFullLength);
+			if (iSegmentCount > 0)
+				sResult += SEP + L("Gaps") + L": " + DistanceToText(dFullGapLength);
+			sResult += NL + L("Partial") + L": " + DistanceToText(dPartLength);
+			if (iSegmentCount > 0)
+				sResult += SEP + L("Gaps") + L": " + DistanceToText(dPartGapLength);
+			sResult += NL + L("Segment count") + L": " + IntToText(iSegmentCount);
+			return sResult + L"\n";
+		}
+	case 3:
+		{
+			std::wstring sResult = std::wstring(L"-- ") + L("Smoothed lengths (10m) ") + L" --";
+			double dFullLength, dPartLength, dFullGapLength, dPartGapLength;
+			int iSegmentCount;
+			CalcLengthsUnlocked(m_StartCursor, m_EndCursor, 10,
+				                dFullLength, dPartLength, dFullGapLength, dPartGapLength, iSegmentCount);
+			sResult += NL + L("Full") + L": " + DistanceToText(dFullLength);
+			sResult += NL + L("Partial") + L": " + DistanceToText(dPartLength);
+			return sResult + L"\n";
+		}
+	case 4:
+		{
+			std::wstring sResult = std::wstring(L"-- ") + L("Times") + L" --";
+			unsigned long ulStartTimeUTC, ulEndTimeUTC, ulIndex1TimeUTC, ulIndex2TimeUTC;
+			CalcTimesUnlocked(m_StartCursor, m_EndCursor,
+				              ulStartTimeUTC, ulEndTimeUTC, ulIndex1TimeUTC, ulIndex2TimeUTC);
+			sResult += NL + L("Start time") + L": " + UTCTimeToLocalTimeText(ulStartTimeUTC);
+			sResult += NL + L("End time") + L": " + UTCTimeToLocalTimeText(ulEndTimeUTC);
+			sResult += NL + L("Duration") + L": " + DurationToText(ulEndTimeUTC-ulStartTimeUTC);
+			if ((-1 != m_StartCursor) || (-1 != m_EndCursor))
+			{
+				sResult += NL + L("Start cursor") + L": " + IntToText(m_StartCursor);
+				sResult += NL + L("End cursor") + L": " + IntToText(m_EndCursor);
+				sResult += NL + L("Partial Start time") + L": " + UTCTimeToLocalTimeText(ulIndex1TimeUTC);
+				sResult += NL + L("Partial End time") + L": " + UTCTimeToLocalTimeText(ulIndex2TimeUTC);
+				sResult += NL + L("Partial Duration") + L": " + DurationToText(ulIndex2TimeUTC-ulIndex1TimeUTC);
+			}
+			return sResult + L"\n";
+		}
+	case 5:
+		{
+			std::wstring sResult = std::wstring(L"-- ") + L("Elevation differences") + L" --";
+			int iFullEleDiffUp, iPartEleDiffUp, iFullEleDiffDown, iPartEleDiffDown;
+			int iFullGapEleDiffUp, iPartGapEleDiffUp, iFullGapEleDiffDown, iPartGapEleDiffDown;
+			int iSegmentCount;
+			CalcEleDiffUnlocked(m_StartCursor, m_EndCursor, 0,
+								iFullEleDiffUp, iPartEleDiffUp, iFullEleDiffDown, iPartEleDiffDown,
+								iFullGapEleDiffUp, iPartGapEleDiffUp, iFullGapEleDiffDown, iPartGapEleDiffDown,
+								iSegmentCount);
+			sResult += NL + L("Full") + L": " + HeightToText(iFullEleDiffUp) + SEP + HeightToText(iFullEleDiffDown);
+			if (iSegmentCount > 0)
+				sResult += NL + L" " + L("Gaps") + L": " + HeightToText(iFullGapEleDiffUp) + SEP + HeightToText(iFullGapEleDiffDown);
+			sResult += NL + L("Partial") + L": " + HeightToText(iPartEleDiffUp) + SEP + HeightToText(iPartEleDiffDown);
+			if (iSegmentCount > 0)
+				sResult += NL + L" " + L("Gaps") + L": " + HeightToText(iPartGapEleDiffUp) + SEP + HeightToText(iPartGapEleDiffDown);
+			return sResult + L"\n";
+		}
+	case 6:
+		{
+			std::wstring sResult = std::wstring(L"-- ") + L("Elevation differences, smoothed (30m)") + L" --";
+			int iFullEleDiffUp, iPartEleDiffUp, iFullEleDiffDown, iPartEleDiffDown;
+			int iFullGapEleDiffUp, iPartGapEleDiffUp, iFullGapEleDiffDown, iPartGapEleDiffDown;
+			int iSegmentCount;
+			CalcEleDiffUnlocked(m_StartCursor, m_EndCursor, 30,
+								iFullEleDiffUp, iPartEleDiffUp, iFullEleDiffDown, iPartEleDiffDown,
+								iFullGapEleDiffUp, iPartGapEleDiffUp, iFullGapEleDiffDown, iPartGapEleDiffDown,
+								iSegmentCount);
+			sResult += NL + L("Full") + L": " + HeightToText(iFullEleDiffUp) + SEP + HeightToText(iFullEleDiffDown);
+			sResult += NL + L("Partial") + L": " + HeightToText(iPartEleDiffUp) + SEP + HeightToText(iPartEleDiffDown);
+			return sResult + L"\n";
+		}
+	default:
+		return L"";
+	}
+}
+
+double CTrack::GetFullLength() const
+{
+	double dFullLength, dPartLength, dFullGapLength, dPartGapLength;
+	int iSegmentCount;
+	CalcLengthsUnlocked(-1, -1, 0, dFullLength, dPartLength,
+		                dFullGapLength, dPartGapLength, iSegmentCount);
+	return dFullLength;
+}
+
+// Calculate the length between two indexes (-1 for the whole track).
+// smoothing = number of meters that the point must differs (0 to deactivate).
+void CTrack::CalcLengthsUnlocked(int index1, int index2, double smoothing,
+								 double& dFullLength, double& dPartLength,
+								 double& dFullGapLength, double& dPartGapLength,
+								 int& iSegmentCount) const
+{
+	dPartLength = 0;
+	dPartGapLength = 0;
+	iSegmentCount = 0;
+	double dNotPartLength = 0;
+	double dNotPartGapLength = 0;
+	int currentIndex = -1;
+	if (index2 < 0) index2 = INT_MAX;
+	const GeoPoint* pPreviousGP = NULL;
+	for (Track::const_iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		++iSegmentCount;
+		Segment::const_iterator it = itSeg->begin();
+		if (it == itSeg->end()) continue;
+		++currentIndex;
+		if (NULL != pPreviousGP)
+		{
+			double d = DoubleDistance(it->gp, *pPreviousGP);
+			if ((currentIndex <= index1) || (currentIndex > index2))
+				dNotPartGapLength += d;
+			else
+				dPartGapLength += d;
+		}
+		pPreviousGP = &(it->gp);
+		// Length of a segment:
+		for (++it; it != itSeg->end(); it++)
+		{
+			++currentIndex;
+			double d = DoubleDistance(it->gp, *pPreviousGP);
+
+			// Ignore point because of smoothing?
+			if	(  (d < smoothing)				// Distance too small
+				&& (currentIndex != index1)		// Not start cursor
+				&& (currentIndex != index2)		// Not end cursor
+				&& (&(*it) != &itSeg->back()) )	// Not last point of segment
+				continue;
+
+			pPreviousGP = &(it->gp);
+			if ((currentIndex <= index1) || (currentIndex > index2))
+				dNotPartLength += d;
+			else
+				dPartLength +=d;
+		}
+	}
+	dFullLength = dPartLength + dNotPartLength;
+	dFullGapLength = dPartGapLength + dNotPartGapLength;
+}
+
+
+// smoothing = number of meters that the point must differs (0 to deactivate).
+void CTrack::CalcEleDiffUnlocked(int index1, int index2, int smoothing,
+								 int& iFullEleDiffUp, int& iPartEleDiffUp,
+								 int& iFullEleDiffDown, int& iPartEleDiffDown,
+								 int& iFullGapEleDiffUp, int& iPartGapEleDiffUp,
+								 int& iFullGapEleDiffDown, int& iPartGapEleDiffDown,
+							     int& iSegmentCount) const
+{
+	iPartEleDiffUp = 0;
+	iPartGapEleDiffUp = 0;
+	iPartEleDiffDown = 0;
+	iPartGapEleDiffDown = 0;
+	iSegmentCount = 0;
+	int iNotPartEleDiffUp = 0;
+	int iNotPartGapEleDiffUp = 0;
+	int iNotPartEleDiffDown = 0;
+	int iNotPartGapEleDiffDown = 0;
+	int currentIndex = -1;
+	if (index2 < 0) index2 = INT_MAX;
+	int iPreviousAltitude = NO_iALTITUDE;
+	for (Track::const_iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		++iSegmentCount;
+		Segment::const_iterator it = itSeg->begin();
+		if (it == itSeg->end()) continue;
+		++currentIndex;
+		if (NO_iALTITUDE != iPreviousAltitude)
+		{
+			int d = it->altitude - iPreviousAltitude;
+			if ((currentIndex <= index1) || (currentIndex > index2))
+			{
+				if (d >= 0)
+					iNotPartGapEleDiffUp += d;
+				else
+					iNotPartGapEleDiffDown += d;
+			}
+			else
+			{
+				if (d >= 0)
+					iPartGapEleDiffUp += d;
+				else
+					iPartGapEleDiffDown += d;
+			}
+		}
+		iPreviousAltitude = it->altitude;
+		// Length of a segment:
+		for (++it; it != itSeg->end(); it++)
+		{
+			++currentIndex;
+			int d = it->altitude - iPreviousAltitude;
+
+			// Ignore point because of smoothing?
+			if	(  (abs(d) < smoothing)			// Distance too small
+				&& (currentIndex != index1)		// Not start cursor
+				&& (currentIndex != index2)		// Not end cursor
+				&& (&(*it) != &itSeg->back()) )	// Not last point of segment
+				continue;
+
+			iPreviousAltitude = it->altitude;
+			if ((currentIndex <= index1) || (currentIndex > index2))
+			{
+				if (d >= 0)
+					iNotPartEleDiffUp += d;
+				else
+					iNotPartEleDiffDown += d;
+			}
+			else
+			{
+				if (d >= 0)
+					iPartEleDiffUp += d;
+				else
+					iPartEleDiffDown += d;
+			}
+		}
+	}
+	iFullEleDiffUp = iPartEleDiffUp + iNotPartEleDiffUp;
+	iFullEleDiffDown = iPartEleDiffDown + iNotPartEleDiffDown;
+	iFullGapEleDiffUp = iPartGapEleDiffUp + iNotPartGapEleDiffUp;
+	iFullGapEleDiffDown = iPartGapEleDiffDown + iNotPartGapEleDiffDown;
+}
+
+
+void CTrack::CalcTimesUnlocked(int index1, int index2,
+							   unsigned long& ulStartTimeUTC, unsigned long& ulEndTimeUTC,
+							   unsigned long& ulIndex1TimeUTC, unsigned long& ulIndex2TimeUTC) const
+{
+	ulStartTimeUTC = 0;
+	int currentIndex = -1;
+	for (Track::const_iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::const_iterator it = itSeg->begin(); it != itSeg->end(); it++)
+		{
+			++currentIndex;
+			if (0 == currentIndex)
+				ulStartTimeUTC = it->timeUTC;
+			if (index1 == currentIndex)
+				ulIndex1TimeUTC = it->timeUTC;
+			if (index2 == currentIndex)
+				ulIndex2TimeUTC = it->timeUTC;
+			ulEndTimeUTC = it->timeUTC;
+		}
+	}
+}
+
+void CTrack::SetWritingWithFilename(const std::wstring& wstrNewFilename)
+{
+	SetWriting(true);
+	m_wstrFilenameInt = wstrNewFilename;
+	m_wstrFilenameExt = wstrNewFilename;
+}
+
+void CTrack::AppendToTrackOnlyCoord(CTrack & aTrack) const
+{
+	for (Track::const_iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		aTrack.Break();
+		for (Segment::const_iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			aTrack.AddPoint(it->gp, 0);
+		}
+	}
+}
+
+void CTrack::ReverseAppendToTrackOnlyCoord(CTrack & aTrack) const
+{
+	for (Track::const_reverse_iterator itSeg = m_Track.rbegin(); itSeg != m_Track.rend(); ++itSeg)
+	{
+		aTrack.Break();
+		for (Segment::const_reverse_iterator it = itSeg->rbegin(); it != itSeg->rend(); ++it)
+		{
+			aTrack.AddPoint(it->gp, 0);
+		}
+	}
+}
+
+CTrack::TrackPoint& CTrack::GetTrackPoint(int iPointIndex)
+{
+	int currentIndex = 0;
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			if (currentIndex == iPointIndex)
+			{
+				return *it;
+			}
+			++currentIndex;
+		}
+	}
+	return m_Track.back().back();
+}
+
+// Calculate the distance from a point to each end of the track:
+// * distance = ditance from the point to the next track point in the direction + distance along the track
+// * returns the index of the next point in the forward direction (and the point it self in NextForwardPoint).
+Int CTrack::CalculateDistanceOnTrack(const GeoPoint & gp,
+									 double& ForwardDistance, GeoPoint& NextForwardPoint)
+{
+	// Forward distance:
+	Int indexForward = FindNearestSegmentIndex(gp, NextForwardPoint);
+	if (-1 == indexForward)
+		ForwardDistance = 0;
+	else
+	{
+		double dFullLength, dPartLength, dFullGapLength, dPartGapLength;
+		int iSegmentCount;
+		CalcLengthsUnlocked(indexForward, -1, 0, dFullLength, dPartLength,
+		                    dFullGapLength, dPartGapLength, iSegmentCount);
+		ForwardDistance = dPartLength + DoubleDistance(gp, GetTrackPoint(indexForward).gp);
+	}
+
+	return indexForward;
+}
+
+
+// ---------------------------------------------------------------
+
+CTrackList::CTrackList()
+{
+}
 
 void CTrackList::GetTrackList(IListAcceptor * pAcceptor)
 {
@@ -482,7 +995,7 @@ void CTrackList::GetTrackList(IListAcceptor * pAcceptor)
 		pAcceptor->AddItem(it->GetExtFilename().c_str(), iIndex);
 }
 
-bool CTrackList::OpenTracks(const std::wstring& wstrFile)
+Int CTrackList::OpenTracks(const std::wstring& wstrFile)
 {
 	std::wstring wstrExt = wstrFile.substr(wstrFile.length()-4, 4);
 #ifndef UNDER_WINE
@@ -493,43 +1006,53 @@ bool CTrackList::OpenTracks(const std::wstring& wstrFile)
 		return OpenTrackPLT(wstrFile);
 }
 
-bool CTrackList::OpenTrackPLT(const std::wstring& wstrFile)
+Int CTrackList::OpenTrackPLT(const std::wstring& wstrFile)
 {
 	m_Tracks.push_back(CTrack());
 	m_Tracks.back().ReadPLT(wstrFile);
 	if (m_Tracks.back().IsPresent())
 	{
-		return true;
+		return m_Tracks.size()-1;
 	}
 	else
 	{
 		m_Tracks.pop_back();
-		return false;
+		return -1;
 	}
 }
 
 #ifndef UNDER_WINE
-bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
+Int CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 {
-	bool Result = false;
+	Int Result = -1;
 	try
 	{
 		ComInit MyObjectToInitCOM;
 		{
 			CGPXFileReader GpxReader(wstrFile);
 			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
+			GpxReader.setReadAltitude(!app.m_Options[mcoQuickReadGPXTrack]);
 			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
 			if (apTrack->eof())
 				MessageBox(NULL, L("No track in this file"), L("GPX read error"), MB_ICONEXCLAMATION);
 			while (!apTrack->eof())
 			{
-				m_Tracks.push_back(CTrack());
-				m_Tracks.back().ReadGPX(apTrack, wstrFile);
-				if (m_Tracks.back().IsPresent())
+				std::wstring wstrTrackname;
+				if (!(app.m_Options[mcoMultitrackAsSingleTrack] && (-1 != Result)))
 				{
-					Result = true;
+					m_Tracks.push_back(CTrack());
+					wstrTrackname = apTrack->getName() + L" - " + wstrFile;
 				}
 				else
+					wstrTrackname = wstrFile;
+
+				m_Tracks.back().ReadGPX(apTrack, wstrTrackname);
+				
+				if (m_Tracks.back().IsPresent())
+				{
+					Result = m_Tracks.size()-1;
+				}
+				else if (!(app.m_Options[mcoMultitrackAsSingleTrack] && Result))
 					m_Tracks.pop_back();
 				apTrack = GpxReader.nextTrack();
 			}
@@ -550,6 +1073,17 @@ bool CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 }
 #endif // UNDER_WINE
 
+CTrack& CTrackList::GetTrack(Int iIndex)
+{
+	std::list<CTrack>::iterator it;
+	for (it = m_Tracks.begin(); it != m_Tracks.end(); ++it)
+	{
+		if (0 == iIndex) return *it;
+		--iIndex;
+	}
+	return Last();
+}
+
 void CTrackList::CloseTrack(Int iIndex)
 {
 	std::list<CTrack>::iterator it;
@@ -564,3 +1098,295 @@ void CTrackList::CloseTrack(Int iIndex)
 		m_Tracks.erase(it);
 	}
 }
+
+// returns -1 when not found
+Int CTrackList::FindTrackIndex(const CTrack& aTrack)
+{
+	Int CurrentIndex = 0;
+	std::list<CTrack>::iterator it;
+	for (it = m_Tracks.begin(); it != m_Tracks.end(); ++it)
+	{
+		if (&(*it) == &aTrack)
+			return CurrentIndex;
+		CurrentIndex++;
+	}
+	return -1;
+}
+
+Int CTrackList::NewTrack(const std::wstring& wstrDefaultname)
+{
+	m_Tracks.push_back(CTrack(wstrDefaultname));
+	return m_Tracks.size()-1;  // Index of the new track
+};
+
+
+CTrackList::iterator CTrackList::FindNearestTrack(const GeoPoint & gp, int& iDistance, int& indexNearestPoint)
+{
+	iDistance = INT_MAX;
+	indexNearestPoint = -1;
+	CTrackList::iterator itNearestTrack = end();
+	std::list<CTrack>::iterator it;
+	for (it = m_Tracks.begin(); it != m_Tracks.end(); ++it)
+	{
+		int d;
+		int index = it->FindNearestPointIndex(gp, d);
+		if (d < iDistance)
+		{
+			iDistance = d;
+			itNearestTrack = it;
+			indexNearestPoint = index;
+		}
+	}
+	return itNearestTrack;
+}
+
+// ---------------------------------------------------------------
+
+// -1 for the current track
+CTrack& CAllTracks::GetTrack(Int iIndex)
+{
+	if (-1 == iIndex)
+		return m_CurTrack;
+	else
+		return m_OldTracks.GetTrack(iIndex);
+}
+
+CTrack& CAllTracks::GetNearestTrack(const GeoPoint & gp, int& iIndexNearestPoint)
+{
+	int iDistMin;
+	// Current track?
+	iIndexNearestPoint = m_CurTrack.FindNearestPointIndex(gp, iDistMin);
+	CTrack*	pResult = &m_CurTrack;
+	// Or one of the old tracks?
+	int iDistOld, iIndexOld;
+	CTrackList::iterator itNearestOldTrack = m_OldTracks.FindNearestTrack(gp, iDistOld, iIndexOld);
+	if (iDistOld < iDistMin)  // "<" and not "<=": important when there are no old tracks
+	{
+		iDistMin = iDistOld; 
+		iIndexNearestPoint = iIndexOld;
+		pResult = &(*itNearestOldTrack);
+	}
+	// Or the route?
+	if (!m_CurRoute.IsEmpty())
+	{
+		int iDistRoute, iIndexRoute;
+		iIndexRoute = m_CurRoute.AsTrack().FindNearestPointIndex(gp, iDistRoute);
+		if (iDistRoute < iDistMin)
+		{
+			iDistMin = iDistRoute; 
+			iIndexNearestPoint = iIndexRoute;
+			pResult = &(m_CurRoute.AsTrack());
+		}
+	}
+	return *pResult;
+}
+
+// save a route as track to disk
+void CAllTracks::SaveRoute(const std::wstring& wstrFilename)
+{
+	DeleteFile(wstrFilename.c_str());
+	Int iIndex = m_OldTracks.NewTrack(wstrFilename);
+	m_OldTracks.Last().SetWritingWithFilename(wstrFilename);
+	m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
+	m_OldTracks.Last().SetWriting(false);
+	m_CurRoute.MarkAsSaved();
+}
+
+void CAllTracks::PaintOldTracksWithCompetition(IPainter * pPainter, const GeoPoint & gp, unsigned long ulCompetitionTime)
+{
+	Int index = 0;
+	for (CTrackList::iterator trit = GetOldTracks().begin(); trit != GetOldTracks().end(); ++trit)
+	{
+		trit->SetCompetition(gp, ulCompetitionTime);
+		trit->PaintUnlocked(pPainter, CTrack::typeOldTrack);
+		index++;
+	}
+	m_CurRoute.PaintRoute(pPainter);
+}
+
+void CAllTracks::PaintOldTracks(IPainter * pPainter)
+{
+	PaintOldTracksWithCompetition(pPainter, GeoPoint(), 0);
+}
+
+void CAllTracks::NewRoute()
+{
+	if (m_CurRoute.NeedsSaving())
+	{
+		if (MessageBox(NULL, L("Copy old route to track list?"), L("Route not saved"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+		{
+			Int iIndex = m_OldTracks.NewTrack(L"Unsaved route");
+			m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
+		}
+	}
+	m_CurRoute.Reinit();
+}
+
+void CAllTracks::NewRouteFromTrackIndex(Int iIndex)
+{
+	if (-1 != iIndex)
+		NewRouteFromTrack(m_OldTracks.GetTrack(iIndex));
+}
+
+void CAllTracks::NewRouteFromTrack(const CTrack& anOldTrack)
+{
+	NewRoute();
+	m_CurRoute.AppendTrack(anOldTrack);
+	m_CurRoute.MarkAsSaved();
+}
+
+// ---------------------------------------------------------------
+
+CRoute::CRoute()
+: m_pRouteAsTrack(new CTrack(L"Current route")),
+  m_InsertMode(rimNone),
+  m_bRouteHasChanges(false)
+{
+}
+
+CRoute::~CRoute()
+{
+	delete m_pRouteAsTrack;
+}
+
+void CRoute::Reinit()
+{
+	delete m_pRouteAsTrack;
+	m_pRouteAsTrack = new CTrack(L"Current route");
+}
+
+void CRoute::PaintRoute(IPainter * pPainter)
+{
+	m_pRouteAsTrack->PaintUnlocked(pPainter, (IsEditing())?CTrack::typeRouteInEdition:CTrack::typeRoute);
+}
+
+// Function called during routing to update the current position
+// Returns distance to target and next point on the route.
+void CRoute::UpdatePosition(const GeoPoint & gpCurrentPosition,
+		                    double& ForwardDistance, GeoPoint& NextForwardPoint)
+{
+	Int indexForward = m_pRouteAsTrack->CalculateDistanceOnTrack(gpCurrentPosition,
+		                                                         ForwardDistance, NextForwardPoint);
+	if (!IsEditing())
+	{
+		m_pRouteAsTrack->SetStartCursor(indexForward);
+		m_pRouteAsTrack->SetEndCursor(-1);
+	}
+}
+
+void CRoute::UpdateNoPosition()
+{
+	if (!IsEditing())
+	{
+		m_pRouteAsTrack->SetStartCursor(-1);
+		m_pRouteAsTrack->SetEndCursor(-1);
+	}
+}
+
+void CRoute::UpdateAsNotFollowed()
+{
+	if (!IsEditing())
+	{
+		m_pRouteAsTrack->SetStartCursor(0);
+		m_pRouteAsTrack->SetEndCursor(0);
+	}
+}
+
+bool CRoute::NeedsSaving()
+{
+	return m_bRouteHasChanges && (GetPointCount() > 0);
+}
+
+void CRoute::MarkAsSaved()
+{
+	m_bRouteHasChanges = false;
+}
+
+void CRoute::AppendPoint(const GeoPoint& pt)
+{
+	m_bRouteHasChanges = true;
+	m_pRouteAsTrack->AddPoint(pt, 0);
+}
+
+void CRoute::AppendTrack(const CTrack& aTrack)
+{
+	m_bRouteHasChanges = true;
+	aTrack.AppendToTrackOnlyCoord(*m_pRouteAsTrack);
+}
+
+void CRoute::AddPointBeforeEndCursor(const GeoPoint& pt, bool bForwards)
+{
+	m_bRouteHasChanges = true;
+	m_pRouteAsTrack->InsertPoint(m_pRouteAsTrack->GetEndCursor(), pt);
+	if (bForwards)
+	{
+		m_pRouteAsTrack->SetEndCursor(m_pRouteAsTrack->GetEndCursor()+1);
+		m_pRouteAsTrack->SetStartCursor(m_pRouteAsTrack->GetStartCursor()+1);
+	}
+}
+
+void CRoute::InsertPointInNearestSegment(const GeoPoint& pt)
+{
+	m_bRouteHasChanges = true;
+	int segIndex = m_pRouteAsTrack->FindNearestSegmentIndex(pt);
+	m_pRouteAsTrack->InsertPoint(segIndex, pt);
+}
+
+void CRoute::ErasePoint(int iPointIndex)
+{
+	m_bRouteHasChanges = true;
+	m_pRouteAsTrack->ErasePoint(iPointIndex);
+}
+
+int CRoute::GetPointCount() const
+{
+	return m_pRouteAsTrack->GetPointCount();
+}
+
+void CRoute::InsertPoint(const GeoPoint& pt)
+{
+	switch (m_InsertMode)
+	{
+	case rimNearestSegment:
+		InsertPointInNearestSegment(pt);
+		break;
+	case rimBackwards:
+		AddPointBeforeEndCursor(pt, false);
+		break;
+	case rimForwards:
+		AddPointBeforeEndCursor(pt, true);
+		break;
+	}
+}
+
+void CRoute::SetInsertMode(enumRouteInsertMode mode, const GeoPoint& pt)
+{
+	m_InsertMode = mode;
+	switch (m_InsertMode)
+	{
+	case rimNone:
+	case rimNearestSegment:
+		m_pRouteAsTrack->SetEndCursor(-1);
+		m_pRouteAsTrack->SetStartCursor(-1);
+		break;
+	case rimBackwards:
+	case rimForwards:
+		int segIndex = m_pRouteAsTrack->FindNearestSegmentIndex(pt);
+		m_pRouteAsTrack->SetEndCursor(segIndex);
+		int previousIndex = (segIndex >=1)?segIndex-1:-1;
+		m_pRouteAsTrack->SetStartCursor(previousIndex);
+		break;
+	}
+};
+
+void CRoute::Reverse()
+{
+	CTrack* pReversedTrack = new CTrack(L"Current route");
+	m_pRouteAsTrack->ReverseAppendToTrackOnlyCoord(*pReversedTrack);
+	delete m_pRouteAsTrack;
+	m_pRouteAsTrack = pReversedTrack;
+	m_bRouteHasChanges = true;
+}
+
+// ---------------------------------------------------------------
+

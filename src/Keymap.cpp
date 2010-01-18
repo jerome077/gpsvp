@@ -79,7 +79,7 @@ void CKeymap::Load()
 		SetCommandKey(mcRight, VK_RIGHT);
 		SetCommandKey(mcUp, VK_UP);
 		SetCommandKey(mcDown, VK_DOWN);
-		SetCommandKey(mcContextMenu, VK_RETURN);
+		SetCommandKey(mcLeftClickOrContextMenu, VK_RETURN);
 	}
 }
 

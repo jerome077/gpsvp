@@ -117,17 +117,31 @@ struct ScreenRect : public RECT
 		if (top < r.top)
 			top = (std::min)(bottom, r.top);
 	}
+	void Trim(int bordureWitdh)
+	{
+		right = (std::max)(left, right-bordureWitdh);
+		left = (std::min)(right, left+bordureWitdh);
+		bottom = (std::max)(top, bottom-bordureWitdh);
+		top = (std::min)(bottom, top+bordureWitdh);
+	}
 };
 
 struct ScreenDiff
 {
+	ScreenDiff() : dx(0), dy(0) {}
 	ScreenDiff(const ScreenDiff & d) { dx = d.dx; dy = d.dy; }
 	ScreenDiff(int x, int y) : dx(x), dy(y) {}
-	bool Null() {return dx == 0.0 && dy == 0.0;}
+	bool Null() const {return dx == 0.0 && dy == 0.0;}
 	int dx;
 	int dy;
 	void operator *=(int i) {dx*=i; dy*=i;}
 	void operator /=(int i) {dx/=i; dy/=i;}
+	ScreenDiff& operator = (const ScreenDiff & d) {dx=d.dx; dy=d.dy; return (*this);}
+	ScreenDiff operator + (const ScreenDiff & d) { return ScreenDiff(dx+d.dx, dy+d.dy); }
+	ScreenDiff operator - (const ScreenDiff & d) { return ScreenDiff(dx-d.dx, dy-d.dy); }
+	ScreenDiff operator * (int i) { return ScreenDiff(dx*i, dy*=i); }
+	ScreenDiff Direction() const { return ScreenDiff((dx>0)?1:((dx<0)?-1:0), (dy>0)?1:((dy<0)?-1:0)); }
+	bool IsOpposite(const ScreenDiff & d) const { return d.dx == -dx && d.dy == -dy; }
 };
 
 class ScreenRectSet

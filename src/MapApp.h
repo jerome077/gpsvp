@@ -76,8 +76,7 @@ public:
 	int m_iPressedButton;
 	HWND m_hWnd;
 	std::wstring m_wstrHome;
-	CTrackList m_Tracks;
-	CTrack m_CurTrack;
+	CAllTracks m_Tracks;
 	HANDLE m_hPortFile;
 	CRegString m_rsPort;
 	CRegString m_rsPortSpeed;
@@ -124,11 +123,18 @@ public:
 	CSatellitesMonitor m_monSatellites;
 	CTextMonitor m_monInternet;
 	CTextMonitor m_monDLRemaining;
+	CDistanceMonitor m_monForwardRouteDistance;
 	//! Cursor position
 	GeoPoint m_gpCursor;
 	bool m_fCursorVisible;
 	CRegScalar<GeoPoint, REG_BINARY> m_gpNavigate;
-	CRegScalar<bool, REG_BINARY> m_fNavigate;
+	enum enumNavigateMode
+	{
+		nmOff = 0,
+		nmPoint = 1,
+		nmRoute = 2,
+	};
+	CRegScalar<enumNavigateMode, REG_BINARY> m_riNavigate;
 	CMRUPoints m_MRUPoints;
 	CMonitorSet m_MonitorSet;
 	bool m_fFix;
@@ -235,13 +241,7 @@ public:
 	CKeymap & GetKeymap();
 	CScreenButtons & GetButtons();
 	void Navigate(ScreenPoint pt, const wchar_t * wcName);
-	void Navigate(const GeoPoint & gp, const wchar_t * wcName)
-	{
-		m_gpNavigate.Set(gp);
-		m_fNavigate.Set(true);
-		m_painter.Redraw();
-		m_MRUPoints.AddPoint(gp, wcName);
-	};
+	void Navigate(const GeoPoint & gp, const wchar_t * wcName);
 	void SetMenu(HMENU hMenu);
 	void SetMenu(HWND hWndMenu);
 	void CheckMenu();
@@ -249,11 +249,7 @@ public:
 	void PrevMonitorsRow();
 	void UpdateMonitors();
 	void PaintCursor(const GeoPoint & gp, bool fCursorVisible);
-	void ToolsStopNavigating()
-	{
-		m_fNavigate.Set(false);
-		m_painter.Redraw();
-	}
+	void ToolsStopNavigating();
 	void ToolsWaypoints();
 	void ToolsWaypointsEx();
 	void ToolsMaps();
@@ -287,15 +283,19 @@ public:
 		}
 		return uiScale10;
 	}
-	void GetTrackList(IListAcceptor * pAcceptor) { m_Tracks.GetTrackList(pAcceptor); };
+	void GetTrackList(IListAcceptor * pAcceptor) { m_Tracks.GetOldTracks().GetTrackList(pAcceptor); };
 	void SetConnectPeriod(int nPeriod);
 	void SetTrackFormat(int nTrackFormat);
 	void OnTimer();
 	void ToggleConnect();
 	void ToggleShowCenter();
 	void ContextMenu();
+	void LeftClickOrContextMenu();
 	void NewTrack();
 	void ContextMenu(ScreenPoint sp);
+	void ContextMenuMapNormal(ScreenPoint sp);
+	void ContextMenuEditRoute(ScreenPoint sp);
+	void LeftClickOrContextMenu(ScreenPoint sp, bool bAllowContextMenu);
 	void AdjustZoom();
 	ObjectInfo FindNearestPoint(const ScreenPoint & sp, double dRadius);
 	ObjectInfo FindNearestPolyline(const GeoPoint & gp, double dRadius);
@@ -337,6 +337,20 @@ public:
 	void ProcessOSMSearchResult(const char * data, int size);
 	void AddSearchResult(const std::string & name, const std::string & lat, const std::string & lon);
 	const CVersionNumber& GetGpsVPVersion();
+	void GoToDemoPoint();
+	void FollowTrack(Int iIndex);
+	void InfoTrack(HWND hDlgParent, const CTrack& track);
+	void InfoTrack(HWND hDlgParent, Int iIndex) { InfoTrack(hDlgParent, m_Tracks.GetTrack(iIndex)); };
+	void SetStartCursorOnNearestTrack(const GeoPoint & gp);
+	void SetEndCursorOnNearestTrack(const GeoPoint & gp);
+
+	void StartEditingRoute();
+	void StopEditingRoute();
+	bool FileOpenRoute();
+	bool FileSaveRoute();
+	void CenterRouteTarget();
+	void ToolsNavigateRoute();
+	void ToolsStopNavigateRoute();
 };
 
 extern CMapApp app;

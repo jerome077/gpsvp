@@ -473,7 +473,7 @@ void CGDIPainter::InitTools(const wchar_t * strFilename)
 		fclose(pFile);
 }
 
-void CGDIPainter::ZoomIn()
+void CGDIPainter::ZoomInAtScreenCenter()
 {
 	if (m_ruiScale10() == ciMinZoom)
 		return;
@@ -482,7 +482,7 @@ void CGDIPainter::ZoomIn()
 	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10() / 2));
 	Redraw();
 }
-void CGDIPainter::ZoomOut()
+void CGDIPainter::ZoomOutAtScreenCenter()
 {
 	if (m_ruiScale10() == ciMaxZoom)
 		return;
@@ -491,25 +491,53 @@ void CGDIPainter::ZoomOut()
 	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10() * 2));
 	Redraw();
 }
+void CGDIPainter::ZoomIn(const ScreenPoint &spZoomCenter)
+{
+	ScreenDiff sd = m_spWindowCenter - spZoomCenter;
+	sd /= 2;
+	Move(sd);
+	ZoomInAtScreenCenter();
+}
+void CGDIPainter::ZoomOut(const ScreenPoint &spZoomCenter)
+{
+	ScreenDiff sd = m_spWindowCenter - spZoomCenter;
+	sd *= -1;
+	Move(sd);
+	ZoomOutAtScreenCenter();
+}
+void CGDIPainter::ZoomInAtCursor()
+{
+	ScreenPoint spCross(m_spWindowCenter - m_sdCenterCrossShift);
+	ZoomIn(spCross);
+}
+void CGDIPainter::ZoomOutAtCursor()
+{
+	ScreenPoint spCross(m_spWindowCenter - m_sdCenterCrossShift);
+	ZoomOut(spCross);
+}
+
+#define MAP_BORDER_WIDTH 15
+#define MAP_STEP 30
+
 void CGDIPainter::Left()
 {
 	// Move view left by 30 screen points
-	Move(ScreenDiff(30, 0));
+	MoveCross(ScreenDiff(MAP_STEP, 0));
 }
 void CGDIPainter::Right()
 {
 	// Move view right by 30 screen points
-	Move(ScreenDiff(-30, 0));
+	MoveCross(ScreenDiff(-MAP_STEP, 0));
 }
 void CGDIPainter::Up()
 {
 	// Move view up by 30 screen points
-	Move(ScreenDiff(0, 30));
+	MoveCross(ScreenDiff(0, MAP_STEP));
 }
 void CGDIPainter::Down()
 {
 	// Move view down by 30 screen points
-	Move(ScreenDiff(0, -30));
+	MoveCross(ScreenDiff(0, -MAP_STEP));
 }
 void CGDIPainter::Move(ScreenDiff d)
 {
@@ -517,6 +545,64 @@ void CGDIPainter::Move(ScreenDiff d)
 		return;
 	// Move view by given number of screen points
 	SetView(ScreenToGeo(m_spWindowCenter - d), true);
+}
+ScreenDiff CGDIPainter::getAcceleratingWidth(const ScreenDiff& d)
+{
+	ScreenDiff dDir = d.Direction();              // Just keep directions: 1, -1 or 0
+	if (dDir.IsOpposite(m_LastMoveDirection))
+		m_MoveCountWithinShortTime = 0; 	      // Opposite direction => reset acceleration
+	m_LastMoveDirection = dDir;
+    
+	DWORD tickCount = GetTickCount();
+	if ((tickCount - m_LastMoveTickCount) < 500)  // Short time since last move => accelerate
+	{
+		m_LastMoveTickCount = tickCount;
+		m_MoveCountWithinShortTime++;
+		if (m_MoveCountWithinShortTime >= 8)
+		{
+			m_MoveCountWithinShortTime = 8;
+			return dDir * 27;
+		};
+		if (m_MoveCountWithinShortTime >= 4)
+		{
+			return dDir * 9;
+		};
+		if (m_MoveCountWithinShortTime >= 2)
+		{
+			return dDir * 3;
+		};
+		return dDir;
+	}
+	else
+	{
+		m_LastMoveTickCount = tickCount;
+		m_MoveCountWithinShortTime = 0;
+		return dDir;
+	}
+}
+void CGDIPainter::MoveCross(const ScreenDiff& d)
+{
+	if (!m_bMoveCrossMode)
+	{
+		Move(d);
+	}
+	else
+	{
+		// Move the cross by given number of screen points
+		ScreenDiff sdAccelerated = getAcceleratingWidth(d);
+		m_sdCenterCrossShift = m_sdCenterCrossShift + sdAccelerated;
+		ScreenPoint spCross(m_spWindowCenter - m_sdCenterCrossShift);
+		// If the cross is out of the screen or too near to the edges, move the screen:
+		ScreenRect srBorderForCursor(m_srWindow);
+		srBorderForCursor.Trim(MAP_BORDER_WIDTH);
+		if (0 != srBorderForCursor.Side(spCross))
+		{
+			m_sdCenterCrossShift = m_sdCenterCrossShift - sdAccelerated - d;
+			Move(d); // Full length for moving map, because it slower than moving the cursor
+		}
+		else
+			Redraw();
+	}
 }
 
 bool CGDIPainter::WillPaint(const ScreenRect & rect)
@@ -921,6 +1007,12 @@ void CGDIPainter::SetCurrentMonitor(const ScreenRect & srRect, bool fActive)
 		m_srActiveMonitor = srRect;
 }
 
+CGDIPainter::CGDIPainter()
+: m_bMoveCrossMode(false),
+  m_LastMoveTickCount(0)
+{
+}
+
 CGDIPainter::~CGDIPainter()
 {
 }
@@ -1088,6 +1180,14 @@ const GeoPoint CGDIPainter::GetCenter()
 {
 	return m_gpCenter();
 }
+const GeoPoint CGDIPainter::GetCenterCross() 
+{
+	return ScreenToGeo(GetScreenCenterCross());
+}
+ScreenPoint CGDIPainter::GetScreenCenterCross()
+{
+	return m_spWindowCenter - m_sdCenterCrossShift;
+}
 void CGDIPainter::PaintScale()
 {
 	static double lengths0[] = {10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 0};
@@ -1218,4 +1318,11 @@ void CGDIPainter::SetXScale(double scale)
 	new_scale = (std::max)((unsigned)ciMinZoom, (std::min)((unsigned)ciMaxZoom, new_scale));
 	if (m_ruiScale10() != new_scale)
 		m_ruiScale10.Set(new_scale);
+}
+void CGDIPainter::SetMoveCrossMode(bool f)
+{
+	m_bMoveCrossMode = f;
+	if (!m_bMoveCrossMode)
+		m_sdCenterCrossShift = ScreenDiff(0, 0);
+	Redraw();
 }

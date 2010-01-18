@@ -313,7 +313,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="\Storage Card\Карты\Программа"
+				RemoteDirectory=""
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -612,7 +612,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="\"
+				RemoteDirectory=""
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>

@@ -95,6 +95,11 @@ public:
 	long GetWMSMapCount() const { return m_GMFH.GetWMSMapCount(); };
 	std::wstring GetWMSMapName(long indexWMS) const { return m_GMFH.GetWMSMapName(indexWMS); };
     GeoPoint GetDemoPoint(enumGMapType type, double &scale) const { return m_GMFH.GetDemoPoint(type, scale); };
+    bool HasDemoPoint(enumGMapType type) const
+	{
+		double m_dummyScale;
+		return (GeoPoint(0, 0) != GetDemoPoint(type, m_dummyScale));
+	};
 	void SetKeepMemoryLow(bool value);
 
 protected:

@@ -148,6 +148,8 @@ extern Dict & GetDict();
 
 bool UTCVariantTimeToLocalVariantTime(double dUTCTime, double &dLocalTime);
 bool LocalVariantTimeToUTCVariantTime(double dLocalTime, double &dUTCTime);
+std::wstring UTCTimeToLocalTimeText(unsigned long ulTimeUTC);
+std::wstring DurationToText(long iDuration);
 
 // ---------------------------------------------------------------
 

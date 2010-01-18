@@ -79,6 +79,8 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	CRegScalar<GeoPoint, REG_BINARY> m_gpCenter;
 	GeoPoint m_gpCenterCache;
 	GeoPoint m_gpCenterView;
+	// To shift the cross from the view center (relative to m_gpCenter):
+	ScreenDiff m_sdCenterCrossShift;
 	int m_rotate; // the map on screen is rotated m_rotate degrees CCW
 	int m_sin100;
 	int m_cos100;
@@ -181,7 +183,14 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	bool m_fShowPolygonLabels;
 	bool m_fShowAreaAsOutline;
 	int m_iStatusLineOffset;
+	DWORD m_LastMoveTickCount;
+	ScreenDiff m_LastMoveDirection;
+	int m_MoveCountWithinShortTime;
+	bool m_bMoveCrossMode;
+
+	ScreenDiff getAcceleratingWidth(const ScreenDiff& d);
 public:
+	CGDIPainter();
 	virtual ~CGDIPainter();
 	void Init(HWND hWnd, HKEY hRegKey);
 	// IPainter
@@ -204,9 +213,13 @@ public:
 	//! Initialize tools
 	void InitTools(const wchar_t * strFilename);
 	//! Zoom view in
-	void ZoomIn();
+	void ZoomInAtCursor();
+	void ZoomInAtScreenCenter();
+	void ZoomIn(const ScreenPoint &spZoomCenter);
 	//! Zoom view out
-	void ZoomOut();
+	void ZoomOutAtCursor();
+	void ZoomOutAtScreenCenter();
+	void ZoomOut(const ScreenPoint &spZoomCenter);
 	//! Move view center left
 	void Left();
 	//! Move view center right
@@ -217,6 +230,7 @@ public:
 	void Down();
 	//! Move view center by random vector
 	void Move(ScreenDiff d);
+	void MoveCross(const ScreenDiff& d);
 	//! Get-method for m_uiScale
 	int GetScale() {return m_ruiScale10();}
 	//! Check if rectangle intersects window
@@ -233,6 +247,7 @@ public:
 	GeoRect ScreenToGeo(const ScreenRect & rect);
 	int GetScreenRotationAngle() {return m_rotate;}
 	const GeoPoint GetCenter();
+	const GeoPoint GetCenterCross();
 	void PaintScale();
 
 	void PaintStatusLine(const wchar_t * wcName);
@@ -254,6 +269,7 @@ public:
 	void GetUnknownTypes(IListAcceptor * pAcceptor);
 	ScreenRect GetScreenRect(){return m_srWindow;}
 	ScreenPoint GetScreenCenter(){return m_spWindowCenter;}
+	ScreenPoint GetScreenCenterCross();
 	ScreenPoint GetActiveMonitorCenter(){return m_srActiveMonitor.Center();}
 	void PaintStatusIcon(int iIcon);
 	void ParseString(const char * buff, const std::wstring & wstrBase);
@@ -275,6 +291,7 @@ public:
 	double GetXScale();
 	void SetXScale(double scale);
 	void PrepareScales();
+	void SetMoveCrossMode(bool f);
 };
 
 #endif // GDIPAINTER_H

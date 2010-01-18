@@ -45,11 +45,21 @@ int IntAzimuth(const GeoPoint & llPointFrom, const GeoPoint & llPointTo)
 	return int(res);
 }
 
+double AzimuthRadian(const GeoPoint & llPointFrom, const GeoPoint & llPointTo)
+{
+	// Get coordinates in radians
+	double lat1 = Degree(llPointFrom.lat)*pi/180;
+	double lat2 = Degree(llPointTo.lat)*pi/180;
+	double deltaLon = Degree(llPointFrom.lon-llPointTo.lon)*pi/180;
+
+	double y = sin(deltaLon)*cos(lat2);
+	double x = cos(lat1)*sin(lat2) - sin(lat1)*cos(lat2)*cos(deltaLon);
+	return atan2(y, x);
+}
+
 double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2)
 {
 	// llPoint1, llPoint2 - points to find the distance between
-	// pi = 3.1415...,  rad - sphere (Earth) radius
-	double rad = 6372795;
 
 	// Get coordinates in radians
 	double lat1 = Degree(llPoint1.lat)*pi/180;
@@ -77,8 +87,35 @@ double DoubleDistance(const GeoPoint & llPoint1, const GeoPoint & llPoint2)
 	double anglerad = atan(p7);
 	if (anglerad < 0)
 		anglerad += pi;
-	double dist = anglerad*rad;
+	double dist = anglerad*EARTH_RAD;
 
 	// Return the length of the great circle arc
 	return dist;
+}
+
+// Return the distance from point gp to the line going through gp1 and gp2
+double CrossTrackDoubleDistance(const GeoPoint & gp, const GeoPoint& gp1, const GeoPoint& gp2)
+{
+	double d13 = DoubleDistance(gp1, gp);
+	double az13 = AzimuthRadian(gp1, gp);
+	double az12 = AzimuthRadian(gp1, gp2);
+	return abs(asin(sin(d13/EARTH_RAD)*sin(az13-az12)) * EARTH_RAD);
+}
+
+double mymod(double x, double y) { return x - y * floor(x / y); };
+
+// Return the distance from point gp to the segment [gp1, gp2]
+double DoubleDistanceToSegment(const GeoPoint & gp, const GeoPoint& gp1, const GeoPoint& gp2)
+{
+	double d13 = DoubleDistance(gp1, gp);
+	double az13 = AzimuthRadian(gp1, gp);
+	double az12 = AzimuthRadian(gp1, gp2);
+	double a312 = mymod(az13-az12, 2*pi);
+	if ((a312 >= 0.5*pi) && (a312 <= 1.5*pi))
+		return d13;
+	double az23 = AzimuthRadian(gp2, gp);
+	double a321 = mymod(az23-(pi+az12), 2*pi);
+	if ((a321 >= 0.5*pi) && (a321 <= 1.5*pi))
+		return DoubleDistance(gp2, gp);
+	return abs(asin(sin(d13/EARTH_RAD)*sin(a312)) * EARTH_RAD);
 }
