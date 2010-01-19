@@ -3899,18 +3899,29 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			m_painter.Redraw();
 		return;
 	}
-	// Context menu for editing a route?
-	if (m_Tracks.IsEditingRoute())
-	{
-		ContextMenuEditRoute(sp);
-		return;
-	}
-	// Normal context menu for the map?
+	// In the map aera?
 	if (m_painter.WillPaint(sp))
 	{
-		ContextMenuMapNormal(sp);
+		// Context menu for editing a route?
+		if (m_Tracks.IsEditingRoute())
+		{
+			ContextMenuEditRoute(sp);
+			return;
+		}
+		// Normal context menu for the map?
+		else
+		{
+			ContextMenuMapNormal(sp);
+			return;
+		}
+	}
+	else
+	{
+		// In the monitor bar
+		m_MonitorSet.ContextMenu(m_hWnd, sp);
+		m_painter.Redraw();
 		return;
-	}	
+	}
 }
 
 void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
