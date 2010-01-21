@@ -281,11 +281,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				HWND hMenuMB = (HWND)SHFindMenuBar(hWnd);
 				app.SetMenu(hMenuMB);
 				app.Create(hWnd, L"/My Documents/VSMapViewer/");
-
-
 				SetTimer(hWnd, 1, 1000, 0);
+#ifdef UNDER_CE
+				app.RegisterRoamNotify();
+#endif
 			}
 			break;
+#ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
+		case UM_REGNOTIFY:
+			app.OnRoamNotify();
+			break;
+#	endif
+#endif
 		case WM_TIMER:
 			app.OnTimer();
 			break;
@@ -293,6 +301,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			app.Paint();
 			break; 
 		case WM_DESTROY:
+#ifdef UNDER_CE
+			app.UnregisterRoamNotify();
+#endif
 			Quit();
 			break;
 		case WM_SETTINGCHANGE:

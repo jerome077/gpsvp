@@ -40,6 +40,26 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Sun.h"
 #include "Team.h"
 
+// Flags
+#define ALLOW_INTERNET_ALWAYS 0x01
+#define ALLOW_INTERNET_HOME_ONLY 0x02
+
+enum PHONE_ROAM_values {
+	PHONE_ROAM_HOME_NETWORK = 0x00,
+	PHONE_ROAM_ROAMING_NETWORK,
+	PHONE_ROAM_NOTIFY_DISABLED,
+	PHONE_ROAM_NOTIFY_ENABLED
+};
+
+#ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
+#		include <snapi.h>
+#		include <regext.h>
+#		define UM_REGNOTIFY    WM_USER+1956
+#	endif
+#endif // UNDER_CE
+
+
 struct ObjectInfo
 {
 	std::wstring wstrName;
@@ -98,6 +118,8 @@ public:
 	CRegScalar<int, REG_BINARY> m_riConnectPeriodMin;
 	CRegScalar<int, REG_BINARY> m_riTrackFormat;
 	CRegScalar<int, REG_BINARY> m_riGMapType;
+	CRegScalar<int, REG_BINARY> m_riAllowInternet;
+	CRegScalar<int, REG_BINARY> m_riMonitorRow;
 	bool volatile m_fExiting;
 	bool volatile m_fStopHttpThread;
 	CDistanceMonitor m_monDistance;
@@ -166,6 +188,12 @@ public:
 	HINSTANCE m_hCoreDll;
 	GetIdleTimeProc m_pfnGetIdleTime;
 	DWORD m_dwLastIdleTick;
+
+	bool m_bPhoneRoamingNotifyEnabled;
+	bool m_bIsPhoneRoaming;
+#	if UNDER_CE >= 0x0500
+	HREGNOTIFY m_hRegRoamingNotify;
+#	endif
 #else // UNDER_CE
 	__int64 m_nProcessorUsage;
 #endif // UNDER_CE
@@ -287,7 +315,6 @@ public:
 	void SetConnectPeriod(int nPeriod);
 	void SetTrackFormat(int nTrackFormat);
 	void OnTimer();
-	void ToggleConnect();
 	void ToggleShowCenter();
 	void ContextMenu();
 	void LeftClickOrContextMenu();
@@ -351,6 +378,20 @@ public:
 	void CenterRouteTarget();
 	void ToolsNavigateRoute();
 	void ToolsStopNavigateRoute();
+
+	bool IsInternetAllowed();
+#ifdef UNDER_CE
+	bool IsPhoneRoaming();
+	void OnPhoneRoaming(DWORD roaming);
+#	if UNDER_CE >= 0x0500
+	HREGNOTIFY& GetRegNotify() { return m_hRegRoamingNotify; };
+	void RegisterRoamNotify();
+	void OnRoamNotify();
+	void UnregisterRoamNotify() {
+		RegistryCloseNotification(GetRegNotify());
+	};
+#	endif
+#endif // UNDER_CE
 };
 
 extern CMapApp app;

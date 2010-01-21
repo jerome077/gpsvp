@@ -2233,7 +2233,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Warn on GPS loss"), L"WarnNoGPS", false, mcoWarnNoGPS);
 	m_Options.AddOption(L("Keep backlight"), L"KeepBacklight", false, mcoKeepBacklight);
 	m_Options.AddOption(L("Keep device on"), L"KeepDeviceOn", true, mcoKeepDeviceOn);
-	m_Options.AddOption(L("Allow internet connection"), L"AllowInternet", true, mcoAllowInternet);
+//	m_Options.AddOption(L("Allow internet connection always"), L"AllowInternetAlways", true, mcoAllowInternetAlways);
+//	m_Options.AddOption(L("Allow internet connection home only"), L"AllowInternetHomeOnly", true, mcoAllowInternetHomeOnly);
 	m_Options.AddOption(L("Use proxy server"), L"EnableProxy", false, mcoUseProxy);
 	m_Options.AddOption(L("Connect"), L"Connect", true, mcoConnect);
 	m_Options.AddOption(L("Show center"), L"ShowCenter", true, mcoShowCenter);
@@ -2442,6 +2443,11 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
 		m_riGMapType.Set(0);
 
+	m_riAllowInternet.Init(hRegKey, L"AllowInternet", 0);
+#ifdef UNDER_CE
+	OnPhoneRoaming(PHONE_ROAM_NOTIFY_DISABLED);
+#endif
+
 	CheckOptions();
 
 	m_Tracks.GetCurTrack().Init();
@@ -2523,6 +2529,93 @@ void CMapApp::CheckOptions()
 	}
 #endif
 	m_painter.GetFontCache().SetLargeFonts(m_Options[mcoLargeFonts]);
+}
+
+#ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
+
+void CMapApp::RegisterRoamNotify()
+{
+	// Create a notification to detect whether phone is in roaming network
+	NOTIFICATIONCONDITION nc;
+	ZeroMemory(&nc, sizeof(NOTIFICATIONCONDITION));
+	nc.ctComparisonType = REG_CT_EQUAL;
+	nc.dwMask = SN_PHONEROAMING_BITMASK;
+	nc.TargetValue.dw = SN_PHONEROAMING_BITMASK;
+	RegistryNotifyWindow(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, SN_PHONEROAMING_VALUE, m_hWnd, UM_REGNOTIFY, 0, &nc, &GetRegNotify());
+	OnPhoneRoaming(PHONE_ROAM_NOTIFY_ENABLED);
+}
+
+void CMapApp::OnRoamNotify()
+{
+	if (IsPhoneRoaming()) {
+		OnPhoneRoaming(PHONE_ROAM_ROAMING_NETWORK);
+	} else {
+		OnPhoneRoaming(PHONE_ROAM_HOME_NETWORK);
+	}
+}
+#	endif
+
+bool CMapApp::IsPhoneRoaming()
+{
+	HKEY hRegKey = 0;
+	DWORD nRes;
+#ifdef RegOpenKey
+	nRes = RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("System\\State\\Phone"), &hRegKey);
+#else
+	nRes = RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("System\\State\\Phone"), 0, KEY_READ, &hRegKey);
+#endif
+	if (ERROR_SUCCESS != nRes)
+		return false;
+	DWORD dwData, dwType;
+	DWORD dwLen = sizeof(dwData);
+	nRes = RegQueryValueEx(hRegKey, TEXT("Status"), NULL, &dwType, (LPBYTE) &dwData, &dwLen);
+	if (ERROR_SUCCESS != nRes)
+		return false;
+	bool bIsRoaming = (dwData & 0x200) != 0;
+	RegCloseKey(hRegKey);
+	return bIsRoaming;
+}
+
+void CMapApp::OnPhoneRoaming(DWORD roaming)
+{
+	switch (roaming) {
+		case PHONE_ROAM_NOTIFY_ENABLED:
+			m_bPhoneRoamingNotifyEnabled = true;
+			m_bIsPhoneRoaming = false;
+			break;
+		case PHONE_ROAM_NOTIFY_DISABLED:
+			m_bPhoneRoamingNotifyEnabled = false;
+			m_bIsPhoneRoaming = false;
+			break;
+		case PHONE_ROAM_HOME_NETWORK:
+			m_bIsPhoneRoaming = false;
+			break;
+		case PHONE_ROAM_ROAMING_NETWORK:
+			m_bIsPhoneRoaming = true;
+			break;
+	}
+}
+#endif //UNDER_CE
+
+bool CMapApp::IsInternetAllowed()
+{
+	if (m_riAllowInternet() == 0)
+		return false;
+
+	if (m_riAllowInternet() & ALLOW_INTERNET_ALWAYS)
+		return true;
+
+#ifdef UNDER_CE
+	if (m_riAllowInternet() & ALLOW_INTERNET_HOME_ONLY) {
+		if (m_bPhoneRoamingNotifyEnabled) {
+			return !m_bIsPhoneRoaming;
+		} else {
+			return IsPhoneRoaming();
+		}
+	}
+#endif // UNDER_CE
+	return false;
 }
 
 class CStatusPainter : public IStatusPainter
@@ -3317,7 +3410,14 @@ void CMapApp::InitMenu()
 #ifndef SMARTPHONE
 		mmSetup.CreateItem(L("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
-		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternet);
+		{
+			CMenu & mmInet = mmSetup.CreateSubMenu(L("Allow internet connection"));
+			mmInet.CreateItem(L("Never"), mcoAllowInternetNever);
+			mmInet.CreateItem(L("Always"), mcoAllowInternetAlways);
+#ifdef UNDER_CE
+			mmInet.CreateItem(L("Home network only"), mcoAllowInternetHomeOnly);
+#endif // UNDER_CE
+		}
 		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);
 	}
 	{
@@ -3379,6 +3479,12 @@ void CMapApp::CheckMenu()
 		 i < iEnd; ++i)
 		menu.CheckMenuItem(mcGMapType + i, i == m_riGMapType());
 
+	DWORD allowInet = m_riAllowInternet();
+	menu.CheckMenuItem(mcoAllowInternetNever, allowInet == 0);
+	menu.CheckMenuItem(mcoAllowInternetAlways, (allowInet & ALLOW_INTERNET_ALWAYS) != 0);
+#ifdef UNDER_CE
+	menu.CheckMenuItem(mcoAllowInternetHomeOnly, (allowInet & ALLOW_INTERNET_HOME_ONLY) != 0);
+#endif // UNDER_CE
 	menu.EnableMenuItem(mcCloseColors, !m_rsToolsFile().empty());
 	bool fGarminMaps = !m_atlas.IsEmpty();
 	menu.EnableMenuItem(mcoShowGarminMaps, fGarminMaps);
@@ -3786,6 +3892,18 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			break;
 		case mcCenterRouteTarget:
 			CenterRouteTarget();
+			break;
+		case mcoAllowInternetNever:
+			m_riAllowInternet.Set(0);
+			CheckMenu();
+			break;
+		case mcoAllowInternetAlways:
+			m_riAllowInternet.Set(ALLOW_INTERNET_ALWAYS);
+			CheckMenu();
+			break;
+		case mcoAllowInternetHomeOnly:
+			m_riAllowInternet.Set(ALLOW_INTERNET_HOME_ONLY);
+			CheckMenu();
 			break;
 		default:
 			{
@@ -4850,7 +4968,7 @@ void CMapApp::HttpThreadRoutine()
 			m_request = request;
 		}
 
-		if (!request.empty() && !m_fStopHttpThread && m_Options[mcoAllowInternet])
+		if (!request.empty() && !m_fStopHttpThread && IsInternetAllowed())
 		{
 			bool fConnected = true;
 #ifdef UNDER_CE

@@ -128,7 +128,7 @@ enum enumMenuCommands
 	mcoLargeFonts,
 	mcSearchOSM,
 	mcSearchResults,
-	mcoAllowInternet,
+	mcoAllowInternetAlways,
 	mcoUseProxy,
 	mcTeamSettings,
 	mcTeamUpdateNow,
@@ -155,6 +155,8 @@ enum enumMenuCommands
 	mcCenterRouteTarget,
 	mcNavigatingToPoint,
 	mcNavigatingAlongRoute,
+	mcoAllowInternetNever,
+	mcoAllowInternetHomeOnly,
 
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,

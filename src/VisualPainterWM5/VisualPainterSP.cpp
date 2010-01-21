@@ -137,10 +137,19 @@ LRESULT CALLBACK WndProc(
 				lResult = OnCreate(hwnd, (CREATESTRUCT*)lp);
 				app.SetMenu(g_hwndCB);
 				app.Create(hwnd, L"/My Documents/VSMapViewer");
-
 				SetTimer(hwnd, 1, 1000, 0);
+#ifdef UNDER_CE
+				app.RegisterRoamNotify();
+#endif
 			}
             break;
+#ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
+		case UM_REGNOTIFY:
+			app.OnRoamNotify();
+			break;
+#	endif
+#endif
 		case WM_TIMER:
 			app.OnTimer();
 			break;
@@ -154,7 +163,10 @@ LRESULT CALLBACK WndProc(
 			break; 
 
         case WM_DESTROY:
-            PostQuitMessage(0);
+#ifdef UNDER_CE
+			app.UnregisterRoamNotify();
+#endif
+			PostQuitMessage(0);
             break;
 
 		case WM_COPYDATA:

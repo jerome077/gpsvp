@@ -286,7 +286,7 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 
 			if (hbm == NULL) {
 				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled
-				if (app.m_Options[mcoDownloadGoogleMaps] && app.m_Options[mcoAllowInternet])
+				if (app.m_Options[mcoDownloadGoogleMaps] && app.IsInternetAllowed())
 					DeleteFile(w.c_str());
 				bHBITMAPInited = false;
 			} else {
@@ -409,7 +409,7 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 		SelectObject(srcdc, srcoldbm);
 		DeleteDC(srcdc);
 
-		// Check if this code works better 
+		// TODO: Check if this code works better 
 		// http://www.codeguru.com/cpp/g-m/bitmap/specialeffects/article.php/c4897/
 	}
 
