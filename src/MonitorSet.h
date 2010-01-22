@@ -33,9 +33,9 @@ public:
 	void Init(HKEY hRegKey)
 	{
 		m_hRegKey = hRegKey;
+		m_nRow = 0;
 		Load();
 		m_iActiveMonitor = 0;
-		m_nRow = 0;
 	}
 	void AddMonitor(IMonitor * pMonitor)
 	{
@@ -72,47 +72,8 @@ public:
 			}
 		}
 	}
-	void Load()
-	{
-		std::vector<Byte> data;
-		DWORD ulTotalLen = 0;
-		DWORD dwType = REG_BINARY;
-		RegQueryValueEx(m_hRegKey, L"Monitors", 0, &dwType, 0, &ulTotalLen);
-		if (ulTotalLen > 0)
-		{
-			if (dwType != REG_BINARY)
-				return;
-			data.resize(ulTotalLen);
-			if (RegQueryValueEx(m_hRegKey, L"Monitors", 0, &dwType, &data[0], &ulTotalLen) != ERROR_SUCCESS)
-				return;
-			m_vectMonitors.clear();
-			unsigned int uiPos = 0;
-			while (uiPos < ulTotalLen)
-			{
-				int iLen;
-				std::wstring wstr;
-				memcpy(&iLen, &data[uiPos], sizeof(iLen));
-				uiPos += sizeof(iLen);
-				wstr.assign((wchar_t *)&data[uiPos], iLen);
-				uiPos += sizeof(wchar_t) * iLen;
-				m_vectMonitors.push_back(wstr);
-			}
-		}
-	}
-	void Save()
-	{
-		std::vector<Byte> data;
-		for (std::vector<std::wstring>::iterator it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
-		{
-			std::wstring wstrFilename = *it;
-			int len = wstrFilename.length();
-			data.insert(data.end(), (const Byte*)&len, (const Byte*)&len + sizeof(len));
-			data.insert(data.end(), (const Byte*)&wstrFilename.c_str()[0], (const Byte*)&wstrFilename.c_str()[0] + sizeof(wchar_t) * len); 
-		}
-		wchar_t buf[1000];
-		wsprintf(buf, L"%d", data.size());
-		RegSetValueEx(m_hRegKey, L"Monitors", 0, REG_BINARY, &data[0], data.size());
-	}
+	void Load();
+	void Save();
 	void Decrease(UInt uiDiff)
 	{
 		while (m_iActiveMonitor < uiDiff)
@@ -150,12 +111,14 @@ public:
 		++ m_nRow;
 		if (m_nRow * m_iInRow > m_vectMonitors.size() - 1)
 			m_nRow = 0;
+		Save();
 	}
 	void PrevRow()
 	{
 		-- m_nRow;
 		if (m_nRow < 0)
 			m_nRow = (m_vectMonitors.size() - 1) / m_iInRow;
+		Save();
 	}
 };
 
