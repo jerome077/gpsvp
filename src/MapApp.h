@@ -123,6 +123,7 @@ public:
 	bool volatile m_fStopHttpThread;
 	CDistanceMonitor m_monDistance;
 	CAzimuthMonitor m_monAzimuth;
+	CAzimuthMonitor m_monCourseRel;
 	CAzimuthMonitor m_monCourse;
 	CHeightMonitor m_monAltitude;
 	CHeightMonitor m_monSeparation;

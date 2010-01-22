@@ -2317,6 +2317,10 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_monCourse.SetIdL(L"Course");
 	m_MonitorSet.AddMonitor(&m_monCourse);
 	
+	m_monCourseRel.SetIdL(L"Relative course");
+	m_MonitorSet.AddMonitor(&m_monCourseRel);
+	
+
 	//m_monTrackDistance.SetIdL(L"Track distance"));
 	//m_MonitorSet.AddMonitor(&m_monTrackDistance);
 
@@ -3044,6 +3048,14 @@ void CMapApp::UpdateMonitors()
 		{
 			(CDoubleMonitor &)m_monDistance = DoubleDistance(m_gpNavigate(), m_gpCursor);
 			m_monAzimuth.Set(IntAzimuth(m_gpCursor, m_gpNavigate()));
+			if (m_monCourse.IsSet() && m_fCursorVisible) {
+				int course = int(m_monCourse.Get());
+				int azimuth = int(m_monAzimuth.Get());
+				int diff = (course - azimuth + 720) % 360;
+				if (diff > 180)
+					diff -= 360;
+				m_monCourseRel.Set(diff);
+			}
 			/*
 			double dTrackDistance = GetDistanceByTrack(m_gpNavigate(), gpCursor);
 			if (dTrackDistance < 40000000)
