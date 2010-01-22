@@ -119,7 +119,6 @@ public:
 	CRegScalar<int, REG_BINARY> m_riTrackFormat;
 	CRegScalar<int, REG_BINARY> m_riGMapType;
 	CRegScalar<int, REG_BINARY> m_riAllowInternet;
-	CRegScalar<int, REG_BINARY> m_riMonitorRow;
 	bool volatile m_fExiting;
 	bool volatile m_fStopHttpThread;
 	CDistanceMonitor m_monDistance;
