@@ -124,6 +124,21 @@ void CMonitorSet::PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool 
 	}
 }
 
+void CMonitorSet::AddMonitor(IMonitor * pMonitor)
+{
+	std::wstring wstrName = pMonitor->GetId();
+	m_mapMonitors[wstrName] = pMonitor;
+	if (m_vectMonitors.size() < 30)
+	{
+		std::vector<std::wstring>::iterator it;
+		for (it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
+			if (*it == wstrName) break;
+		if (it == m_vectMonitors.end())
+			m_vectMonitors.push_back(wstrName);
+	}
+	Save();
+}
+
 void CMonitorSet::Load()
 {
 	DWORD ulTotalLen = sizeof(m_nRow);
@@ -172,4 +187,37 @@ void CMonitorSet::Save()
 	wsprintf(buf, L"%d", data.size());
 	RegSetValueEx(m_hRegKey, L"Monitors", 0, REG_BINARY, &data[0], data.size());
 	RegSetValueEx(m_hRegKey, L"MonitorCurRow", 0, REG_DWORD, (LPBYTE) &m_nRow, sizeof(m_nRow));
+}
+
+int CMonitorSet::GetMonitorUnder(ScreenPoint pt)
+{
+	for (MonitorRects::iterator it1 = m_listMonitorRects.begin(); 
+		it1 != m_listMonitorRects.end(); ++it1)
+	{
+		if (it1->first.Side(pt) == 0) {
+			return it1->second;
+		}
+	}
+	return -1;
+}
+
+void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt)
+{
+	ContextMenu(hWnd, iMonitor, ScreenPoint(
+		rt.left + (rt.right - rt.left) * iMonitor / m_vectMonitors.size(), 
+		rt.bottom));
+}
+
+void CMonitorSet::ContextMenu(HWND hWnd, ScreenPoint pt)
+{
+	int iMonitor = GetMonitorUnder(pt);
+	if (iMonitor >= 0) {
+		ContextMenu(hWnd, iMonitor, pt);
+	}
+}
+
+void CMonitorSet::SwapMonitors(int m1, int m2)
+{
+	m_vectMonitors[m1].swap(m_vectMonitors[m2]);
+	Save();
 }

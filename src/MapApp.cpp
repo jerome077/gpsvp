@@ -1631,35 +1631,52 @@ CMapApp::~CMapApp()
 
 void CMapApp::OnLButtonDown(ScreenPoint pt)
 {
-	m_spFrom = pt;
-	m_iPressedButton = m_painter.CheckButton(pt);
-	if (m_iPressedButton != -1)
-	{
-		GetButtons().SelectButton(m_iPressedButton);
-		m_painter.BeginPaintLite(VP::DC(m_hWnd));
-		GetButtons().Paint(&m_painter);
-	}
-	m_fMoving = true;
-}
-void CMapApp::OnLButtonUp(ScreenPoint pt)
-{
-	if (m_fMoving)
-	{
+	if (m_Options[mcoMonitorsMode]) {
+		m_iMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
+	} else {
+		m_spFrom = pt;
+		m_iPressedButton = m_painter.CheckButton(pt);
 		if (m_iPressedButton != -1)
 		{
-			if (m_painter.CheckButton(pt) == m_iPressedButton)
-				ProcessCommand(GetButtons().GetCommand(m_iPressedButton));
-			GetButtons().DeselectButton();
+			GetButtons().SelectButton(m_iPressedButton);
 			m_painter.BeginPaintLite(VP::DC(m_hWnd));
 			GetButtons().Paint(&m_painter);
 		}
-		else if (pt == m_spFrom)
-		{
-			LeftClickOrContextMenu(pt, false);
+		m_fMoving = true;
+	}
+}
+void CMapApp::OnLButtonUp(ScreenPoint pt)
+{
+	if (m_Options[mcoMonitorsMode]) {
+		int newMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
+		if (newMonitorUnder >= 0) {
+			if ((m_iMonitorUnder >= 0) && (newMonitorUnder != m_iMonitorUnder)) {
+				m_MonitorSet.SwapMonitors(m_iMonitorUnder, newMonitorUnder);
+				m_painter.Redraw();
+			} else if (m_iMonitorUnder == newMonitorUnder) {
+				m_MonitorSet.SetActiveMonitor(newMonitorUnder);
+				m_painter.Redraw();
+			}
 		}
-		else
-			m_painter.Move(pt - m_spFrom);
-		m_fMoving = false;
+	} else {
+		if (m_fMoving)
+		{
+			if (m_iPressedButton != -1)
+			{
+				if (m_painter.CheckButton(pt) == m_iPressedButton)
+					ProcessCommand(GetButtons().GetCommand(m_iPressedButton));
+				GetButtons().DeselectButton();
+				m_painter.BeginPaintLite(VP::DC(m_hWnd));
+				GetButtons().Paint(&m_painter);
+			}
+			else if (pt == m_spFrom)
+			{
+				LeftClickOrContextMenu(pt, false);
+			}
+			else
+				m_painter.Move(pt - m_spFrom);
+			m_fMoving = false;
+		}
 	}
 }
 void CMapApp::ViewZoomIn()
@@ -4030,7 +4047,7 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 			m_painter.Redraw();
 		return;
 	}
-	// In the map aera?
+	// In the map area?
 	if (m_painter.WillPaint(sp))
 	{
 		// Context menu for editing a route?

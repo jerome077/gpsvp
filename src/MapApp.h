@@ -94,6 +94,7 @@ public:
 	ScreenPoint m_spFrom;
 	bool m_fMoving;
 	int m_iPressedButton;
+	int m_iMonitorUnder;
 	HWND m_hWnd;
 	std::wstring m_wstrHome;
 	CAllTracks m_Tracks;

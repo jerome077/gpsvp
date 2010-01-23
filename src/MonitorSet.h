@@ -37,41 +37,13 @@ public:
 		Load();
 		m_iActiveMonitor = 0;
 	}
-	void AddMonitor(IMonitor * pMonitor)
-	{
-		std::wstring wstrName = pMonitor->GetId();
-		m_mapMonitors[wstrName] = pMonitor;
-		if (m_vectMonitors.size() < 30)
-		{
-			std::vector<std::wstring>::iterator it;
-			for (it = m_vectMonitors.begin(); it != m_vectMonitors.end(); ++it)
-				if (*it == wstrName) break;
-			if (it == m_vectMonitors.end())
-				m_vectMonitors.push_back(wstrName);
-		}
-		Save();
-	}
+	void AddMonitor(IMonitor * pMonitor);
 	void PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool fMonitorsMode, bool fVertical, bool fLarge);
-	void ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt)
-	{
-		ContextMenu(hWnd, iMonitor, ScreenPoint(
-			rt.left + (rt.right - rt.left) * iMonitor / m_vectMonitors.size(), 
-			rt.bottom));
-	}
+	void ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt);
 	void ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt);
-	void ContextMenu(HWND hWnd, ScreenPoint pt)
-	{
-		for (MonitorRects::iterator it1 = m_listMonitorRects.begin(); 
-			it1 != m_listMonitorRects.end(); ++it1)
-		{
-			if (it1->first.Side(pt) == 0)
-			{
-				int iMonitor = it1->second;
-				ContextMenu(hWnd, iMonitor, pt);
-				return;
-			}
-		}
-	}
+	void ContextMenu(HWND hWnd, ScreenPoint pt);
+	int GetMonitorUnder(ScreenPoint pt);
+	void SwapMonitors(int m1, int m2);
 	void Load();
 	void Save();
 	void Decrease(UInt uiDiff)
@@ -105,6 +77,10 @@ public:
 	int GetActiveMonitor()
 	{
 		return m_iActiveMonitor;
+	}
+	void SetActiveMonitor(UInt uiMonitor)
+	{
+		m_iActiveMonitor = uiMonitor;
 	}
 	void NextRow()
 	{
