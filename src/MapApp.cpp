@@ -2741,6 +2741,7 @@ void CMapApp::Paint()
 			AutoLock l;
 			fShowGarminMaps = m_Options[mcoShowGarminMaps];
 			fMonitorsMode = m_Options[mcoMonitorsMode];
+			GetKeymap().SetMonitorsMode(fMonitorsMode);
 			fBuffered = m_Options[mcoBuffered];
 			fLowLight = m_Options[mcoLowLight];
 			fShowRoadName = fShowGarminMaps && m_Options[mcoShowRoadName];

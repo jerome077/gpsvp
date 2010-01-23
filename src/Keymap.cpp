@@ -138,6 +138,20 @@ bool CKeymap::SetCommandKey(WORD wCommand, int nScancode)
 }
 UINT CKeymap::Translate(int nScancode)
 {
+	if (m_bInMonitorsMode) {
+		switch (nScancode) {
+			case VK_LEFT:
+				return mcLeft;
+			case VK_RIGHT:
+				return mcRight;
+			case VK_UP:
+				return mcUp;
+			case VK_DOWN:
+				return mcDown;
+			case VK_RETURN:
+				return mcLeftClickOrContextMenu;
+		}
+	}
 	for (std::list<CAction>::iterator it = m_Actions.begin(); it != m_Actions.end(); ++it)
 	{
 		if (it->m_wKey == nScancode)

@@ -35,6 +35,7 @@ private:
 	};
 	std::list<CAction> m_Actions;
 	HKEY m_hRegKey;
+	bool m_bInMonitorsMode;
 public:
 	void Init(HKEY hRegKey);
 	void GetList(IListAcceptor2 * pAcceptor);
@@ -46,6 +47,7 @@ public:
 	void Load();
 	void Save();
 	virtual void UpdateCurrent(int iId, IListAcceptor2 * pAcceptor);
+	void SetMonitorsMode(bool bMode) { m_bInMonitorsMode = bMode; };
 };
 
 #endif // KEYMAP_H
