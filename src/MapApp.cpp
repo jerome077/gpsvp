@@ -2565,8 +2565,11 @@ void CMapApp::RegisterRoamNotify()
 	nc.ctComparisonType = REG_CT_EQUAL;
 	nc.dwMask = SN_PHONEROAMING_BITMASK;
 	nc.TargetValue.dw = SN_PHONEROAMING_BITMASK;
-	RegistryNotifyWindow(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, SN_PHONEROAMING_VALUE, m_hWnd, UM_REGNOTIFY, 0, &nc, &GetRegNotify());
-	OnPhoneRoaming(PHONE_ROAM_NOTIFY_ENABLED);
+	HRESULT hRes = RegistryNotifyWindow(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, SN_PHONEROAMING_VALUE, m_hWnd, UM_REGNOTIFY, 0, &nc, &GetRegNotify());
+	if (SUCCEEDED(hRes)) {
+		OnPhoneRoaming(PHONE_ROAM_NOTIFY_ENABLED);
+	}
+	OnRoamNotify(); // Here it gets roaming status using regular registry read
 }
 
 void CMapApp::OnRoamNotify()
@@ -2584,18 +2587,18 @@ bool CMapApp::IsPhoneRoaming()
 	HKEY hRegKey = 0;
 	DWORD nRes;
 #ifdef RegOpenKey
-	nRes = RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("System\\State\\Phone"), &hRegKey);
+	nRes = RegOpenKey(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, &hRegKey);
 #else
-	nRes = RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("System\\State\\Phone"), 0, KEY_READ, &hRegKey);
+	nRes = RegOpenKeyEx(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, 0, KEY_READ, &hRegKey);
 #endif
 	if (ERROR_SUCCESS != nRes)
 		return false;
 	DWORD dwData, dwType;
 	DWORD dwLen = sizeof(dwData);
-	nRes = RegQueryValueEx(hRegKey, TEXT("Status"), NULL, &dwType, (LPBYTE) &dwData, &dwLen);
+	nRes = RegQueryValueEx(hRegKey, SN_PHONEROAMING_VALUE, NULL, &dwType, (LPBYTE) &dwData, &dwLen);
 	if (ERROR_SUCCESS != nRes)
 		return false;
-	bool bIsRoaming = (dwData & 0x200) != 0;
+	bool bIsRoaming = (dwData & SN_PHONEROAMING_BITMASK) != 0;
 	RegCloseKey(hRegKey);
 	return bIsRoaming;
 }
@@ -2631,11 +2634,17 @@ bool CMapApp::IsInternetAllowed()
 
 #ifdef UNDER_CE
 	if (m_riAllowInternet() & ALLOW_INTERNET_HOME_ONLY) {
+		bool bIsRoam = false;
 		if (m_bPhoneRoamingNotifyEnabled) {
-			return !m_bIsPhoneRoaming;
+			bIsRoam = m_bIsPhoneRoaming;
 		} else {
-			return IsPhoneRoaming();
+			bIsRoam = IsPhoneRoaming();
 		}
+		if (bIsRoam) {
+			AutoLock l;
+			m_wstrHttpStatus = L("Roaming");
+		}
+		return !bIsRoam;
 	}
 #endif // UNDER_CE
 	return false;

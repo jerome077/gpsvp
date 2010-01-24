@@ -283,7 +283,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				app.Create(hWnd, L"/My Documents/VSMapViewer/");
 				SetTimer(hWnd, 1, 1000, 0);
 #ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
 				app.RegisterRoamNotify();
+#	endif
 #endif
 			}
 			break;
@@ -302,7 +304,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break; 
 		case WM_DESTROY:
 #ifdef UNDER_CE
+#	if UNDER_CE >= 0x0500
 			app.UnregisterRoamNotify();
+#	endif
 #endif
 			Quit();
 			break;
