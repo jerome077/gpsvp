@@ -18,6 +18,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Menu.h"
 #include "GDIPainter.h"
 
+const int INVALID_MONITOR_ID = -1;
+
 class CMonitorSet
 {
 private:

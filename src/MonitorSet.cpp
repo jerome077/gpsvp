@@ -198,7 +198,7 @@ int CMonitorSet::GetMonitorUnder(ScreenPoint pt)
 			return it1->second;
 		}
 	}
-	return -1;
+	return INVALID_MONITOR_ID;
 }
 
 void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt)
@@ -218,6 +218,8 @@ void CMonitorSet::ContextMenu(HWND hWnd, ScreenPoint pt)
 
 void CMonitorSet::SwapMonitors(int m1, int m2)
 {
-	m_vectMonitors[m1].swap(m_vectMonitors[m2]);
-	Save();
+	if ((m1 > INVALID_MONITOR_ID) && (m2 > INVALID_MONITOR_ID)) {
+		m_vectMonitors[m1].swap(m_vectMonitors[m2]);
+		Save();
+	}
 }

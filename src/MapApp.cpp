@@ -1608,7 +1608,7 @@ void CMapApp::StartHttpThread()
 
 CMapApp::CMapApp() : m_fMoving(false), m_hWnd(0), m_hPortThread(0), m_hHttpThread(0),
 	m_hPortFile(0), m_wstrCmdLine(0), m_hPwrReq(0), m_fMemoryLow(false), m_fMemoryVeryLow(false),
-	m_NMEAParser(), m_Options()
+	m_NMEAParser(), m_Options(), m_iMonitorUnder(INVALID_MONITOR_ID)
 {
 	m_NMEAParser.SetClient(this);
 	m_pRasterMapPainter = new CGMPainter();
@@ -1649,15 +1649,17 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 {
 	if (m_Options[mcoMonitorsMode]) {
 		int newMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
-		if (newMonitorUnder >= 0) {
-			if ((m_iMonitorUnder >= 0) && (newMonitorUnder != m_iMonitorUnder)) {
+		if (newMonitorUnder > INVALID_MONITOR_ID) {
+			if ((m_iMonitorUnder > INVALID_MONITOR_ID) && (newMonitorUnder != m_iMonitorUnder)) {
 				m_MonitorSet.SwapMonitors(m_iMonitorUnder, newMonitorUnder);
+				m_MonitorSet.SetActiveMonitor(newMonitorUnder);
 				m_painter.Redraw();
 			} else if (m_iMonitorUnder == newMonitorUnder) {
 				m_MonitorSet.SetActiveMonitor(newMonitorUnder);
 				m_painter.Redraw();
 			}
 		}
+		m_iMonitorUnder = INVALID_MONITOR_ID;
 	} else {
 		if (m_fMoving)
 		{
