@@ -24,13 +24,9 @@ void CSatellitesMonitor::Paint(IMonitorPainter * pPainter)
 
 void CAzimuthMonitor::Paint(IMonitorPainter * pPainter)
 {
-	if (m_fSet)
-	{
-		std::wstring str = IntToText(m_iValue) + L"°";
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), str.c_str());
-	}
-	else
-		pPainter->DrawTextMonitor(m_wstrLabel.c_str(), L"-");
+	m_wstrValue = m_fSet ? IntToText(m_iValue) + L"°" : L"-";
+	pPainter->DrawTextMonitor(&m_cached, m_wstrLabel.c_str(), m_wstrValue.c_str(), m_wstrValueCached != m_wstrValue);
+	m_wstrValueCached = m_wstrValue;
 }
 
 void CTimeMonitor::PrepareContextMenu(IListAcceptor * pMenu)
@@ -42,7 +38,9 @@ void CTimeMonitor::PrepareContextMenu(IListAcceptor * pMenu)
 
 void COptionMonitor::Paint(IMonitorPainter * pPainter)
 {
-	pPainter->DrawTextMonitor(m_wstrLabel.c_str(), m_Value() ? L("Yes") : L("No"));
+	m_wstrValue = m_Value() ? L("Yes") : L("No");
+	pPainter->DrawTextMonitor(&m_cached, m_wstrLabel.c_str(), m_wstrValue.c_str(), m_wstrValueCached != m_wstrValue);
+	m_wstrValueCached = m_wstrValue;
 }
 
 void CTextMonitor::ProcessMenuCommand(int i)

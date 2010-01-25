@@ -35,6 +35,10 @@ struct ScreenSize : public SIZE
 {
 	ScreenSize() {}
 	ScreenSize(long x, long y) { cx = x; cy = y; }
+	bool operator == (const ScreenSize & sz)
+	{
+		return (cx == sz.cx) && (cy == sz.cy);
+	}
 };
 
 struct ScreenRect : public RECT
@@ -101,6 +105,10 @@ struct ScreenRect : public RECT
 	int Height()
 	{
 		return bottom - top;
+	}
+	ScreenSize Size()
+	{
+		return ScreenSize(Width(), Height());
 	}
 	ScreenPoint Center()
 	{

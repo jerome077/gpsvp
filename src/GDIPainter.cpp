@@ -925,6 +925,53 @@ GeoRect CGDIPainter::GetRect()
 	return ScreenToGeo(m_srWindow);
 }
 
+void CGDIPainter::DrawTextMonitor(ScreenBuffer *pBuffer, const wchar_t * wcLabel, const wchar_t * wcText, bool bTextChanged)
+{
+	ScreenRect &sr = m_srCurrentMonitor;
+	ScreenSize newSize(sr.Width(), sr.Height());
+	bool bNeedRedraw = (bTextChanged || !(newSize == pBuffer->size));
+	if (!bNeedRedraw) {
+		int x = 0;
+	}
+	VP::DC dc = pBuffer->buffer.GetContext(m_hdc, sr.Width(), sr.Height());
+	pBuffer->size = m_srCurrentMonitor.Size();
+	if (bNeedRedraw) {
+		// Copy background from destination
+		dc.BitBlt(0, 0, m_srCurrentMonitor.Width(), m_srCurrentMonitor.Height(),
+			m_hdc, m_srCurrentMonitor.left, m_srCurrentMonitor.top, SRCCOPY); 
+		ScreenRect sr;
+		sr.left = sr.top = 0;
+		sr.right = m_srCurrentMonitor.Width();
+		sr.bottom = m_srCurrentMonitor.Height();
+		int iHeight = sr.bottom;
+		int iTitle = iHeight / 3;
+		int iValue = iHeight - iTitle;
+
+		SIZE sizeCurr;
+
+		HFONT hMonitorTitleFont = m_FontCache.GetFont(iTitle, true, 0);
+		HFONT hMonitorValueFont = m_FontCache.GetFont(iValue, true, 0);
+
+		dc.SetTextColor(m_crText);
+
+		dc.SelectObject(hMonitorTitleFont);
+		dc.getTextExtentPoint(wcLabel, &sizeCurr);
+		dc.ExtTextOut(sr.Center().x - sizeCurr.cx / 2, sr.top, ETO_CLIPPED, &sr, wcLabel, 0);
+		sr.top += sizeCurr.cy;
+
+		dc.SelectObject(hMonitorValueFont);
+		dc.getTextExtentPoint(wcText, &sizeCurr);
+		dc.ExtTextOut(sr.Center().x - sizeCurr.cx / 2, sr.top, ETO_CLIPPED, &sr, wcText, 0);
+		sr.top += sizeCurr.cy;
+
+	}
+
+	m_hdc.BitBlt(m_srCurrentMonitor.left+2, m_srCurrentMonitor.top+2,
+		m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3,
+		dc, 2, 2, SRCCOPY); 
+}
+
+/*
 void CGDIPainter::DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText)
 {
 	ScreenRect &sr = m_srCurrentMonitor;
@@ -950,6 +997,8 @@ void CGDIPainter::DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcTex
 	sr.top += sizeCurr.cy;
 
 }
+*/
+
 void CGDIPainter::DrawMonitorLabel(const wchar_t * wcLabel)
 {
 	ScreenRect &sr = m_srCurrentMonitor;

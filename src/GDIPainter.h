@@ -34,9 +34,15 @@ extern HWND g_hwndCB;
 #endif
 #endif
 
+struct ScreenBuffer {
+	VP::Buffer buffer;
+	ScreenSize size;
+};
+
 struct IMonitorPainter
 {
-	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText) = 0;
+//	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText) = 0;
+	virtual void DrawTextMonitor(ScreenBuffer *pBuffer, const wchar_t * wcLabel, const wchar_t * wcText, bool bTextChanged) = 0;
 	virtual void DrawMonitorLabel(const wchar_t * wcLabel) = 0;
 	virtual ScreenPoint GetMonitorSize() = 0;
 	virtual void DrawBar(const ScreenRect & srBar) = 0;
@@ -252,7 +258,8 @@ public:
 
 	void PaintStatusLine(const wchar_t * wcName);
 	void PaintLowMemory(const wchar_t * wcString1, const wchar_t * wcString2);
-	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText);
+//	virtual void DrawTextMonitor(const wchar_t * wcLabel, const wchar_t * wcText);
+	virtual void DrawTextMonitor(ScreenBuffer *pBuffer, const wchar_t * wcLabel, const wchar_t * wcText, bool bTextChanged);
 	virtual void DrawMonitorLabel(const wchar_t * wcLabel);
 	virtual ScreenPoint GetMonitorSize();
 	virtual void DrawBar(const ScreenRect & srBar);

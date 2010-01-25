@@ -81,7 +81,8 @@ namespace VP
 				_data->AddRef();
 		}
 		explicit DC(HWND hWnd, LPPAINTSTRUCT lpPaint) : _data(new Data(hWnd, lpPaint)) {}
-		~DC()
+		~DC() { Release(); }
+		void Release()
 		{
 			if (_data)
 				_data->Release();
@@ -198,7 +199,13 @@ namespace VP
 				y = (std::max)(y, _y);
 			}
 			_context = DC(original, x, y);
+			_x = x;
+			_y = y;
 			return _context;
+		}
+		void Release()
+		{
+			_context.Release();
 		}
 	};
 }
