@@ -2562,7 +2562,7 @@ void CMapApp::RegisterRoamNotify()
 	// Create a notification to detect whether phone is in roaming network
 	NOTIFICATIONCONDITION nc;
 	ZeroMemory(&nc, sizeof(NOTIFICATIONCONDITION));
-	nc.ctComparisonType = REG_CT_EQUAL;
+	nc.ctComparisonType = REG_CT_ANYCHANGE;
 	nc.dwMask = SN_PHONEROAMING_BITMASK;
 	nc.TargetValue.dw = SN_PHONEROAMING_BITMASK;
 	HRESULT hRes = RegistryNotifyWindow(SN_PHONEROAMING_ROOT, SN_PHONEROAMING_PATH, SN_PHONEROAMING_VALUE, m_hWnd, UM_REGNOTIFY, 0, &nc, &GetRegNotify());
