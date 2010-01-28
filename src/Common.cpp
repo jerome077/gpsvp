@@ -312,13 +312,18 @@ std::wstring IntToHex(int iInt)
 
 std::wstring MemoryToText(unsigned long ulMemory)
 {
-	wchar_t wcMemory[1000];
+	const size_t bufsize = 1000;
+	wchar_t wcMemory[bufsize];
 	if (ulMemory < 1 * 1024)
-		swprintf(wcMemory, 1000, L"%u%s", ulMemory, L("b"));
+		swprintf(wcMemory, bufsize, L"%u%s", ulMemory, L("B"));
 	else if (ulMemory < 1 * 1024 * 1024)
-		swprintf(wcMemory, 1000, L"%.1f%s", double(ulMemory) / 1024, L("kb"));
-	else
-		swprintf(wcMemory, 1000, L"%.1f%s", double(ulMemory) / 1024 / 1024, L("mb"));
+		swprintf(wcMemory, bufsize, L"%.1f%s", double(ulMemory) / 1024, L("K"));
+	else {
+		wchar_t *pFmt = L"%.1f%s";
+		if (ulMemory > 1 * 100 * 1024 * 1024)
+			pFmt = L"%.0f%s";
+		swprintf(wcMemory, bufsize, pFmt, double(ulMemory) / 1024 / 1024, L("M"));
+	}
 	return wcMemory;
 }
 
@@ -892,5 +897,3 @@ std::wstring UTMZoneToLongText(int utmZone)
 }
 
 // ---------------------------------------------------------------
-
-
