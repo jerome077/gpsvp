@@ -966,9 +966,24 @@ void CGDIPainter::DrawTextMonitor(ScreenBuffer *pBuffer, const wchar_t * wcLabel
 
 	}
 
-	m_hdc.BitBlt(m_srCurrentMonitor.left+2, m_srCurrentMonitor.top+2,
-		m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3,
-		dc, 2, 2, SRCCOPY); 
+#ifdef AC_SRC_OVER
+	if (!m_sdMoved.Null()) {
+		BLENDFUNCTION bf;
+		bf.BlendOp = AC_SRC_OVER;
+		bf.BlendFlags = 0;
+		bf.SourceConstantAlpha = 128;
+		bf.AlphaFormat = 0;
+		m_hdc.AlphaBlend(m_srCurrentMonitor.left+2+m_sdMoved.dx, m_srCurrentMonitor.top+2+m_sdMoved.dy,
+			m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3,
+			dc, 2, 2, m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3, bf); 
+	} else {
+#endif
+		m_hdc.BitBlt(m_srCurrentMonitor.left+2+m_sdMoved.dx, m_srCurrentMonitor.top+2+m_sdMoved.dy,
+			m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3,
+			dc, 2, 2, SRCCOPY); 
+#ifdef AC_SRC_OVER
+	}
+#endif
 }
 
 /*
@@ -1044,7 +1059,7 @@ ScreenRect CGDIPainter::GetMonitorsBar()
 	}
 	return res;
 }
-void CGDIPainter::SetCurrentMonitor(const ScreenRect & srRect, bool fActive)
+void CGDIPainter::SetCurrentMonitor(const ScreenRect & srRect, bool fActive, ScreenDiff *pMoved)
 {
 	m_srCurrentMonitor = srRect;
 	m_hdc.SelectObject(m_hBgBrush);
@@ -1054,6 +1069,11 @@ void CGDIPainter::SetCurrentMonitor(const ScreenRect & srRect, bool fActive)
 		m_hdc.Rectangle(srRect.left + 1, srRect.top + 1, srRect.right, srRect.bottom);
 	if (true == fActive)
 		m_srActiveMonitor = srRect;
+	if (pMoved) {
+		m_sdMoved = *pMoved;
+	} else {
+		m_sdMoved = ScreenDiff(0, 0);
+	}
 }
 
 CGDIPainter::CGDIPainter()

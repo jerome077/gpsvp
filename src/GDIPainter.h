@@ -46,7 +46,7 @@ struct IMonitorPainter
 	virtual void DrawMonitorLabel(const wchar_t * wcLabel) = 0;
 	virtual ScreenPoint GetMonitorSize() = 0;
 	virtual void DrawBar(const ScreenRect & srBar) = 0;
-	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive) = 0;
+	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive, ScreenDiff *pMoved) = 0;
 };
 
 struct IMonitor
@@ -169,12 +169,12 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	int m_iBottomBar;
 	RECT m_rectLastWinSize;
 	RECT m_rectLastCBSize;
+	ScreenRect m_srActiveMonitor;
 	ScreenRect m_srCurrentMonitor;
-	
+	ScreenDiff m_sdMoved;
 
 	HINSTANCE m_hResourceInst;
 	std::set<int> m_setUnknownTypes;
-	ScreenRect m_srActiveMonitor;
 	std::map<int, HICON> m_mapIcons;
 	int m_iCurrentStatusIcon;
 	CGDIPainter & operator = (const CGDIPainter &);
@@ -272,7 +272,7 @@ public:
 	}
 	void SetFullScreen(bool fFull);
 	virtual ScreenRect GetMonitorsBar();
-	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive);
+	virtual void SetCurrentMonitor(const ScreenRect & srRect, bool fActive, ScreenDiff *pMoved);
 	void GetUnknownTypes(IListAcceptor * pAcceptor);
 	ScreenRect GetScreenRect(){return m_srWindow;}
 	ScreenPoint GetScreenCenter(){return m_spWindowCenter;}

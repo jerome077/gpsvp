@@ -1631,26 +1631,44 @@ CMapApp::~CMapApp()
 
 void CMapApp::OnLButtonDown(ScreenPoint pt)
 {
+	m_spFrom = pt;
 	if (m_Options[mcoMonitorsMode]) {
 		m_iMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
+		m_fMoving = true;
 	} else {
-		m_spFrom = pt;
 		m_iPressedButton = m_painter.CheckButton(pt);
 		if (m_iPressedButton != -1)
 		{
 			GetButtons().SelectButton(m_iPressedButton);
 			m_painter.BeginPaintLite(VP::DC(m_hWnd));
 			GetButtons().Paint(&m_painter);
+		} else {
+			m_fMoving = true;
 		}
-		m_fMoving = true;
 	}
 }
+
+void CMapApp::OnMouseMove(ScreenPoint pt)
+{
+	if (m_fMoving) {
+		if (m_Options[mcoMonitorsMode]) {
+			int curMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
+			if (curMonitorUnder != INVALID_MONITOR_ID) {
+				m_MonitorSet.SetActiveMonitor(curMonitorUnder);
+			}
+			m_MonitorSet.SetMovingMonitor(m_iMonitorUnder, pt - m_spFrom);
+			m_painter.Redraw();
+		} else {
+		}
+	}
+}
+
 void CMapApp::OnLButtonUp(ScreenPoint pt)
 {
 	if (m_Options[mcoMonitorsMode]) {
 		int newMonitorUnder = m_MonitorSet.GetMonitorUnder(pt);
-		if (newMonitorUnder > INVALID_MONITOR_ID) {
-			if ((m_iMonitorUnder > INVALID_MONITOR_ID) && (newMonitorUnder != m_iMonitorUnder)) {
+		if (newMonitorUnder != INVALID_MONITOR_ID) {
+			if ((m_iMonitorUnder != INVALID_MONITOR_ID) && (newMonitorUnder != m_iMonitorUnder)) {
 				m_MonitorSet.SwapMonitors(m_iMonitorUnder, newMonitorUnder);
 				m_MonitorSet.SetActiveMonitor(newMonitorUnder);
 				m_painter.Redraw();
@@ -1660,6 +1678,8 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 			}
 		}
 		m_iMonitorUnder = INVALID_MONITOR_ID;
+		m_MonitorSet.SetMovingMonitor(INVALID_MONITOR_ID, ScreenDiff());
+		m_fMoving = false;
 	} else {
 		if (m_fMoving)
 		{
@@ -2281,9 +2301,9 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 #ifndef SMARTPHONE
 	m_Options.AddOption(L("Show screen buttons"), L"ShowScreenButtons", true, mcoScreenButtons);
 #endif // !SMARTPHONE
-#ifdef SMARTPHONE
+#ifdef AC_SRC_OVER
 	m_Options.AddOption(L("Low light"), L"LowLight", false, mcoLowLight);
-#endif // SMARTPHONE
+#endif // AC_SRC_OVER
 #ifdef SMARTPHONE
 	m_Options.AddOption(L("Turn bluetooth on"), L"BluetoothOn", false, mcoBluetoothOn);
 #endif // SMARTPHONE
@@ -2947,7 +2967,7 @@ void CMapApp::Paint()
 			dwTmp = GetTickCount(); m_monProfile[7] = dwTmp - dwTimer; dwTimer = dwTmp;
 			if (fBuffered)
 			{
-#if defined(SMARTPHONE) && defined(AC_SRC_OVER)
+#if defined(AC_SRC_OVER)
 				if (fLowLight)
 				{
 					GetClientRect(m_hWnd, &srWindow);
@@ -2977,7 +2997,7 @@ void CMapApp::Paint()
 						hdcPreScreen, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
 				}
 				else
-#endif // SMARTPHONE
+#endif // AC_SRC_OVER
 				{
 					hdcScreen.BitBlt(ps.rcPaint.left, ps.rcPaint.top,
 						ps.rcPaint.right - ps.rcPaint.left,

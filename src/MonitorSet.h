@@ -29,6 +29,8 @@ private:
 	std::vector<std::wstring> m_vectMonitors;
 	HKEY m_hRegKey;
 	UInt m_iActiveMonitor;
+	int m_iMovingMonitor;
+	ScreenDiff m_sdMovingMonitor;
 	int m_nRow;
 	UInt m_iInRow;
 public:
@@ -38,14 +40,20 @@ public:
 		m_nRow = 0;
 		Load();
 		m_iActiveMonitor = 0;
+		m_iMovingMonitor = INVALID_MONITOR_ID;
 	}
 	void AddMonitor(IMonitor * pMonitor);
 	void PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool fMonitorsMode, bool fVertical, bool fLarge);
-	void ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt);
-	void ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt);
-	void ContextMenu(HWND hWnd, ScreenPoint pt);
+	void ContextMenu(HWND hWnd, int iMonitor, const ScreenRect &rt);
+	void ContextMenu(HWND hWnd, int iMonitor, const ScreenPoint &pt);
+	void ContextMenu(HWND hWnd, const ScreenPoint &pt);
 	int GetMonitorUnder(ScreenPoint pt);
 	void SwapMonitors(int m1, int m2);
+	void SetMovingMonitor(int iMonitor, const ScreenDiff &sd)
+	{
+		m_iMovingMonitor = iMonitor;
+		m_sdMovingMonitor = sd;
+	}
 	void Load();
 	void Save();
 	void Decrease(UInt uiDiff)

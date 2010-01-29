@@ -15,7 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "MonitorSet.h"
 #include "MapApp.h"
 
-void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenPoint pt)
+void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, const ScreenPoint &pt)
 {
 	std::map<int, std::wstring> mapMenu;
 	CMenu mmPopupMenu;
@@ -106,10 +106,7 @@ void CMonitorSet::PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool 
 		srCurrentMonitor.Init(ScreenPoint(ssr.left, ssr.top));
 		srCurrentMonitor.Append(ScreenPoint(srCurrentMonitor.right + ssr.Width() / colleft, ssr.bottom));
 		ssr.left = srCurrentMonitor.right;
-		pPainter->SetCurrentMonitor(srCurrentMonitor, i == m_iActiveMonitor && fMonitorsMode);
 		m_listMonitorRects.push_back(std::make_pair(srCurrentMonitor, i));
-		if (m_mapMonitors.find(m_vectMonitors[i]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[i]])
-			m_mapMonitors[m_vectMonitors[i]]->Paint(pPainter);
 		if (!--colleft)
 		{
 			sr.top = ssr.bottom;
@@ -121,6 +118,27 @@ void CMonitorSet::PaintMonitors(IMonitorPainter * pPainter, ScreenRect sr, bool 
 			colleft = m_iInRow;
 		}
 		++i;
+	}
+	MonitorRects::iterator it = m_listMonitorRects.begin();
+	if (m_iMovingMonitor != INVALID_MONITOR_ID) {
+		// Moving monitor should be drawn the last
+		while (it != m_listMonitorRects.end()) {
+			if (it->second == m_iMovingMonitor) {
+				MonitorRects::value_type t = *it;
+				*it = *(m_listMonitorRects.rbegin());
+				*(m_listMonitorRects.rbegin()) = t;
+				break;
+			}
+			++it;
+		}
+	}
+	it = m_listMonitorRects.begin();
+	while (it != m_listMonitorRects.end()) {
+		pPainter->SetCurrentMonitor(it->first, it->second == m_iActiveMonitor && fMonitorsMode, it->second == m_iMovingMonitor ? &m_sdMovingMonitor : NULL);
+		if (m_mapMonitors.find(m_vectMonitors[it->second]) != m_mapMonitors.end() && m_mapMonitors[m_vectMonitors[it->second]]) {
+			m_mapMonitors[m_vectMonitors[it->second]]->Paint(pPainter);
+		}
+		++it;
 	}
 }
 
@@ -201,14 +219,14 @@ int CMonitorSet::GetMonitorUnder(ScreenPoint pt)
 	return INVALID_MONITOR_ID;
 }
 
-void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, ScreenRect rt)
+void CMonitorSet::ContextMenu(HWND hWnd, int iMonitor, const ScreenRect &rt)
 {
 	ContextMenu(hWnd, iMonitor, ScreenPoint(
 		rt.left + (rt.right - rt.left) * iMonitor / m_vectMonitors.size(), 
 		rt.bottom));
 }
 
-void CMonitorSet::ContextMenu(HWND hWnd, ScreenPoint pt)
+void CMonitorSet::ContextMenu(HWND hWnd, const ScreenPoint &pt)
 {
 	int iMonitor = GetMonitorUnder(pt);
 	if (iMonitor >= 0) {
@@ -218,7 +236,7 @@ void CMonitorSet::ContextMenu(HWND hWnd, ScreenPoint pt)
 
 void CMonitorSet::SwapMonitors(int m1, int m2)
 {
-	if ((m1 > INVALID_MONITOR_ID) && (m2 > INVALID_MONITOR_ID)) {
+	if ((m1 != INVALID_MONITOR_ID) && (m2 != INVALID_MONITOR_ID)) {
 		m_vectMonitors[m1].swap(m_vectMonitors[m2]);
 		Save();
 	}

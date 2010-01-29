@@ -139,7 +139,7 @@ struct ScreenDiff
 	ScreenDiff() : dx(0), dy(0) {}
 	ScreenDiff(const ScreenDiff & d) { dx = d.dx; dy = d.dy; }
 	ScreenDiff(int x, int y) : dx(x), dy(y) {}
-	bool Null() const {return dx == 0.0 && dy == 0.0;}
+	bool Null() const {return dx == 0 && dy == 0;}
 	int dx;
 	int dy;
 	void operator *=(int i) {dx*=i; dy*=i;}

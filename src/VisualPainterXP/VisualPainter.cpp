@@ -193,6 +193,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_LBUTTONDOWN:
 			app.OnLButtonDown(ScreenPoint(LOWORD(lParam), HIWORD(lParam)));
 			break;
+		case WM_MOUSEMOVE:
+			app.OnMouseMove(ScreenPoint(LOWORD(lParam), HIWORD(lParam)));
+			break;
 		case WM_LBUTTONUP:
 			app.OnLButtonUp(ScreenPoint(LOWORD(lParam), HIWORD(lParam)));
 			break;

@@ -219,6 +219,7 @@ public:
 	virtual void NoVFix();
 	virtual void VFix(double dAltitude, double dSeparation);
 	void OnLButtonDown(ScreenPoint pt);
+	void OnMouseMove(ScreenPoint pt);
 	void OnLButtonUp(ScreenPoint pt);
 	int AddPointScreen(ScreenPoint pt, wchar_t * wcName);
 	int AddPointCenter(wchar_t * wcName);
