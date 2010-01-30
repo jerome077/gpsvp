@@ -301,8 +301,9 @@ public:
 	bool ProcessCommand(WPARAM wp);
 	void ProcessWMHIBERNATE();
 	void SetDetail(int iDetail);
-	int PrepareScale(unsigned int uiScale10)
+	int PrepareScale(unsigned int uiScale10_256)
 	{
+		unsigned int uiScale10 = uiScale10_256 >> 8;
 		switch (m_riDetail())
 		{
 		case -2: return uiScale10 * 4;

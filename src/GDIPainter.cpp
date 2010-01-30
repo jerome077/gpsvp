@@ -324,7 +324,7 @@ void CGDIPainter::BeginPaintLite(VP::DC hdc)
 void CGDIPainter::PrepareScales()
 {
 	m_gpCenterCache = m_gpCenter();
-	m_uiScale10Cache = m_ruiScale10();
+	m_uiScale10_256Cache = m_ruiScale10_256();
 	m_lXScale100 = cos100(m_gpCenterCache.lat);
 }
 
@@ -475,20 +475,20 @@ void CGDIPainter::InitTools(const wchar_t * strFilename)
 
 void CGDIPainter::ZoomInAtScreenCenter()
 {
-	if (m_ruiScale10() == ciMinZoom)
+	if (m_ruiScale10_256() == ciMinZoom256)
 		return;
 	// Decrease scale twice
 	// Correct if minimum reached
-	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10() / 2));
+	m_ruiScale10_256.Set((std::max)((int)(ciMinZoom256), m_ruiScale10_256() / 2));
 	Redraw();
 }
 void CGDIPainter::ZoomOutAtScreenCenter()
 {
-	if (m_ruiScale10() == ciMaxZoom)
+	if (m_ruiScale10_256() == ciMaxZoom256)
 		return;
 	// Increase scale twice
 	// Correct if maximum reached
-	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10() * 2));
+	m_ruiScale10_256.Set((std::min)((int)(ciMaxZoom256), m_ruiScale10_256() * 2));
 	Redraw();
 }
 void CGDIPainter::ZoomIn(const ScreenPoint &spZoomCenter)
@@ -642,9 +642,9 @@ void CGDIPainter::Init(HWND hWnd, HKEY hRegKey)
 		m_gpCenter.Set(GeoPoint(lon, lat));
 	}
 	m_fViewSet = false;
-	m_ruiScale10.Init(hRegKey, L"ScaleD", 500);
-	m_ruiScale10.Set((std::max)((int)(ciMinZoom), m_ruiScale10()));
-	m_ruiScale10.Set((std::min)((int)(ciMaxZoom), m_ruiScale10()));
+	m_ruiScale10_256.Init(hRegKey, L"ScaleD", 500);
+	m_ruiScale10_256.Set((std::max)((int)(ciMinZoom256), m_ruiScale10_256()));
+	m_ruiScale10_256.Set((std::min)((int)(ciMaxZoom256), m_ruiScale10_256()));
 
 	m_lXScale100 = cos100(m_gpCenter().lat);
 	m_fBottomBar = false;
@@ -1184,9 +1184,12 @@ GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
 
 	//res.lon = dx2 * m_ruiScale10() / 10 * 100 / m_lXScale100 + m_gpCenter().lon;
 	//res.lat = - dy2 * m_ruiScale10() / 10 + m_gpCenter().lat;
+	//res = GeoPoint(
+	//	int(((__int64)(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
+	//	int(-((__int64)(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
 	res = GeoPoint(
-		int(((__int64)(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
-		int(-((__int64)(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
+		int( ((__int64)(dx2) * m_ruiScale10_256() * 10 << (GPWIDTH - 24)) / m_lXScale100 / 256),
+		int(-((__int64)(dy2) * m_ruiScale10_256() << (GPWIDTH - 24)) / 10 / 256));
 	res.lon += m_gpCenter().lon;
 	res.lat += m_gpCenter().lat;
 	return res;
@@ -1195,8 +1198,10 @@ ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 {
 	AutoLock l;
 	ScreenPoint res;
-	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
-	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
+	//int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
+	//int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
+	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 / (m_uiScale10_256Cache >> 8);
+	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / (m_uiScale10_256Cache >> 8);
 
 	int dx2;
 	int dy2;
@@ -1377,16 +1382,16 @@ void CGDIPainter::PaintCompass()
 
 double CGDIPainter::GetXScale() 
 { 
-	return double(m_uiScale10Cache) / m_lXScale100 * 10;
+	return double(m_uiScale10_256Cache) / m_lXScale100 * 10 / 256;
 }
 
 void CGDIPainter::SetXScale(double scale)
 {
 	AutoLock l;
-	unsigned int new_scale = (unsigned int)(scale / 10 * m_lXScale100);
-	new_scale = (std::max)((unsigned)ciMinZoom, (std::min)((unsigned)ciMaxZoom, new_scale));
-	if (m_ruiScale10() != new_scale)
-		m_ruiScale10.Set(new_scale);
+	unsigned int new_scale256 = (unsigned int)(scale / 10 * m_lXScale100 * 256);
+	new_scale256 = (std::max)((unsigned)ciMinZoom256, (std::min)((unsigned)ciMaxZoom256, new_scale256));
+	if (m_ruiScale10_256() != new_scale256)
+		m_ruiScale10_256.Set(new_scale256);
 }
 void CGDIPainter::SetMoveCrossMode(bool f)
 {

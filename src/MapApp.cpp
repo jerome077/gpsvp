@@ -2746,7 +2746,7 @@ private:
 
 void CMapApp::AdjustZoom()
 {
-	if (m_Options[mcoGoogleZoomLevels] && (m_painter.GetScale() > 3))
+	if (m_Options[mcoGoogleZoomLevels] && (m_painter.GetScale256() > 3*256))
 	{
 		m_painter.PrepareScales();
 		double xscale = m_painter.GetXScale();
@@ -2871,7 +2871,7 @@ void CMapApp::Paint()
 			{
 				if (!m_fMemoryLow)
 				{
-					UInt uiScale = PrepareScale(m_painter.GetScale());
+					UInt uiScale = PrepareScale(m_painter.GetScale256());
 					if (fShowGarminMaps)
 					{
 						CStatusPainter statuspainter(m_hWnd, m_painter.GetFontCache());
@@ -4117,7 +4117,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 	{
 		CMenu & mmGarmin = mmMenu.CreateSubMenu(L("Garmin map"));
 
-		pinfo = FindNearestPoint(sp, m_painter.GetScale() * 50 / 10);
+		pinfo = FindNearestPoint(sp, m_painter.GetScale256() * 50 / 10 / 256);
 		if (pinfo.fPresent)
 		{
 			CMenu & mmPointMenu = mmGarmin.CreateSubMenu((L("POI: ") + pinfo.GetDescription()).c_str());
@@ -4130,7 +4130,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 			mmGarmin.CreateItem(L("No POI near"), -1);
 		}
 
-		linfo = FindNearestPolyline(gp, m_painter.GetScale() * 50 / 10);
+		linfo = FindNearestPolyline(gp, m_painter.GetScale256() * 50 / 10 / 256);
 		if (linfo.fPresent)
 			mmGarmin.CreateItem((L("Line: ") + linfo.GetDescription()).c_str(), 30);
 		else
@@ -4147,7 +4147,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 		mmMenu.CreateItem(L("Garmin maps disabled"), -1);
 	}
 
-	int nPointID = m_Waypoints.GetNearestPoint(gp, m_painter.GetScale() * 50 / 10);
+	int nPointID = m_Waypoints.GetNearestPoint(gp, m_painter.GetScale256() * 50 / 10 / 256);
 	if (nPointID >= 0)
 	{
 		CMenu & mmNearestMenu = mmMenu.CreateSubMenu(m_Waypoints.GetLabelByID(nPointID).c_str());
@@ -4652,7 +4652,7 @@ public:
 ObjectInfo CMapApp::FindNearestPoint(const ScreenPoint & sp, double dRadius)
 {
 	CObjectFinder finder(&m_painter, m_painter.ScreenToGeo(sp), dRadius);
-	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale()), &finder, 0);
+	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale256()), &finder, 0);
 	m_atlas.Paint(maskPoints, m_Options[mcoDirectPaint]);
 	return finder.GetObjectInfo();
 }
@@ -4660,7 +4660,7 @@ ObjectInfo CMapApp::FindNearestPoint(const ScreenPoint & sp, double dRadius)
 ObjectInfo CMapApp::FindNearestPolyline(const GeoPoint & gp, double dRadius)
 {
 	CObjectFinder finder(&m_painter, gp, dRadius);
-	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale()), &finder, 0);
+	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale256()), &finder, 0);
 	m_atlas.Paint(maskPolylines, m_Options[mcoDirectPaint]);
 	return finder.GetObjectInfo();
 }
@@ -4668,7 +4668,7 @@ ObjectInfo CMapApp::FindNearestPolyline(const GeoPoint & gp, double dRadius)
 ObjectInfo CMapApp::FindPolygon(const GeoPoint & gp)
 {
 	CObjectFinder finder(&m_painter, gp, 0);
-	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale()), &finder, 0);
+	m_atlas.BeginPaint(PrepareScale(m_painter.GetScale256()), &finder, 0);
 	m_atlas.Paint(maskPolygons, m_Options[mcoDirectPaint]);
 	return finder.GetObjectInfo();
 }

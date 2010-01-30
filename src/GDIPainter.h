@@ -92,8 +92,8 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	int m_cos100;
 	bool m_fViewSet;
 	//! Scale in garmin points per screen point
-	CRegScalar<int, REG_DWORD> m_ruiScale10;
-	int m_uiScale10Cache;
+	CRegScalar<int, REG_DWORD> m_ruiScale10_256;
+	int m_uiScale10_256Cache;
 	//! Scale of x axis for the latitude
 	long m_lXScale100;
 	//! Are we painting polygon {or polyline)
@@ -148,8 +148,8 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	VP::DC m_hdc;
 
 	enum { 
-		ciMinZoom = 1,		//!< Minimum zoom
-		ciMaxZoom = 100000	//!< Maximum zoom
+		ciMinZoom256 = 1*256,		//!< Minimum zoom
+		ciMaxZoom256 = 100000*256	//!< Maximum zoom
 	};
 	const wchar_t * m_wcName;
 	SIZE m_LabelSize;
@@ -238,7 +238,7 @@ public:
 	void Move(ScreenDiff d);
 	void MoveCross(const ScreenDiff& d);
 	//! Get-method for m_uiScale
-	int GetScale() {return m_ruiScale10();}
+	int GetScale256() {return m_ruiScale10_256();}
 	//! Check if rectangle intersects window
 	bool WillPaint(const ScreenRect & rect);
 	bool WillPaint(const ScreenPoint & pt);
