@@ -744,7 +744,7 @@ class CSearchOSMDlg : public CMADialog
 						to += sprintf(to, "%%%02X", (unsigned char)*from);
 				}
 				(*to) = 0;
-				std::string url = "http://www.frankieandshadow.com/osm/search.xml?find=";
+				std::string url = "http://gazetteer.openstreetmap.org/namefinder/search.xml?find=";
 				url += quoted;
 				app.SetSearchURL(url.c_str());
 				EndDialog(hDlg, 0);
