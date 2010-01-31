@@ -968,14 +968,9 @@ void CGDIPainter::DrawTextMonitor(ScreenBuffer *pBuffer, const wchar_t * wcLabel
 
 #ifdef AC_SRC_OVER
 	if (!m_sdMoved.Null()) {
-		BLENDFUNCTION bf;
-		bf.BlendOp = AC_SRC_OVER;
-		bf.BlendFlags = 0;
-		bf.SourceConstantAlpha = 128;
-		bf.AlphaFormat = 0;
-		m_hdc.AlphaBlend(m_srCurrentMonitor.left+2+m_sdMoved.dx, m_srCurrentMonitor.top+2+m_sdMoved.dy,
+		m_hdc.BitBlend(m_srCurrentMonitor.left+2+m_sdMoved.dx, m_srCurrentMonitor.top+2+m_sdMoved.dy,
 			m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3,
-			dc, 2, 2, m_srCurrentMonitor.Width()-3, m_srCurrentMonitor.Height()-3, bf); 
+			dc, 2, 2, 160); 
 	} else {
 #endif
 		m_hdc.BitBlt(m_srCurrentMonitor.left+2+m_sdMoved.dx, m_srCurrentMonitor.top+2+m_sdMoved.dy,

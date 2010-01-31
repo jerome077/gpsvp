@@ -174,10 +174,19 @@ namespace VP
 				::BitBlt(_data->_hdc, x, y, cx, cy, hdcSrc._data->_hdc, x1, y1, rop);
 		}
 #if defined(AC_SRC_OVER)
-		void AlphaBlend(int x, int y, int cx, int cy, DC & hdcSrc, int x1, int y1, int cx1, int cy1, BLENDFUNCTION bf)
+		void AlphaBlend(int x, int y, int cx, int cy, DC & hdcSrc, int x1, int y1, int cx1, int cy1, const BLENDFUNCTION &bf)
 		{
 			if (_data != NULL && _data->_hdc != NULL && hdcSrc._data != NULL && hdcSrc._data->_hdc != NULL)
 				::AlphaBlend(_data->_hdc, x, y, cx, cy, hdcSrc._data->_hdc, x1, y1, cx1, cy1, bf);			
+		}
+		void BitBlend(int x, int y, int cx, int cy, DC & hdcSrc, int x1, int y1, BYTE blendAlpha)
+		{
+			BLENDFUNCTION bf;
+			bf.BlendOp = AC_SRC_OVER;
+			bf.BlendFlags = 0;
+			bf.SourceConstantAlpha = blendAlpha;
+			bf.AlphaFormat = 0;
+			AlphaBlend(x, y, cx, cy, hdcSrc, x1, y1, cx, cy, bf);
 		}
 #endif // AC_SRC_OVER
 		HDC Get() {return _data->_hdc;}

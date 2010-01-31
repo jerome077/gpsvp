@@ -1681,24 +1681,22 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 		m_MonitorSet.SetMovingMonitor(INVALID_MONITOR_ID, ScreenDiff());
 		m_fMoving = false;
 	} else {
-		if (m_fMoving)
+		if (m_iPressedButton != -1)
 		{
-			if (m_iPressedButton != -1)
-			{
-				if (m_painter.CheckButton(pt) == m_iPressedButton)
-					ProcessCommand(GetButtons().GetCommand(m_iPressedButton));
-				GetButtons().DeselectButton();
-				m_painter.BeginPaintLite(VP::DC(m_hWnd));
-				GetButtons().Paint(&m_painter);
-			}
-			else if (pt == m_spFrom)
-			{
-				LeftClickOrContextMenu(pt, false);
-			}
-			else
-				m_painter.Move(pt - m_spFrom);
-			m_fMoving = false;
+			if (m_painter.CheckButton(pt) == m_iPressedButton)
+				ProcessCommand(GetButtons().GetCommand(m_iPressedButton));
+			GetButtons().DeselectButton();
+			m_painter.BeginPaintLite(VP::DC(m_hWnd));
+			GetButtons().Paint(&m_painter);
 		}
+		else if (pt == m_spFrom)
+		{
+			LeftClickOrContextMenu(pt, false);
+		}
+		else
+			m_painter.Move(pt - m_spFrom);
+
+		m_fMoving = false;
 	}
 }
 void CMapApp::ViewZoomIn()
@@ -2979,18 +2977,11 @@ void CMapApp::Paint()
 						ps.rcPaint.right - ps.rcPaint.left,
 						ps.rcPaint.bottom - ps.rcPaint.top,
 						hdc, ps.rcPaint.left, ps.rcPaint.top, BLACKNESS);
-					BLENDFUNCTION bf;
-					bf.BlendOp = AC_SRC_OVER;
-					bf.BlendFlags = 0;
-					bf.SourceConstantAlpha = 128;
-					bf.AlphaFormat = 0;
-					hdcPreScreen.AlphaBlend(ps.rcPaint.left, ps.rcPaint.top,
+					hdcPreScreen.BitBlend(ps.rcPaint.left, ps.rcPaint.top,
 						ps.rcPaint.right - ps.rcPaint.left,
 						ps.rcPaint.bottom - ps.rcPaint.top,
 						hdc, ps.rcPaint.left, ps.rcPaint.top,
-						ps.rcPaint.right - ps.rcPaint.left,
-						ps.rcPaint.bottom - ps.rcPaint.top,
-						bf);
+						128);
 					hdcScreen.BitBlt(ps.rcPaint.left, ps.rcPaint.top,
 						ps.rcPaint.right - ps.rcPaint.left,
 						ps.rcPaint.bottom - ps.rcPaint.top,
