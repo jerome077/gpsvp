@@ -128,7 +128,8 @@ enum enumMenuCommands
 	mcoLargeFonts,
 	mcSearchOSM,
 	mcSearchResults,
-	mcoAllowInternetAlways,
+	mcoAllowInternetAlways, // Also used as a single inet-status flag 
+	// if roaming detection not supported
 	mcoUseProxy,
 	mcTeamSettings,
 	mcTeamUpdateNow,

@@ -2602,6 +2602,7 @@ void CMapApp::OnRoamNotify()
 
 bool CMapApp::IsPhoneRoaming()
 {
+#	if UNDER_CE >= 0x0500
 	HKEY hRegKey = 0;
 	DWORD nRes;
 #ifdef RegOpenKey
@@ -2619,6 +2620,9 @@ bool CMapApp::IsPhoneRoaming()
 	bool bIsRoaming = (dwData & SN_PHONEROAMING_BITMASK) != 0;
 	RegCloseKey(hRegKey);
 	return bIsRoaming;
+#	else //UNDER_CE >= 0x0500
+	return false;
+#	endif
 }
 
 void CMapApp::OnPhoneRoaming(DWORD roaming)
@@ -3463,12 +3467,14 @@ void CMapApp::InitMenu()
 		mmSetup.CreateItem(L("Keep device on"), mcoKeepDeviceOn);
 #endif // SMARTPHONE
 		{
+#if UNDER_CE >= 0x500
 			CMenu & mmInet = mmSetup.CreateSubMenu(L("Allow internet connection"));
 			mmInet.CreateItem(L("Never"), mcoAllowInternetNever);
 			mmInet.CreateItem(L("Always"), mcoAllowInternetAlways);
-#ifdef UNDER_CE
 			mmInet.CreateItem(L("Home network only"), mcoAllowInternetHomeOnly);
-#endif // UNDER_CE
+#else // UNDER_CE >= 0x500
+		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternetAlways);
+#endif // UNDER_CE >= 0x500
 		}
 		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);
 	}
@@ -3532,10 +3538,12 @@ void CMapApp::CheckMenu()
 		menu.CheckMenuItem(mcGMapType + i, i == m_riGMapType());
 
 	DWORD allowInet = m_riAllowInternet();
+#if UNDER_CE >= 0x500
 	menu.CheckMenuItem(mcoAllowInternetNever, allowInet == 0);
 	menu.CheckMenuItem(mcoAllowInternetAlways, (allowInet & ALLOW_INTERNET_ALWAYS) != 0);
-#ifdef UNDER_CE
 	menu.CheckMenuItem(mcoAllowInternetHomeOnly, (allowInet & ALLOW_INTERNET_HOME_ONLY) != 0);
+#else
+	menu.CheckMenuItem(mcoAllowInternetAlways, allowInet != 0);
 #endif // UNDER_CE
 	menu.EnableMenuItem(mcCloseColors, !m_rsToolsFile().empty());
 	bool fGarminMaps = !m_atlas.IsEmpty();
@@ -3950,7 +3958,11 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			CheckMenu();
 			break;
 		case mcoAllowInternetAlways:
+#if UNDER_CE >= 0x500
 			m_riAllowInternet.Set(ALLOW_INTERNET_ALWAYS);
+#else
+			m_riAllowInternet.Set((m_riAllowInternet() != 0) ? 0 : 1);
+#endif
 			CheckMenu();
 			break;
 		case mcoAllowInternetHomeOnly:
