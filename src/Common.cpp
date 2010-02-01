@@ -897,3 +897,32 @@ std::wstring UTMZoneToLongText(int utmZone)
 }
 
 // ---------------------------------------------------------------
+
+std::pair<long, long> GetFraction(double d, long maxDen)
+{
+	long an = int(d);
+	long p1(1), q1(0), p0(an), q0(1);
+	long pn(p0), qn(q0);
+	double xn = d - an;
+	while (true) {
+		if (xn != 0) {
+			xn = 1/xn;
+			if (xn >= 0xffffffffUL)
+				break;
+			an = int(xn);
+			if (((double) (maxDen - q1))/q0 < an) {
+				break;
+			}
+			xn -= an;
+			qn = an*q0 + q1;
+			pn = an*p0 + p1;
+			p1 = p0; 
+			p0 = pn;
+			q1 = q0;
+			q0 = qn;
+		} else {
+			break;
+		}
+	}
+	return std::pair<long, long>(pn, qn);
+}

@@ -186,6 +186,14 @@ void UTMToLongLat(double utmX, double utmY, int utmZone, double& lon360, double&
 //  - a text describing the zone
 std::wstring UTMZoneToLongText(int utmZone);
 
+// GetFraction
+// input:
+//  - d = double value we need to estimate
+//  - maxDen = maximum denominator we expect
+// ouput:
+//  - a pair of nominator and denominator
+std::pair<long, long> GetFraction(double d, long maxDen);
+
 // ---------------------------------------------------------------
 
 #endif // COMMON_H
