@@ -71,7 +71,7 @@ std::string GoogleXYZ1toQRST(unsigned long x, unsigned long y, unsigned char zoo
 	if ((firstChar > 0) || (maxCharCount > 0))
 	{
 		std::string strBuf = buf;
-		if (firstChar >= strBuf.length())
+		if ((size_t) firstChar >= strBuf.length())
 			return "";
 		else
 			return strBuf.substr(firstChar, maxCharCount);
@@ -121,7 +121,7 @@ std::wstring GoogleXYZ1toQRSTW(unsigned long x, unsigned long y, unsigned char z
 	if ((firstChar > 0) || (maxCharCount > 0))
 	{
 		std::wstring strBuf = buf;
-		if (firstChar >= strBuf.length())
+		if ((size_t) firstChar >= strBuf.length())
 			return L"";
 		else
 			return strBuf.substr(firstChar, maxCharCount);
@@ -171,7 +171,7 @@ std::string GoogleXYZ1toQKey(unsigned long x, unsigned long y, unsigned char zoo
 	if ((firstChar > 0) || (maxCharCount > 0))
 	{
 		std::string strBuf = buf;
-		if (firstChar >= strBuf.length())
+		if ((size_t) firstChar >= strBuf.length())
 			return "";
 		else
 			return strBuf.substr(firstChar, maxCharCount);
@@ -220,7 +220,7 @@ std::wstring GoogleXYZ1toQKeyW(unsigned long x, unsigned long y, unsigned char z
 	if ((firstChar > 0) || (maxCharCount > 0))
 	{
 		std::wstring strBuf = buf;
-		if (firstChar >= strBuf.length())
+		if ((size_t) firstChar >= strBuf.length())
 			return L"";
 		else
 			return strBuf.substr(firstChar, maxCharCount);
