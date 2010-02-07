@@ -240,6 +240,8 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 		nNewBMSize = 256*256*4;
 	}
 
+	{ 
+	AutoLock l;
 	std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it = m_mapCachedFiles.find(gfr);
 	// If in cache
 	if (it != m_mapCachedFiles.end()) {
@@ -412,6 +414,7 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 		// TODO: Check if this code works better 
 		// http://www.codeguru.com/cpp/g-m/bitmap/specialeffects/article.php/c4897/
 	}
+	} // Locked section
 
 	return 0;
 }
@@ -470,6 +473,7 @@ void CGMPainter::RequestProcessed(const std::string request, const char * data, 
 	std::map< std::string, GEOFILE_DATA >::iterator it = m_mapRequestsSent.find(request);
 	if (it != m_mapRequestsSent.end()) {
 		m_GMFH.OnRequestProcessed(request, it->second, data, size);
+		DeleteElementFromCache(it->second);
 		if (m_Missing == it->second)
 			m_fMissing = false;
 		m_mapRequestsSent.erase(it);
@@ -569,6 +573,8 @@ long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadi
 
 void CGMPainter::ProcessWMHIBERNATE()
 {
+	AutoLock l;
+
 	// Kill all contents of the image cache 
 	m_lstLastUsed.erase(m_lstLastUsed.begin(), m_lstLastUsed.end());
 
@@ -608,6 +614,8 @@ void CGMPainter::SetKeepMemoryLow(bool value)
 
 void CGMPainter::DeleteFrontElementFromCache()
 {
+	AutoLock l;
+
 	GEOFILE_RASTERIZED g(m_lstLastUsed.front());
 	m_lstLastUsed.pop_front();
 
@@ -616,5 +624,28 @@ void CGMPainter::DeleteFrontElementFromCache()
 	{
 		DeleteObject(it->second.h);
 		m_mapCachedFiles.erase(it);
+	}
+}
+
+void CGMPainter::DeleteElementFromCache(const GEOFILE_DATA &data)
+{
+	AutoLock l;
+
+	std::list< GEOFILE_RASTERIZED > lstToDelete;
+	std::list< GEOFILE_RASTERIZED >::iterator it = m_lstLastUsed.begin();
+	while (it != m_lstLastUsed.end()) {
+		if (it->data == data) {
+			std::map< GEOFILE_RASTERIZED, GEOFILE_CONTENTS >::iterator it2 = m_mapCachedFiles.find(*it);
+			if (it2 != m_mapCachedFiles.end())
+			{
+				DeleteObject(it2->second.h);
+				m_mapCachedFiles.erase(it2);
+			}
+			std::list< GEOFILE_RASTERIZED >::iterator it3 = it;
+			++it;
+			m_lstLastUsed.erase(it3);
+		} else {
+			++it;
+		}
 	}
 }

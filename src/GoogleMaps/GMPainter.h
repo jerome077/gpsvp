@@ -111,6 +111,7 @@ protected:
 	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
 		long *pnInCacheCount, bool bJustCount);
 	void DeleteFrontElementFromCache();
+	void DeleteElementFromCache(const GEOFILE_DATA &data);
 
 private:
 	// Opened files
