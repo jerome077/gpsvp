@@ -22,6 +22,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "RasterServerSources.h"
 #include "../VersionNumber.h"
 
+typedef std::set< GEOFILE_DATA > GeoDataSet;
+
 class CGMFileHolder
 {
 public:
@@ -46,6 +48,7 @@ public:
 
 	size_t GetDownloadQueueSize();
 	long AddFileToDownload(const GEOFILE_DATA& data);
+	long AddFileToDownload(const GeoDataSet& data);
 	bool IsFileInCache(const GEOFILE_DATA& data);
 
 	long GetMaxLevel() const { return m_nMaxLevel; };
@@ -54,6 +57,11 @@ public:
 
 	HANDLE RelocateFiles(HANDLE h, long nMaxMSec = INFINITE); 
 	bool NeedRelocateFiles(); 
+
+	bool IsInsideRegion(const GEOFILE_DATA &data, const GeoRect &region);
+	size_t ListFilesInsideRegion(GeoDataSet *pSet, enumGMapType type, const GeoRect *pRegion);
+	size_t ListFilesInsideRegion(GeoDataSet *pSet, enumGMapType type, const std::wstring &wstrCurPath, const GeoRect *pRegion);
+	void SetOldTileDays(int nDays) { m_nOldTileDays = nDays; }
 
 	const CRasterMapSource *GetRMS(enum enumGMapType t) const
 	{
@@ -85,7 +93,9 @@ private:
 	// Inited
 	bool m_bInitialized;
 
-	std::set< GEOFILE_DATA > m_setToDownload;
+	GeoDataSet m_setToDownload;
+	FILETIME m_ftOldTile;
+	int m_nOldTileDays;
 
 	// File name returned in case the requested tile is absent
 	std::wstring m_strDefaultFileName;

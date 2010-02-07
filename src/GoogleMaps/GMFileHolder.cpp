@@ -379,6 +379,15 @@ long CGMFileHolder::AddFileToDownload(const GEOFILE_DATA& data)
 	return (m_setToDownload.insert(data).second ? 0 : 1);
 }
 
+long CGMFileHolder::AddFileToDownload(const GeoDataSet& data)
+{
+	AutoLock l;
+
+	m_setToDownload.insert(data.begin(), data.end());
+
+	return 0;
+}
+
 bool CGMFileHolder::IsFileInCache(const GEOFILE_DATA& data)
 {
 	std::wstring name;
@@ -400,6 +409,105 @@ HANDLE CGMFileHolder::RelocateFiles(HANDLE h, long nMaxMSec)
 	DeleteDirIfEmpty(m_strMapsRoot, false);
 
 	return NULL;
+}
+
+size_t CGMFileHolder::ListFilesInsideRegion(GeoDataSet *pSet, enumGMapType type, const GeoRect *pRegion)
+{
+	// Get the prefix
+	GEOFILE_DATA data(type, 1, 1, 1);
+	std::wstring name, path;
+	bool bRes = m_vecRMS[type]->GetDiskFileName(data, path, name, L"");
+	std::wstring prefix = path.substr(0, path.find(L"/"));
+
+	// Get the minimum FILETIME
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	SystemTimeToFileTime(&st, &m_ftOldTile);
+	ULARGE_INTEGER u;
+	u.HighPart = m_ftOldTile.dwHighDateTime;
+	u.LowPart = m_ftOldTile.dwLowDateTime;
+	u.QuadPart -= (ULONGLONG) m_nOldTileDays * 24 * 60 * 60 * 10000000;
+	m_ftOldTile.dwHighDateTime = u.HighPart;
+	m_ftOldTile.dwLowDateTime = u.LowPart;	
+	FileTimeToSystemTime(&m_ftOldTile, &st);
+
+    return ListFilesInsideRegion(pSet, type, m_strMapsRoot + L"/" + prefix, pRegion);
+}
+
+bool CGMFileHolder::IsInsideRegion(const GEOFILE_DATA &data, const GeoRect &region)
+{
+	long nNumTiles = 1 << (LEVEL_REVERSE_OFFSET - data.level - 2);
+	double a = exp(pi*2*(1.0 - (double) data.Y/nNumTiles));
+	double z = (a-1)/(a+1);
+	double lat = asin(z)/pi*180;
+	double lon = ((double) data.X / (nNumTiles) - 1) * 180;
+	GeoPoint lu(lon, lat);
+	a = exp(pi*2*(1.0-((double) data.Y+1)/nNumTiles));
+	z = (a-1)/(a+1);
+	lat = asin(z)/pi*180;
+	lon = ((double) (data.X+1) / (nNumTiles) - 1) * 180;
+	GeoPoint rl(lon, lat);
+	GeoRect r;
+	r.Init(lu);
+	r.Append(rl);
+	return r.Intersect(region);
+}
+
+size_t CGMFileHolder::ListFilesInsideRegion(GeoDataSet *pSet, enumGMapType type, const std::wstring &wstrCurPath, const GeoRect *pRegion)
+{
+	size_t nCount = 0;
+	const wchar_t *pszMask = L"\\*";
+	WIN32_FIND_DATA fd;
+	HANDLE hSearch = FindFirstFile((wstrCurPath + pszMask).c_str(), &fd);
+	BOOL bNextFound = TRUE;
+
+	GEOFILE_DATA data;
+
+	while ((hSearch != INVALID_HANDLE_VALUE) && (bNextFound)) {
+		std::wstring name(fd.cFileName);
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			// Folder: pass to the lower recursion level. Check it is not . or ..
+			if ((name != L".") && (name != L"..")) {
+				nCount += ListFilesInsideRegion(pSet, type, wstrCurPath + L"/" + name, pRegion);
+			}
+		} else {
+			// Parse file name into segments
+			bool bInside = false;
+			if (m_vecRMS[type]->IsGoodFileName(data, name)) {
+				if (!pRegion)
+					bInside = true;
+				else {
+					// Check if this tile inside a region
+					bInside = IsInsideRegion(data, *pRegion);
+				}
+			}
+			if (bInside) {
+				std::wstring fullname = (wstrCurPath + L"/" + name).c_str();
+				HANDLE hSrc = CreateFile(fullname.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, 
+				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+				if (hSrc) {
+					FILETIME ftModified;
+					GetFileTime(hSrc, NULL, NULL, &ftModified);
+					if (CompareFileTime(&ftModified, &m_ftOldTile) < 0) {
+						// Need to refresh
+						pSet->insert(data);
+						++nCount;
+					}
+				}
+				CloseHandle(hSrc);
+			} else {
+				// Incomprehensible name--leave the file in place
+			}
+		}
+
+		bNextFound = FindNextFile(hSearch, &fd);
+	}
+	if (hSearch) {
+		FindClose(hSearch);
+		hSearch = NULL;
+	}
+
+	return nCount; // This dir completed
 }
 
 bool CGMFileHolder::RelocateFilesInDir(std::wstring wstrCurPath, std::wstring wstrPartPath)

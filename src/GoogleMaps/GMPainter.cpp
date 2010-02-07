@@ -106,7 +106,7 @@ int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, doubl
 		return 0;
 	double dLatCenter = Degree(gpCenter.lat);
 	double dLonCenter = Degree(gpCenter.lon);
-	// Paint image at zoom level level centered at (dLonCenter, dLatCenter)
+	// Paint image at zoom level 'level' centered at (dLonCenter, dLatCenter)
 
 	int level = LEVEL_REVERSE_OFFSET;
 
@@ -474,16 +474,52 @@ void CGMPainter::RequestProcessed(const std::string request, const char * data, 
 			m_fMissing = false;
 		m_mapRequestsSent.erase(it);
 	} else {
-		// Ну что уж тут поделаешь...
+		// We haven't requested it! =8-/
 	}
 }
 
 void CGMPainter::DownloadAddCurrentView()
 {
 	m_grectToDownload = m_grectLastViewed;
-	// Помечаем, что больше не надо запоминать текущий GeoRect
-	// [??? Mark that we don't need to store current GeoRect any more]
+	// Mark that we already have stored current GeoRect for download
 	m_bGeoRectToDownload = true;
+}
+
+void CGMPainter::DownloadStartWithCurrentZoom()
+{
+	if (m_bGeoRectToDownload) {
+		long nInCache;
+		long nCount = EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache, true);
+		wchar_t buf[256];
+		wsprintf(buf, L("%d new segments to download (%d in cache). Proceed?"), nCount, nInCache);
+		if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
+			EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, NULL, false);
+			m_bGeoRectToDownload = false;
+		} else {
+		}
+	}
+}
+
+void CGMPainter::RefreshTiles(const GeoRect *pRegion)
+{
+	GeoDataSet files;
+	size_t nCount = m_GMFH.ListFilesInsideRegion(&files, m_enTypeToDownload, pRegion);
+	wchar_t buf[256];
+	wsprintf(buf, L("%d segments to refresh. Proceed?"), nCount);
+	if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
+		m_GMFH.AddFileToDownload(files);
+	} else {
+	}
+}
+
+void CGMPainter::RefreshAll()
+{
+	RefreshTiles(NULL);
+}
+
+void CGMPainter::RefreshInsideRegion()
+{
+	RefreshTiles(&m_grectLastViewed);
 }
 
 long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
@@ -524,21 +560,6 @@ long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enum
 	if (pnInCacheCount)
 		*pnInCacheCount = nInCache;
 	return nCount;
-}
-
-void CGMPainter::DownloadStartWithCurrentZoom()
-{
-	if (m_bGeoRectToDownload) {
-		long nInCache;
-		long nCount = EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache, true);
-		wchar_t buf[256];
-		wsprintf(buf, L("%d new segments to download (%d in cache). Proceed?"), nCount, nInCache);
-		if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
-			EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, NULL, false);
-			m_bGeoRectToDownload = false;
-		} else {
-		}
-	}
 }
 
 long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadius, long nDetailedLevel)

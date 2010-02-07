@@ -886,6 +886,7 @@ class CSettingsDlg : public CMADialog
 	CCombo m_utmZone;
 	CCombo m_metrics;
 	CCombo m_GeoidMode;
+	CCombo m_OldTileDays;
 
 	std::map<std::wstring, int> m_comboItems;
 	void AddComboItem(int iCombo, int iItem, wchar_t * wcString, int iToSelect)
@@ -983,6 +984,14 @@ class CSettingsDlg : public CMADialog
 		m_GeoidMode.AddItem(L"Sirf", app.m_rsGeoidMode().c_str());
 		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
 
+		m_OldTileDays.Create(hDlg, false);
+		m_OldTileDays.AddItem(1, app.m_riOldTileDays());
+		m_OldTileDays.AddItem(3, app.m_riOldTileDays());
+		m_OldTileDays.AddItem(7, app.m_riOldTileDays());
+		m_OldTileDays.AddItem(30, app.m_riOldTileDays());
+		m_OldTileDays.AddItem(90, app.m_riOldTileDays());
+		m_OldTileDays.AddItem(365, app.m_riOldTileDays());
+
 		AddItem(hDlg, CText(hDlg, L("Port:")));
 		AddItem(hDlg, m_port);
 		AddItem(hDlg, CText(hDlg, L("Port speed:")));
@@ -999,6 +1008,8 @@ class CSettingsDlg : public CMADialog
 		AddItem(hDlg, m_metrics);
 		AddItem(hDlg, CText(hDlg, L("Geoid Separation mode:")));
 		AddItem(hDlg, m_GeoidMode);
+		AddItem(hDlg, CText(hDlg, L("Tile is old after ... days:")));
+		AddItem(hDlg, m_OldTileDays);
 		
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
@@ -1029,6 +1040,13 @@ class CSettingsDlg : public CMADialog
 
 		m_trackstep.GetText(buff, cnMaxStr);
 		app.m_riTrackStep.Set(wcstol(buff, 0, 10));
+
+		{
+		m_OldTileDays.GetText(buff, cnMaxStr);
+		long n = wcstol(buff, 0, 10);
+		app.m_riOldTileDays.Set(n);
+		app.m_pRasterMapPainter->SetOldTileDays(n);
+		}
 
 		int index = m_coordformat.GetCurSel();
 		if (app.m_riCoordFormat() != index)
@@ -2325,6 +2343,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_riCoordFormat.Init(hRegKey, L"CoordinateFormat", 0);
 	m_riUTMZone.Init(hRegKey, L"UTMZone", 0);
 	m_riMetrics.Init(hRegKey, L"MetricSystem", 0);
+	m_riOldTileDays.Init(hRegKey, L"OldTileDays", 90);
 	m_riWaypointsRadius.Init(hRegKey, L"WaypointsRadius", 40000000);
 	m_riDetail.Init(hRegKey, L"Detail", 0);
 	m_riConnectPeriodMin.Init(hRegKey, L"ConnectPeriod", 0);
@@ -2483,6 +2502,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
 	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
 		m_riGMapType.Set(0);
+
+	m_pRasterMapPainter->SetOldTileDays(m_riOldTileDays());
 
 	m_riAllowInternet.Init(hRegKey, L"AllowInternet", 0);
 #ifdef UNDER_CE
@@ -3295,6 +3316,8 @@ void CMapApp::InitMenu()
 			}
 			{
 				CMenu & mmMaintMaps = mmGoogleMaps.CreateSubMenu(L("Cache maintenance"));
+				mmMaintMaps.CreateItem(L("Refresh all"), mcRastMapsRefreshAll);
+				mmMaintMaps.CreateItem(L("Refresh inside region"), mcRastMapsRefreshInsideRegion);
 				mmMaintMaps.CreateItem(L("Delete from cache"), mcRastMapsDeleteFromCache);
 				mmMaintMaps.EnableMenuItem(mcRastMapsDeleteFromCache, false);
 				mmMaintMaps.CreateBreak();
@@ -3893,6 +3916,12 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			break;
 		case mcDownlRasterByTrack:
 			DRMByTrack();
+			break;
+		case mcRastMapsRefreshAll:
+			DRMRefreshAll();
+			break;
+		case mcRastMapsRefreshInsideRegion:
+			DRMRefreshInsideRegion();
 			break;
 		case mcDecreaseDetail:
 			SetDetail(m_riDetail() - 1);
@@ -5191,6 +5220,16 @@ void CMapApp::DRMStartWithCurrentZoom()
 {
 	m_pRasterMapPainter->DownloadStartWithCurrentZoom();
 	CheckMenu();
+}
+
+void CMapApp::DRMRefreshInsideRegion()
+{
+	m_pRasterMapPainter->RefreshInsideRegion();
+}
+
+void CMapApp::DRMRefreshAll()
+{
+	m_pRasterMapPainter->RefreshAll();
 }
 
 void CMapApp::ProcessWMHIBERNATE()

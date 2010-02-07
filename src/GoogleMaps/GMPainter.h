@@ -85,9 +85,12 @@ public:
 
 	void DownloadAddCurrentView();
 	void DownloadStartWithCurrentZoom();
+	void RefreshTiles(const GeoRect *pRegion);
+	void RefreshInsideRegion();
+	void RefreshAll();
+	void SetOldTileDays(int n) { m_GMFH.SetOldTileDays(n); }
 	bool IsSelectingZoomToDownload() { return m_bGeoRectToDownload; };
 	size_t GetDownloadQueueSize();
-
 	long DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadius, long nDetailedLevel);
 	void RelocateFiles(); 
 	bool NeedRelocateFiles(); 

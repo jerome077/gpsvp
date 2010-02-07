@@ -294,7 +294,7 @@ bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) co
 		data.level = (unsigned char) zoom;
 		data.X = x;
 		data.Y = y;
-		data.type = gtMap;
+		data.type = gtOsm;
 		return true;
 	} else {
 		return false;
