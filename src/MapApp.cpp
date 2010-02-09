@@ -1697,25 +1697,25 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 		}
 		m_iMonitorUnder = INVALID_MONITOR_ID;
 		m_MonitorSet.SetMovingMonitor(INVALID_MONITOR_ID, ScreenDiff());
-		m_fMoving = false;
 	} else {
-		if (m_iPressedButton != -1)
-		{
+		if (m_iPressedButton != -1) {
 			if (m_painter.CheckButton(pt) == m_iPressedButton)
 				ProcessCommand(GetButtons().GetCommand(m_iPressedButton));
 			GetButtons().DeselectButton();
 			m_painter.BeginPaintLite(VP::DC(m_hWnd));
 			GetButtons().Paint(&m_painter);
-		}
-		else if (pt == m_spFrom)
-		{
+		} else if (pt == m_spFrom) {
 			LeftClickOrContextMenu(pt, false);
+		} else {
+			if (m_fMoving) {
+				// This check is for PPC devices.
+				// Long press brings context menu and then short press on non-menu 
+				// screen area will NOT generate LButtonDown but WILL generate LButtonUp.
+				m_painter.Move(pt - m_spFrom);
+			}
 		}
-		else
-			m_painter.Move(pt - m_spFrom);
-
-		m_fMoving = false;
 	}
+	m_fMoving = false;
 }
 void CMapApp::ViewZoomIn()
 {
