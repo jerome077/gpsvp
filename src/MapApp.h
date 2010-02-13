@@ -306,7 +306,7 @@ public:
 	void SetDetail(int iDetail);
 	int PrepareScale(unsigned int uiScale10_256)
 	{
-		unsigned int uiScale10 = uiScale10_256 >> 8;
+		unsigned int uiScale10 = uiScale10_256 / SCALEFACTOR;
 		switch (m_riDetail())
 		{
 		case -2: return uiScale10 * 4;

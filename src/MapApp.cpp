@@ -2769,7 +2769,7 @@ private:
 
 void CMapApp::AdjustZoom()
 {
-	if (m_Options[mcoGoogleZoomLevels] && (m_painter.GetScale256() > 3*256))
+	if (m_Options[mcoGoogleZoomLevels]) // && (m_painter.GetScale256() > 3*SCALEFACTOR))
 	{
 		m_painter.PrepareScales();
 		double xscale = m_painter.GetXScale();
@@ -4149,7 +4149,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 	{
 		CMenu & mmGarmin = mmMenu.CreateSubMenu(L("Garmin map"));
 
-		pinfo = FindNearestPoint(sp, m_painter.GetScale256() * 50 / 10 / 256);
+		pinfo = FindNearestPoint(sp, m_painter.GetScale256() * 50 / 10 / SCALEFACTOR);
 		if (pinfo.fPresent)
 		{
 			CMenu & mmPointMenu = mmGarmin.CreateSubMenu((L("POI: ") + pinfo.GetDescription()).c_str());
@@ -4162,7 +4162,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 			mmGarmin.CreateItem(L("No POI near"), -1);
 		}
 
-		linfo = FindNearestPolyline(gp, m_painter.GetScale256() * 50 / 10 / 256);
+		linfo = FindNearestPolyline(gp, m_painter.GetScale256() * 50 / 10 / SCALEFACTOR);
 		if (linfo.fPresent)
 			mmGarmin.CreateItem((L("Line: ") + linfo.GetDescription()).c_str(), 30);
 		else
@@ -4179,7 +4179,7 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 		mmMenu.CreateItem(L("Garmin maps disabled"), -1);
 	}
 
-	int nPointID = m_Waypoints.GetNearestPoint(gp, m_painter.GetScale256() * 50 / 10 / 256);
+	int nPointID = m_Waypoints.GetNearestPoint(gp, m_painter.GetScale256() * 50 / 10 / SCALEFACTOR);
 	if (nPointID >= 0)
 	{
 		CMenu & mmNearestMenu = mmMenu.CreateSubMenu(m_Waypoints.GetLabelByID(nPointID).c_str());

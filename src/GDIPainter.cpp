@@ -1183,8 +1183,8 @@ GeoPoint CGDIPainter::ScreenToGeo(const ScreenPoint & pt)
 	//	int(((__int64)(dx2) * m_ruiScale10() * 10 << (GPWIDTH - 24)) / m_lXScale100),
 	//	int(-((__int64)(dy2) * m_ruiScale10() << (GPWIDTH - 24)) / 10));
 	res = GeoPoint(
-		int( ((__int64)(dx2) * m_ruiScale10_256() * 10 << (GPWIDTH - 24)) / m_lXScale100 / 256),
-		int(-((__int64)(dy2) * m_ruiScale10_256() << (GPWIDTH - 24)) / 10 / 256));
+		int( ((__int64)(dx2) * m_ruiScale10_256() * 10 << (GPWIDTH - 24)) / m_lXScale100 / SCALEFACTOR),
+		int(-((__int64)(dy2) * m_ruiScale10_256() << (GPWIDTH - 24)) / 10 / SCALEFACTOR));
 	res.lon += m_gpCenter().lon;
 	res.lat += m_gpCenter().lat;
 	return res;
@@ -1195,8 +1195,8 @@ ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 	ScreenPoint res;
 	//int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
 	//int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
-	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 / (m_uiScale10_256Cache >> 8);
-	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / (m_uiScale10_256Cache >> 8);
+	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) * SCALEFACTOR / 10 / m_uiScale10_256Cache;
+	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) * SCALEFACTOR / m_uiScale10_256Cache;
 
 	int dx2;
 	int dy2;
@@ -1377,13 +1377,13 @@ void CGDIPainter::PaintCompass()
 
 double CGDIPainter::GetXScale() 
 { 
-	return double(m_uiScale10_256Cache) / m_lXScale100 * 10 / 256;
+	return double(m_uiScale10_256Cache) / m_lXScale100 * 10 / SCALEFACTOR;
 }
 
 void CGDIPainter::SetXScale(double scale)
 {
 	AutoLock l;
-	unsigned int new_scale256 = (unsigned int)(scale / 10 * m_lXScale100 * 256);
+	unsigned int new_scale256 = (unsigned int)(scale / 10 * m_lXScale100 * SCALEFACTOR);
 	new_scale256 = (std::max)((unsigned)ciMinZoom256, (std::min)((unsigned)ciMaxZoom256, new_scale256));
 	if (m_ruiScale10_256() != new_scale256)
 		m_ruiScale10_256.Set(new_scale256);

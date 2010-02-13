@@ -34,6 +34,10 @@ extern HWND g_hwndCB;
 #endif
 #endif
 
+// Factor to increase the scale precision without using a double
+// Caution: Check the maximal value ciMaxScale256 before increasing the factor.
+#define SCALEFACTOR (256)
+
 struct ScreenBuffer {
 	VP::Buffer buffer;
 	ScreenSize size;
@@ -148,8 +152,8 @@ class CGDIPainter : public IPainter, public IMonitorPainter, public IButtonPaint
 	VP::DC m_hdc;
 
 	enum { 
-		ciMinZoom256 = 1*256,		//!< Minimum zoom
-		ciMaxZoom256 = 100000*256	//!< Maximum zoom
+		ciMinZoom256 = 1*SCALEFACTOR,		//!< Minimum zoom
+		ciMaxZoom256 = 100000*SCALEFACTOR	//!< Maximum zoom
 	};
 	const wchar_t * m_wcName;
 	SIZE m_LabelSize;
