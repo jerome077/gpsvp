@@ -62,6 +62,8 @@ struct ILegSender
 struct Splitter
 {
 	Splitter(ILegSender * legSender) : _legSender(legSender), _turnCount(0), _currentTurn(_turns.FindEnd()), _ulPrevTime(0) { Reset(); }
+	Splitter() : _legSender(NULL), _turnCount(0), _currentTurn(_turns.FindEnd()), _ulPrevTime(0) { Reset(); }
+	void Init(ILegSender * legSender) { _legSender = legSender; }
 	ILegSender * _legSender;
 	bool _started;
 	double _currentLength;
@@ -217,7 +219,9 @@ struct Splitter
 
 struct TrafficNodes::Data : public ILegSender
 {
-	Data() : m_ulLastTime(0), m_fRefresh(false), m_fTrafficLoaded(false), m_Splitter(this) {}
+	Data() : m_ulLastTime(0), m_fRefresh(false), m_fTrafficLoaded(false) {
+		m_Splitter.Init(this);
+	}
 	void Fix(const GeoPoint & gp, unsigned long ulTime);
 	void Paint(IPainter * p, bool fTrafficFlags) const;
 	void AddNode(const GeoPoint & gp);
