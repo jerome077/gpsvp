@@ -1195,8 +1195,8 @@ ScreenPoint CGDIPainter::GeoToScreen(const GeoPoint & pt)
 	ScreenPoint res;
 	//int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) / 10 /* * 10 / 100 */ / m_uiScale10Cache;
 	//int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) / m_uiScale10Cache;
-	int dx1 = int((__int64)(pt.lon - m_gpCenterCache.lon) * m_lXScale100 >> (GPWIDTH - 24)) * SCALEFACTOR / 10 / m_uiScale10_256Cache;
-	int dy1 = int((__int64)(m_gpCenterCache.lat - pt.lat) * 10  >> (GPWIDTH - 24)) * SCALEFACTOR / m_uiScale10_256Cache;
+	int dx1 = int(((__int64)(pt.lon - m_gpCenterCache.lon) * SCALEFACTOR * m_lXScale100 >> (GPWIDTH - 24)) / 10 / m_uiScale10_256Cache);
+	int dy1 = int(((__int64)(m_gpCenterCache.lat - pt.lat) * SCALEFACTOR * 10  >> (GPWIDTH - 24)) / m_uiScale10_256Cache);
 
 	int dx2;
 	int dy2;
