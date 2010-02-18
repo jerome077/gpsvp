@@ -214,14 +214,20 @@ void CTrack::PaintUnlocked(IPainter * pPainter, track_t uiType)
 		}
 	}
 }
+
 void CTrack::CreateFile()
+{
+	CreateFile((enumTrackFormat)app.m_riTrackFormat());
+}
+
+void CTrack::CreateFile(enumTrackFormat riTrackFormat)
 {
 	m_fBeginFile = true;
 	// Track should begin
 	m_fBeginTrack = true;
 	m_fTrackPresent = false;
 	m_wstrFilenameInt = L"";
-	switch (app.m_riTrackFormat())
+	switch (riTrackFormat)
 	{
 	case tfPLT:
 		CreateFilePLT();
@@ -428,6 +434,7 @@ void CTrack::ReadPLT(const std::wstring& wstrFilename)
 			AddPoint(GeoPoint(FromDegree(dLongitude), FromDegree(dLatitude)), dTimeUTC);
 		}
 	}
+	fclose(pFile);
 }
 const std::wstring CTrack::GetExtFilename() const
 {
@@ -911,9 +918,24 @@ void CTrack::CalcTimesUnlocked(int index1, int index2,
 	}
 }
 
+void CTrack::SetWriting(bool fWriting)
+{
+	if (m_fWriting != fWriting)
+	{
+		Flush(m_iBufferPos);
+		CreateFile();
+		m_fWriting = fWriting;
+	}
+}
+
 void CTrack::SetWritingWithFilename(const std::wstring& wstrNewFilename)
 {
-	SetWriting(true);
+	Flush(m_iBufferPos);
+	if (0 == _wcsnicmp(wstrNewFilename.c_str(), L".gpx", 4))
+		CreateFile(tfGPX);
+	else
+		CreateFile(tfPLT);
+	m_fWriting = true;
 	m_wstrFilenameInt = wstrNewFilename;
 	m_wstrFilenameExt = wstrNewFilename;
 }
@@ -1182,14 +1204,17 @@ CTrack& CAllTracks::GetNearestTrack(const GeoPoint & gp, int& iIndexNearestPoint
 }
 
 // save a route as track to disk
-void CAllTracks::SaveRoute(const std::wstring& wstrFilename)
+void CAllTracks::SaveRoute(const std::wstring& wstrFilename, bool bKeepTrackOpen, bool bMarkAsSaved)
 {
 	DeleteFile(wstrFilename.c_str());
 	Int iIndex = m_OldTracks.NewTrack(wstrFilename);
 	m_OldTracks.Last().SetWritingWithFilename(wstrFilename);
 	m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
 	m_OldTracks.Last().SetWriting(false);
-	m_CurRoute.MarkAsSaved();
+	if (!bKeepTrackOpen)
+		CloseTrack(iIndex);
+	if (bMarkAsSaved)
+		m_CurRoute.MarkAsSaved();
 }
 
 void CAllTracks::PaintOldTracksWithCompetition(IPainter * pPainter, const GeoPoint & gp, unsigned long ulCompetitionTime)
@@ -1209,30 +1234,46 @@ void CAllTracks::PaintOldTracks(IPainter * pPainter)
 	PaintOldTracksWithCompetition(pPainter, GeoPoint(), 0);
 }
 
-void CAllTracks::NewRoute()
+// returns false if canceled
+bool CAllTracks::NewRoute()
 {
 	if (m_CurRoute.NeedsSaving())
 	{
-		if (MessageBox(NULL, L("Copy old route to track list?"), L("Route not saved"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+		switch (MessageBox(NULL, L("Copy old route to track list?"), L("Route not saved"), MB_YESNOCANCEL | MB_ICONEXCLAMATION))
 		{
+		case IDCANCEL:
+			return false;
+			break;
+		case IDYES:
 			Int iIndex = m_OldTracks.NewTrack(L"Unsaved route");
 			m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
+			break;
 		}
 	}
 	m_CurRoute.Reinit();
+	return true;
 }
 
-void CAllTracks::NewRouteFromTrackIndex(Int iIndex)
+// returns false if canceled
+bool CAllTracks::NewRouteFromTrackIndex(Int iIndex, bool bMarkAsSaved)
 {
 	if (-1 != iIndex)
-		NewRouteFromTrack(m_OldTracks.GetTrack(iIndex));
+		return NewRouteFromTrack(m_OldTracks.GetTrack(iIndex), bMarkAsSaved);
+	else
+		return false;
 }
 
-void CAllTracks::NewRouteFromTrack(const CTrack& anOldTrack)
+// returns false if canceled
+bool CAllTracks::NewRouteFromTrack(const CTrack& anOldTrack, bool bMarkAsSaved)
 {
-	NewRoute();
-	m_CurRoute.AppendTrack(anOldTrack);
-	m_CurRoute.MarkAsSaved();
+	bool bNewRouteCreated = NewRoute();
+	if (bNewRouteCreated)
+	{
+		m_CurRoute.AppendTrack(anOldTrack);
+		if (bMarkAsSaved)
+			m_CurRoute.MarkAsSaved();
+	}
+	return bNewRouteCreated;
 }
 
 // ---------------------------------------------------------------

@@ -379,6 +379,8 @@ public:
 
 	void StartEditingRoute();
 	void StopEditingRoute();
+	void SaveCurrentRoute();
+	void LoadCurrentRoute();
 	bool FileOpenRoute();
 	bool FileSaveRoute();
 	void CenterRouteTarget();

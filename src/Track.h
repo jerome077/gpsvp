@@ -97,6 +97,7 @@ protected:
 
 	const wchar_t * GetFileName();
 	void CreateFile();
+	void CreateFile(enumTrackFormat riTrackFormat);
 	void CreateFilePLT();
 	void CreateFileGPX();
 	std::string GetCreator();
@@ -186,15 +187,7 @@ public:
 	{
 		return m_fWriting;
 	}
-	void SetWriting(bool fWriting)
-	{
-		if (m_fWriting != fWriting)
-		{
-			Flush(m_iBufferPos);
-			CreateFile();
-			m_fWriting = fWriting;
-		}
-	}
+	void SetWriting(bool fWriting);
 	void SetWritingWithFilename(const std::wstring& wstrNewFilename);
 	void Flush(int iSize)
 	{
@@ -279,6 +272,8 @@ protected:
 	enumRouteInsertMode m_InsertMode;
 	// Flag for modifications:
 	bool m_bRouteHasChanges;
+	// Where the route will be saved:
+	std::wstring m_wstrRouteFilename;
 public:
 	CRoute();
 	~CRoute();
@@ -342,10 +337,10 @@ public:
 
 	// Route:
 	CRoute& GetCurRoute() { return m_CurRoute; };
-	void NewRoute();
-	void NewRouteFromTrackIndex(Int iIndex);
-	void NewRouteFromTrack(const CTrack& anOldTrack);
-	void SaveRoute(const std::wstring& wstrFilename);
+	bool NewRoute();                                                            // returns false if canceled
+	bool NewRouteFromTrackIndex(Int iIndex, bool bMarkAsSaved = true);          // returns false if canceled
+	bool NewRouteFromTrack(const CTrack& anOldTrack, bool bMarkAsSaved = true); // returns false if canceled
+	void SaveRoute(const std::wstring& wstrFilename, bool bKeepTrackOpen, bool bMarkAsSaved = true);
 	bool IsEditingRoute() { return m_CurRoute.IsEditing(); };
 };
 

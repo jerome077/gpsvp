@@ -2155,8 +2155,8 @@ void CMapApp::CloseTrack(Int iIndex)
 
 void CMapApp::FollowTrack(Int iIndex)
 {
-	m_Tracks.NewRouteFromTrackIndex(iIndex);
-	ToolsNavigateRoute();
+	if (m_Tracks.NewRouteFromTrackIndex(iIndex))
+		ToolsNavigateRoute();
 }
 
 void CMapApp::InfoTrack(HWND hDlgParent, const CTrack& track)
@@ -2497,7 +2497,10 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_rsRasterMapFolder.Init(hRegKey, L"RasterMapFolder");
 	if (!m_rsRasterMapFolder().empty())
+	{
 		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
+		LoadCurrentRoute();
+	}
 	// Only after loading the list of WMS-Maps
 	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
 	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
@@ -3975,6 +3978,8 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			StopEditingRoute();
 			m_Tracks.NewRoute();
 			ToolsStopNavigateRoute();
+			SaveCurrentRoute();
+			m_painter.Redraw();
 			break;
 		case mcInfoCurRoute:
 			InfoTrack(m_hWnd, m_Tracks.GetCurRoute().AsTrack());
@@ -4385,16 +4390,18 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 		m_painter.Redraw();
 		break;
 	case 55:
-		m_Tracks.NewRouteFromTrack(nearestTrack);
-		ToolsNavigateRoute();
+		if (m_Tracks.NewRouteFromTrack(nearestTrack))
+			ToolsNavigateRoute();
 		break;
 	case 61:
-		m_Tracks.NewRoute();
-		if (m_fFix)
-			m_Tracks.GetCurRoute().AppendPoint(m_gpCursor);
-		m_Tracks.GetCurRoute().AppendPoint(gp);
-		StartEditingRoute();
-		ToolsNavigateRoute();
+		if (m_Tracks.NewRoute())
+		{
+			if (m_fFix)
+				m_Tracks.GetCurRoute().AppendPoint(m_gpCursor);
+			m_Tracks.GetCurRoute().AppendPoint(gp);
+			StartEditingRoute();
+			ToolsNavigateRoute();
+		}
 		break;
 	case 62:
 		CenterRouteTarget();
@@ -5433,7 +5440,25 @@ void CMapApp::StopEditingRoute()
 {
 	m_Tracks.GetCurRoute().SetInsertMode(rimNone);
 	m_painter.SetMoveCrossMode(false);
+	SaveCurrentRoute();
 	CheckMenu();
+}
+
+void CMapApp::SaveCurrentRoute()
+{
+	if (!m_rsRasterMapFolder().empty())
+		m_Tracks.SaveRoute(m_rsRasterMapFolder()+L"\\route.plt", false, false);
+}
+
+void CMapApp::LoadCurrentRoute()
+{
+	// Try to open the file, if it doesn't exists it will simply open nothing...
+	Int indexTrack = m_Tracks.OpenTracks(m_rsRasterMapFolder()+L"\\route.plt");
+	if (-1 != indexTrack)
+	{
+		m_Tracks.NewRouteFromTrackIndex(indexTrack, false);
+		m_Tracks.CloseTrack(indexTrack);
+	}
 }
 
 bool CMapApp::FileOpenRoute()
@@ -5447,11 +5472,14 @@ bool CMapApp::FileOpenRoute()
 		Int indexTrack = m_Tracks.OpenTracks(strFile);
 		if (-1 != indexTrack)
 		{
-			m_Tracks.NewRouteFromTrackIndex(indexTrack);
-			m_painter.SetView(m_Tracks.Last().GetLastPoint(), true);
+			bool bNewRouteCreated = m_Tracks.NewRouteFromTrackIndex(indexTrack);
 			m_Tracks.CloseTrack(indexTrack);
-			ToolsNavigateRoute();
-			return true;
+			if (bNewRouteCreated)
+			{
+				m_painter.SetView(m_Tracks.Last().GetLastPoint(), true);
+				ToolsNavigateRoute();
+			}
+			return bNewRouteCreated;
 		}
 		else
 			return false;
@@ -5486,7 +5514,7 @@ bool CMapApp::FileSaveRoute()
 		int iLen = wcslen(strFile);
 		if (iLen >= 4 && !!_wcsicmp(strFile + iLen - wstrExt.length(), wstrExt.c_str()))
 			wcscpy(strFile + iLen, wstrExt.c_str());
-		m_Tracks.SaveRoute(strFile); // save to disk
+		m_Tracks.SaveRoute(strFile, true); // save to disk
 		m_painter.Redraw();
 		return true;
 	}
