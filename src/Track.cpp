@@ -1239,15 +1239,18 @@ bool CAllTracks::NewRoute()
 {
 	if (m_CurRoute.NeedsSaving())
 	{
-		switch (MessageBox(NULL, L("Copy old route to track list?"), L("Route not saved"), MB_YESNOCANCEL | MB_ICONEXCLAMATION))
+		// MB_YESNOCANCEL don't work on smartphones so that I need to ask 2 questions...
+		if (IDNO == MessageBox(NULL, L("Clear current route?"), L("Route not saved"), MB_YESNO | MB_ICONEXCLAMATION))
 		{
-		case IDCANCEL:
-			return false;
-			break;
-		case IDYES:
-			Int iIndex = m_OldTracks.NewTrack(L"Unsaved route");
-			m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
-			break;
+			if (IDOK == MessageBox(NULL, L("Copy to track list?"), L("Route not saved"), MB_OKCANCEL | MB_ICONEXCLAMATION))
+			{
+				Int iIndex = m_OldTracks.NewTrack(L"Unsaved route");
+				m_CurRoute.AsTrack().AppendToTrackOnlyCoord(m_OldTracks.Last());
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 	m_CurRoute.Reinit();
