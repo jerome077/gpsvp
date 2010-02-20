@@ -838,25 +838,39 @@ class CTracksDlg : public CMADialog
 };
 
 
-class CTrackInfoDlg : public CMADialog
+class CInfoDlg : public CMADialog
 {
-	std::vector<CText> m_TextControls;
+	CListView m_list;
 public:
-	CTrack* m_pDisplayedTrack;
+	std::wstring InfoCaption;
+	std::wstring InfoText;
 	virtual void InitDialog(HWND hDlg)
 	{
-		SetWindowText(hDlg, L("Track information"));
-#ifndef UNDER_CE
-		ShowScrollBar(hDlg,SB_VERT,TRUE);
-#endif
-		for(int i=0; i<m_pDisplayedTrack->GetInfoCount(); i++)
+		SetWindowText(hDlg, InfoCaption.c_str());
+		m_list.Create(hDlg, false);
+		m_list.AddColumn(L("Info"), 500, 0);
+		m_list.Clear();
+		// Split the string in "InfoText" in lines for the list:
+		int iIndex = 0;
+		wchar_t *cstr = new wchar_t [InfoText.size()+1];
+		wcscpy (cstr, InfoText.c_str());
+		wchar_t *p = wcstok(cstr, L"\n");
+		while (p!=NULL)
 		{
-			m_TextControls.push_back(CText(m_hDialog, m_pDisplayedTrack->GetInfo(i).c_str()));
-			AddItem(m_hDialog, m_TextControls.back());
+			m_list.AddItem(p, iIndex);
+			p = wcstok(NULL, L"\n");
+			iIndex++;
 		}
+		delete[] cstr;  
+		// Buttons:
 		SetSoftkeybar(hDlg, IDR_TEMPLATE_MENUBAR_2);
 		m_MenuBar.SetItemLabelAndCommand(IDC_LEFT, L("Ok"), IDOK);
-		m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Ok"), IDOK);
+		//m_MenuBar.SetItemLabelAndCommand(IDC_RIGHT, L("Ok"), IDOK);
+	}
+	virtual void WindowPosChanged(HWND hDlg)
+	{
+		ReinitItemY();
+		AddList(m_list.HWnd());
 	}
 	virtual void Command(HWND hDlg, int iCommand)
 	{
@@ -2161,16 +2175,21 @@ void CMapApp::FollowTrack(Int iIndex)
 
 void CMapApp::InfoTrack(HWND hDlgParent, const CTrack& track)
 {
-	//static CTrackInfoDlg dlg;
-	//dlg.m_pDisplayedTrack = &m_Tracks.GetTrack(iIndex);		
-	//g_pNextDialog = &dlg;
-	//DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, hDlgParent, (DLGPROC)MADlgProc);
 	std::wstring strInfo = L"";
 	for(int i=0; i<track.GetInfoCount(); i++)
 	{
-		strInfo += track.GetInfo(i) + L"\n";
+		strInfo += track.GetInfo(i) + L" \n"; // Whitespace important for the list in CInfoDlg
 	}
-	MessageBox(hDlgParent, strInfo.c_str(), L("Track info"), MB_ICONINFORMATION);
+
+	// MessageBox is good on SP, OK on desktop, bad on PPC.
+	//	MessageBox(hDlgParent, strInfo.c_str(), L("Track info"), MB_ICONINFORMATION);
+
+	// Own dialog to replace MessageBox:
+	static CInfoDlg dlg;
+	dlg.InfoCaption = L("Track info");		
+	dlg.InfoText = strInfo;		
+	g_pNextDialog = &dlg;
+	DialogBox(g_hInst, (LPCTSTR)IDD_TEMPLATE, hDlgParent, (DLGPROC)MADlgProc);
 }
 
 void CMapApp::OptionsSetTrackFolder()
