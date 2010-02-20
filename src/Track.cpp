@@ -610,13 +610,14 @@ int CTrack::FindNearestSegmentIndex(const GeoPoint & gp, GeoPoint& NextPoint)
 	return nearestIndex;
 }
 
-// Index -1 will add the point at the end
-void CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
+// Index -1 will add the point at the end.
+// Returns the index of the newpoint.
+int CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
 {
 	if (-1 == iNextPointIndex)
 	{
 		AddPoint(gp, 0);
-		return;
+		return m_nPointCount-1;
 	}
 	int currentIndex = 0;
 	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
@@ -627,7 +628,7 @@ void CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
 			{
 				itSeg->insert(it, TrackPoint(gp, 0, NO_iALTITUDE));
 				++m_nPointCount;
-				return;
+				return iNextPointIndex;
 			}
 			++currentIndex;
 		}
@@ -1301,7 +1302,8 @@ bool CAllTracks::NewRouteFromTrack(const CTrack& anOldTrack, bool bMarkAsSaved)
 CRoute::CRoute()
 : m_pRouteAsTrack(new CTrack(L"Current route")),
   m_InsertMode(rimNone),
-  m_bRouteHasChanges(false)
+  m_bRouteHasChanges(false),
+  m_IndexLastNewPoint(-1)
 {
 }
 
@@ -1383,7 +1385,7 @@ void CRoute::AppendTrack(const CTrack& aTrack)
 void CRoute::AddPointBeforeEndCursor(const GeoPoint& pt, bool bForwards)
 {
 	m_bRouteHasChanges = true;
-	m_pRouteAsTrack->InsertPoint(m_pRouteAsTrack->GetEndCursor(), pt);
+	m_IndexLastNewPoint = m_pRouteAsTrack->InsertPoint(m_pRouteAsTrack->GetEndCursor(), pt);
 	if (bForwards)
 	{
 		m_pRouteAsTrack->SetEndCursor(m_pRouteAsTrack->GetEndCursor()+1);
@@ -1395,7 +1397,7 @@ void CRoute::InsertPointInNearestSegment(const GeoPoint& pt)
 {
 	m_bRouteHasChanges = true;
 	int segIndex = m_pRouteAsTrack->FindNearestSegmentIndex(pt);
-	m_pRouteAsTrack->InsertPoint(segIndex, pt);
+	m_IndexLastNewPoint = m_pRouteAsTrack->InsertPoint(segIndex, pt);
 }
 
 void CRoute::ErasePoint(int iPointIndex)
@@ -1456,6 +1458,21 @@ bool CRoute::SetPreviewInsertionPoint(const GeoPoint & gp)
 	m_gpPreviewInsertionPoint = gp;
 	return IsEditing();
 }
+
+bool CRoute::CanUndo()
+{
+	return (-1 != m_IndexLastNewPoint);
+}
+
+void CRoute::Undo()
+{
+	if (CanUndo())
+	{
+		ErasePoint(m_IndexLastNewPoint);
+		m_IndexLastNewPoint = -1;
+	}
+}
+
 
 void CRoute::SetInsertMode(enumRouteInsertMode mode, const GeoPoint& pt)
 {

@@ -1676,8 +1676,6 @@ void CMapApp::OnLButtonDown(ScreenPoint pt)
 			GetButtons().Paint(&m_painter);
 		} else {
 			m_fMoving = true;
-			m_ClickPointForRoutePreview = m_painter.ScreenToGeo(pt);
-			m_painter.Redraw();
 		}
 	}
 }
@@ -4156,6 +4154,8 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		// Context menu for editing a route?
 		if (m_Tracks.IsEditingRoute())
 		{
+			m_ClickPointForRoutePreview = m_painter.ScreenToGeo(sp);
+			m_painter.Redraw();
 			ContextMenuEditRoute(sp);
 			return;
 		}
@@ -4460,6 +4460,10 @@ void CMapApp::ContextMenuEditRoute(ScreenPoint sp)
 	GeoPoint gp = m_painter.ScreenToGeo(sp);
 
 	mmMenu.CreateItem(L("Insert point here"),		1);
+	if (m_Tracks.GetCurRoute().CanUndo())
+		mmMenu.CreateItem(L("Undo"),				2);
+	else
+		mmMenu.CreateItem(L("Undo"),				-1);
 	CMenu & mmInsertMode = mmMenu.CreateSubMenu(L("Insert mode"));
 	{
 		enumRouteInsertMode insertMode = m_Tracks.GetCurRoute().GetInsertMode();
@@ -4485,6 +4489,10 @@ void CMapApp::ContextMenuEditRoute(ScreenPoint sp)
 	{
 	case 1:
 		m_Tracks.GetCurRoute().InsertPoint(gp);
+		m_painter.Redraw();
+		break;
+	case 2:
+		m_Tracks.GetCurRoute().Undo();
 		m_painter.Redraw();
 		break;
 	case 21:

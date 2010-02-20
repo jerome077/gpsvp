@@ -221,7 +221,7 @@ public:
 	int GetInfoCount() const;
 	std::wstring GetInfo(int infoIndex) const;
 	double GetFullLength() const;
-	void InsertPoint(int iNextPointIndex, const GeoPoint & gp);
+	int InsertPoint(int iNextPointIndex, const GeoPoint & gp);
 	void ErasePoint(int iPointIndex);
 	GeoPoint GetPoint(int iPointIndex);
 	int GetPointCount() const { return m_nPointCount; };
@@ -277,6 +277,8 @@ protected:
 	std::wstring m_wstrRouteFilename;
 	// To preview where a point could be inserted:
 	GeoPoint m_gpPreviewInsertionPoint;
+	// To undo the last insertion (-1 when unknown)
+	int m_IndexLastNewPoint;
 public:
 	CRoute();
 	~CRoute();
@@ -302,6 +304,8 @@ public:
 	void SetInsertMode(enumRouteInsertMode mode, const GeoPoint& pt = GeoPoint());
 	bool IsEditing() { return (rimNone != m_InsertMode); };
 	bool SetPreviewInsertionPoint(const GeoPoint & gp); // returns true when redraw needed
+	bool CanUndo();
+	void Undo();
 
 	// Add a point at the end:
 	void AppendPoint(const GeoPoint& pt);
