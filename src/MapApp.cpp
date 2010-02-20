@@ -1676,6 +1676,11 @@ void CMapApp::OnLButtonDown(ScreenPoint pt)
 			GetButtons().Paint(&m_painter);
 		} else {
 			m_fMoving = true;
+			#ifndef UNDER_CE
+				// "Preview on click" only on desktop (no use on SP and not good on PPC, because long click = contextmenu)
+				m_ClickPointForRoutePreview = m_painter.ScreenToGeo(pt);
+				m_painter.Redraw();
+			#endif
 		}
 	}
 }
@@ -4154,8 +4159,6 @@ void CMapApp::ContextMenu(ScreenPoint sp)
 		// Context menu for editing a route?
 		if (m_Tracks.IsEditingRoute())
 		{
-			m_ClickPointForRoutePreview = m_painter.ScreenToGeo(sp);
-			m_painter.Redraw();
 			ContextMenuEditRoute(sp);
 			return;
 		}
