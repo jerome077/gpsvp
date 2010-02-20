@@ -151,7 +151,7 @@ CTrack::track_t not_selected_track_t(CTrack::track_t uiType)
 	case CTrack::typeCurrentTrack:		return CTrack::typeCurrentTrack_NotSelected;
 	case CTrack::typeOldTrack:			return CTrack::typeOldTrack_NotSelected;
 	case CTrack::typeRoute:				return CTrack::typeRoute_NotSelected;
-	case CTrack::typeRouteInEdition:	return CTrack::typeRoute_NotSelected;
+	case CTrack::typeRouteInEdition:	return CTrack::typeRoute;
 	default:							return uiType;
 	}
 }
@@ -650,6 +650,23 @@ void CTrack::ErasePoint(int iPointIndex)
 			++currentIndex;
 		}
 	}
+}
+
+GeoPoint CTrack::GetPoint(int iPointIndex)
+{
+	int currentIndex = 0;
+	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
+	{
+		for (Segment::iterator it = itSeg->begin(); it != itSeg->end(); ++it)
+		{
+			if (currentIndex == iPointIndex)
+			{
+				return it->gp;
+			}
+			++currentIndex;
+		}
+	}
+	return GeoPoint();
 }
 
 int CTrack::GetInfoCount() const
@@ -1302,6 +1319,11 @@ void CRoute::Reinit()
 void CRoute::PaintRoute(IPainter * pPainter)
 {
 	m_pRouteAsTrack->PaintUnlocked(pPainter, (IsEditing())?CTrack::typeRouteInEdition:CTrack::typeRoute);
+	if (IsEditing())
+	{
+		if  (!m_gpPreviewInsertionPoint.IsNull())
+			PaintInsertionPoint(pPainter, m_gpPreviewInsertionPoint);
+	}
 }
 
 // Function called during routing to update the current position
@@ -1401,6 +1423,38 @@ void CRoute::InsertPoint(const GeoPoint& pt)
 		AddPointBeforeEndCursor(pt, true);
 		break;
 	}
+}
+
+// Show where a new point would be inserted...
+void CRoute::PaintInsertionPoint(IPainter * pPainter, const GeoPoint & gpNewPoint)
+{
+	int indexNextPt; 
+	switch (m_InsertMode)
+	{
+	case rimNearestSegment:
+		indexNextPt = m_pRouteAsTrack->FindNearestSegmentIndex(gpNewPoint);
+		break;
+	case rimBackwards:
+	case rimForwards:
+		indexNextPt = m_pRouteAsTrack->GetEndCursor();
+		break;
+	}
+	pPainter->StartPolyline(CTrack::typeRoute_NotSelected, 0);
+	if (indexNextPt > 0)
+		pPainter->AddPoint(m_pRouteAsTrack->GetPoint(indexNextPt-1));
+	else if (-1 == indexNextPt)
+		pPainter->AddPoint(m_pRouteAsTrack->GetPoint(m_pRouteAsTrack->GetPointCount()-1));
+	pPainter->AddPoint(gpNewPoint);
+	if (indexNextPt >= 0)
+		pPainter->AddPoint(m_pRouteAsTrack->GetPoint(indexNextPt));
+	pPainter->FinishObject();
+}
+
+// returns true when redraw needed
+bool CRoute::SetPreviewInsertionPoint(const GeoPoint & gp)
+{
+	m_gpPreviewInsertionPoint = gp;
+	return IsEditing();
 }
 
 void CRoute::SetInsertMode(enumRouteInsertMode mode, const GeoPoint& pt)

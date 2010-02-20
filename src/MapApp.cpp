@@ -1676,6 +1676,8 @@ void CMapApp::OnLButtonDown(ScreenPoint pt)
 			GetButtons().Paint(&m_painter);
 		} else {
 			m_fMoving = true;
+			m_ClickPointForRoutePreview = m_painter.ScreenToGeo(pt);
+			m_painter.Redraw();
 		}
 	}
 }
@@ -1692,6 +1694,11 @@ void CMapApp::OnMouseMove(ScreenPoint pt)
 			m_painter.Redraw();
 		} else {
 		}
+	}
+	if (!m_ClickPointForRoutePreview.IsNull())
+	{
+		m_ClickPointForRoutePreview = GeoPoint();
+		m_painter.Redraw();
 	}
 }
 
@@ -1730,6 +1737,11 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 		}
 	}
 	m_fMoving = false;
+	if (!m_ClickPointForRoutePreview.IsNull())
+	{
+		m_ClickPointForRoutePreview = GeoPoint();
+		m_painter.Redraw();
+	}
 }
 void CMapApp::ViewZoomIn()
 {
@@ -2943,6 +2955,10 @@ void CMapApp::Paint()
 				}
 				{
 					AutoLock l;
+					if (!m_ClickPointForRoutePreview.IsNull())
+						m_Tracks.GetCurRoute().SetPreviewInsertionPoint(m_ClickPointForRoutePreview);
+					else
+						m_Tracks.GetCurRoute().SetPreviewInsertionPoint(m_painter.GetCenterCross());
 					if (m_TrackCompetition.IsDetected()) 
 						m_Tracks.PaintOldTracksWithCompetition(&m_painter, m_TrackCompetition.GetPoint(), m_TrackCompetition.GetTime());
 					else

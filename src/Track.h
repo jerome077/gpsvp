@@ -223,6 +223,7 @@ public:
 	double GetFullLength() const;
 	void InsertPoint(int iNextPointIndex, const GeoPoint & gp);
 	void ErasePoint(int iPointIndex);
+	GeoPoint GetPoint(int iPointIndex);
 	int GetPointCount() const { return m_nPointCount; };
 	// Copy the points of this track at the end of another track
 	void AppendToTrackOnlyCoord(CTrack & aTrack) const;
@@ -274,12 +275,15 @@ protected:
 	bool m_bRouteHasChanges;
 	// Where the route will be saved:
 	std::wstring m_wstrRouteFilename;
+	// To preview where a point could be inserted:
+	GeoPoint m_gpPreviewInsertionPoint;
 public:
 	CRoute();
 	~CRoute();
 	void Reinit();
 	bool IsEmpty() const { return (0 == GetPointCount()); };
 	void PaintRoute(IPainter * pPainter);
+	void PaintInsertionPoint(IPainter * pPainter, const GeoPoint & gpNewPoint);
 	CTrack & AsTrack() { return *m_pRouteAsTrack; };
 	int GetPointCount() const;
 
@@ -297,6 +301,7 @@ public:
 	enumRouteInsertMode GetInsertMode() { return m_InsertMode; };
 	void SetInsertMode(enumRouteInsertMode mode, const GeoPoint& pt = GeoPoint());
 	bool IsEditing() { return (rimNone != m_InsertMode); };
+	bool SetPreviewInsertionPoint(const GeoPoint & gp); // returns true when redraw needed
 
 	// Add a point at the end:
 	void AppendPoint(const GeoPoint& pt);

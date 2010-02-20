@@ -182,6 +182,7 @@ public:
 	TrackCompetition m_TrackCompetition;
 	CSun m_Sun;
 	CTeam m_team;
+	GeoPoint m_ClickPointForRoutePreview;
 
 	// For CPU load monitor
 	DWORD m_dwLastTickTimer;
