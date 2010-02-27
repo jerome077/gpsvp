@@ -633,6 +633,7 @@ int CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
 			++currentIndex;
 		}
 	}
+	return -1; // Point wasn't added
 }
 
 GeoPoint CTrack::ErasePoint(int iPointIndex)
