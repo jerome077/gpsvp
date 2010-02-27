@@ -222,7 +222,7 @@ public:
 	std::wstring GetInfo(int infoIndex) const;
 	double GetFullLength() const;
 	int InsertPoint(int iNextPointIndex, const GeoPoint & gp);
-	void ErasePoint(int iPointIndex);
+	GeoPoint ErasePoint(int iPointIndex);
 	GeoPoint GetPoint(int iPointIndex);
 	int GetPointCount() const { return m_nPointCount; };
 	// Copy the points of this track at the end of another track
@@ -277,8 +277,10 @@ protected:
 	std::wstring m_wstrRouteFilename;
 	// To preview where a point could be inserted:
 	GeoPoint m_gpPreviewInsertionPoint;
-	// To undo the last insertion (-1 when unknown)
-	int m_IndexLastNewPoint;
+	// To undo the last insertion
+	enum enumUndoType { utNone, utNewPoint, utErasePoint } m_UndoType;
+	int m_IndexUndoPoint;
+	GeoPoint m_UndoPoint;
 public:
 	CRoute();
 	~CRoute();

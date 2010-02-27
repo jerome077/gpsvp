@@ -610,11 +610,11 @@ int CTrack::FindNearestSegmentIndex(const GeoPoint & gp, GeoPoint& NextPoint)
 	return nearestIndex;
 }
 
-// Index -1 will add the point at the end.
+// Index -1 (or PointCount) will add the point at the end.
 // Returns the index of the newpoint.
 int CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
 {
-	if (-1 == iNextPointIndex)
+	if ((-1 == iNextPointIndex) | (iNextPointIndex >= m_nPointCount))
 	{
 		AddPoint(gp, 0);
 		return m_nPointCount-1;
@@ -635,8 +635,9 @@ int CTrack::InsertPoint(int iNextPointIndex, const GeoPoint & gp)
 	}
 }
 
-void CTrack::ErasePoint(int iPointIndex)
+GeoPoint CTrack::ErasePoint(int iPointIndex)
 {
+	GeoPoint Result = GeoPoint();
 	int currentIndex = 0;
 	for (Track::iterator itSeg = m_Track.begin(); itSeg != m_Track.end(); ++itSeg)
 	{
@@ -644,13 +645,15 @@ void CTrack::ErasePoint(int iPointIndex)
 		{
 			if (currentIndex == iPointIndex)
 			{
+				Result = it->gp;
 				itSeg->erase(it);
 				--m_nPointCount;
-				return;
+				return Result;
 			}
 			++currentIndex;
 		}
 	}
+	return Result;
 }
 
 GeoPoint CTrack::GetPoint(int iPointIndex)
@@ -1303,7 +1306,8 @@ CRoute::CRoute()
 : m_pRouteAsTrack(new CTrack(L"Current route")),
   m_InsertMode(rimNone),
   m_bRouteHasChanges(false),
-  m_IndexLastNewPoint(-1)
+  m_UndoType(utNone),
+  m_IndexUndoPoint(-1)
 {
 }
 
@@ -1385,7 +1389,8 @@ void CRoute::AppendTrack(const CTrack& aTrack)
 void CRoute::AddPointBeforeEndCursor(const GeoPoint& pt, bool bForwards)
 {
 	m_bRouteHasChanges = true;
-	m_IndexLastNewPoint = m_pRouteAsTrack->InsertPoint(m_pRouteAsTrack->GetEndCursor(), pt);
+	m_UndoType = utNewPoint;
+	m_IndexUndoPoint = m_pRouteAsTrack->InsertPoint(m_pRouteAsTrack->GetEndCursor(), pt);
 	if (bForwards)
 	{
 		m_pRouteAsTrack->SetEndCursor(m_pRouteAsTrack->GetEndCursor()+1);
@@ -1397,13 +1402,19 @@ void CRoute::InsertPointInNearestSegment(const GeoPoint& pt)
 {
 	m_bRouteHasChanges = true;
 	int segIndex = m_pRouteAsTrack->FindNearestSegmentIndex(pt);
-	m_IndexLastNewPoint = m_pRouteAsTrack->InsertPoint(segIndex, pt);
+	m_UndoType = utNewPoint;
+	m_IndexUndoPoint = m_pRouteAsTrack->InsertPoint(segIndex, pt);
 }
 
 void CRoute::ErasePoint(int iPointIndex)
 {
+	m_UndoPoint = m_pRouteAsTrack->ErasePoint(iPointIndex);
 	m_bRouteHasChanges = true;
-	m_pRouteAsTrack->ErasePoint(iPointIndex);
+	if (!m_UndoPoint.IsNull())
+	{
+		m_IndexUndoPoint = iPointIndex;
+		m_UndoType = utErasePoint;	
+	}
 }
 
 int CRoute::GetPointCount() const
@@ -1461,16 +1472,21 @@ bool CRoute::SetPreviewInsertionPoint(const GeoPoint & gp)
 
 bool CRoute::CanUndo()
 {
-	return (-1 != m_IndexLastNewPoint);
+	return (utNone != m_UndoType);
 }
 
 void CRoute::Undo()
 {
-	if (CanUndo())
+	switch (m_UndoType)
 	{
-		ErasePoint(m_IndexLastNewPoint);
-		m_IndexLastNewPoint = -1;
+	case utNewPoint:
+		ErasePoint(m_IndexUndoPoint);
+		break;
+	case utErasePoint:
+		m_pRouteAsTrack->InsertPoint(m_IndexUndoPoint, m_UndoPoint);
+		break;
 	}
+	m_UndoType = utNone;
 }
 
 
