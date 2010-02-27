@@ -953,7 +953,8 @@ void CTrack::SetWriting(bool fWriting)
 void CTrack::SetWritingWithFilename(const std::wstring& wstrNewFilename)
 {
 	Flush(m_iBufferPos);
-	if (0 == _wcsnicmp(wstrNewFilename.c_str(), L".gpx", 4))
+	std::wstring wstrExt = wstrNewFilename.substr(wstrNewFilename.length()-4, 4);
+	if (0 == _wcsnicmp(wstrExt.c_str(), L".gpx", 4))
 		CreateFile(tfGPX);
 	else
 		CreateFile(tfPLT);

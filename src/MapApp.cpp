@@ -2185,7 +2185,10 @@ void CMapApp::CloseTrack(Int iIndex)
 void CMapApp::FollowTrack(Int iIndex)
 {
 	if (m_Tracks.NewRouteFromTrackIndex(iIndex))
+	{
+		SaveCurrentRoute(); // Save it as route.plt
 		ToolsNavigateRoute();
+	}
 }
 
 void CMapApp::InfoTrack(HWND hDlgParent, const CTrack& track)
@@ -4429,7 +4432,10 @@ void CMapApp::ContextMenuMapNormal(ScreenPoint sp)
 		break;
 	case 55:
 		if (m_Tracks.NewRouteFromTrack(nearestTrack))
+		{
+			SaveCurrentRoute(); // Save it as route.plt
 			ToolsNavigateRoute();
+		}
 		break;
 	case 61:
 		if (m_Tracks.NewRoute())
@@ -5522,7 +5528,8 @@ bool CMapApp::FileOpenRoute()
 			m_Tracks.CloseTrack(indexTrack);
 			if (bNewRouteCreated)
 			{
-				m_painter.SetView(m_Tracks.Last().GetLastPoint(), true);
+				SaveCurrentRoute(); // Save it as route.plt
+				m_painter.SetView(m_Tracks.GetCurRoute().AsTrack().GetLastPoint(), true);
 				ToolsNavigateRoute();
 			}
 			return bNewRouteCreated;
