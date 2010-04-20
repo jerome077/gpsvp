@@ -2555,7 +2555,6 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Tracks.GetCurTrack().Init();
 
 	StartListening();
-	StartHttpThread();
 
 	InitMenu();
 
@@ -2566,6 +2565,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 			m_pRasterMapPainter->RelocateFiles();
 		}
 	}
+
+	StartHttpThread();
 }
 void CMapApp::OnTimer()
 {
@@ -3346,6 +3347,7 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
+				mmMapType.CreateItem(L("n.maps.yandex.ru"), mcGMapType + gtNYandex);
 				InitMenuAllWMSMaps(mmMapType);
 			}
 			{

@@ -40,6 +40,7 @@ CGMFileHolder::CGMFileHolder(void)
 	m_vecRMS.push_back(new CMSMapSource()); // gtMSMap
 	m_vecRMS.push_back(new CMSSatSource()); // gtMSSat
 	m_vecRMS.push_back(new CMSHybSource()); // gtMSHyb
+	m_vecRMS.push_back(new CNYaSource()); // gtNYandex
 	m_vecRMS.push_back(new CNullSource());  // gtHybrid
 }
 

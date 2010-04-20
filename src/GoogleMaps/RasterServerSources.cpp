@@ -139,7 +139,38 @@ CMSHybSource::CMSHybSource()
 	SetType(gtMSHyb);
 }
 
+CNYaSource::CNYaSource()
+{
+	std::list<std::string> lst;
+	lst.push_back("http://wvec.maps.yandex.net");
+	SetServerPrefixes(lst);
+
+	SetType(gtNYandex);
+}
+
 bool CGMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+{
+	std::string::size_type q = name.find(L".png");
+	if (q == std::string::npos)
+		return false;
+	if (name.length() > (q + 4)) {
+		return false;
+	}
+
+	long x, y, zoom;
+	int nReadFields = swscanf(name.c_str(), L"x=%d&y=%d&zoom=%d.png", &x, &y, &zoom);
+	if (nReadFields == 3) {
+		data.level = (unsigned char) zoom;
+		data.X = x;
+		data.Y = y;
+		data.type = gtMap;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool CNYaSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
 {
 	std::string::size_type q = name.find(L".png");
 	if (q == std::string::npos)

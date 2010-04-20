@@ -31,9 +31,10 @@ enum enumGMapType
 	gtMSMap,
 	gtMSSat,
 	gtMSHyb,
-	gtHybrid,
+	gtNYandex, // Former gtHybrid
 	gtFirstWMSMapType,
-	gtLastGMapType = 0x1000
+	gtLastGMapType = 0x1000,
+	gtHybrid
 };
 
 struct GEOFILE_DATA {
@@ -345,6 +346,31 @@ public:
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
 };
 
+class CNYaSource : public CRasterMapSource
+{
+public:
+	CNYaSource();
+	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
+	{
+		char buffer[256];
+		sprintf(buffer, "http://wvec.maps.yandex.net/?x=%ld&y=%ld&z=%d", data.X, data.Y, 17 - data.level);
+		return buffer;
+	};
+
+	virtual bool GetDiskFileName(
+			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		)
+	{
+		wchar_t filename[MAX_PATH];
+
+		wsprintf(filename, L"x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
+		name = filename;
+
+		return GetDiskGenericFileName(gfdata, root, path, L"nya");
+	};
+
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
+};
 
 // Properties for one level of zoom of a user defined Map:
 class CUserMapZoomProp
