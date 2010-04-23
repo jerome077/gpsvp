@@ -32,9 +32,9 @@ enum enumGMapType
 	gtMSSat,
 	gtMSHyb,
 	gtNYandex, // Former gtHybrid
+	//gtHybrid = gtNYandex,
 	gtFirstWMSMapType,
 	gtLastGMapType = 0x1000,
-	gtHybrid
 };
 
 struct GEOFILE_DATA {

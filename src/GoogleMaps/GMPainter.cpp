@@ -183,7 +183,7 @@ int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, doubl
 			bool bDoNotDraw = false;
 			switch (type) {
 				case gtNone:
-				case gtHybrid:
+				// case gtHybrid:
 					bDoNotDraw = true;
 					break;
 				default:

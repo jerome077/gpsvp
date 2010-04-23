@@ -41,7 +41,7 @@ CGMFileHolder::CGMFileHolder(void)
 	m_vecRMS.push_back(new CMSSatSource()); // gtMSSat
 	m_vecRMS.push_back(new CMSHybSource()); // gtMSHyb
 	m_vecRMS.push_back(new CNYaSource()); // gtNYandex
-	m_vecRMS.push_back(new CNullSource());  // gtHybrid
+//	m_vecRMS.push_back(new CNullSource());  // gtHybrid
 }
 
 CGMFileHolder::~CGMFileHolder(void)
@@ -681,7 +681,7 @@ bool CGMFileHolder::NeedRelocateFiles()
 long CGMFileHolder::ProcessPrefixes(const std::string &s)
 {
 	const char *cur = s.c_str();
-	enumGMapType vecTypesInRequest[] = {gtMap, gtSatellite, gtHybrid, gtTopo};
+	enumGMapType vecTypesInRequest[] = {gtMap, gtSatellite, gtNone /* gtHybrid */, gtTopo};
 	for (int i=0; i<sizeof(vecTypesInRequest)/sizeof(vecTypesInRequest[0]); i++) {
 		std::list<std::string> lst;
 		const char *pGMap = strstr(cur, "["); 
@@ -694,7 +694,9 @@ long CGMFileHolder::ProcessPrefixes(const std::string &s)
 				lst.push_back(s);
 				pGMap = pQuotEnd + 1;
 			}
-			m_vecRMS[vecTypesInRequest[i]]->SetServerPrefixes(lst);
+			if (vecTypesInRequest[i] != gtNone) {
+				m_vecRMS[vecTypesInRequest[i]]->SetServerPrefixes(lst);
+			}
 			cur = pGMap;
 		} else {
 			// Malformed reply...
