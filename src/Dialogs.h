@@ -93,6 +93,22 @@ public:
 	}
 	void GetText(wchar_t * buffer, int size);
 };
+class CEditCombo : public CCombo
+{
+	int AddString(wchar_t * string, bool fSelect);
+	HWND m_hControl2;
+	HWND m_hControl3;
+public:
+	void Create(HWND hDlg, bool fSort);
+	virtual BOOL SetWindowPos(int x, int y, int dx, int dy)
+	{
+		BOOL res = ::SetWindowPos(m_hControl, 0, x, y, dx * 9 / 10, dy, 
+			SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+		res = res && ::SetWindowPos(m_hControl2, 0, x + dx * 9 / 10, y, dx - dx * 9 / 10, dy, 
+			SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+		return res;
+	}
+};
 
 class CEditText : public CControl
 {

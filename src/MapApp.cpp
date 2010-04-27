@@ -49,6 +49,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "HttpClient.h"
 #include "GoogleMaps/GMPainter.h"
 #include "VersionNumber.h"
+#include "EGM96Geoid.h"
 
 const DWORD MIN_CPUMON_STEP_MS = 900;
 
@@ -899,7 +900,7 @@ class CSettingsDlg : public CMADialog
 	CCombo m_coordformat;
 	CCombo m_utmZone;
 	CCombo m_metrics;
-	CCombo m_GeoidMode;
+	CEditCombo m_GeoidMode;
 	CCombo m_OldTileDays;
 
 	std::map<std::wstring, int> m_comboItems;
@@ -994,8 +995,7 @@ class CSettingsDlg : public CMADialog
 		m_GeoidMode.AddItem(L"Auto", app.m_rsGeoidMode().c_str());
 		m_GeoidMode.AddItem(L"Always", app.m_rsGeoidMode().c_str());
 		m_GeoidMode.AddItem(L"Never", app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L"User", app.m_rsGeoidMode().c_str());
-		m_GeoidMode.AddItem(L"Sirf", app.m_rsGeoidMode().c_str());
+		m_GeoidMode.AddItem((wchar_t *)app.m_rsGeoidMode().c_str() , app.m_rsGeoidMode().c_str());
 		m_GeoidMode.SetText(app.m_rsGeoidMode().c_str());
 
 		m_OldTileDays.Create(hDlg, false);
@@ -1020,7 +1020,7 @@ class CSettingsDlg : public CMADialog
 		AddItem(hDlg, m_utmZone);
 		AddItem(hDlg, CText(hDlg, L("Metric system:")));
 		AddItem(hDlg, m_metrics);
-		AddItem(hDlg, CText(hDlg, L("Geoid Separation mode:")));
+		AddItem(hDlg, CText(hDlg, L("Alt correction (meters):")));
 		AddItem(hDlg, m_GeoidMode);
 		AddItem(hDlg, CText(hDlg, L("Tile is old after ... days:")));
 		AddItem(hDlg, m_OldTileDays);
@@ -1088,7 +1088,8 @@ class CSettingsDlg : public CMADialog
 		if (app.m_rsGeoidMode() != buff)
 		{
 			app.m_rsGeoidMode = buff;
-			fStartListening = true;
+			EGM96init(buff);
+
 		}
 
 		
@@ -2395,6 +2396,9 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_rsCurrentFolder.Init(hRegKey, L"");
 	m_rsProxy.Init(hRegKey,L"Proxy");
 	m_rsGeoidMode.Init(hRegKey, L"GeoidMode");
+	if (m_rsGeoidMode().empty())
+		m_rsGeoidMode = L"Auto";
+	EGM96init((wchar_t *)m_rsGeoidMode().c_str());
 	GetKeymap().Init(hRegKey);
 	GetButtons().Init(hRegKey);
 
@@ -2435,7 +2439,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 
 	m_monAltitude.SetIdL(L"Altitude");
 	m_MonitorSet.AddMonitor(&m_monAltitude);
-	m_monSeparation.SetIdL(L"Geoid Separation");
+	m_monSeparation.SetIdL(L"Alt. correction");
 	//m_monSeparation.SetRegistry(hRegKey, L"GeoidSeparation");
 	m_MonitorSet.AddMonitor(&m_monSeparation);
 	

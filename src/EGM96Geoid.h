@@ -11,6 +11,7 @@ See EGM96Geoid.c for more info
 extern "C" {
 #endif
 
+void EGM96init(wchar_t *sGeoidMode);
 void EGM96Geoid(double dLat, double dLon, double *dWsg84Alt, double *dGeoidAlt);
 
 #ifdef __cplusplus

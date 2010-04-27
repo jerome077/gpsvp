@@ -324,6 +324,38 @@ int CCombo::AddString(wchar_t * string, bool fSelect)
 	return index;
 }
 
+void CEditCombo::Create(HWND hDlg, bool fSort)
+{
+	HFONT f = (HFONT)SendMessage(hDlg, WM_GETFONT, 0, 0);
+#ifdef USE_SPIN_CONTROL
+	m_hControl = CreateWindow (TEXT("listbox"), NULL, WS_VISIBLE | 
+								  WS_BORDER | WS_TABSTOP, 10,17,32,GetFontHeight(hDlg, f)*2 - 1, hDlg,
+								  0, g_hInst, 0L);
+
+//	m_hControl3 = CreateWindow(/*WS_EX_CLIENTEDGE, */WC_EDIT, L"EditText", 
+//		WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_NOHIDESEL | 
+//		ES_AUTOHSCROLL | WS_TABSTOP,
+//		0, 0, 100, GetFontHeight(hDlg, f) + 2, hDlg, 0, g_hInst, 0);
+
+	m_hControl2 = CreateWindow (UPDOWN_CLASS, NULL, WS_VISIBLE | UDS_HORZ |
+									UDS_ALIGNRIGHT | UDS_ARROWKEYS |
+									UDS_SETBUDDYINT | UDS_WRAP | UDS_EXPANDABLE,
+									0, 0, 0, 0, hDlg, 0, g_hInst, 0L);
+
+	SendMessage (m_hControl2, UDM_SETBUDDY, (WPARAM)m_hControl, 0);
+
+#else
+	
+	m_hControl = CreateWindow(L"combobox", 0, 
+		WS_CHILD | WS_VISIBLE | WS_BORDER  | WS_VSCROLL | WS_TABSTOP | (fSort ? CBS_SORT : 0) |
+		CBS_DROPDOWN,
+		10,17,32,GetFontHeight(hDlg, f) * 8, hDlg, 0, g_hInst, 0);
+
+#endif
+
+	MySendMessage(WM_SETFONT, WPARAM(f), 0);
+}
+
 CText::CText()
 {
 }
