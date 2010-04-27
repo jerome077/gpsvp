@@ -160,6 +160,8 @@ enum enumMenuCommands
 	mcoAllowInternetHomeOnly,
 	mcRastMapsRefreshAll,
 	mcRastMapsRefreshInsideRegion,
+	mcoHideCacheTiles,
+	mcoPlaceholder1,
 
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,

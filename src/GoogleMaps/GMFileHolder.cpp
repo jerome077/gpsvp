@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GMFileHolder.h"
 #include "../PlatformDef.h"
 #include "../Lock.h"
+#include "../MapApp.h"
 #ifndef _MSC_VER
 #include <errno.h>
 #endif
@@ -257,11 +258,15 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 	// Archive is usually set. Hidden will prevent most album scans. System even more
     // m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
 	m_dwMapsAttr = GetFileAttributes((m_strMapsRoot + L"\\attrib").c_str());
-	if (INVALID_FILE_ATTRIBUTES == m_dwMapsAttr)
-		m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE;
 	// I consider this a temporary workaround, it may be nicer and clearer for users
 	// to create a proper settigns in VP (also for the 404 above) rather than 
 	// non-intuitive non-documented "settings" like this
+
+	// New code: do we need above still for should it be scrapped?
+	if (INVALID_FILE_ATTRIBUTES == m_dwMapsAttr)
+		m_dwMapsAttr = FILE_ATTRIBUTE_ARCHIVE;
+	if (app.m_Options[mcoHideCacheTiles])
+		m_dwMapsAttr = m_dwMapsAttr | FILE_ATTRIBUTE_HIDDEN;
 
 	NeedRelocateFiles();
 

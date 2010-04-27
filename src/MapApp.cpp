@@ -2347,7 +2347,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Automatic light"), L"AutomaticLight", false, mcoAutoLight);
 	m_Options.AddOption(L("Large fonts"), L"LargeFonts", hiRes, mcoLargeFonts);
 	m_Options.AddOption(L("Show Sun azimuth"), L"ShowSunAz", false, mcoShowSunAz);
-
+	m_Options.AddOption(L("Hide cache tiles"), L"Hide cache tiles", false, mcoHideCacheTiles);
+	
 	m_fTrafficAgreement.Init(hRegKey, L"TrafficAgreement", false);
 	
 	if (m_Options[mcoRefreshTrafficOnStartup])
@@ -3373,8 +3374,11 @@ void CMapApp::InitMenu()
 				mmMaintMaps.CreateBreak();
 				mmMaintMaps.CreateItem(L("Cache auto delete"), mcoRasterCacheAutoDelete);
 				mmMaintMaps.EnableMenuItem(mcoRasterCacheAutoDelete, false);
+				mmMaintMaps.CreateItem(L("Set raster cache folder"), mcSetGoogleMapsFolder);
+				mmMaintMaps.CreateItem(L("Hide cache tiles"), mcoHideCacheTiles);
 			}
-			mmGoogleMaps.CreateItem(L("Set raster cache folder"), mcSetGoogleMapsFolder);
+			mmGoogleMaps.CreateItem(L("menu placeholder"), mcoPlaceholder1);
+			mmGoogleMaps.EnableMenuItem(mcoPlaceholder1, false);
 			mmGoogleMaps.CreateBreak();
 			mmGoogleMaps.CreateItem(L("Prefer Google zoom levels"), mcoGoogleZoomLevels);
 			mmGoogleMaps.CreateItem(L("Enable raster downloading"), mcoDownloadGoogleMaps);
