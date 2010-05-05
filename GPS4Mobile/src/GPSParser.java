@@ -7,7 +7,7 @@ import java.io.*;
 import java.io.*;
 
 interface GPSListener {
-	public void add(String date, String time, GPSPoint g);
+	public void add(String date, String time, GPSPoint g, String altitude);
 	public void brk();
 }
 
@@ -76,11 +76,11 @@ public class GPSParser implements Runnable{
 		}
 	}
 
-	private void add(String date, String time, GPSPoint g, int altitude) {
+	private void add(String date, String time, GPSPoint g, String altitude) {
 		Enumeration e = listeners.elements();
 		while (e.hasMoreElements()) {
 			GPSListener l = (GPSListener)(e.nextElement());
-			l.add(date, time, g, int altitude);
+			l.add(date, time, g, altitude);
 		}
 		try {
 			Class.forName("com.nokia.mid.ui.DeviceControl");

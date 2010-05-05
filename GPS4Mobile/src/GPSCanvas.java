@@ -15,12 +15,12 @@ public class GPSCanvas extends Canvas implements GPSListener {
 	Log log = null;
 	private IntPoint curpos = null;
 	private GPSPoint curgpspos = null;
-	private IntPoint curcenter = null;
+	private GPSPoint curgpscenter = null;
 	private WayPoint nearest = null;
-	public IntPoint destination = null;
-	private Route route = null;
+	public GPSPoint gpsdestination = null;
+	// private Route route = null;
 
-	TileFactory factory = new OSMFactory();
+	TileFactory factory = null;
 	long manual = System.currentTimeMillis();
 	boolean fullscreen = false;
 
@@ -65,6 +65,13 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		g.setFont(Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
         g.setColor(0xFFFFFF);
         g.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        IntPoint curcenter = null;
+        if (curgpscenter != null)
+			curcenter = new IntPoint(curgpscenter, factory);
+		IntPoint destination = null;
+		if (gpsdestination != null)
+			destination = new IntPoint(gpsdestination, factory);
 
 		int zoom = 0x80000 >> level;
 
@@ -74,23 +81,23 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		Enumeration en = midlet.points.getPoints();
 		while (en.hasMoreElements()) {
 			WayPoint pt = (WayPoint)en.nextElement();
-			int distance = pt.p.Distance(curcenter);
+			int distance = (new IntPoint(pt.g, factory)).Distance(new IntPoint(curgpscenter, factory));
 			if (distance < mindistance) {
 				mindistance = distance;
 				nearest = pt;
 			}					
 		}
 		if (nearest != null && mindistance != 0 && (curgpspos == null || System.currentTimeMillis() < manual)) {
-			curcenter = new IntPoint(nearest.p);
+			curgpscenter = nearest.g;
 		}
 
 
 		// Tiles
-		if (curcenter != null) {
+		if (curgpscenter != null) {
 			g.setColor(0x000000);
 			int topx = FlooredDiv((curcenter.x / zoom - WIDTH / 2), 256);
 			int topy = FlooredDiv((-curcenter.y / zoom - HEIGHT / 2), 256);
-			int offset = FlooredDiv(IntPoint.resolution, zoom * 256);
+			int offset = FlooredDiv(factory.resolution(), zoom * 256);
 			for (int x = topx - 1; ; ++x) {
 				int x1 = x * 256 - (curcenter.x / zoom - WIDTH / 2);
 				if (x1 + 256 < 0)
@@ -142,13 +149,13 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		}
 
 		// Old tracks
-		if (curcenter != null) {
+		if (curgpscenter != null) {
 			g.setColor(0xbb00bb);
 			Enumeration e = midlet.tracks.elements();
 			while (en.hasMoreElements()) {
 				Track tr = (Track)en.nextElement();
 				if (tr != null)
-					tr.Paint(g, curcenter, zoom, WIDTH / 2, HEIGHT / 2);
+					tr.Paint(g, new IntPoint(curgpscenter, factory), zoom, WIDTH / 2, HEIGHT / 2);
 			}
 
 		}
@@ -157,25 +164,27 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		Track track = midlet.track;
 
 		// Current track
-		if (curcenter != null && track != null) {
+		if (curgpscenter != null && track != null) {
 			if (midlet.track2.tracklen > 0) {
 				g.setColor(0xdd00dd);
-				midlet.track2.Paint(g, curcenter, zoom, WIDTH / 2, HEIGHT / 2);
+				midlet.track2.Paint(g, new IntPoint(curgpscenter, factory), zoom, WIDTH / 2, HEIGHT / 2);
 			}
 			if (track.tracklen > 0) {
 				g.setColor(0xff00ff);
-				track.Paint(g, curcenter, zoom, WIDTH / 2, HEIGHT / 2);
+				track.Paint(g, new IntPoint(curgpscenter, factory), zoom, WIDTH / 2, HEIGHT / 2);
 			}
 		}
 
 		// Current route
-		if (curcenter != null && route != null) {
+		/*
+		if (curgpscenter != null && route != null) {
 			g.setColor(0x0000ff);
-			route.Paint(g, curcenter, zoom, WIDTH / 2, HEIGHT / 2);
+			route.Paint(g, new IntPoint(curgpscenter, factory), zoom, WIDTH / 2, HEIGHT / 2);
 		}
+		*/
 
 		// Waypoints
-		if (curcenter != null) {
+		if (curgpscenter != null) {
 			if (nearest != null) {
 				addCommand(midlet.CMD_EDIT);
 				addCommand(midlet.CMD_DELPOINT);
@@ -189,8 +198,9 @@ public class GPSCanvas extends Canvas implements GPSListener {
 			int x1, y1;
 			while (en.hasMoreElements()) {
 				WayPoint pt = (WayPoint)en.nextElement();
-				x1 = (pt.p.x - curcenter.x) / zoom + WIDTH / 2;
-				y1 = - (pt.p.y - curcenter.y) / zoom + HEIGHT / 2;
+				IntPoint p = new IntPoint(pt.g, factory);
+				x1 = (p.x - curcenter.x) / zoom + WIDTH / 2;
+				y1 = - (p.y - curcenter.y) / zoom + HEIGHT / 2;
 				g.setColor(0x800000);
 				g.fillArc(x1-2, y1-2, 4, 4, 0, 360);
 				g.setColor(0xFFFFFF);
@@ -199,8 +209,9 @@ public class GPSCanvas extends Canvas implements GPSListener {
 
 			// Nearest waypoint
 			if (nearest != null) {
-				x1 = (nearest.p.x - curcenter.x) / zoom + WIDTH / 2;
-				y1 = - (nearest.p.y - curcenter.y) / zoom + HEIGHT / 2;
+				IntPoint p = new IntPoint(nearest.g, factory);
+				x1 = (p.x - curcenter.x) / zoom + WIDTH / 2;
+				y1 = - (p.y - curcenter.y) / zoom + HEIGHT / 2;
 				g.setColor(0xFF0000);
 				g.fillArc(x1-3, y1-3, 6, 6, 0, 360);
 				g.setColor(0xFF7F7F);
@@ -213,7 +224,7 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		}
 
 		// Destination vector
-		if (curpos != null && curcenter != null && destination != null) {
+		if (curpos != null && curgpscenter != null && destination != null) {
 			int x1 = (int)((curpos.x - curcenter.x) / zoom + WIDTH / 2);
 			int y1 = (int)(- (curpos.y - curcenter.y) / zoom + HEIGHT / 2);
 			int x2 = (int)((destination.x - curcenter.x) / zoom + WIDTH / 2);
@@ -252,12 +263,12 @@ public class GPSCanvas extends Canvas implements GPSListener {
 			if (destination != null) {
 				int dist = 0;
 				if (curgpspos != null)
-					dist = (int)curgpspos.Distance(new GPSPoint(destination));
+					dist = (int)curgpspos.Distance(new GPSPoint(destination, factory));
 				else {
 					if (nearest != null)
-						dist = (int)(nearest.g.Distance(new GPSPoint(destination)));
+						dist = (int)(nearest.g.Distance(new GPSPoint(destination, factory)));
 					else
-						dist = (int)((new GPSPoint(curcenter)).Distance(new GPSPoint(destination)));
+						dist = (int)((new GPSPoint(curcenter, factory)).Distance(new GPSPoint(destination, factory)));
 				}
 				if (dist > 9999) {
 					s += dist / 1000;
@@ -282,9 +293,9 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		
 		// Scale
 		if (curcenter != null) {
-			GPSPoint gpcenter = new GPSPoint(curcenter);
+			GPSPoint gpcenter = new GPSPoint(curcenter, factory);
 			String s = "";
-			int scale = (int)(WIDTH * (20000000.0 / (IntPoint.resolution / zoom)) * Math.cos(Math.toRadians(gpcenter.lat)));
+			int scale = (int)(WIDTH * (20000000.0 / (factory.resolution() / zoom)) * Math.cos(Math.toRadians(gpcenter.lat)));
 			if (scale > 9999) {
 				s += scale / 1000;
 				s += "km";
@@ -327,16 +338,17 @@ public class GPSCanvas extends Canvas implements GPSListener {
 			g.fillArc(2, 2, 6, 6, 0, 360);
 		}
 	}
-	
+	/*
 	public void route() {
-		if (destination != null) {
+		if (gpsdestination != null) {
 			if (curgpspos != null) {
-				route = new Route(curgpspos, new GPSPoint(destination), log, this);
+				route = new Route(curgpspos, gpsdestination, log, this);
 			} else {
-				route = new Route(new GPSPoint(curcenter), new GPSPoint(destination), log, this);
+				route = new Route(curgpscenter, gpsdestination, log, this);
 			}
 		}
 	}
+	*/
 
 	public void keyRepeated(int key) {
 		keyPressed(key);
@@ -363,25 +375,41 @@ public class GPSCanvas extends Canvas implements GPSListener {
 			ToggleFullscreen();
 			break;
 		case LEFT:
-			curcenter.x -= 15 * zoom;
-			manual = System.currentTimeMillis() + 60000;
-			repaint();
-			break;
+			{
+				IntPoint curcenter = new IntPoint(curgpscenter, factory);
+				curcenter.x -= 15 * zoom;
+				curgpscenter = new GPSPoint(curcenter, factory);
+				manual = System.currentTimeMillis() + 60000;
+				repaint();
+				break;
+			}
 		case RIGHT:
-			curcenter.x += 15 * zoom;
-			manual = System.currentTimeMillis() + 60000;
-			repaint();
-			break;
+			{
+				IntPoint curcenter = new IntPoint(curgpscenter, factory);
+				curcenter.x += 15 * zoom;
+				curgpscenter = new GPSPoint(curcenter, factory);
+				manual = System.currentTimeMillis() + 60000;
+				repaint();
+				break;
+			}
 		case UP:
-			curcenter.y += 15 * zoom;
-			manual = System.currentTimeMillis() + 60000;
-			repaint();
-			break;
+			{
+				IntPoint curcenter = new IntPoint(curgpscenter, factory);
+				curcenter.y += 15 * zoom;
+				curgpscenter = new GPSPoint(curcenter, factory);
+				manual = System.currentTimeMillis() + 60000;
+				repaint();
+				break;
+			}
 		case DOWN:
-			curcenter.y -= 15 * zoom;
-			manual = System.currentTimeMillis() + 60000;
-			repaint();
-			break;                
+			{
+				IntPoint curcenter = new IntPoint(curgpscenter, factory);
+				curcenter.y -= 15 * zoom;
+				curgpscenter = new GPSPoint(curcenter, factory);
+				manual = System.currentTimeMillis() + 60000;
+				repaint();
+				break;
+			}
 		}
     }
 
@@ -392,23 +420,32 @@ public class GPSCanvas extends Canvas implements GPSListener {
 		curpos = null;
 	}
 
-	public void add(String date, String time, GPSPoint g) {
+	public void add(String date, String time, GPSPoint g, String altitude) {
 		if (curgpspos != g)
 			repaint();
 		curgpspos = g;
-		curpos = new IntPoint(g);
+		curpos = new IntPoint(g, factory);
 		if (System.currentTimeMillis() > manual)
-			curcenter = new IntPoint(g);
+			curgpscenter = g;
 		addCommand(midlet.CMD_ADDPOINT);
 	}
 
 	public void SetCenter(IntPoint p) {
-		curcenter = p;
+		curgpscenter = new GPSPoint(p, factory);
+		repaint();
+	}
+
+	public void SetGpsCenter(GPSPoint p) {
+		curgpscenter = p;
 		repaint();
 	}
 
 	public IntPoint GetCenter() {
-		return curcenter;
+		return new IntPoint(curgpscenter, factory);
+	}
+
+	public GPSPoint GetGpsCenter() {
+		return curgpscenter;
 	}
 
 	public GPSPoint getGPSPos() {

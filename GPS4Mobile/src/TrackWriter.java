@@ -66,7 +66,7 @@ class TrackWriter implements GPSListener {
 						if (iData > 2) {
 							if (data[2] == "1")
 								track.brk();
-							track.add(null, null, new GPSPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
+							track.add(null, null, new GPSPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])), null);
 						}
 					}
 					iData = 0;
@@ -104,7 +104,7 @@ class TrackWriter implements GPSListener {
 		return null;
 	}
 
-	public void add(String d, String t, GPSPoint g) {
+	public void add(String d, String t, GPSPoint g, String altitude) {
 		if (last != null && !newsegment && last.Distance(g) < 10)
 			return;
 		CreatePlt(d, t);
@@ -114,7 +114,7 @@ class TrackWriter implements GPSListener {
 			sLine = g.lat + "," +
 				g.lng + "," + 
 				(newsegment ? "1," : "0,") +
-				"-777," +
+				altitude.toString() + "," +
 				dt.toString() +"," +
 				",,";
 			try{                

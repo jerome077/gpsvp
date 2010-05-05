@@ -66,7 +66,7 @@ class SearchResults extends DefaultHandler implements Runnable, CommandListener 
 			display.setCurrent(canvas);
 		if (c == found.SELECT_COMMAND) {
 			display.setCurrent(canvas);
-			canvas.SetCenter(new IntPoint(GetPoint(((List)d).getSelectedIndex())));
+			canvas.SetGpsCenter(GetPoint(((List)d).getSelectedIndex()));
 		}
 	}
 }

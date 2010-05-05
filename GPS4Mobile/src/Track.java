@@ -2,14 +2,21 @@ import javax.microedition.lcdui.*;
 
 class TrackPoint {
 	GPSPoint g;
-	IntPoint p;
+	IntPoint cachep;
 	long t;
 	int s;
+	TileFactory factory;
 	TrackPoint(GPSPoint gg, int ss) {
 		g = gg;
-		p = new IntPoint(gg);
 		t = System.currentTimeMillis();
 		s = ss;
+	}
+	IntPoint p(TileFactory f) {
+		if (factory != f) {
+			cachep = new IntPoint(g, f);
+			factory = f;
+		}
+		return cachep;
 	}
 }
 
@@ -20,6 +27,7 @@ class Track implements GPSListener {
     private TrackPoint []track = new TrackPoint[maxtrack];
     public int tracklen = 0;
 	public IntPoint lastpoint;
+	public TileFactory factory;
 	int cursegment = 0;
 	Track old = null;
 	Log log;
@@ -33,7 +41,7 @@ class Track implements GPSListener {
 		old = o;
 		log = l;
 	}
-	public void add(String date, String time, GPSPoint g) {
+	public void add(String date, String time, GPSPoint g, String altitude) {
 		try {
 			add(new TrackPoint(g, cursegment));	
 		} catch (Exception e) {
@@ -42,7 +50,7 @@ class Track implements GPSListener {
 		}
 	}
 	void add(TrackPoint p) throws Exception {
-		lastpoint = p.p;
+		lastpoint = p.p(factory);
 		if (!compressed) {
 			if (tracklen > maxtrack && old != null) {
 				try {
@@ -141,8 +149,8 @@ class Track implements GPSListener {
 				if (tracklen > Track.maxtrack)
 					i = tracklen % Track.maxtrack;
 				try {
-					x1 = (track[i].p.x - curpoint.x) / zoom + dx;
-					y1 = -(track[i].p.y - curpoint.y) / zoom + dy;
+					x1 = (track[i].p(factory).x - curpoint.x) / zoom + dx;
+					y1 = -(track[i].p(factory).y - curpoint.y) / zoom + dy;
 					s1 = track[i].s;
 				}catch(Exception e){
 					log.write("track[i]");
@@ -154,8 +162,8 @@ class Track implements GPSListener {
 				
 				while (i != (tracklen % Track.maxtrack)) {
 					try {
-						x2 = (track[i].p.x - curpoint.x) / zoom + dx;
-						y2 = -(track[i].p.y - curpoint.y) / zoom + dy;
+						x2 = (track[i].p(factory).x - curpoint.x) / zoom + dx;
+						y2 = -(track[i].p(factory).y - curpoint.y) / zoom + dy;
 						s2 = track[i].s;
 					}catch(Exception e){
 						log.write("track[i] (146)");
@@ -177,8 +185,8 @@ class Track implements GPSListener {
 				}
 			} else {
 				try {
-					x1 = (track[0].p.x - curpoint.x) / zoom + dx;
-					y1 = -(track[0].p.y - curpoint.y) / zoom + dy;
+					x1 = (track[0].p(factory).x - curpoint.x) / zoom + dx;
+					y1 = -(track[0].p(factory).y - curpoint.y) / zoom + dy;
 					s1 = track[0].s;
 				}catch(Exception e){
 					log.write("track[0]");
@@ -189,8 +197,8 @@ class Track implements GPSListener {
 					if (i % maxtrack + i / maxtrack < maxtrack)
 					{
 						try {
-							x2 = (track[i % maxtrack + i / maxtrack].p.x - curpoint.x) / zoom + dx;
-							y2 = -(track[i % maxtrack + i / maxtrack].p.y - curpoint.y) / zoom + dy;
+							x2 = (track[i % maxtrack + i / maxtrack].p(factory).x - curpoint.x) / zoom + dx;
+							y2 = -(track[i % maxtrack + i / maxtrack].p(factory).y - curpoint.y) / zoom + dy;
 							s2 = track[i % maxtrack + i / maxtrack].s;
 						}catch(Exception e){
 							log.write("track[i % maxtrack + i / maxtrack]");

@@ -1,8 +1,8 @@
 MIDlet-1: GPS4Mobile, GPS4Mobile.png, GPS4Mobile
 MIDlet-Name: GPS4Mobile
-MIDlet-Permissions: javax.microedition.io.Connector.http,javax.microed
- ition.io.Connector.bluetooth.client,javax.microedition.io.Connector.f
- ile.read,javax.microedition.io.Connector.file.write
+MIDlet-Permissions: javax.microedition.io.Connector.http,javax.microedi
+ tion.io.Connector.bluetooth.client,javax.microedition.io.Connector.fil
+ e.read,javax.microedition.io.Connector.file.write
 MIDlet-Vendor: Vsevolod Shorin
 MIDlet-Version: 1.0
 MicroEdition-Configuration: CLDC-1.1

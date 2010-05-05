@@ -25,10 +25,11 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 	public final static Command CMD_MINIMIZE = new Command("Minimize", Command.BACK, 1);
 	public final static Command CMD_MAP = new Command("Map view", Command.SCREEN, 1);
 	public final static Command CMD_SATELLITE = new Command("Satellite view", Command.SCREEN, 1);
+	public final static Command CMD_YANDEX = new Command("Yandex UGC", Command.SCREEN, 1);
 	public final static Command CMD_SEARCH = new Command("Search", Command.SCREEN, 1);
 	public final static Command CMD_DISCONNECT = new Command("Disconnect", Command.SCREEN, 1);
 	public final static Command CMD_CONNECT = new Command("Connect", Command.SCREEN, 1);
-	public final static Command CMD_ROUTE = new Command("Route", Command.SCREEN, 1);
+	//public final static Command CMD_ROUTE = new Command("Route", Command.SCREEN, 1);
 	//public final static Command CMD_SEARCHRESULTS = new Command("Search results", Command.SCREEN, 1);
 
 	public Log log = new Log();
@@ -53,10 +54,12 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 	void Init()
 	{
         try {
+			log.write("Setting center to (0,0)");
+			canvas.SetGpsCenter(new GPSPoint(0, 0));
 			log.write("Opening record store");
             RecordStore options = RecordStore.openRecordStore("options", true);
-			canvas.SetCenter(new IntPoint(0, 0));
             if (options.getNumRecords() != 0) {
+				IntPoint center = null;
                 byte[] data = options.getRecord(1);
 				log.write("Closing record store");
                 options.closeRecordStore();
@@ -66,8 +69,9 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 				log.write("url is " + url);
 				int x = dis.readInt();
 				int y = dis.readInt();
+				
 				if (x != 0 || y != 0)
-					canvas.SetCenter(new IntPoint(x, y));
+					center = new IntPoint(x, y);
 				int zoom = dis.readInt();
 				int level = dis.readInt();
 				// canvas.zoom = zoom;
@@ -76,12 +80,22 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 				if (navigate) {
 					x = dis.readInt();
 					y = dis.readInt();
-					canvas.destination = new IntPoint(x, y);
+					canvas.gpsdestination = new GPSPoint(new IntPoint(x, y), canvas.factory);
 				}
 				String maptype = dis.readUTF();
 				log.write("map type is " + maptype);
-				if (maptype.equals("mssat"))
+				if (maptype.equals("mssat")) {
 					canvas.factory = new MSSatFactory();
+					track.factory = canvas.factory;
+				} else if (maptype.equals("yandex")) {
+					canvas.factory = new YandexFactory();
+					track.factory = canvas.factory;
+				} else {
+					canvas.factory = new OSMFactory();
+					track.factory = canvas.factory;
+				}
+				if (center != null)
+					canvas.SetCenter(center);
             } else {
 				log.write("No records");
 			}		 
@@ -118,10 +132,14 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 			canvas.removeCommand(CMD_MAP);
 		else
 			canvas.addCommand(CMD_MAP);
+		if (canvas.factory.GetType() == "yandex")
+			canvas.removeCommand(CMD_YANDEX);
+		else
+			canvas.addCommand(CMD_YANDEX);
 	}
 
 	void CheckNavigateMenu() {
-		if (canvas.destination == null) {
+		if (canvas.gpsdestination == null) {
 			canvas.removeCommand(CMD_DONTNAVIGATE);
 			canvas.addCommand(CMD_NAVIGATE);
 		} else {
@@ -140,7 +158,7 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 		canvas.addCommand(CMD_SELECT);
 		CheckMapMenu();
 		canvas.addCommand(CMD_SEARCH);
-		canvas.addCommand(CMD_ROUTE);
+		// canvas.addCommand(CMD_ROUTE);
 		canvas.addCommand(CMD_EXIT);
 		canvas.setCommandListener(this);
 		display.setCurrent(canvas);
@@ -172,15 +190,17 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 			dos.writeInt(0); // canvas.zoom);
 			dos.writeInt(canvas.level);
 			
-			if (canvas.destination != null) {
+			dos.writeBoolean(false); // old destination
+
+			dos.writeUTF(canvas.factory.GetType());
+
+			if (canvas.gpsdestination != null) {
 				dos.writeBoolean(true);
-				dos.writeInt(canvas.destination.x);
-				dos.writeInt(canvas.destination.y);
+				dos.writeDouble(canvas.gpsdestination.lat);
+				dos.writeDouble(canvas.gpsdestination.lng);
 			} else {
 				dos.writeBoolean(false);
 			}
-
-			dos.writeUTF(canvas.factory.GetType());
 
 			RecordStore options = RecordStore.openRecordStore("options", true);
 			byte[] data = baos.toByteArray();
@@ -204,25 +224,34 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 			AddCurrentPoint();
 		if (c == CMD_NAVIGATE) {
 			if (canvas.GetNearest() == null)
-				canvas.destination = new IntPoint(canvas.GetCenter());
+				canvas.gpsdestination = canvas.GetGpsCenter();
 			else
-				canvas.destination = canvas.GetNearest().p;
+				canvas.gpsdestination = canvas.GetNearest().g;
 			canvas.repaint();
 			CheckNavigateMenu();
 		}
 		if (c == CMD_DONTNAVIGATE) {
-			canvas.destination = null;
+			canvas.gpsdestination = null;
 			canvas.repaint();
 			CheckNavigateMenu();
 		}
 		if (c == CMD_MAP) {
 			canvas.factory = new OSMFactory();
+			track.factory = canvas.factory;
 			CheckMapMenu();
+			canvas.repaint();
 		}
 		if (c == CMD_SATELLITE) {
 			canvas.factory = new MSSatFactory();
-			// canvas.factory = new KSFactory();
+			track.factory = canvas.factory;
 			CheckMapMenu();
+			canvas.repaint();
+		}
+		if (c == CMD_YANDEX) {
+			canvas.factory = new YandexFactory();
+			track.factory = canvas.factory;
+			CheckMapMenu();
+			canvas.repaint();
 		}
 		if (c == CMD_FULLSCREEN)
 			canvas.ToggleFullscreen();
@@ -251,9 +280,11 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 			parser.disconnect = false;
 			canvas.repaint();
 		}
+		/*
 		if (c == CMD_ROUTE) {
 			canvas.route();
 		}
+		*/
 		if (c == CMD_CANCEL) {
 			display.setCurrent(canvas);
 			if (btSearch != null) {
@@ -324,6 +355,6 @@ public class GPS4Mobile extends MIDlet implements CommandListener, Runnable {
 
     public void AddCurrentPoint(){
         if (canvas.GetCenter() != null)
-            points.add(new GPSPoint(canvas.GetCenter()), "Waypoint");
+            points.add(new GPSPoint(canvas.GetCenter(), canvas.factory), "Waypoint");
     }
 }

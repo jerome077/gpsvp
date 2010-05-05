@@ -9,9 +9,9 @@ public class GPSPoint {
         lng = lng1;
 	}
 
-	public GPSPoint(IntPoint pt) {
-        lng = IntPoint.x2lng(pt.x);
-        lat = IntPoint.y2lat(pt.y);
+	public GPSPoint(IntPoint pt, TileFactory f) {
+        lng = f.x2lng(pt.x);
+        lat = f.y2lat(pt.y);
 	}
 	
 	private double Sqr(double x) {

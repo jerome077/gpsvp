@@ -1,4 +1,4 @@
-<import javax.microedition.lcdui.*;
+import javax.microedition.lcdui.*;
 
 class WayPointProperties extends Form implements CommandListener {
     private final static Command CMD_CANCEL = new Command("Cancel", Command.CANCEL, 1);
