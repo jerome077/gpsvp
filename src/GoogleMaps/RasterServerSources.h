@@ -74,8 +74,19 @@ struct GEOFILE_DATA {
 
 class CRasterMapSource
 {
+protected:
+	char m_szHl[16];
 public:
-	CRasterMapSource() : m_enMyType(gtNone) {};
+	CRasterMapSource() : m_enMyType(gtNone) 
+	{
+		wchar_t buf[16];
+		GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, buf, sizeof(buf)/sizeof(buf[0]));
+		for (size_t i=0; i<wcslen(buf); i++) {
+			buf[i] = towlower(buf[i]);
+		}
+		wcstombs(m_szHl, buf, sizeof(m_szHl));
+		m_szHl[2] = 0; // Trim sublanguage
+	};
 	virtual ~CRasterMapSource() {};
 
 	enumGMapType GetType() const { return m_enMyType; };
@@ -141,7 +152,6 @@ class CNullSource : public CRasterMapSource
 
 class CGMapSource : public CRasterMapSource
 {
-	char m_szHl[16];
 public:
 	CGMapSource();
 
@@ -175,7 +185,7 @@ public:
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d&hl=%s", GetNextPrefix().c_str(), data.X, data.Y, data.level, m_szHl);
 		return buffer;
 	};
 

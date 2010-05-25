@@ -465,6 +465,18 @@ void CGMPainter::RequestProcessed(const std::string request, const char * data, 
 	AutoLock l;
 	if (request == "http://gpsvp.com/GoogleMaps.txt") {
 		std::string s(data, size);
+		// Remove "&hl=ru"
+		char *p = "&hl=ru";
+		size_t l = strlen(p);
+		size_t found;
+		while (true) {
+			found = s.find(p);
+			if (found != std::string::npos) {
+				s.replace(found, l, "");
+			} else {
+				break;
+			}
+		}
 		if (m_GMFH.ProcessPrefixes(s) == 0) {
 			m_bGotMapVersions = true;
 		}
