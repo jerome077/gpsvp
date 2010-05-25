@@ -141,13 +141,14 @@ class CNullSource : public CRasterMapSource
 
 class CGMapSource : public CRasterMapSource
 {
+	char m_szHl[16];
 public:
 	CGMapSource();
 
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
-		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d", GetNextPrefix().c_str(), data.X, data.Y, data.level);
+		sprintf(buffer, "%sx=%ld&y=%ld&zoom=%d&hl=%s", GetNextPrefix().c_str(), data.X, data.Y, data.level, m_szHl);
 		return buffer;
 	};
 

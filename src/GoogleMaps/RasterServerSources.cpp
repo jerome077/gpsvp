@@ -74,6 +74,14 @@ CGMapSource::CGMapSource()
 	SetServerPrefixes(lst);
 
 	SetType(gtMap);
+
+	wchar_t buf[16];
+	GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, buf, sizeof(buf)/sizeof(buf[0]));
+	for (size_t i=0; i<wcslen(buf); i++) {
+		buf[i] = towlower(buf[i]);
+	}
+	wcstombs(m_szHl, buf, sizeof(m_szHl));
+	m_szHl[2] = 0; // Trim sublanguage
 }
 
 CGTopoSource::CGTopoSource()
