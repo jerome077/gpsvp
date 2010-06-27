@@ -196,6 +196,7 @@ public:
 	bool m_bIsPhoneRoaming;
 #	if UNDER_CE >= 0x0500
 	HREGNOTIFY m_hRegRoamingNotify;
+	HREGNOTIFY& GetRegNotify() { return m_hRegRoamingNotify; };
 #	endif
 #else // UNDER_CE
 	__int64 m_nProcessorUsage;
@@ -393,7 +394,6 @@ public:
 	bool IsPhoneRoaming();
 	void OnPhoneRoaming(DWORD roaming);
 #	if UNDER_CE >= 0x0500
-	HREGNOTIFY& GetRegNotify() { return m_hRegRoamingNotify; };
 	void RegisterRoamNotify();
 	void OnRoamNotify();
 	void UnregisterRoamNotify() {

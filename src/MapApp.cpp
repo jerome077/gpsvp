@@ -1732,11 +1732,23 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 		} else if (pt == m_spFrom) {
 			LeftClickOrContextMenu(pt, false);
 		} else {
-			if (m_fMoving) {
-				// This check is for PPC devices.
-				// Long press brings context menu and then short press on non-menu 
-				// screen area will NOT generate LButtonDown but WILL generate LButtonUp.
-				m_painter.Move(pt - m_spFrom);
+			if (!m_painter.WillPaint(pt) && !m_painter.WillPaint(m_spFrom)) {
+				// Click inside a monitor bar
+				int xDiff = m_spFrom.x - pt.x;
+				int minDiff = 16;
+				if (xDiff + minDiff < 0) {
+					NextMonitorsRow();
+				} else if (xDiff - minDiff > 0) {
+					PrevMonitorsRow();
+				}
+			} else {
+				// Normal click inside a map area
+				if (m_fMoving) {
+					// This check is for PPC devices.
+					// Long press brings context menu and then short press on non-menu 
+					// screen area will NOT generate LButtonDown but WILL generate LButtonUp.
+					m_painter.Move(pt - m_spFrom);
+				}
 			}
 		}
 	}
