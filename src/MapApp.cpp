@@ -1734,7 +1734,7 @@ void CMapApp::OnLButtonUp(ScreenPoint pt)
 		} else {
 			if (!m_painter.WillPaint(pt) && !m_painter.WillPaint(m_spFrom)) {
 				// Click inside a monitor bar
-				int xDiff = m_spFrom.x - pt.x;
+				int xDiff = pt.x - m_spFrom.x;
 				int minDiff = 16;
 				if (xDiff + minDiff < 0) {
 					NextMonitorsRow();
