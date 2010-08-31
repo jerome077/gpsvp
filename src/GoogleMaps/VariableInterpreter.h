@@ -95,12 +95,28 @@ protected:
 class CXSchema: public CSchema
 {
 public:
+	CXSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
 		wchar_t buffer[32];
 		swprintf(buffer, 32, L"%d", x);
-		return buffer;
+
+		if ((m_firstChar > 0) || (m_MaxChar > 0))
+		{
+			std::wstring strBuf = buffer;
+			if ((size_t) m_firstChar >= strBuf.length())
+				return L"";
+			else
+				return strBuf.substr(m_firstChar, m_MaxChar);
+		}
+		else
+			return buffer;
 	};
+protected:
+	// Maximal length of the interpreted value (0 for the whole value):
+	int m_MaxChar;
+	// First char to use (0 to start at the beginning):
+	int m_firstChar;
 };
 
 // ---------------------------------------------------------------
@@ -109,12 +125,28 @@ public:
 class CYSchema: public CSchema
 {
 public:
+	CYSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
 		wchar_t buffer[32];
 		swprintf(buffer, 32, L"%d", y);
-		return buffer;
+
+		if ((m_firstChar > 0) || (m_MaxChar > 0))
+		{
+			std::wstring strBuf = buffer;
+			if ((size_t) m_firstChar >= strBuf.length())
+				return L"";
+			else
+				return strBuf.substr(m_firstChar, m_MaxChar);
+		}
+		else
+			return buffer;
 	};
+protected:
+	// Maximal length of the interpreted value (0 for the whole value):
+	int m_MaxChar;
+	// First char to use (0 to start at the beginning):
+	int m_firstChar;
 };
 
 // ---------------------------------------------------------------
@@ -140,12 +172,28 @@ protected:
 class CTMSYSchema: public CSchema
 {
 public:
+	CTMSYSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
 		wchar_t buffer[32];
 		swprintf(buffer, 32, L"%d", (1<<(17-l))-1-y);
-		return buffer;
+
+		if ((m_firstChar > 0) || (m_MaxChar > 0))
+		{
+			std::wstring strBuf = buffer;
+			if ((size_t) m_firstChar >= strBuf.length())
+				return L"";
+			else
+				return strBuf.substr(m_firstChar, m_MaxChar);
+		}
+		else
+			return buffer;
 	};
+protected:
+	// Maximal length of the interpreted value (0 for the whole value):
+	int m_MaxChar;
+	// First char to use (0 to start at the beginning):
+	int m_firstChar;
 };
 
 // ---------------------------------------------------------------

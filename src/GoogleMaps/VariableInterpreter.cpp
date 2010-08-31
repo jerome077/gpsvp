@@ -31,8 +31,8 @@ void Test_CStringSchema()
 	assert(S1.interpret(3, 8734, 5710) == L"abc8734def5710abc87345710def");
 	S1.assign(L"%LONG1,%LAT1,%LONG2,%LAT2");
 	assert(!S1.empty());
-	//assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424206,11.93115234375000,47.78363463526377");	
-	assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424218,11.93115234375000,47.78363463526387");	
+	assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424206,11.93115234375000,47.78363463526377");	
+	//assert(S1.interpret(3, 8734, 5710) == L"11.90917968750000,47.76886840424218,11.93115234375000,47.78363463526387");	
 	S1.assign(L"http://a.X.b/%ZOOM_17/%ZOOM_00/%ZOOM_01");
 	assert(!S1.empty());
 	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/3/14/15");	
@@ -51,6 +51,9 @@ void Test_CStringSchema()
 	S1.assign(L"http://a.X.b/%5QKEY/%QKEY/%4,7QKEY");
 	assert(!S1.empty());
 	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/12023/12023002013330/0201");	
+	S1.assign(L"%2X,%3,2X;%2Y;%2,2Y/%2,2TMSX/%1,2TMSY");
+	assert(!S1.empty());
+	assert(S1.interpret(3, 8734, 5710) == L"87,734;57;71/73/0");
 }
 
 // ---------------------------------------------------------------
@@ -168,15 +171,15 @@ void CStringSchema::assign(const std::wstring& strSchema)
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
 			m_SchemaParts.push_back( new CLatitudeSchema(0) ); // north
 		}
-		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"X")))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"X", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CXSchema() );
+			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar) );
 		}
-		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"Y")))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"Y", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CYSchema() );
+			m_SchemaParts.push_back( new CYSchema(maxCharCount, firstChar) );
 		}
 		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"ZOOM_17")))
 		{
@@ -193,15 +196,15 @@ void CStringSchema::assign(const std::wstring& strSchema)
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
 			m_SchemaParts.push_back( new CZoomSchema(-1, LEVEL_REVERSE_OFFSET) ); // 18-data.level
 		}
-		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"TMSX")))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSX", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CXSchema() );
+			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar) );
 		}
-		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"TMSY")))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSY", maxCharCount, firstChar)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CTMSYSchema() );
+			m_SchemaParts.push_back( new CTMSYSchema(maxCharCount, firstChar) );
 		}
 		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QRST", maxCharCount, firstChar)))
 		{
