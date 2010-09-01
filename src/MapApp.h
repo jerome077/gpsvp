@@ -148,6 +148,9 @@ public:
 	CTextMonitor m_monInternet;
 	CTextMonitor m_monDLRemaining;
 	CDistanceMonitor m_monForwardRouteDistance;
+	CTextMonitor m_monZoom_00;
+	CTextMonitor m_monZoom_01;
+	CTextMonitor m_monZoom_17;
 	//! Cursor position
 	GeoPoint m_gpCursor;
 	bool m_fCursorVisible;

@@ -2526,6 +2526,15 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Sun.m_monSunset.SetIdL(L"Sunset");
 	m_MonitorSet.AddMonitor(&m_Sun.m_monSunset);
 
+	m_monZoom_00.SetIdL(L"ZOOM_00");
+	m_MonitorSet.AddMonitor(&m_monZoom_00);
+
+	m_monZoom_01.SetIdL(L"ZOOM_01");
+	m_MonitorSet.AddMonitor(&m_monZoom_01);
+
+	m_monZoom_17.SetIdL(L"ZOOM_17");
+	m_MonitorSet.AddMonitor(&m_monZoom_17);
+
 	if (m_rsWaypointsFile().empty())
 		m_rsWaypointsFile = L"\\My Documents\\Waypoints.wpt";
 	m_Waypoints.Read(m_rsWaypointsFile().c_str());
@@ -3288,6 +3297,19 @@ void CMapApp::UpdateMonitors()
 
 	m_monInternet = m_wstrHttpStatus.c_str();
 	m_monDLRemaining = IntToText(m_pRasterMapPainter->GetDownloadQueueSize()).c_str();
+
+	if (gtNone != enumGMapType(m_riGMapType()))
+	{
+		m_monZoom_00 = IntToText(m_pRasterMapPainter->GetLastZoom_00()).c_str();
+		m_monZoom_01 = IntToText(m_pRasterMapPainter->GetLastZoom_01()).c_str();
+		m_monZoom_17 = IntToText(m_pRasterMapPainter->GetLastZoom_17()).c_str();
+	}
+	else
+	{
+		m_monZoom_00 = L"-";
+		m_monZoom_01 = L"-";
+		m_monZoom_17 = L"-";
+	}
 }
 
 int CMapApp::AddPointScreen(ScreenPoint pt, wchar_t * wcName)

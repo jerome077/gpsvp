@@ -104,6 +104,9 @@ public:
 		return (GeoPoint(0, 0) != GetDemoPoint(type, m_dummyScale));
 	};
 	void SetKeepMemoryLow(bool value);
+	int GetLastZoom_00() const { return m_nLevelToDownload-1; };
+	int GetLastZoom_01() const { return m_nLevelToDownload; };
+	int GetLastZoom_17() const { return LEVEL_REVERSE_OFFSET - m_nLevelToDownload; };
 
 protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
