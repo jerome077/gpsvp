@@ -328,44 +328,85 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 		return 2;
 	}
 
-	//   DO NOT WRITE to the right place right now, as the painting
-	// thread could find an empty file (being written to) and kill it.
 	std::wstring tmpfilename = m_strMapsRoot + L"/__tmpfile";
+	std::wstring filename = path + L"/" + name;
 
-	FILE * file = wfopen(tmpfilename.c_str(), L"wb");
+	// First, we compare old and new contents. If the are identical then just touch file.
+	FILE * file = wfopen(filename.c_str(), L"rb");
+	bool bWillChange = true;
 	if (file) {
-		std::wstring filename = path + L"/" + name;
-		int nResult = IDRETRY;
-		while (nResult == IDRETRY) {
-			if (fwrite(data, size, 1, file) != 1) {
-				// Disk write unsuccessful
-				fclose(file);
-				wchar_t buf[128+MAX_PATH];
-#ifdef UNDER_CE
-				wsprintf(buf, L("Error writing to file[%s]"), tmpfilename.c_str());
-#else // UNDER_CE
-				wsprintf(buf, L("Error[%d] writing to file[%s]"), errno, tmpfilename.c_str());
-#endif // UNDER_CE
-				nResult = MessageBox(NULL, buf, L"gpsVP", MB_RETRYCANCEL | MB_ICONERROR);
-				if (nResult == IDCANCEL) {
-					return 3;
+		fseek(file, 0, SEEK_END);
+		long nSize = ftell(file);
+		fseek(file, 0, SEEK_SET);
+		if (nSize == size) {
+			const int chunksize = 1*1024;
+			unsigned char buf[chunksize];
+			int cur = 0;
+			while (true) {
+				long r = fread(buf, 1, chunksize, file);
+				if (memcmp(buf, data+cur, r) != 0) {
+					break;
 				}
-			} else {
-				break;
+				cur += r;
+				if (cur == size) {
+					bWillChange = false;
+					break;
+				} else if (r < chunksize) {
+					// Error reading?
+					break;
+				}
 			}
 		}
 		fclose(file);
-
-		// Apply attributes if needed (assume archive is default)
-		if (m_dwMapsAttr != FILE_ATTRIBUTE_ARCHIVE) {
-		    SetFileAttributes(tmpfilename.c_str(), m_dwMapsAttr);
+	}
+	if (!bWillChange) {
+		HANDLE hFile = CreateFile(filename.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+			NULL, OPEN_EXISTING, 0, 0);
+		if (hFile) {
+			SYSTEMTIME stNow;
+			GetSystemTime(&stNow);
+			FILETIME ftNow;
+			SystemTimeToFileTime(&stNow, &ftNow);
+			SetFileTime(hFile, NULL, NULL, &ftNow);
+			CloseHandle(hFile);
 		}
+	} else {
+		//   DO NOT WRITE to the right place right now, as the painting
+		// thread could find an empty file (being written to) and kill it.
+		file = wfopen(tmpfilename.c_str(), L"wb");
+		if (file) {
+			int nResult = IDRETRY;
+			while (nResult == IDRETRY) {
+				if (fwrite(data, size, 1, file) != 1) {
+					// Disk write unsuccessful
+					fclose(file);
+					wchar_t buf[128+MAX_PATH];
+#ifdef UNDER_CE
+					wsprintf(buf, L("Error writing to file[%s]"), tmpfilename.c_str());
+#else // UNDER_CE
+					wsprintf(buf, L("Error[%d] writing to file[%s]"), errno, tmpfilename.c_str());
+#endif // UNDER_CE
+					nResult = MessageBox(NULL, buf, L"gpsVP", MB_RETRYCANCEL | MB_ICONERROR);
+					if (nResult == IDCANCEL) {
+						return 3;
+					}
+				} else {
+					break;
+				}
+			}
+			fclose(file);
 
-		// Move file from temporary to proper location
-		bool res = (DeleteFile(filename.c_str()) != 0);
-		res = (MoveFile(tmpfilename.c_str(), filename.c_str()) != 0);
+			// Apply attributes if needed (assume archive is default)
+			if (m_dwMapsAttr != FILE_ATTRIBUTE_ARCHIVE) {
+				SetFileAttributes(tmpfilename.c_str(), m_dwMapsAttr);
+			}
 
-		m_setToDownload.erase(gfdata);
+			// Move file from temporary to proper location
+			bool res = (DeleteFile(filename.c_str()) != 0);
+			res = (MoveFile(tmpfilename.c_str(), filename.c_str()) != 0);
+
+			m_setToDownload.erase(gfdata);
+		}
 	}
 
 	return 0;

@@ -1305,7 +1305,7 @@ void CGDIPainter::AddButton(const wchar_t * wcLabel, int iCommand, bool fSelecte
 	HFONT f = m_FontCache.GetFont(5, 0);
 	ScreenSize size;
 	int nVBtnSpace = 2; // Vertical space (pixels) between screen buttons
-	int nVSizeAdd = 10; // Add more pixels under and above text (for easier finger operation)
+	int nVSizeAdd = 16; // Add more pixels under and above text (for easier finger operation)
 	m_hdc.SelectObject(f);
 	m_hdc.getTextExtentPoint(wcLabel, &size);
 	int nVRectSize = size.cy + nVSizeAdd;
