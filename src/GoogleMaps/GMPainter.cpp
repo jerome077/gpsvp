@@ -505,11 +505,13 @@ void CGMPainter::DownloadStartWithCurrentZoom()
 {
 	if (m_bGeoRectToDownload) {
 		long nInCache;
-		long nCount = EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache, true);
+		GeoDataSet files;
+		long nCount = EnumerateAndProcessGeoRect(
+			&files, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache);
 		wchar_t buf[256];
 		wsprintf(buf, L("%d new segments to download (%d in cache). Proceed?"), nCount, nInCache);
 		if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
-			EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, NULL, false);
+			m_GMFH.AddFileToDownload(files);
 			m_bGeoRectToDownload = false;
 		} else {
 		}
@@ -538,8 +540,8 @@ void CGMPainter::RefreshInsideRegion()
 	RefreshTiles(&m_grectLastViewed);
 }
 
-long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
-	long *pnInCacheCount, bool bJustCount)
+long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type, 
+	long *pnInCacheCount)
 {
 	GEOFILE_DATA topleft, bottomright;
 	GetFileDataByPoint(&topleft, GeoPoint(m_grectToDownload.minLon, m_grectToDownload.minLat), nLevel);
@@ -564,9 +566,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enum
 					nInCache++;
 				} else {
 					nCount++;
-					if (!bJustCount) {
-						m_GMFH.AddFileToDownload(data);
-					}
+					pSet->insert(data);
 				}
 			}
 		}

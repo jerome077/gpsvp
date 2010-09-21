@@ -111,8 +111,8 @@ public:
 protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
-	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, 
-		long *pnInCacheCount, bool bJustCount);
+	long EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type,
+		long *pnInCacheCount);
 	void DeleteFrontElementFromCache();
 	void DeleteElementFromCache(const GEOFILE_DATA &data);
 
