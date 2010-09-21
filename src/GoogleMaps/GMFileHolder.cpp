@@ -404,10 +404,9 @@ long CGMFileHolder::OnRequestProcessed(const std::string request, GEOFILE_DATA& 
 			// Move file from temporary to proper location
 			bool res = (DeleteFile(filename.c_str()) != 0);
 			res = (MoveFile(tmpfilename.c_str(), filename.c_str()) != 0);
-
-			m_setToDownload.erase(gfdata);
 		}
 	}
+	m_setToDownload.erase(gfdata);
 
 	return 0;
 }
