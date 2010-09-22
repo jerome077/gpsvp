@@ -262,6 +262,7 @@ public:
 	void SetRasterMapFolder();
 	void DRMAddCurrentView();
 	void DRMStartWithCurrentZoom();
+	void DRMShowAvailableTiles();
 	void DRMByTrack();
 	void DRMRefreshInsideRegion();
 	void DRMRefreshAll();

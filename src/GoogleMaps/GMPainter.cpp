@@ -507,7 +507,7 @@ void CGMPainter::DownloadStartWithCurrentZoom()
 		long nInCache;
 		GeoDataSet files;
 		long nCount = EnumerateAndProcessGeoRect(
-			&files, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache);
+			&files, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache, app.m_Options[mcoDownloadLowerLevels], NULL);
 		wchar_t buf[256];
 		wsprintf(buf, L("%d new segments to download (%d in cache). Proceed?"), nCount, nInCache);
 		if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
@@ -516,6 +516,13 @@ void CGMPainter::DownloadStartWithCurrentZoom()
 		} else {
 		}
 	}
+}
+
+void CGMPainter::GenerateTilesTrackForCurrentView(CTrackList& aTrackList)
+{
+	int trackIndex = aTrackList.NewTrack(L("Tiles for selected view at Z0=")+IntToText(m_nLevelToDownload-1));
+	CTrack * pTrack = &aTrackList.GetTrack(trackIndex);
+	EnumerateAndProcessGeoRect(NULL, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, NULL, false, pTrack);
 }
 
 void CGMPainter::RefreshTiles(const GeoRect *pRegion)
@@ -540,12 +547,14 @@ void CGMPainter::RefreshInsideRegion()
 	RefreshTiles(&m_grectLastViewed);
 }
 
+// pSet = when not NULL lists the tiles to download in the set
+// pTrack = when not NULL draws a cross on the available tiles on the track
 long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type, 
-	long *pnInCacheCount)
+	long *pnInCacheCount, bool bDownloadLowerLevels, CTrack* pTrack)
 {
 	GEOFILE_DATA topleft, bottomright;
-	GetFileDataByPoint(&topleft, GeoPoint(m_grectToDownload.minLon, m_grectToDownload.minLat), nLevel);
-	GetFileDataByPoint(&bottomright, GeoPoint(m_grectToDownload.maxLon, m_grectToDownload.maxLat), nLevel);
+	GetFileDataByPoint(&topleft, GeoPoint(gr.minLon, gr.minLat), nLevel);
+	GetFileDataByPoint(&bottomright, GeoPoint(gr.maxLon, gr.maxLat), nLevel);
 
 	RECT r;
 	r.top = topleft.Y; r.bottom = bottomright.Y;
@@ -553,10 +562,10 @@ long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr,
 
 	long nCount = 0;
 	long nInCache = 0;
-	long nMinLevel = (app.m_Options[mcoDownloadLowerLevels]) ? 1 : m_nLevelToDownload - 1;
+	long nMinLevel = (bDownloadLowerLevels) ? 1 : nLevel - 1;
 	GEOFILE_DATA data;
 	data.type = type;
-	for (int level = m_nLevelToDownload; level > nMinLevel; level--) {
+	for (int level = nLevel; level > nMinLevel; level--) {
 		data.level = (unsigned char)  (LEVEL_REVERSE_OFFSET - level);
 		for (long x = r.left; x <= r.right; x++) {
 			data.X = x;
@@ -564,9 +573,18 @@ long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr,
 				data.Y = y;
 				if (m_GMFH.IsFileInCache(data)) {
 					nInCache++;
+					if (pTrack)
+					{
+						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
+						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X+1, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
+						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X+1, data.level), GoogleYZ17toLat(data.Y+1, data.level)), 0);
+						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y+1, data.level)), 0);
+						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
+						pTrack->Break();
+					}
 				} else {
 					nCount++;
-					pSet->insert(data);
+					if (pSet) pSet->insert(data);
 				}
 			}
 		}

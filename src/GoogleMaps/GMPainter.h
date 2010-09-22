@@ -23,6 +23,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif // USE_GDI_PLUS
 #include <list>
 #include "../VersionNumber.h"
+#include "../Track.h"
 
 struct GEOFILE_CONTENTS {
 	HBITMAP h;
@@ -85,6 +86,7 @@ public:
 
 	void DownloadAddCurrentView();
 	void DownloadStartWithCurrentZoom();
+    void GenerateTilesTrackForCurrentView(CTrackList& aTrackList);
 	void RefreshTiles(const GeoRect *pRegion);
 	void RefreshInsideRegion();
 	void RefreshAll();
@@ -112,7 +114,7 @@ protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
 	long EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type,
-		long *pnInCacheCount);
+		long *pnInCacheCount, bool bDownloadLowerLevels, CTrack* pTrack);
 	void DeleteFrontElementFromCache();
 	void DeleteElementFromCache(const GEOFILE_DATA &data);
 

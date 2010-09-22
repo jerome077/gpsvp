@@ -162,6 +162,7 @@ enum enumMenuCommands
 	mcRastMapsRefreshInsideRegion,
 	mcoHideCacheTiles,
 	mcoPlaceholder1,
+	mcDownlRasterShowAvailableTiles,
 
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,

@@ -3394,6 +3394,7 @@ void CMapApp::InitMenu()
 				mmDownloadMaps.CreateItem(L("Add current view"), mcDownlRasterAddCurrentView);
 				mmDownloadMaps.CreateItem(L("Start with current zoom"), mcDownlRasterStartWithCurZoom);
 				mmDownloadMaps.CreateItem(L("By track"), mcDownlRasterByTrack);
+				mmDownloadMaps.CreateItem(L("Show available tiles"), mcDownlRasterShowAvailableTiles);
 				mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
 				mmDownloadMaps.CreateBreak();
 				mmDownloadMaps.CreateItem(L("Download all lower levels"), mcoDownloadLowerLevels);
@@ -3669,6 +3670,8 @@ void CMapApp::CheckMenu()
 	menu.EnableMenuItem(mcCloseAllMaps, fGarminMaps);
 	menu.EnableMenuItem(mcMapList, fGarminMaps);
 	menu.EnableMenuItem(mcDownlRasterStartWithCurZoom, 
+		m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload());
+	menu.EnableMenuItem(mcDownlRasterShowAvailableTiles,
 		m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload());
 	menu.EnableMenuItem(mcDownlRasterAddCurrentView, m_Options[mcoDownloadGoogleMaps]);
 	
@@ -4001,6 +4004,9 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 			break;
 		case mcDownlRasterStartWithCurZoom:
 			DRMStartWithCurrentZoom();
+			break;
+		case mcDownlRasterShowAvailableTiles:
+			DRMShowAvailableTiles();
 			break;
 		case mcDownlRasterByTrack:
 			DRMByTrack();
@@ -5322,6 +5328,12 @@ void CMapApp::DRMAddCurrentView()
 void CMapApp::DRMStartWithCurrentZoom()
 {
 	m_pRasterMapPainter->DownloadStartWithCurrentZoom();
+	CheckMenu();
+}
+
+void CMapApp::DRMShowAvailableTiles()
+{
+	m_pRasterMapPainter->GenerateTilesTrackForCurrentView(m_Tracks.GetOldTracks());
 	CheckMenu();
 }
 
