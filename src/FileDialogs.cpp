@@ -67,7 +67,7 @@ class CFileDlg : public CMADialog
 		{
 			// Here we make the list of folders
 			WIN32_FIND_DATA wwd;
-			std::set<std::wstring> setDirectories;
+			std::vector<std::wstring> setDirectories;
 			std::wstring wstrMask = app.m_rsCurrentFolder() + L"\\*.*";
 			HANDLE h = FindFirstFile(wstrMask.c_str(), &wwd);
 			if (h && h != INVALID_HANDLE_VALUE)
@@ -80,12 +80,12 @@ class CFileDlg : public CMADialog
 						std::wstring wstrItem = L"[";
 						wstrItem += std::wstring(wwd.cFileName);
 						wstrItem += L"]";
-						setDirectories.insert(wstrItem);
+						setDirectories.push_back(wstrItem);
 					}
 				} while (FindNextFile(h, &wwd));
 				FindClose(h);
 			}
-			for (std::set<std::wstring>::iterator it = setDirectories.begin();
+			for (std::vector<std::wstring>::iterator it = setDirectories.begin();
 				it != setDirectories.end(); ++it)
 			{
 				m_list.AddItem(it->c_str(), iItem, 0, 1);
@@ -95,7 +95,7 @@ class CFileDlg : public CMADialog
 		{
 			// And here we make the list of files
 			WIN32_FIND_DATA wwd;
-			std::set<std::wstring> setFiles;
+			std::vector<std::wstring> setFiles;
 			// m_wstrMask could contain several extensions separated with ";"
 			std::wstringstream wssMaskStream(m_wstrMask);
 			std::wstring wstrMaskItem;
@@ -109,13 +109,14 @@ class CFileDlg : public CMADialog
 					{
 						if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 						{
-							setFiles.insert(wwd.cFileName);
+							std::wstring strFilename(wwd.cFileName);
+							setFiles.push_back(strFilename);
 						}
 					} while (FindNextFile(h, &wwd));
 					FindClose(h);
 				}
 			}
-			for (std::set<std::wstring>::iterator it = setFiles.begin();
+			for (std::vector<std::wstring>::iterator it = setFiles.begin();
 				it != setFiles.end(); ++it)
 			{
 				m_list.AddItem(it->c_str(), iItem, 0, 2);

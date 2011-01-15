@@ -88,6 +88,8 @@ public:
 		m_szHl[2] = 0; // Trim sublanguage
 	};
 	virtual ~CRasterMapSource() {};
+	
+	const virtual std::wstring& GetFilePrefix() const = 0;
 
 	enumGMapType GetType() const { return m_enMyType; };
 	void SetType(enumGMapType en) { m_enMyType = en; };
@@ -140,6 +142,11 @@ typedef CRasterMapSource* PRasterMapSource;
 
 class CNullSource : public CRasterMapSource
 {
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L""; return prefix;
+	}
+
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data) { return ""; };
 
 	virtual bool GetDiskFileName(
@@ -154,6 +161,11 @@ class CGMapSource : public CRasterMapSource
 {
 public:
 	CGMapSource();
+
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L"gmap"; return prefix;
+	}
 
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
@@ -171,7 +183,7 @@ public:
 		wsprintf(filename, L"x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
-		return GetDiskGenericFileName(gfdata, root, path, L"gmap");
+		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
@@ -181,6 +193,11 @@ class CGTopoSource : public CRasterMapSource
 {
 public:
 	CGTopoSource();
+
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L"gtopo"; return prefix;
+	}
 
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
@@ -198,7 +215,7 @@ public:
 		wsprintf(filename, L"x=%d&y=%d&zoom=%d.jpg", gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
-		return GetDiskGenericFileName(gfdata, root, path, L"gtopo");
+		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
@@ -208,6 +225,11 @@ class CGSatSource : public CRasterMapSource
 {
 public:
 	CGSatSource();
+
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L"gsat"; return prefix;
+	}
 
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
@@ -226,7 +248,7 @@ public:
 		name = filename;
 		// wsprintf(zoomname, L"level=%d", name.length() - 4); // 4 = length(.jpg)
 
-		return GetDiskGenericFileName(gfdata, root, path, L"gsat");
+		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
@@ -243,7 +265,6 @@ class CMSSource : public CRasterMapSource
 public:
 	const virtual std::wstring& GetFileExtension() const = 0;
 	const virtual std::wstring& GetMapType() const = 0;
-	const virtual std::wstring& GetFilePrefix() const = 0;
 
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
@@ -335,6 +356,12 @@ class COSMSource : public CRasterMapSource
 {
 public:
 	COSMSource();
+
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L"osm"; return prefix;
+	}
+
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
@@ -351,7 +378,7 @@ public:
 		wsprintf(filename, L"osm-x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
-		return GetDiskGenericFileName(gfdata, root, path, L"osm");
+		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
@@ -361,6 +388,12 @@ class CNYaSource : public CRasterMapSource
 {
 public:
 	CNYaSource();
+
+	const virtual std::wstring& GetFilePrefix() const
+	{
+		const static std::wstring prefix = L"nya"; return prefix;
+	}
+
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data)
 	{
 		char buffer[256];
@@ -377,7 +410,7 @@ public:
 		wsprintf(filename, L"x=%d&y=%d&zoom=%d.png", gfdata.X, gfdata.Y, gfdata.level);
 		name = filename;
 
-		return GetDiskGenericFileName(gfdata, root, path, L"nya");
+		return GetDiskGenericFileName(gfdata, root, path, GetFilePrefix().c_str());
 	};
 
 	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
@@ -409,6 +442,7 @@ public:
 					  const std::wstring& configFile,
 					  const std::wstring& cacheRoot,
 					  const CVersionNumber& gpsVPVersion);
+	const virtual std::wstring& GetFilePrefix() const { return m_MapName; };
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data);
 	std::wstring GetName() { return m_MapName; };
 

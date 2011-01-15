@@ -1,0 +1,4 @@
+Here are files from the LZMA SDK 9.12 beta.
+It's just a part of the LZMA SDK.
+LZMA SDK is placed in the public domain.
+See http://www.7-zip.org/sdk.html

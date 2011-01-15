@@ -341,41 +341,40 @@ void CWaypoints::ReadGPX(const std::wstring& wstrFilename)
 {
 	try
 	{
-		ComInit MyObjectToInitCOM;
+		app.InitComIfNecessary();
+
+		CGPXFileReader GpxReader(wstrFilename);
+		CGPXFileReader::WaypointIterator iterWpt = GpxReader.WaypointBegin();
+		while (iterWpt != GpxReader.WaypointEnd())
 		{
-			CGPXFileReader GpxReader(wstrFilename);
-			CGPXFileReader::WaypointIterator iterWpt = GpxReader.WaypointBegin();
-			while (iterWpt != GpxReader.WaypointEnd())
+			double dLatitude = iterWpt->getLatitude();
+			double dLongitude = iterWpt->getLongitude();
+			int iRadius = iterWpt->getRadius();
+			int iAltitude = int(iterWpt->getAltitude());
+
+			CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, L""), iRadius));
+			CWaypoints::CPointEditor wptEditor = wpt.GetEditor();
+			std::auto_ptr<CGPXField> apField = iterWpt->firstField();
+			while (!apField->eof())
 			{
-				double dLatitude = iterWpt->getLatitude();
-				double dLongitude = iterWpt->getLongitude();
-				int iRadius = iterWpt->getRadius();
-				int iAltitude = int(iterWpt->getAltitude());
-
-				CWaypoints::CPoint& wpt = ById(AddPoint(CPoint(dLongitude, dLatitude, iAltitude, L""), iRadius));
-				CWaypoints::CPointEditor wptEditor = wpt.GetEditor();
-				std::auto_ptr<CGPXField> apField = iterWpt->firstField();
-				while (!apField->eof())
+				std::wstring fieldName = apField->getName();
+				if (L"name" == fieldName)
 				{
-					std::wstring fieldName = apField->getName();
-					if (L"name" == fieldName)
-					{
-						wpt.SetLabel(apField->getValue().c_str());
-					}
-					else if (L"gpsVP:osm" == fieldName)
-					{
-						CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
-						prop.SetName(apField->getOSMKey());
-						prop.SetValue(apField->getOSMValue());
-					}
-					apField = iterWpt->nextField();
+					wpt.SetLabel(apField->getValue().c_str());
 				}
-				wptEditor.Commit();
-
-				++iterWpt;
+				else if (L"gpsVP:osm" == fieldName)
+				{
+					CWaypoints::CPointProp& prop = wptEditor.AddOSMProp();
+					prop.SetName(apField->getOSMKey());
+					prop.SetValue(apField->getOSMValue());
+				}
+				apField = iterWpt->nextField();
 			}
-			m_bCanWrite = GpxReader.IsGpsVPWaypointFile();
+			wptEditor.Commit();
+
+			++iterWpt;
 		}
+		m_bCanWrite = GpxReader.IsGpsVPWaypointFile();
 	}
 	catch (CGPXFileReader::Error& e)
 	{

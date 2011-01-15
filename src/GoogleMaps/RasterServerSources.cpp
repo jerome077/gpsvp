@@ -19,12 +19,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "RasterServerSources.h"
 #include <sstream>
 
-#ifndef UNDER_CE
-#	define WMKDIR(x) _wmkdir(x)
-#else // UNDER_CE
-#	define WMKDIR(x) CreateDirectory(x, NULL)
-#endif // UNDER_CE
-
 void CreateDirectoryRecursively(const std::wstring& wstrRoot, const std::wstring& wstrSubpath)
 {
     if (!wstrRoot.empty())

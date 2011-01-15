@@ -35,6 +35,12 @@ const long LEVEL_REVERSE_OFFSET = 18;
 double	GoogleXZ17toLong	(unsigned long x, unsigned char zoom17);
 double	GoogleYZ17toLat		(unsigned long y, unsigned char zoom17);
 
+// To convert a longitude or latitude to a spherical mercator coordinate
+// (EPSG:3857 alias EPSG:900913, R=6378137)
+double WGS84LatToSphericalLat(double dWGS84Lat);
+double LongToXSphericalMercator(double dLong);
+double LatToYSphericalMercator (double dLat);
+
 // ---------------------------------------------------------------
 
 // To convert a "google" tile reference 'x', 'y' at a given zoom level

@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../Track.h"
 #include "RasterServerSources.h"
 #include "../VersionNumber.h"
+#include "../FileFormats/Decoder_7z.h"
 
 typedef std::set< GEOFILE_DATA > GeoDataSet;
 
@@ -38,7 +39,8 @@ public:
 	long InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded = true);
 	void Deinit();
 
-	const long GetFileName(std::wstring& name, const GEOFILE_DATA& data) const;
+	bool GetFileName(const GEOFILE_DATA& data, std::wstring& name, int& zipIndex) const;
+	std::wstring GetUnzippedFileName(const GEOFILE_DATA& data) const;
 	// Метод для получения запроса для отрисовщика, которому не хватило фрагментов
 	std::string GetRequestURL(const GEOFILE_DATA& data);
 	// Получить запрос

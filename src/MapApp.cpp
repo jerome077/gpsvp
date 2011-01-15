@@ -1641,7 +1641,7 @@ void CMapApp::StartHttpThread()
 
 CMapApp::CMapApp() : m_fMoving(false), m_hWnd(0), m_hPortThread(0), m_hHttpThread(0),
 	m_hPortFile(0), m_wstrCmdLine(0), m_hPwrReq(0), m_fMemoryLow(false), m_fMemoryVeryLow(false),
-	m_NMEAParser(), m_Options(), m_iMonitorUnder(INVALID_MONITOR_ID)
+	m_NMEAParser(), m_Options(), m_iMonitorUnder(INVALID_MONITOR_ID), m_fComInitialized(false)
 {
 	m_NMEAParser.SetClient(this);
 	m_pRasterMapPainter = new CGMPainter();
@@ -1651,6 +1651,7 @@ CMapApp::CMapApp() : m_fMoving(false), m_hWnd(0), m_hPortThread(0), m_hHttpThrea
 CMapApp::~CMapApp() 
 {
 	CHttpRequest::CleanupSocketsIfNecessary();
+	UninitComIfNecessary();
 #ifdef UNDER_CE
 	if (m_hCoreDll) {
 		m_pfnGetIdleTime = NULL;
@@ -2346,7 +2347,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Refresh traffic on startup"), L"TrafficOnStartup", false, mcoRefreshTrafficOnStartup);
 	// m_Options.AddOption(L("Show traffic nodes"), L"ShowTrafficNodes", false, mcoShowTrafficNodes);
 	m_Options.AddOption(L("Download Google maps"), L"DownloadGoogleMaps", false, mcoDownloadGoogleMaps);
-	m_Options.AddOption(L("Download all lower levels"), L"DownloadLowerLevels", false, mcoDownloadLowerLevels);
+	// deprecated: m_Options.AddOption(L("Download all lower levels"), L"DownloadLowerLevels", false, mcoDownloadLowerLevels);
 	m_Options.AddOption(L("Cache auto delete"), L"CacheAutoDelete", false, mcoRasterCacheAutoDelete);
 	m_Options.AddOption(L("Show Garmin maps"), L"ShowGarminMaps", true, mcoShowGarminMaps);
 	m_Options.AddOption(L("Prefer Google zoom levels"), L"GoogleZoomLevels", false, mcoGoogleZoomLevels);
@@ -2971,7 +2972,7 @@ void CMapApp::Paint()
 					}
 
 					m_pRasterMapPainter->SetKeepMemoryLow(fLowMemory);
-					m_pRasterMapPainter->Paint(hdc.Get(), m_painter.GetScreenRect(), m_painter.GetCenter(), m_painter.GetXScale(), enumGMapType(m_riGMapType()), fLargeFonts);
+					m_pRasterMapPainter->Paint(hdc.Get(), m_painter.GetScreenRect(), m_painter.GetCenter(), m_painter.GetXScale(), enumGMapType(m_riGMapType()), fLargeFonts, &m_painter);
 
 					if (fShowGarminMaps)
 					{
@@ -3391,14 +3392,25 @@ void CMapApp::InitMenu()
 			}
 			{
 				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
-				mmDownloadMaps.CreateItem(L("Add current view"), mcDownlRasterAddCurrentView);
-				mmDownloadMaps.CreateItem(L("Start with current zoom"), mcDownlRasterStartWithCurZoom);
-				mmDownloadMaps.CreateItem(L("By track"), mcDownlRasterByTrack);
-				mmDownloadMaps.CreateItem(L("Show available tiles"), mcDownlRasterShowAvailableTiles);
-				mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
+				mmDownloadMaps.CreateItem(L("Aera: Use current View"), mcDownlRasterAddCurrentView);
+				CMenu & mmExtendOfTile = mmDownloadMaps.CreateSubMenu(L("Aera: Extend of center tile"));
+				{
+					mmExtendOfTile.CreateItem(L("by Z0=8"), mcDownlRasterViewOfCurrentTileAtZoom08);
+					mmExtendOfTile.CreateItem(L("by Z0=9"), mcDownlRasterViewOfCurrentTileAtZoom09);
+					mmExtendOfTile.CreateItem(L("by Z0=10"), mcDownlRasterViewOfCurrentTileAtZoom10);
+					mmExtendOfTile.CreateItem(L("by Z0=11"), mcDownlRasterViewOfCurrentTileAtZoom11);
+					mmExtendOfTile.CreateItem(L("by Z0=12"), mcDownlRasterViewOfCurrentTileAtZoom12);
+					mmExtendOfTile.CreateItem(L("by Z0=13"), mcDownlRasterViewOfCurrentTileAtZoom13);
+					mmExtendOfTile.CreateItem(L("by Z0=14"), mcDownlRasterViewOfCurrentTileAtZoom14);
+				}
+				//mmDownloadMaps.CreateItem(L("Aera: By track"), mcDownlRasterByTrack);
+				//mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
+				mmDownloadMaps.CreateItem(L("Aera: Clear"), mcDownlRasterClearView);
 				mmDownloadMaps.CreateBreak();
-				mmDownloadMaps.CreateItem(L("Download all lower levels"), mcoDownloadLowerLevels);
-				// mmDownloadMaps.EnableMenuItem(mcoDownloadLowerLevels, false);
+				mmDownloadMaps.CreateItem(L("Download current zoom"), mcDownlRasterStartWithCurZoom);
+				mmDownloadMaps.CreateItem(L("Download current and all previous zooms"), mcDownlRasterStartCurAndPreviousZooms);
+				mmDownloadMaps.CreateItem(L("Export current zoom (experimental)"), mcDownlRasterExportCurZoom);
+				mmDownloadMaps.CreateItem(L("Show available tiles at current zoom"), mcDownlRasterShowAvailableTiles);
 			}
 			{
 				CMenu & mmMaintMaps = mmGoogleMaps.CreateSubMenu(L("Cache maintenance"));
@@ -3669,11 +3681,11 @@ void CMapApp::CheckMenu()
 	menu.EnableMenuItem(mcoShowAreaName, fGarminMaps);
 	menu.EnableMenuItem(mcCloseAllMaps, fGarminMaps);
 	menu.EnableMenuItem(mcMapList, fGarminMaps);
-	menu.EnableMenuItem(mcDownlRasterStartWithCurZoom, 
-		m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload());
-	menu.EnableMenuItem(mcDownlRasterShowAvailableTiles,
-		m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload());
-	menu.EnableMenuItem(mcDownlRasterAddCurrentView, m_Options[mcoDownloadGoogleMaps]);
+	bool fDownloadOK = m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload();
+	menu.EnableMenuItem(mcDownlRasterStartWithCurZoom, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterStartCurAndPreviousZooms, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterExportCurZoom, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterShowAvailableTiles, fDownloadOK);
 	
 	menu.EnableMenuItem(mcCloseTranslation, !m_rsTranslationFile().empty());
 
@@ -4002,11 +4014,41 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcDownlRasterAddCurrentView:
 			DRMAddCurrentView();
 			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom08:
+			DRMAddViewOfCurrentTileAtZ0(8);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom09:
+			DRMAddViewOfCurrentTileAtZ0(9);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom10:
+			DRMAddViewOfCurrentTileAtZ0(10);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom11:
+			DRMAddViewOfCurrentTileAtZ0(11);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom12:
+			DRMAddViewOfCurrentTileAtZ0(12);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom13:
+			DRMAddViewOfCurrentTileAtZ0(13);
+			break;
+		case mcDownlRasterViewOfCurrentTileAtZoom14:
+			DRMAddViewOfCurrentTileAtZ0(14);
+			break;
+		case mcDownlRasterClearView:
+			DRMClearView();
+			break;
 		case mcDownlRasterStartWithCurZoom:
-			DRMStartWithCurrentZoom();
+			DRMStartWithCurrentZoom(false);
+			break;
+		case mcDownlRasterStartCurAndPreviousZooms:
+			DRMStartWithCurrentZoom(true);
 			break;
 		case mcDownlRasterShowAvailableTiles:
 			DRMShowAvailableTiles();
+			break;
+		case mcDownlRasterExportCurZoom:
+			DRMExportCurZoom();
 			break;
 		case mcDownlRasterByTrack:
 			DRMByTrack();
@@ -5322,18 +5364,40 @@ const char * CMapApp::GetServerName()
 void CMapApp::DRMAddCurrentView()
 {
 	m_pRasterMapPainter->DownloadAddCurrentView();
+	m_painter.Redraw();
 	CheckMenu();
 }
 
-void CMapApp::DRMStartWithCurrentZoom()
+void CMapApp::DRMAddViewOfCurrentTileAtZ0(int Z0)
 {
-	m_pRasterMapPainter->DownloadStartWithCurrentZoom();
+	m_pRasterMapPainter->DownloadAddViewOfCurrentTileAtZoom(Z0);
+	m_painter.Redraw();
+	CheckMenu();
+}
+
+void CMapApp::DRMClearView()
+{
+	m_pRasterMapPainter->DownloadClearView();
+	m_painter.Redraw();
+	CheckMenu();
+}
+
+void CMapApp::DRMStartWithCurrentZoom(bool withPreviousZooms)
+{
+	m_pRasterMapPainter->DownloadStartWithCurrentZoom(withPreviousZooms);
 	CheckMenu();
 }
 
 void CMapApp::DRMShowAvailableTiles()
 {
 	m_pRasterMapPainter->GenerateTilesTrackForCurrentView(m_Tracks.GetOldTracks());
+	m_painter.Redraw();
+	CheckMenu();
+}
+
+void CMapApp::DRMExportCurZoom()
+{
+	m_pRasterMapPainter->ExportCurrentZoom();
 	CheckMenu();
 }
 
@@ -5666,4 +5730,22 @@ void CMapApp::CenterRouteTarget()
 {
 	if (!m_Tracks.GetCurRoute().IsEmpty())
 		m_painter.SetView(m_Tracks.GetCurRoute().AsTrack().GetLastPoint(), true);
+}
+
+void CMapApp::InitComIfNecessary()
+{
+	if (!m_fComInitialized)
+	{
+		CoInitializeEx(NULL, COINIT_MULTITHREADED);
+		m_fComInitialized = true;
+	}
+}
+
+void CMapApp::UninitComIfNecessary()
+{
+	if (m_fComInitialized)
+	{
+		CoUninitialize();
+		m_fComInitialized = false;
+	}
 }

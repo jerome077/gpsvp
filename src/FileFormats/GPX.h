@@ -30,14 +30,6 @@ typedef MSXML::IXMLDOMNamedNodeMapPtr          XmlNamedNodeMap;
 typedef MSXML::IXMLDOMNodeListPtr              XmlNodeList;
 typedef MSXML::IXMLDOMParseErrorPtr            XmlParseError;
 
-// Helper class to init COM
-class ComInit
-{
-public:
-    ComInit()  { CoInitializeEx(NULL, COINIT_MULTITHREADED); }
-    ~ComInit() { CoUninitialize(); }
-};
-
 // ---------------------------------------------------------------
 
 class CGPXFileReader;

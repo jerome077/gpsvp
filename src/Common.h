@@ -196,4 +196,12 @@ std::pair<long, long> GetFraction(double d, long maxDen);
 
 // ---------------------------------------------------------------
 
+#ifndef UNDER_CE
+#	define WMKDIR(x) _wmkdir(x)
+#else // UNDER_CE
+#	define WMKDIR(x) CreateDirectory(x, NULL)
+#endif // UNDER_CE
+
+// ---------------------------------------------------------------
+
 #endif // COMMON_H

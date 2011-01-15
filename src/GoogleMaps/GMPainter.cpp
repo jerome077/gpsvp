@@ -13,15 +13,22 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #include <windows.h>
+#include <sstream>
 #include "GMPainter.h"
 #include "ImageResize.h"
 #ifdef UNDER_CE
 #	include <aygshell.h>
 // #include "STScreenBuffer.h"
 #endif // UNDER_CE
+#ifdef UNDER_CE
+#include <initguid.h>
+#endif // UNDER_CE
 #include <math.h>
 #include <set>
 #include "../MapApp.h"
+#include "../FileFormats/Decoder_7z.h"
+
+
 
 GEOFILE_DATA m_Missing;
 bool m_fMissing = false;
@@ -35,6 +42,8 @@ CGMPainter::CGMPainter(void)
 #ifdef USE_GDI_PLUS
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_nGDIPlusToken, &gdiplusStartupInput, NULL);
+#else
+	m_pImagingFactory = NULL;
 #endif // UNDER_CE
 	m_bGotMapVersions = false;
 	m_bGeoRectToDownload = false;
@@ -100,7 +109,8 @@ bool GetIntersectionRECT(RECT *pr, const RECT &r1, const RECT &r2)
 	return true;
 }
 
-int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize)
+int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type,
+					  bool fDoubleSize, IPainter * pPainter)
 {
 	if (type == gtNone)
 		return 0;
@@ -148,6 +158,9 @@ int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, doubl
 	long cntX = (long) floor(nBitmapOrigo + (dLonCenter * nPixelsPerLonDegree));
 	double z = sin(dLatCenter / 180 * pi);
 	long cntY = (long) floor(nBitmapOrigo - 0.5 * log((1+z)/(1-z)) * nPixelsPerLonRadian);
+	m_nCenterXLastViewed = cntX;
+	m_nCenterYLastViewed = cntY;
+	m_nCenterZ17LastViewed = (unsigned char) (LEVEL_REVERSE_OFFSET - level);
 
 	long X = cntX - int(double(rect.right - rect.left) / 2 / scale);
 	long Y = cntY - int(double(rect.bottom - rect.top) / 2 / scale);
@@ -218,6 +231,18 @@ int CGMPainter::Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, doubl
 		m_Missing = mapMissing.begin()->second;
 	}
 
+	// Draw selected aera (for download, ...)
+	if (m_bGeoRectToDownload)
+	{
+		pPainter->StartPolyline(0xff, 0); // style like typeCurrentTrack
+		pPainter->AddPoint(GeoPoint(m_grectToDownload.minLon, m_grectToDownload.minLat));
+		pPainter->AddPoint(GeoPoint(m_grectToDownload.minLon, m_grectToDownload.maxLat));
+		pPainter->AddPoint(GeoPoint(m_grectToDownload.maxLon, m_grectToDownload.maxLat));
+		pPainter->AddPoint(GeoPoint(m_grectToDownload.maxLon, m_grectToDownload.minLat));
+		pPainter->AddPoint(GeoPoint(m_grectToDownload.minLon, m_grectToDownload.minLat));
+		pPainter->FinishObject();
+	}
+
 	return 0;
 }
 
@@ -261,9 +286,9 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 
 		bHBITMAPInited = true;
 	} else {
-		std::wstring w;
-		long nRes = m_GMFH.GetFileName(w, data);
-		if (nRes) {
+		std::wstring strFullname;
+		int zipIndex;
+		if (!m_GMFH.GetFileName(data, strFullname, zipIndex)) {
 			m_Missing = data;
 			m_fMissing = true;
 			//// Simply fill the given rect with some color
@@ -275,21 +300,12 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 			//}
 			return 1;
 		} else {
-#ifndef USE_GDI_PLUS
-#  if defined(BARECE) || defined(UNDER_WINE)
-#  else
-			hbm = SHLoadImageFile(w.c_str());
-#  endif
-#else // UNDER_CE
-			Gdiplus::Bitmap bm(w.c_str());
-			Gdiplus::Color clr;
-			bm.GetHBITMAP(clr, &hbm);
-#endif // UNDER_CE
+			hbm = LoadTileOrZippedTile(strFullname, zipIndex, dc);
 
 			if (hbm == NULL) {
-				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled
-				if (app.m_Options[mcoDownloadGoogleMaps] && app.IsInternetAllowed())
-					DeleteFile(w.c_str());
+				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled & the file isn't in a zip file
+				if (app.m_Options[mcoDownloadGoogleMaps] && app.IsInternetAllowed() && (-1 == zipIndex))
+					DeleteFile(strFullname.c_str());
 				bHBITMAPInited = false;
 			} else {
 
@@ -333,13 +349,13 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 					// We can use here any stretch algorithm, even a slow one
 #ifdef UNDER_CE
 #	if UNDER_CE >= 0x0500
-					SetStretchBltMode(dstdc, BILINEAR);
+					SetStretchBltMode(dstdc, COLORONCOLOR); // Not sure if it is better
 					POINT pt;
 					SetBrushOrgEx(dstdc, 0, 0, &pt);
 #	endif // UNDER_CE >= 0x0500
 
 #else // UNDER_CE
-					SetStretchBltMode(dstdc, STRETCH_HALFTONE);
+					SetStretchBltMode(dstdc, COLORONCOLOR); // Not sure if it is better
 #endif // UNDER_CE
 
 					StretchBlt(dstdc, 0, 0, gfr.width, gfr.heigth,
@@ -501,18 +517,50 @@ void CGMPainter::DownloadAddCurrentView()
 	m_bGeoRectToDownload = true;
 }
 
-void CGMPainter::DownloadStartWithCurrentZoom()
+void CGMPainter::DownloadAddViewOfCurrentTileAtZoom(int Zoom00)
+{
+	long Z0 = 17 - m_nCenterZ17LastViewed;
+	long cntX, cntY;
+	if (Z0 <= Zoom00)
+	{
+		cntX = m_nCenterXLastViewed << (Zoom00 - Z0);
+		cntY = m_nCenterYLastViewed << (Zoom00 - Z0);
+	}
+	else
+	{
+		cntX = m_nCenterXLastViewed >> (Z0 - Zoom00);
+		cntY = m_nCenterYLastViewed >> (Z0 - Zoom00);
+	}
+	long NumX = (std::max)(long(cntX / 256), long(0));
+	long NumY = (std::max)(long(cntY / 256), long(0));
+	double CoordWest = GoogleXZ17toLong(NumX, LEVEL_REVERSE_OFFSET-Zoom00-1);
+	double CoordNorth = GoogleYZ17toLat(NumY, LEVEL_REVERSE_OFFSET-Zoom00-1);
+	// South and east can not be exactly on the south and east border of the tile
+	// or else EnumerateAndProcessGeoRect would return the next tiles too.
+	int gap = LEVEL_REVERSE_OFFSET-Zoom00;
+	double CoordEast = GoogleXZ17toLong(((NumX+1)<<gap)-1, LEVEL_REVERSE_OFFSET-Zoom00-1-gap);
+	double CoordSouth = GoogleYZ17toLat(((NumY+1)<<gap)-1, LEVEL_REVERSE_OFFSET-Zoom00-1-gap);
+	m_grectToDownload.Init  (GeoPoint(CoordWest, CoordNorth));
+	m_grectToDownload.Append(GeoPoint(CoordEast, CoordSouth));
+	m_bGeoRectToDownload = true;
+}
+
+void CGMPainter::DownloadClearView()
+{
+	m_bGeoRectToDownload = false;
+}
+
+void CGMPainter::DownloadStartWithCurrentZoom(bool withPreviousZooms)
 {
 	if (m_bGeoRectToDownload) {
 		long nInCache;
 		GeoDataSet files;
-		long nCount = EnumerateAndProcessGeoRect(
-			&files, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, &nInCache, app.m_Options[mcoDownloadLowerLevels], NULL);
+		long nCount = EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, withPreviousZooms,
+			                                     &files, &nInCache, NULL);
 		wchar_t buf[256];
 		wsprintf(buf, L("%d new segments to download (%d in cache). Proceed?"), nCount, nInCache);
 		if (IDYES == MessageBox(NULL, buf, L"gpsVP", MB_YESNO | MB_ICONQUESTION)) {
 			m_GMFH.AddFileToDownload(files);
-			m_bGeoRectToDownload = false;
 		} else {
 		}
 	}
@@ -520,9 +568,404 @@ void CGMPainter::DownloadStartWithCurrentZoom()
 
 void CGMPainter::GenerateTilesTrackForCurrentView(CTrackList& aTrackList)
 {
-	int trackIndex = aTrackList.NewTrack(L("Tiles for selected view at Z0=")+IntToText(m_nLevelToDownload-1));
-	CTrack * pTrack = &aTrackList.GetTrack(trackIndex);
-	EnumerateAndProcessGeoRect(NULL, m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, NULL, false, pTrack);
+	int trackIndex = aTrackList.NewTrack(L("Tiles for selected view at Z0=")+IntToText(GetLastZoom_00()));
+	CTrack& track = aTrackList.GetTrack(trackIndex);
+	GeoDataSet filesInCache;
+	EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, false,
+			                   NULL, NULL, &filesInCache);
+	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
+	{
+		track.AddPoint(GeoPoint(GoogleXZ17toLong(it->X,   it->level), GoogleYZ17toLat(it->Y,   it->level)), 0);
+		track.AddPoint(GeoPoint(GoogleXZ17toLong(it->X+1, it->level), GoogleYZ17toLat(it->Y,   it->level)), 0);
+		track.AddPoint(GeoPoint(GoogleXZ17toLong(it->X+1, it->level), GoogleYZ17toLat(it->Y+1, it->level)), 0);
+		track.AddPoint(GeoPoint(GoogleXZ17toLong(it->X,   it->level), GoogleYZ17toLat(it->Y+1, it->level)), 0);
+		track.AddPoint(GeoPoint(GoogleXZ17toLong(it->X,   it->level), GoogleYZ17toLat(it->Y,   it->level)), 0);
+		track.Break();
+	}
+}
+
+void fputws_utf8(FILE* pFile, const std::wstring& wstrToWrite)
+{
+	int charcount = WideCharToMultiByte(CP_UTF8, 0, wstrToWrite.c_str(), wstrToWrite.length(), 0, 0, 0, 0);
+    char* tempStr = new char[charcount+1];
+	WideCharToMultiByte(CP_UTF8, 0, wstrToWrite.c_str(), wstrToWrite.length(), tempStr, charcount, 0, 0);
+	tempStr[charcount] = '\0';
+	fputs(tempStr, pFile);
+    delete [] tempStr;
+}
+
+//bool IsUsingColorPalette(const std::wstring& strImageFullname, int zipIndex)
+//{
+//	#ifdef USE_GDI_PLUS
+//		Gdiplus::Bitmap bm(strImageFullname.c_str());
+//		Gdiplus::PixelFormat pf = bm.GetPixelFormat();
+//		return (PixelFormatIndexed == (pf & PixelFormatIndexed));
+//	#else // USE_GDI_PLUS
+//		// May be wrong...
+//		return (strImageFullname.substr(strImageFullname.length()-3) != L"jpg");
+//	#endif // USE_GDI_PLUS
+//}
+
+std::wstring DblToTxtE(double value)
+{
+	wchar_t wcBuff[100] = {0};
+	swprintf(wcBuff, 100, L"%e", value);
+	return wcBuff;
+}
+
+std::wstring DblToTxtF(double value)
+{
+	wchar_t wcBuff[100] = {0};
+	swprintf(wcBuff, 100, L"%f", value);
+	return wcBuff;
+}
+
+void WriteVRTBand_Tile256Colors(FILE* pFile, GeoDataSet& filesInCache, long minX, long minY,
+								CGMFileHolder& GMFH,
+				                int iBand, const std::wstring& sColor,
+								const std::wstring& wstrMapPath)
+{
+	fputws_utf8(pFile, std::wstring(L" <VRTRasterBand dataType=\"Byte\" band=\"")+IntToText(iBand)+L"\">\n");
+	fputws_utf8(pFile, std::wstring(L"  <ColorInterp>")+sColor+L"</ColorInterp>\n");
+	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
+	{
+		std::wstring name = GMFH.GetUnzippedFileName(*it);
+		long xOff = 256*(it->X - minX);
+		long yOff = 256*(it->Y - minY);
+		fputws_utf8(pFile, L"  <ComplexSource>\n");
+		if (wstrMapPath.empty())
+		  fputws_utf8(pFile, std::wstring(L"   <SourceFilename relativeToVRT=\"0\">")+name+L"</SourceFilename>\n");
+		else
+		{
+			name = name.substr(wstrMapPath.size());
+			fputws_utf8(pFile, std::wstring(L"   <SourceFilename relativeToVRT=\"1\">")+name+L"</SourceFilename>\n");
+		}
+		fputws_utf8(pFile, L"   <SourceBand>1</SourceBand>\n");
+		fputws_utf8(pFile, L"   <SourceProperties RasterXSize=\"256\" RasterYSize=\"256\" DataType=\"Byte\" BlockXSize=\"256\" BlockYSize=\"1\"/>\n");
+		fputws_utf8(pFile, L"   <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"256\" ySize=\"256\"/>\n");
+		fputws_utf8(pFile, std::wstring(L"   <DstRect xOff=\"")+IntToText(xOff)+L"\" yOff=\""+IntToText(yOff)+L"\" xSize=\"256\" ySize=\"256\"/>\n");
+		fputws_utf8(pFile, std::wstring(L"   <ColorTableComponent>")+IntToText(iBand)+L"</ColorTableComponent>\n");
+		fputws_utf8(pFile, L"  </ComplexSource>\n");
+	}
+	fputws_utf8(pFile, L" </VRTRasterBand>\n");
+}
+
+void WriteVRTBand_Tile16MColors(FILE* pFile, GeoDataSet& filesInCache, long minX, long minY,
+								CGMFileHolder& GMFH,
+				                int iBand, const std::wstring& sColor,
+								const std::wstring& wstrMapPath)
+{
+	fputws_utf8(pFile, std::wstring(L" <VRTRasterBand dataType=\"Byte\" band=\"")+IntToText(iBand)+L"\">\n");
+	fputws_utf8(pFile, std::wstring(L"  <ColorInterp>")+sColor+L"</ColorInterp>\n");
+	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
+	{
+		std::wstring name = GMFH.GetUnzippedFileName(*it);
+		long xOff = 256*(it->X - minX);
+		long yOff = 256*(it->Y - minY);
+		fputws_utf8(pFile, L"  <SimpleSource>\n");
+		if (wstrMapPath.empty())
+		  fputws_utf8(pFile, std::wstring(L"   <SourceFilename relativeToVRT=\"0\">")+name+L"</SourceFilename>\n");
+		else
+		{
+			name = name.substr(wstrMapPath.size());
+			fputws_utf8(pFile, std::wstring(L"   <SourceFilename relativeToVRT=\"1\">")+name+L"</SourceFilename>\n");
+		}
+		fputws_utf8(pFile, std::wstring(L"   <SourceBand>")+IntToText(iBand)+L"</SourceBand>\n");
+		fputws_utf8(pFile, L"   <SourceProperties RasterXSize=\"256\" RasterYSize=\"256\" DataType=\"Byte\" BlockXSize=\"256\" BlockYSize=\"1\"/>\n");
+		fputws_utf8(pFile, L"   <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"256\" ySize=\"256\"/>\n");
+		fputws_utf8(pFile, std::wstring(L"   <DstRect xOff=\"")+IntToText(xOff)+L"\" yOff=\""+IntToText(yOff)+L"\" xSize=\"256\" ySize=\"256\"/>\n");
+		fputws_utf8(pFile, L"  </SimpleSource>\n");
+	}
+	fputws_utf8(pFile, L" </VRTRasterBand>\n");
+}
+
+std::wstring ExtractPath(std::wstring fullName)
+{
+	std::replace(fullName.begin(), fullName.end(), L'/', L'\\');
+	std::wstringstream wssPath(fullName);
+	std::wstring strPath;
+	std::wstring strCurrent, strPrevious;
+	while (std::getline(wssPath, strCurrent, L'\\'))
+	{
+		strPath += strPrevious;
+		strPrevious = strCurrent + L"\\";
+	}
+	return strPath;
+}
+
+std::wstring RemoveExtension(std::wstring fullName)
+{
+	std::replace(fullName.begin(), fullName.end(), L'/', L'\\');
+	std::wstringstream wssPath(fullName);
+	std::wstring strPath;
+	std::wstring strCurrent, strPrevious;
+	while (std::getline(wssPath, strCurrent, L'.'))
+	{
+		strPath += strPrevious;
+		strPrevious = strCurrent;
+	}
+	return strPath;
+}
+
+void CGMPainter::ExportCurrentZoom()
+{
+	GeoDataSet filesInCache;
+	EnumerateAndProcessGeoRect(m_grectToDownload, m_nLevelToDownload, m_enTypeToDownload, false,
+			                   NULL, NULL, &filesInCache);
+
+	// Analysing the data (limits: tiles coordinates min and max, zoom level, color depth)
+	long minX = LONG_MAX;
+	long maxX = 0;
+	long minY = LONG_MAX;
+	long maxY = 0;
+	long Z17 = -1;
+	enumGMapType mapType;
+	std::wstring sFormat;
+	GeoDataSet::iterator it = filesInCache.begin();
+	if (it != filesInCache.end())
+	{
+		Z17 = it->level;
+		mapType = (enumGMapType)it->type;
+		std::wstring name;
+		int zipIndex;
+		m_GMFH.GetFileName(*it, name, zipIndex);
+		sFormat = name.substr(name.length()-3);
+		for( ; it != filesInCache.end(); it++)
+		{
+			if (minX > it->X) minX = it->X;
+			if (minY > it->Y) minY = it->Y;
+			if (maxX < it->X) maxX = it->X;
+			if (maxY < it->Y) maxY = it->Y;
+		}
+	}
+	else return; // Nothing to export
+
+	// Size of the resulting image:
+	long XSize = 256*(maxX-minX+1);
+	long YSize = 256*(maxY-minY+1);
+
+	// WGS84-coordinates of the resulting image:
+	double CoordWest  = GoogleXZ17toLong(minX,   Z17);
+	double CoordEast  = GoogleXZ17toLong(maxX+1, Z17);
+	double CoordNorth = GoogleYZ17toLat (minY,   Z17);
+	double CoordSouth = GoogleYZ17toLat (maxY+1, Z17);
+
+	// Mercator-coordinates in meters (Caution: about the latitude see comment by WGS84LatToSphericalLat)
+	double XSpherMercWest  = LongToXSphericalMercator(CoordWest);
+	double XSpherMercEast  = LongToXSphericalMercator(CoordEast);
+	double SphericalLatNorth = WGS84LatToSphericalLat(CoordNorth);
+	double SphericalLatSouth = WGS84LatToSphericalLat(CoordSouth);
+	double YSpherMercNorth = LatToYSphericalMercator(SphericalLatNorth);
+	double YSpherMercSouth = LatToYSphericalMercator(SphericalLatSouth);
+
+	// Size of a single pixel in mercator-coordinates:
+	double PixelSizeAlongX_SpherMerc = (XSpherMercEast-XSpherMercWest)/XSize;
+	double PixelSizeAlongY_SpherMerc = -(YSpherMercNorth-YSpherMercSouth)/YSize;
+
+	// Size of a single pixel in WGS84-coordinates:
+	double PixelSizeAlongX_WGS84 = (CoordEast-CoordWest)/XSize;
+	double PixelSizeAlongY_WGS84 = (CoordSouth-CoordNorth)/XSize;
+
+	// Choosing a file name in the cache directory:
+	std::wstring sMapName = m_GMFH.GetRMS(mapType)->GetFilePrefix();
+	wchar_t wcExportSubFolder[MAX_PATH + 1] = {0};
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	wsprintf(wcExportSubFolder, L"Export-%04d-%02d-%02d-%02d-%02d-%02d",
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+	std::wstring wstrMapPath = m_wstrMapFolder + L"\\" + sMapName + L"\\";
+	std::wstring wstrFolderPath = wstrMapPath + wcExportSubFolder + L"\\";
+	std::wstring wcBaseFileName = L"Map";
+    WMKDIR(wstrFolderPath.c_str());
+
+	std::wstring wstrFilename;
+	FILE* pFile;
+
+	// Generating a "worldfile" as WGS84
+	// ---------------------------------
+	// - Can be read by most GIS systems but do not define coordinates system.
+	// - GDAL can generate it from the .vrt file that why I don't generate
+	//   one for EPSG:3857 but for EPSG:4326
+	//
+	double CenterOfFirstPointCoordX = CoordWest + 0.5*PixelSizeAlongX_WGS84;
+	double CenterOfFirstPointCoordY = CoordNorth + 0.5*PixelSizeAlongY_WGS84;
+	wstrFilename = wstrFolderPath + wcBaseFileName + L"-EPSG4326.wld";
+	pFile = wfopen(wstrFilename.c_str(), L"wb");
+	fputws_utf8(pFile, DblToTxtE(PixelSizeAlongX_WGS84) + L"\n");
+	fputws_utf8(pFile, L"0.0\n");
+	fputws_utf8(pFile, L"0.0\n");
+	fputws_utf8(pFile, DblToTxtE(PixelSizeAlongY_WGS84) + L"\n");
+	fputws_utf8(pFile, DblToTxtE(CenterOfFirstPointCoordX) + L"\n");
+	fputws_utf8(pFile, DblToTxtE(CenterOfFirstPointCoordY) + L"\n");
+	fclose(pFile);
+
+	// Generating a .CAL
+	// -----------------
+    // - Calibration file for the commercial product TTQV (www.ttqv.com)
+    // - Can easilly be converted with Mapc2Mapc (www.the-thorns.org.uk/mapping)
+	double ScaleAera = (CoordEast - CoordWest) * (CoordNorth - CoordSouth) / (XSize * YSize);
+	wstrFilename = wstrFolderPath + wcBaseFileName + L"_png.cal";
+	pFile = wfopen(wstrFilename.c_str(), L"wb");
+	fputws_utf8(pFile, std::wstring(L"; Calibration File for QV Map\n"));
+	fputws_utf8(pFile, std::wstring(L"; generated by gpsVP\n"));
+	fputws_utf8(pFile, std::wstring(L"name = 10 = ")+wcBaseFileName+L".png\n");
+	fputws_utf8(pFile, std::wstring(L"fname = 10 = ")+wcBaseFileName+L".png\n");
+	fputws_utf8(pFile, std::wstring(L"nord = 6 = ")+DblToTxtF(CoordNorth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"sued = 6 = ")+DblToTxtF(CoordSouth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"ost = 6 = ")+DblToTxtF(CoordEast)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"west = 6 = ")+DblToTxtF(CoordWest)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"scale_area = 6 =  ")+DblToTxtF(ScaleAera)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"proj_mode = 10 = proj\n"));
+	fputws_utf8(pFile, std::wstring(L"projparams = 10 = proj=merc\n"));
+	fputws_utf8(pFile, std::wstring(L"datum1 = 10 = WGS 84# 6378137# 298.257223563# 0# 0# 0#\n"));
+	fputws_utf8(pFile, std::wstring(L"c1_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c1_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c2_x = 7 =  ")+IntToText(XSize-1)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c2_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c3_x = 7 =  ")+IntToText(XSize-1)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c3_y = 7 =  ")+IntToText(YSize-1)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c4_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c4_y = 7 =  ")+IntToText(YSize-1)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c5_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c5_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c6_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c6_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c7_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c7_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c8_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c8_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c9_x = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c9_y = 7 =  0\n"));
+	fputws_utf8(pFile, std::wstring(L"c1_lat = 7 =  ")+DblToTxtF(CoordNorth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c1_lon = 7 =  ")+DblToTxtF(CoordWest)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c2_lat = 7 =  ")+DblToTxtF(CoordNorth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c2_lon = 7 =  ")+DblToTxtF(CoordEast)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c3_lat = 7 =  ")+DblToTxtF(CoordSouth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c3_lon = 7 =  ")+DblToTxtF(CoordEast)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c4_lat = 7 =  ")+DblToTxtF(CoordSouth)+L"\n");
+	fputws_utf8(pFile, std::wstring(L"c4_lon = 7 =  ")+DblToTxtF(CoordWest)+L"\n");
+	fclose(pFile);
+
+	// Generating .VRT files
+	// ---------------------
+    // - Virtual format for GDAL, see http://www.gdal.org/gdal_vrttut.html
+    // - Can be used directly by GDAL oder converted to a real picture using:
+	//    gdal_translate -of png -co worldfile=yes EXPORT.vrt EXPORT.png
+	// - 2 files because the syntax depends on input pixel format (256 or 16 million colors).
+	//   Output is always 16 millions or else I would have to calculate a new palette.
+	wstrFilename = wstrFolderPath + wcBaseFileName + L"-256colors.vrt";
+	pFile = wfopen(wstrFilename.c_str(), L"wb");
+	fputws_utf8(pFile, std::wstring(L"<VRTDataset rasterXSize=\"")+IntToText(XSize)+L"\" rasterYSize=\""+IntToText(YSize)+L"\">\n");
+	fputws_utf8(pFile, L" <SRS>EPSG:3857</SRS>\n");
+	fputws_utf8(pFile, std::wstring(L" <GeoTransform> ")+DblToTxtE(XSpherMercWest)+L", "+DblToTxtE(PixelSizeAlongX_SpherMerc)+L", 0.0000000000000000e+000, "+DblToTxtE(YSpherMercNorth)+L", 0.0000000000000000e+000, "+DblToTxtE(PixelSizeAlongY_SpherMerc)+L"</GeoTransform>\n");
+    WriteVRTBand_Tile256Colors(pFile, filesInCache, minX, minY, m_GMFH, 1, L"Red",   wstrMapPath);
+    WriteVRTBand_Tile256Colors(pFile, filesInCache, minX, minY, m_GMFH, 2, L"Green", wstrMapPath);
+    WriteVRTBand_Tile256Colors(pFile, filesInCache, minX, minY, m_GMFH, 3, L"Blue",  wstrMapPath);
+	fputws_utf8(pFile, L"</VRTDataset>\n");
+	fclose(pFile);
+
+	wstrFilename = wstrFolderPath + wcBaseFileName + L"-16Mcolors.vrt";
+	pFile = wfopen(wstrFilename.c_str(), L"wb");
+	fputws_utf8(pFile, std::wstring(L"<VRTDataset rasterXSize=\"")+IntToText(XSize)+L"\" rasterYSize=\""+IntToText(YSize)+L"\">\n");
+	fputws_utf8(pFile, L" <SRS>EPSG:3857</SRS>\n");
+	fputws_utf8(pFile, std::wstring(L" <GeoTransform> ")+DblToTxtE(XSpherMercWest)+L", "+DblToTxtE(PixelSizeAlongX_SpherMerc)+L", 0.0000000000000000e+000, "+DblToTxtE(YSpherMercNorth)+L", 0.0000000000000000e+000, "+DblToTxtE(PixelSizeAlongY_SpherMerc)+L"</GeoTransform>\n");
+    WriteVRTBand_Tile16MColors(pFile, filesInCache, minX, minY, m_GMFH, 1, L"Red",   wstrMapPath);
+    WriteVRTBand_Tile16MColors(pFile, filesInCache, minX, minY, m_GMFH, 2, L"Green", wstrMapPath);
+    WriteVRTBand_Tile16MColors(pFile, filesInCache, minX, minY, m_GMFH, 3, L"Blue",  wstrMapPath);
+	fputws_utf8(pFile, L"</VRTDataset>\n");
+	fclose(pFile);
+
+	// Are some tiles in a .7z file?
+	// -----------------------------
+	wstrFilename = wstrFolderPath + L"copyfiles.bat";
+	pFile = wfopen(wstrFilename.c_str(), L"ab");
+	fputws_utf8(pFile, L"Rem Files that can be copied directly (without unzipping)\r\n");
+	fclose(pFile);
+
+	std::set<std::wstring> zipFilesSet;
+	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
+	{
+		std::wstring name;
+		int zipIndex;
+		m_GMFH.GetFileName(*it, name, zipIndex);
+		if (zipIndex >= 0)
+		{
+			name = name.substr(wstrMapPath.size()); // extracts relative name of the zip file
+	 		std::wstring unzippedName = m_GMFH.GetUnzippedFileName(*it);
+			unzippedName = unzippedName.substr(wstrMapPath.size()+ExtractPath(name).size()); // extracts relative name of the file
+
+			std::wstring zipNameModified = name;
+			std::replace(zipNameModified.begin(), zipNameModified.end(), L'/', L'_');
+			std::replace(zipNameModified.begin(), zipNameModified.end(), L'\\', L'_');
+			wstrFilename = wstrFolderPath + zipNameModified + L".txt";
+			pFile = wfopen(wstrFilename.c_str(), L"ab");
+			fputws_utf8(pFile, std::wstring(L"\"")+unzippedName+L"\"\r\n");
+			fclose(pFile);
+
+			zipFilesSet.insert(name);
+		}
+		else
+		{
+			wstrFilename = wstrFolderPath + L"copyfiles.bat";
+			pFile = wfopen(wstrFilename.c_str(), L"ab");
+	 		std::wstring unzippedName = m_GMFH.GetUnzippedFileName(*it);
+			unzippedName = unzippedName.substr(wstrMapPath.size()); // extracts relative name of the file
+			std::replace(unzippedName.begin(), unzippedName.end(), L'/', L'\\');
+			fputws_utf8(pFile, std::wstring(L"xcopy \"..\\")+unzippedName+L"\" \""+ExtractPath(unzippedName)+L"*\" \r\n");
+			fclose(pFile);
+		}
+	}
+
+	// Generating an explaination/batch file
+	// -------------------------------------
+	wstrFilename = wstrFolderPath + wcBaseFileName + L".bat";
+	pFile = wfopen(wstrFilename.c_str(), L"wb");
+	fputws_utf8(pFile, L"@Echo off\r\n");
+	fputws_utf8(pFile, L"SET PATH_7ZIP=\r\n");
+	fputws_utf8(pFile, L"\r\n");
+	fputws_utf8(pFile, L"Echo One of the .vrt file can be used directly by GDAL (http://www.gdal.org)\r\n");
+	fputws_utf8(pFile, L"Echo On Windows GDAL is for example included in FWTools 2.4.7 (http://fwtools.maptools.org/)\r\n");
+	fputws_utf8(pFile, L"Echo This script assemble convert the .vrt-file into a .png image\r\n");
+	fputws_utf8(pFile, L"\r\n");
+	if (zipFilesSet.size() > 0)
+	{
+//		fputws_utf8(pFile, std::wstring(L"Echo This map needs tiles from ")+IntToText(zipFilesSet.size())+L" .7z archive files.\r\n");
+//		fputws_utf8(pFile, L"SET /P UserInput=Extract the .7z archives files? [y/n]\r\n");
+//		fputws_utf8(pFile, L"IF not \"%UserInput%\"=\"y\" goto :END\r\n");
+		for(std::set<std::wstring>::iterator it7z = zipFilesSet.begin(); it7z != zipFilesSet.end(); it7z++)
+		{			
+			std::wstring zipNameModified = *it7z;
+			std::replace(zipNameModified.begin(), zipNameModified.end(), L'/', L'_');
+			std::replace(zipNameModified.begin(), zipNameModified.end(), L'\\', L'_');
+			fputws_utf8(pFile, std::wstring(L"7z.exe x ..\\")+*it7z+L" -o"+wstrFolderPath+ExtractPath(*it7z)+L" @"+zipNameModified+L".txt\r\n");
+		}
+	}
+	fputws_utf8(pFile, L"call copyfiles.bat\r\n");
+	fputws_utf8(pFile, L"\r\n");
+	fputws_utf8(pFile, L"SET /P UserInput=Do the tiles use 256 colors? [y/n]\r\n");
+	fputws_utf8(pFile, L"IF not \"%UserInput%\"==\"y\" goto :NOT256\r\n");
+	fputws_utf8(pFile, std::wstring(L"gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-256colors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, L":NOT256\r\n");
+	fputws_utf8(pFile, L"SET /P UserInput=Do the tiles use 16 million colors? [y/n]\r\n");
+	fputws_utf8(pFile, L"IF not \"%UserInput%\"==\"y\" goto :NOT16M\r\n");
+	fputws_utf8(pFile, std::wstring(L"gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-16Mcolors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, L":NOT16M\r\n");
+	fputws_utf8(pFile, L"\r\n");
+//	if (zipFilesSet.size() > 0)
+//	{
+//		fputws_utf8(pFile, L"Echo Removing extracted tiles...\r\n");
+//		for(std::set<std::wstring>::iterator it7z = zipFilesSet.begin(); it7z != zipFilesSet.end(); it7z++)
+//		{			
+//			fputws_utf8(pFile, std::wstring(L"rd /s ")+RemoveExtension(*it7z)+L"\r\n");
+//		}
+//	}
+	fputws_utf8(pFile, L":END\r\n");
+	fputws_utf8(pFile, L"Exit /b 0\r\n");
+	fclose(pFile);
+
+	// Displaying a few Infos about the export
+	std::wstring sInfo = std::wstring(L("Exported to map folder as ")) + wcBaseFileName + L".*";
+	MessageBox(0, sInfo.c_str(), L("Export done"), MB_ICONINFORMATION);
 }
 
 void CGMPainter::RefreshTiles(const GeoRect *pRegion)
@@ -547,10 +990,12 @@ void CGMPainter::RefreshInsideRegion()
 	RefreshTiles(&m_grectLastViewed);
 }
 
-// pSet = when not NULL lists the tiles to download in the set
-// pTrack = when not NULL draws a cross on the available tiles on the track
-long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type, 
-	long *pnInCacheCount, bool bDownloadLowerLevels, CTrack* pTrack)
+// return value = number of tiles to download
+// pSetNotInCache = when not NULL receives the list of tiles to download
+// pnInCacheCount = when not NULL receives the number of tiles already in cache
+// pSetInCache = when not NULL receives the list of tiles already in cache
+long CGMPainter::EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, bool bDownloadLowerLevels,
+	                                        GeoDataSet *pSetNotInCache, long *pnInCacheCount, GeoDataSet *pSetInCache)
 {
 	GEOFILE_DATA topleft, bottomright;
 	GetFileDataByPoint(&topleft, GeoPoint(gr.minLon, gr.minLat), nLevel);
@@ -560,7 +1005,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr,
 	r.top = topleft.Y; r.bottom = bottomright.Y;
 	r.left = topleft.X; r.right = bottomright.X;
 
-	long nCount = 0;
+	long nNotInCache = 0;
 	long nInCache = 0;
 	long nMinLevel = (bDownloadLowerLevels) ? 1 : nLevel - 1;
 	GEOFILE_DATA data;
@@ -573,18 +1018,12 @@ long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr,
 				data.Y = y;
 				if (m_GMFH.IsFileInCache(data)) {
 					nInCache++;
-					if (pTrack)
-					{
-						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
-						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X+1, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
-						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X+1, data.level), GoogleYZ17toLat(data.Y+1, data.level)), 0);
-						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y+1, data.level)), 0);
-						pTrack->AddPoint(GeoPoint(GoogleXZ17toLong(data.X, data.level), GoogleYZ17toLat(data.Y, data.level)), 0);
-						pTrack->Break();
-					}
+					if (pSetInCache)
+						pSetInCache->insert(data);
 				} else {
-					nCount++;
-					if (pSet) pSet->insert(data);
+					nNotInCache++;
+					if (pSetNotInCache)
+						pSetNotInCache->insert(data);
 				}
 			}
 		}
@@ -593,7 +1032,7 @@ long CGMPainter::EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr,
 	}
 	if (pnInCacheCount)
 		*pnInCacheCount = nInCache;
-	return nCount;
+	return nNotInCache;
 }
 
 long CGMPainter::DownloadMapBy(enumGMapType type, CTrack &track, long nPixelRadius, long nDetailedLevel)
@@ -678,4 +1117,106 @@ void CGMPainter::DeleteElementFromCache(const GEOFILE_DATA &data)
 			++it;
 		}
 	}
+}
+
+void CGMPainter::InitImagingFactoryOnce()
+{
+	#ifndef USE_GDI_PLUS
+	if (!m_pImagingFactory)
+	{
+		#  if defined(BARECE) || defined(UNDER_WINE)
+		#  else
+		app.InitComIfNecessary();
+		HRESULT hr=CoCreateInstance(CLSID_ImagingFactory, 
+							NULL, 
+							CLSCTX_INPROC_SERVER, 
+							IID_IImagingFactory, 
+							(void**)&m_pImagingFactory);
+		#  endif
+	}
+	#endif
+}
+
+HBITMAP CGMPainter::LoadTileOrZippedTile(const std::wstring& strFullname, int zipIndex, HDC dc)
+{
+	HBITMAP hbm = NULL;
+
+	// Tile is a normal file:
+	if (-1 == zipIndex)
+	{
+		#ifndef USE_GDI_PLUS
+		#  if defined(BARECE) || defined(UNDER_WINE)
+		#  else
+			hbm = SHLoadImageFile(strFullname.c_str());
+		#  endif
+		#else // UNDER_CE
+			Gdiplus::Bitmap bm(strFullname.c_str());
+			Gdiplus::Color clr;
+			bm.GetHBITMAP(clr, &hbm);
+		#endif // UNDER_CE
+
+		return hbm;
+	}
+	// Tile is in a 7z file:
+	else
+	{
+		char *buffer = NULL;
+		CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strFullname);
+		if (!pDec7z->IsFileOk()) return NULL;
+		size_t len = pDec7z->GetItemSize(zipIndex);
+		buffer = (char *)GlobalAlloc(GMEM_FIXED, len);
+		pDec7z->UnzipItem(zipIndex, buffer, len);
+
+		#ifndef USE_GDI_PLUS
+		#  if defined(BARECE) || defined(UNDER_WINE)
+		#  else
+			InitImagingFactoryOnce();
+			IImage* pImage = NULL;
+			m_pImagingFactory->CreateImageFromBuffer(buffer, len,
+													BufferDisposalFlagNone,
+													&pImage );
+			ImageInfo imageInfo;
+			pImage->GetImageInfo(&imageInfo);
+
+			HDC dstdc = CreateCompatibleDC(dc);
+			BITMAPINFOHEADER bmih;
+			void* pBits;
+			bmih.biSize = sizeof(BITMAPINFOHEADER);
+			bmih.biWidth = imageInfo.Width;
+			bmih.biHeight = imageInfo.Height;
+			bmih.biPlanes = 1;
+			bmih.biBitCount = GetDeviceCaps(dc, BITSPIXEL);
+			bmih.biCompression = BI_RGB;
+			bmih.biSizeImage = 0;
+			bmih.biXPelsPerMeter = 0;
+			bmih.biYPelsPerMeter = 0;
+			bmih.biClrUsed = 0;
+			bmih.biClrImportant = 0;
+			HBITMAP dstbm = CreateDIBSection(dstdc, (BITMAPINFO *)&bmih, 0, &pBits, NULL, 0);			
+			HBITMAP dstoldbm = (HBITMAP) SelectObject(dstdc, dstbm);
+			RECT rectForDraw;
+			rectForDraw.top = 0;
+			rectForDraw.left = 0;
+			rectForDraw.right = imageInfo.Width;
+			rectForDraw.bottom = imageInfo.Height;
+			pImage->Draw(dstdc, &rectForDraw, NULL);
+			SelectObject(dstdc, dstoldbm);
+			DeleteDC(dstdc);
+			hbm = dstbm;
+		#  endif
+		#else // UNDER_CE
+			IStream* pIStream    = NULL;
+			if (S_OK == CreateStreamOnHGlobal(buffer, FALSE, (LPSTREAM*)&pIStream))
+			{
+				Gdiplus::Bitmap bm(pIStream);
+				Gdiplus::Color clr;
+				bm.GetHBITMAP(clr, &hbm);
+				pIStream->Release();
+			}
+		#endif // UNDER_CE
+
+		GlobalFree(buffer);
+//		CloseZip(hz);
+	}
+	return hbm;
 }

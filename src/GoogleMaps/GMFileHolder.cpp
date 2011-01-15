@@ -13,10 +13,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 #include <windows.h>
+#include <sstream>
 #include "GMFileHolder.h"
 #include "../PlatformDef.h"
 #include "../Lock.h"
 #include "../MapApp.h"
+#include "../FileFormats/Decoder_7z.h"
 #ifndef _MSC_VER
 #include <errno.h>
 #endif
@@ -208,32 +210,76 @@ void CGMFileHolder::FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion)
 		MessageBox(NULL, sMapVersionWarnings.c_str(), L"Please update gpsVP", MB_ICONEXCLAMATION);
 }
 
-const long CGMFileHolder::GetFileName(std::wstring& name, const GEOFILE_DATA& data) const
+// GetUnzippedFileName:
+// * returns the theoritical tile file name without checking if the file exist in the cache.
+std::wstring CGMFileHolder::GetUnzippedFileName(const GEOFILE_DATA& data) const
 {
 	AutoLock l;
 
 	std::wstring path, filename;
 	FILE *pFile = NULL;
-	if (!GetDiskFileName(data, path, filename)) {
-	} else {
-		filename = m_strMapsRoot + L"/" + path + L"/" + filename;
-		pFile = wfopen(filename.c_str(), L"r");
-	}
+	if (!GetDiskFileName(data, path, filename))
+		return L"";
+	else
+		return m_strMapsRoot + L"/" + path + L"/" + filename;
+}
 
-	if (pFile) {
+// GetFileName:
+// * returns true, zipIndex=-1, name = tile file name, when the tile is not zipped.
+// * returns true, zipIndex>=0, name = zip file name, when the tile is zipped.
+// * returns false, name = theoritical tile file name, when the tile does not exist in the cache.
+bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, int& zipIndex) const
+{
+	AutoLock l;
+
+	zipIndex = -1;
+	std::wstring path, filename;
+	FILE *pFile = NULL;
+	if (!GetDiskFileName(data, path, filename))
+		return false;
+
+	// Check if there is a file
+	std::wstring fullname = m_strMapsRoot + L"/" + path + L"/" + filename;
+	pFile = wfopen(fullname.c_str(), L"r");
+	if (pFile)
+	{
 		fclose(pFile);
 		pFile = NULL;
-		name = filename;
-		return 0;
-	} else {
-		// Not found
-//		if (m_strDefaultFileName.empty()) {
-			return 1;
-//		} else {
-//			name = m_strDefaultFileName;
-//			return 0;
-//		}
+		name = fullname;
+		return true;
 	}
+
+	// Check if there is a file in a zipfile (actually 7z file, trying all possible files on the path)
+	std::wstring strZip, strNameInZip; 
+	std::replace(path.begin(), path.end(), L'\\', L'/');
+	std::wstringstream wssPath(path);
+	std::wstring strPathToCurrent = m_strMapsRoot + L"/";
+	std::wstring strCurrent;
+	int startPosCurrentInPath = 0;
+	while (std::getline(wssPath, strCurrent, L'/'))
+	{
+		strZip = strPathToCurrent + strCurrent + L".7z";
+		strNameInZip = path.substr(startPosCurrentInPath) + L"/" + filename;
+		pFile = wfopen(strZip.c_str(), L"r");
+		if (pFile)
+		{
+			fclose(pFile);
+			pFile = NULL;
+			CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strZip);
+			if (pDec7z->IsFileOk())
+			{
+				zipIndex = pDec7z->FindItem(strNameInZip.c_str());
+				if (-1 != zipIndex)
+				{
+					name = strZip;
+					return true;
+				}
+			}
+		}
+		strPathToCurrent += strCurrent + L"/";
+		startPosCurrentInPath += strCurrent.length() + 1;
+	}
+	return false;
 }
 
 long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded)
@@ -437,7 +483,8 @@ long CGMFileHolder::AddFileToDownload(const GeoDataSet& data)
 bool CGMFileHolder::IsFileInCache(const GEOFILE_DATA& data)
 {
 	std::wstring name;
-	return (GetFileName(name, data) == 0);
+	int zipIndex;
+	return GetFileName(data, name, zipIndex);
 }
 
 HANDLE CGMFileHolder::RelocateFiles(HANDLE h, long nMaxMSec)

@@ -81,6 +81,7 @@ class CMapApp : public IGPSClient
 {
 private:
 	Dict m_dict;
+	bool m_fComInitialized;
 public:
 	CGDIPainter m_painter;
 	CRegString m_rsWaypointsFile;
@@ -220,6 +221,10 @@ public:
 public:
 	CMapApp();
 	~CMapApp();
+	void InitComIfNecessary();
+private:
+	void UninitComIfNecessary();
+public:
 	virtual void NoFix();
 	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP);
 	virtual void NoVFix();
@@ -261,8 +266,11 @@ public:
 	void OptionsSetTrackFolder();
 	void SetRasterMapFolder();
 	void DRMAddCurrentView();
-	void DRMStartWithCurrentZoom();
+	void DRMAddViewOfCurrentTileAtZ0(int Z0);
+	void DRMClearView();
+	void DRMStartWithCurrentZoom(bool withPreviousZooms);
 	void DRMShowAvailableTiles();
+	void DRMExportCurZoom();
 	void DRMByTrack();
 	void DRMRefreshInsideRegion();
 	void DRMRefreshAll();

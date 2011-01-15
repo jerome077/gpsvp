@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="VisualPainterPPC"
 	ProjectGUID="{B2FEF60F-5FB2-4D91-95DA-2D73C40F0872}"
 	RootNamespace="VisualPainterPPC"
@@ -3635,6 +3635,14 @@
 				Name="FileFormats"
 				>
 				<File
+					RelativePath="..\FileFormats\Decoder_7z.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_7z.h"
+					>
+				</File>
+				<File
 					RelativePath="..\FileFormats\GPX.cpp"
 					>
 				</File>
@@ -3650,6 +3658,66 @@
 					RelativePath="..\FileFormats\OSM.h"
 					>
 				</File>
+				<Filter
+					Name="LZMA_SDK"
+					>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zAlloc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zBuf.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zCrc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zCrcOpt.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zDec.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zFile.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zIn.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\7zStream.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\Bcj2.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\Bra.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\Bra86.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\CpuArch.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\Lzma2Dec.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\LZMA_SDK\LzmaDec.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

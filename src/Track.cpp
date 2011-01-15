@@ -357,14 +357,13 @@ void CTrack::ReadFirstTrackFromGPX(const std::wstring& wstrFilename)
 {
 	try
 	{
-		ComInit MyObjectToInitCOM;
+		app.InitComIfNecessary();
+
+		CGPXFileReader GpxReader(wstrFilename);
+		std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
+		if (!apTrack->eof())
 		{
-			CGPXFileReader GpxReader(wstrFilename);
-			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
-			if (!apTrack->eof())
-			{
-				ReadGPX(apTrack, wstrFilename);
-			}
+			ReadGPX(apTrack, wstrFilename);
 		}
 	}
 	catch (CGPXFileReader::Error e)
@@ -1072,35 +1071,34 @@ Int CTrackList::OpenTracksGPX(const std::wstring& wstrFile)
 	Int Result = -1;
 	try
 	{
-		ComInit MyObjectToInitCOM;
-		{
-			CGPXFileReader GpxReader(wstrFile);
-			GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
-			GpxReader.setReadAltitude(!app.m_Options[mcoQuickReadGPXTrack]);
-			std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
-			if (apTrack->eof())
-				MessageBox(NULL, L("No track in this file"), L("GPX read error"), MB_ICONEXCLAMATION);
-			while (!apTrack->eof())
-			{
-				std::wstring wstrTrackname;
-				if (!(app.m_Options[mcoMultitrackAsSingleTrack] && (-1 != Result)))
-				{
-					m_Tracks.push_back(CTrack());
-					wstrTrackname = apTrack->getName() + L" - " + wstrFile;
-				}
-				else
-					wstrTrackname = wstrFile;
+		app.InitComIfNecessary();
 
-				m_Tracks.back().ReadGPX(apTrack, wstrTrackname);
-				
-				if (m_Tracks.back().IsPresent())
-				{
-					Result = m_Tracks.size()-1;
-				}
-				else if (!(app.m_Options[mcoMultitrackAsSingleTrack] && Result))
-					m_Tracks.pop_back();
-				apTrack = GpxReader.nextTrack();
+		CGPXFileReader GpxReader(wstrFile);
+		GpxReader.setReadTime(!app.m_Options[mcoQuickReadGPXTrack]);
+		GpxReader.setReadAltitude(!app.m_Options[mcoQuickReadGPXTrack]);
+		std::auto_ptr<CGPXTrack> apTrack = GpxReader.firstTrack();
+		if (apTrack->eof())
+			MessageBox(NULL, L("No track in this file"), L("GPX read error"), MB_ICONEXCLAMATION);
+		while (!apTrack->eof())
+		{
+			std::wstring wstrTrackname;
+			if (!(app.m_Options[mcoMultitrackAsSingleTrack] && (-1 != Result)))
+			{
+				m_Tracks.push_back(CTrack());
+				wstrTrackname = apTrack->getName() + L" - " + wstrFile;
 			}
+			else
+				wstrTrackname = wstrFile;
+
+			m_Tracks.back().ReadGPX(apTrack, wstrTrackname);
+			
+			if (m_Tracks.back().IsPresent())
+			{
+				Result = m_Tracks.size()-1;
+			}
+			else if (!(app.m_Options[mcoMultitrackAsSingleTrack] && Result))
+				m_Tracks.pop_back();
+			apTrack = GpxReader.nextTrack();
 		}
 	}
 	catch (CGPXFileReader::Error e)

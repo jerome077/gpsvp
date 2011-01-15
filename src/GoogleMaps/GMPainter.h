@@ -18,9 +18,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "GMFileHolder.h"
 #include "../GeoPoint.h"
 #include <windows.h>
+
 #ifdef USE_GDI_PLUS
 #	include <gdiplus.h>
 #endif // USE_GDI_PLUS
+#ifdef UNDER_CE
+#include <imaging.h> 
+#endif // UNDER_CE
+
 #include <list>
 #include "../VersionNumber.h"
 #include "../Track.h"
@@ -75,7 +80,8 @@ public:
 	void ProcessWMHIBERNATE();
 	// Level - 0 .. 18
 	// DC, rect - where to draw
-	int Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type, bool fDoubleSize);
+	int Paint(HDC dc, const RECT& rect, const GeoPoint & gpCenter, double scale, enumGMapType type,
+		      bool fDoubleSize, IPainter * pPainter);
 	bool RotationAllowed();
 
 	void PostponeVersionUpdate();
@@ -85,8 +91,11 @@ public:
 	double GetPreferredScale(double scale);
 
 	void DownloadAddCurrentView();
-	void DownloadStartWithCurrentZoom();
+	void DownloadAddViewOfCurrentTileAtZoom(int Zoom00);
+	void DownloadClearView();
+	void DownloadStartWithCurrentZoom(bool withPreviousZooms);
     void GenerateTilesTrackForCurrentView(CTrackList& aTrackList);
+	void ExportCurrentZoom();
 	void RefreshTiles(const GeoRect *pRegion);
 	void RefreshInsideRegion();
 	void RefreshAll();
@@ -113,10 +122,12 @@ public:
 protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
 	bool GetFileDataByPoint(GEOFILE_DATA *pData, const GeoPoint & gp, long level) const;
-	long EnumerateAndProcessGeoRect(GeoDataSet *pSet, const GeoRect &gr, long nLevel, enumGMapType type,
-		long *pnInCacheCount, bool bDownloadLowerLevels, CTrack* pTrack);
+	long EnumerateAndProcessGeoRect(const GeoRect &gr, long nLevel, enumGMapType type, bool bDownloadLowerLevels,
+	                                GeoDataSet *pSetNotInCache, long *pnInCacheCount, GeoDataSet *pSetInCache);
 	void DeleteFrontElementFromCache();
 	void DeleteElementFromCache(const GEOFILE_DATA &data);
+	HBITMAP LoadTileOrZippedTile(const std::wstring& strFullname, int zipIndex, HDC dc);
+	void InitImagingFactoryOnce();
 
 private:
 	// Opened files
@@ -136,6 +147,9 @@ private:
 
 	// GeoRect that was Paint()ed last
 	GeoRect m_grectLastViewed;
+	long m_nCenterXLastViewed;
+	long m_nCenterYLastViewed;
+	unsigned char m_nCenterZ17LastViewed;
 	// GeoRect user chose to download
 	GeoRect m_grectToDownload;
 	bool m_bGeoRectToDownload;
@@ -145,4 +159,8 @@ private:
 	enumGMapType m_enTypeToDownload;
 
 	bool m_KeepMemoryLow;
+
+	#ifndef USE_GDI_PLUS
+	IImagingFactory* m_pImagingFactory;
+	#endif
 };
