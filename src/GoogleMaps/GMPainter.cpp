@@ -26,7 +26,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <math.h>
 #include <set>
 #include "../MapApp.h"
-#include "../FileFormats/Decoder_7z.h"
+#if UNDER_CE && _WIN32_WCE < 0x500
+#else
+#  include "../FileFormats/Decoder_7z.h"
+#endif
 
 
 
@@ -43,7 +46,10 @@ CGMPainter::CGMPainter(void)
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_nGDIPlusToken, &gdiplusStartupInput, NULL);
 #else
+#  if UNDER_CE && _WIN32_WCE < 0x500
+#  else
 	m_pImagingFactory = NULL;
+#  endif
 #endif // UNDER_CE
 	m_bGotMapVersions = false;
 	m_bGeoRectToDownload = false;
@@ -1122,6 +1128,8 @@ void CGMPainter::DeleteElementFromCache(const GEOFILE_DATA &data)
 void CGMPainter::InitImagingFactoryOnce()
 {
 	#ifndef USE_GDI_PLUS
+	#  if UNDER_CE && _WIN32_WCE < 0x500
+	#  else
 	if (!m_pImagingFactory)
 	{
 		#  if defined(BARECE) || defined(UNDER_WINE)
@@ -1134,6 +1142,7 @@ void CGMPainter::InitImagingFactoryOnce()
 							(void**)&m_pImagingFactory);
 		#  endif
 	}
+	#  endif
 	#endif
 }
 
@@ -1160,6 +1169,8 @@ HBITMAP CGMPainter::LoadTileOrZippedTile(const std::wstring& strFullname, int zi
 	// Tile is in a 7z file:
 	else
 	{
+		#if UNDER_CE && _WIN32_WCE < 0x500
+		#else
 		char *buffer = NULL;
 		CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strFullname);
 		if (!pDec7z->IsFileOk()) return NULL;
@@ -1217,6 +1228,7 @@ HBITMAP CGMPainter::LoadTileOrZippedTile(const std::wstring& strFullname, int zi
 
 		GlobalFree(buffer);
 //		CloseZip(hz);
+		#endif
 	}
 	return hbm;
 }

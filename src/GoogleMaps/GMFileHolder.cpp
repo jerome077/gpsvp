@@ -18,7 +18,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../PlatformDef.h"
 #include "../Lock.h"
 #include "../MapApp.h"
-#include "../FileFormats/Decoder_7z.h"
 #ifndef _MSC_VER
 #include <errno.h>
 #endif
@@ -250,6 +249,8 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, in
 	}
 
 	// Check if there is a file in a zipfile (actually 7z file, trying all possible files on the path)
+	#if UNDER_CE && _WIN32_WCE < 0x500
+	#else
 	std::wstring strZip, strNameInZip; 
 	std::replace(path.begin(), path.end(), L'\\', L'/');
 	std::wstringstream wssPath(path);
@@ -279,6 +280,7 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, in
 		strPathToCurrent += strCurrent + L"/";
 		startPosCurrentInPath += strCurrent.length() + 1;
 	}
+	#endif
 	return false;
 }
 

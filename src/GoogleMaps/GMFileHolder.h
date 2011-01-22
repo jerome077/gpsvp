@@ -21,7 +21,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../Track.h"
 #include "RasterServerSources.h"
 #include "../VersionNumber.h"
-#include "../FileFormats/Decoder_7z.h"
+#if UNDER_CE && _WIN32_WCE < 0x500
+#else
+#  include "../FileFormats/Decoder_7z.h"
+#endif
 
 typedef std::set< GEOFILE_DATA > GeoDataSet;
 

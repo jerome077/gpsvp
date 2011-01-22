@@ -23,7 +23,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #	include <gdiplus.h>
 #endif // USE_GDI_PLUS
 #ifdef UNDER_CE
-#include <imaging.h> 
+#  if UNDER_CE && _WIN32_WCE < 0x500
+#  else
+#    include <imaging.h> 
+#  endif // _WIN32_WCE
 #endif // UNDER_CE
 
 #include <list>
@@ -161,6 +164,9 @@ private:
 	bool m_KeepMemoryLow;
 
 	#ifndef USE_GDI_PLUS
+	#  if UNDER_CE && _WIN32_WCE < 0x500
+	#  else
 	IImagingFactory* m_pImagingFactory;
+	#  endif
 	#endif
 };
