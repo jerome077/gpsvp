@@ -77,5 +77,8 @@ inline std::wstring	GoogleXYZ17toQKeyW	(unsigned long x, unsigned long y, unsign
 
 // ---------------------------------------------------------------
 
+void adjustLevel(unsigned char newLevel, unsigned long& x, unsigned long& y, unsigned char& l);
+
+// ---------------------------------------------------------------
 
 #endif // GMCOMMON_H

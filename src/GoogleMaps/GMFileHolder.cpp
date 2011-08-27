@@ -167,6 +167,9 @@ protected:
 
 void CGMFileHolder::FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion)
 {
+	// Test cases for the variables can be through the following line activated:
+	// Test_CStringSchema();
+
 	WPARAM currentWMSNumber = gtFirstWMSMapType;
 
     bool bMapErrors = false;

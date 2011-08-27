@@ -950,11 +950,13 @@ void CGMPainter::ExportCurrentZoom()
 	fputws_utf8(pFile, L"\r\n");
 	fputws_utf8(pFile, L"SET /P UserInput=Do the tiles use 256 colors? [y/n]\r\n");
 	fputws_utf8(pFile, L"IF not \"%UserInput%\"==\"y\" goto :NOT256\r\n");
-	fputws_utf8(pFile, std::wstring(L"gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-256colors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, std::wstring(L"REM gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-256colors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, std::wstring(L"gdal_translate -of GTiff -co worldfile=yes ")+ wcBaseFileName + L"-256colors.vrt " + wcBaseFileName+L".tif\r\n");
 	fputws_utf8(pFile, L":NOT256\r\n");
 	fputws_utf8(pFile, L"SET /P UserInput=Do the tiles use 16 million colors? [y/n]\r\n");
 	fputws_utf8(pFile, L"IF not \"%UserInput%\"==\"y\" goto :NOT16M\r\n");
-	fputws_utf8(pFile, std::wstring(L"gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-16Mcolors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, std::wstring(L"REM gdal_translate -of png -co worldfile=yes ")+ wcBaseFileName + L"-16Mcolors.vrt " + wcBaseFileName+L".png\r\n");
+	fputws_utf8(pFile, std::wstring(L"gdal_translate -of GTiff -co worldfile=yes ")+ wcBaseFileName + L"-16Mcolors.vrt " + wcBaseFileName+L".tif\r\n");
 	fputws_utf8(pFile, L":NOT16M\r\n");
 	fputws_utf8(pFile, L"\r\n");
 //	if (zipFilesSet.size() > 0)

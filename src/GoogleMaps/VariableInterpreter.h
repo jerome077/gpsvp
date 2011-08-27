@@ -95,10 +95,12 @@ protected:
 class CXSchema: public CSchema
 {
 public:
-	CXSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
+	CXSchema(int maxChar, int firstChar, int zoom00 = -1) : m_MaxChar(maxChar), m_firstChar(firstChar),
+		                                                    m_level(LEVEL_REVERSE_OFFSET-1-zoom00) {};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
-		wchar_t buffer[32];
+		wchar_t buffer[32];		
+		adjustLevel(m_level, x, y, l);
 		swprintf(buffer, 32, L"%d", x);
 
 		if ((m_firstChar > 0) || (m_MaxChar > 0))
@@ -117,6 +119,8 @@ protected:
 	int m_MaxChar;
 	// First char to use (0 to start at the beginning):
 	int m_firstChar;
+	// level for the calculation or 18 (zoom00 = -1) to use the current level:
+	int m_level;
 };
 
 // ---------------------------------------------------------------
@@ -125,10 +129,12 @@ protected:
 class CYSchema: public CSchema
 {
 public:
-	CYSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
+	CYSchema(int maxChar, int firstChar, int zoom00 = -1) : m_MaxChar(maxChar), m_firstChar(firstChar),
+		                                                    m_level(LEVEL_REVERSE_OFFSET-1-zoom00) {};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
 		wchar_t buffer[32];
+		adjustLevel(m_level, x, y, l);
 		swprintf(buffer, 32, L"%d", y);
 
 		if ((m_firstChar > 0) || (m_MaxChar > 0))
@@ -147,6 +153,8 @@ protected:
 	int m_MaxChar;
 	// First char to use (0 to start at the beginning):
 	int m_firstChar;
+	// level for the calculation or 18 (zoom00 = -1) to use the current level:
+	int m_level;
 };
 
 // ---------------------------------------------------------------
@@ -172,10 +180,12 @@ protected:
 class CTMSYSchema: public CSchema
 {
 public:
-	CTMSYSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
+	CTMSYSchema(int maxChar, int firstChar, int zoom00 = -1) : m_MaxChar(maxChar), m_firstChar(firstChar),
+		                                                    m_level(LEVEL_REVERSE_OFFSET-1-zoom00) {};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
 		wchar_t buffer[32];
+		adjustLevel(m_level, x, y, l);
 		swprintf(buffer, 32, L"%d", (1<<(17-l))-1-y);
 
 		if ((m_firstChar > 0) || (m_MaxChar > 0))
@@ -194,6 +204,8 @@ protected:
 	int m_MaxChar;
 	// First char to use (0 to start at the beginning):
 	int m_firstChar;
+	// level for the calculation or 18 (zoom00 = -1) to use the current level:
+	int m_level;
 };
 
 // ---------------------------------------------------------------
@@ -202,9 +214,11 @@ protected:
 class CQRSTSchema: public CSchema
 {
 public:
-	CQRSTSchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
+	CQRSTSchema(int maxChar, int firstChar, int zoom00 = -1) : m_MaxChar(maxChar), m_firstChar(firstChar),
+		                                                    m_level(LEVEL_REVERSE_OFFSET-1-zoom00) {};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
+		adjustLevel(m_level, x, y, l);
 		return GoogleXYZ17toQRSTW(x, y, l, m_MaxChar, m_firstChar);
 	};
 
@@ -213,6 +227,8 @@ protected:
 	int m_MaxChar;
 	// First char to use (0 to start at the beginning):
 	int m_firstChar;
+	// level for the calculation or 18 (zoom00 = -1) to use the current level:
+	int m_level;
 };
 
 // ---------------------------------------------------------------
@@ -221,9 +237,11 @@ protected:
 class CQKeySchema: public CSchema
 {
 public:
-	CQKeySchema(int maxChar, int firstChar) : m_MaxChar(maxChar), m_firstChar(firstChar)	{};
+	CQKeySchema(int maxChar, int firstChar, int zoom00 = -1) : m_MaxChar(maxChar), m_firstChar(firstChar),
+		                                                    m_level(LEVEL_REVERSE_OFFSET-1-zoom00) {};
 	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y)
 	{
+		adjustLevel(m_level, x, y, l);
 		return GoogleXYZ17toQKeyW(x, y, l, m_MaxChar, m_firstChar);
 	};
 
@@ -232,6 +250,34 @@ protected:
 	int m_MaxChar;
 	// First char to use (0 to start at the beginning):
 	int m_firstChar;
+	// level for the calculation or 18 (zoom00 = -1) to use the current level:
+	int m_level;
+};
+
+// ---------------------------------------------------------------
+
+// CLongitudeSchema: for %EPSG_3785_LONG1, %EPSG_3785_LONG2
+class CLongitude3785Schema: public CSchema
+{
+public:
+	CLongitude3785Schema(int delta)	: m_delta(delta) {};
+	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y);
+
+protected:
+	int m_delta;
+};
+
+// ---------------------------------------------------------------
+
+// CLatitudeSchema: for %EPSG_3785_LAT1, %EPSG_3785_LAT2
+class CLatitude3785Schema: public CSchema
+{
+public:
+	CLatitude3785Schema(int delta) : m_delta(delta)	{};
+	virtual std::wstring interpret(unsigned char l, unsigned long x, unsigned long y);
+
+protected:
+	int m_delta;
 };
 
 // ---------------------------------------------------------------

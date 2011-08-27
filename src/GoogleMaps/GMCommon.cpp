@@ -265,3 +265,25 @@ std::wstring GoogleXYZ1toQKeyW(unsigned long x, unsigned long y, unsigned char z
 }
 
 // ---------------------------------------------------------------
+
+void adjustLevel(unsigned char newLevel, unsigned long& x, unsigned long& y, unsigned char& l)
+{
+	// No adjustement when newLevel >= 18 (corresponds to zoom00 = -1)
+	if (newLevel >= LEVEL_REVERSE_OFFSET)
+		return;
+
+	int diff = l - newLevel;
+	if (diff > 0)
+	{
+		x = x << diff;
+		y = y << diff;
+	}
+	else if (diff < 0)
+	{
+		x = x >> -diff;
+		y = y >> -diff;
+	}
+	l = newLevel;
+}
+
+// ---------------------------------------------------------------

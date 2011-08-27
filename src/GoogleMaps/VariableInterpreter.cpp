@@ -54,6 +54,15 @@ void Test_CStringSchema()
 	S1.assign(L"%2X,%3,2X;%2Y;%2,2Y/%2,2TMSX/%1,2TMSY");
 	assert(!S1.empty());
 	assert(S1.interpret(3, 8734, 5710) == L"87,734;57;71/73/0");
+	S1.assign(L"%EPSG_3785_LONG1,%EPSG_3785_LAT1,%EPSG_3785_LONG2,%EPSG_3785_LAT2");
+	assert(!S1.empty());
+	assert(S1.interpret(3, 8734, 5710) == L"1325723.81857809700000,6068488.54961671310000,1328169.80348322260000,6070934.53452183770000");	
+	S1.assign(L"%ZOOM_00: %,,10X %,,11X %,,12X %,,13X %,,14X %,,15X / %,,13TMSX / %,,10Y %,,11Y %,,12Y %,,13Y %,,14Y %,,15Y / %,,13TMSY %,,14TMSY");
+	assert(!S1.empty());
+	assert(S1.interpret(3, 8734, 5710) == L"14: 545 1091 2183 4367 8734 17468 / 4367 / 356 713 1427 2855 5710 11420 / 5336 10673");	
+	S1.assign(L"http://a.X.b/%5QKEY/%QKEY/%,,5QKEY");
+	assert(!S1.empty());
+	assert(S1.interpret(3, 8734, 5710) == L"http://a.X.b/12023/12023002013330/12023");	
 }
 
 // ---------------------------------------------------------------
@@ -104,8 +113,9 @@ bool GetVarNameAndIncPos(const std::wstring& strSchema, size_t& pos, const std::
 
 // Like 'CheckVariableAndGetLength' but for variables where you can limit the char count: %5QRST
 // an also give a start position like %5,7QRST
+// and give the zoom0 at which the variable should be calculated like %,,10X
 size_t CheckExtendedVariable(const std::wstring& strSchema, size_t pos, const std::wstring& varName,
-							 int& maxCharCount, int& firstChar)
+							 int& maxCharCount, int& firstChar, int& zoom00)
 {
 	size_t currentPos = pos;
 
@@ -120,6 +130,14 @@ size_t CheckExtendedVariable(const std::wstring& strSchema, size_t pos, const st
 	}
 	else
 		firstChar = 0;
+
+	// Zoom:
+	if (GetSeparatorAndIncPos(strSchema, currentPos))
+	{
+		zoom00 = GetIntegerAndIncPos(strSchema, currentPos);
+	}
+	else
+		zoom00 = -1;
 
 	// Variable present:
 	if (GetVarNameAndIncPos(strSchema, currentPos, varName))
@@ -150,7 +168,7 @@ void CStringSchema::assign(const std::wstring& strSchema)
 	while (std::wstring::npos != found)
 	{
 		size_t varlen;
-		int maxCharCount, firstChar;
+		int maxCharCount, firstChar, zoom00;
 		if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"LONG1")))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
@@ -171,15 +189,15 @@ void CStringSchema::assign(const std::wstring& strSchema)
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
 			m_SchemaParts.push_back( new CLatitudeSchema(0) ); // north
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"X", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"X", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar, zoom00) );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"Y", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"Y", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CYSchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CYSchema(maxCharCount, firstChar, zoom00) );
 		}
 		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"ZOOM_17")))
 		{
@@ -196,25 +214,45 @@ void CStringSchema::assign(const std::wstring& strSchema)
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
 			m_SchemaParts.push_back( new CZoomSchema(-1, LEVEL_REVERSE_OFFSET) ); // 18-data.level
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSX", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSX", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CXSchema(maxCharCount, firstChar, zoom00) );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSY", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"TMSY", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CTMSYSchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CTMSYSchema(maxCharCount, firstChar, zoom00) );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QRST", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QRST", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CQRSTSchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CQRSTSchema(maxCharCount, firstChar, zoom00) );
 		}
-		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QKEY", maxCharCount, firstChar)))
+		else if (0 != (varlen = CheckExtendedVariable(strSchema, found+1, L"QKEY", maxCharCount, firstChar, zoom00)))
 		{
 			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
-			m_SchemaParts.push_back( new CQKeySchema(maxCharCount, firstChar) );
+			m_SchemaParts.push_back( new CQKeySchema(maxCharCount, firstChar, zoom00) );
+		}
+		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"EPSG_3785_LONG1")))
+		{
+			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
+			m_SchemaParts.push_back( new CLongitude3785Schema(0) ); // west
+		}
+		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"EPSG_3785_LONG2"))) //east
+		{
+			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
+			m_SchemaParts.push_back( new CLongitude3785Schema(1) ); // east
+		}
+		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"EPSG_3785_LAT1")))
+		{
+			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
+			m_SchemaParts.push_back( new CLatitude3785Schema(1) ); // south
+		}
+		else if (0 != (varlen = CheckVariableAndGetLength(strSchema, found+1, L"EPSG_3785_LAT2")))
+		{
+			m_SchemaParts.push_back( new CSimpleStringSchema(strSchema.substr(pos0, found-pos0)) );
+			m_SchemaParts.push_back( new CLatitude3785Schema(0) ); // north
 		}
 		else
 		{
@@ -242,7 +280,6 @@ std::wstring CStringSchema::interpret(unsigned char l, unsigned long x, unsigned
 
 // ---------------------------------------------------------------
 
-
 std::wstring CLongitudeSchema::interpret(unsigned char l, unsigned long x, unsigned long y)
 {
 	wchar_t buffer[32];
@@ -258,6 +295,31 @@ std::wstring CLatitudeSchema::interpret(unsigned char l, unsigned long x, unsign
 	wchar_t buffer[32];
 	double Lat1 = GoogleYZ17toLat(y + m_delta, l);
 	swprintf(buffer, 32, L"%.14f", Lat1);
+	return buffer;
+};
+
+// ---------------------------------------------------------------
+
+std::wstring CLongitude3785Schema::interpret(unsigned char l, unsigned long x, unsigned long y)
+{
+	wchar_t buffer[32];
+	double Long1 = GoogleXZ17toLong(x + m_delta, l);
+	double XSpherMerc = LongToXSphericalMercator(Long1);
+	swprintf(buffer, 32, L"%.14f", XSpherMerc);
+	return buffer;
+};
+
+// ---------------------------------------------------------------
+
+std::wstring CLatitude3785Schema::interpret(unsigned char l, unsigned long x, unsigned long y)
+{
+	wchar_t buffer[32];
+	double Lat1 = GoogleYZ17toLat(y + m_delta, l);
+	// Should give the same output as a call "gdaltransform -s_srs EPSG:4326 -t_srs EPSG:900913"
+	// and it seems that WGS84LatToSphericalLat is not neede here...
+	//double SphericalLat = WGS84LatToSphericalLat(Lat1);
+	double YSpherMerc = LatToYSphericalMercator(Lat1);
+	swprintf(buffer, 32, L"%.14f", YSpherMerc);
 	return buffer;
 };
 
