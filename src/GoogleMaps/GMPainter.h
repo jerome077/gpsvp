@@ -95,10 +95,14 @@ public:
 
 	void DownloadAddCurrentView();
 	void DownloadAddViewOfCurrentTileAtZoom(int Zoom00);
+	void DownloadViewCorner(const int iCorner, const GeoPoint & gpCornerPoint);
+	#ifndef UNDER_CE
+    void DownloadViewFormat(const TSheetFormat iFormat, const GeoPoint & gpCenterPoint);
+	void ExportCurrentZoom();
+	#endif
 	void DownloadClearView();
 	void DownloadStartWithCurrentZoom(bool withPreviousZooms);
     void GenerateTilesTrackForCurrentView(CTrackList& aTrackList);
-	void ExportCurrentZoom();
 	void RefreshTiles(const GeoRect *pRegion);
 	void RefreshInsideRegion();
 	void RefreshAll();

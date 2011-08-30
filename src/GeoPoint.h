@@ -53,6 +53,7 @@ struct GeoPoint
 		return GeoPoint(lon+pt.lon, lat+pt.lat);
 	}
 	bool IsNull() const {return lon == 0 && lat == 0;}
+	GeoPoint ShiftedPointInMeter(double dX, double dY) const;
 };
 
 #define GeoPoint24(iLongitude24,iLatitude24) GeoPoint((iLongitude24) << (GPWIDTH - 24), (iLatitude24) << (GPWIDTH - 24))

@@ -19,6 +19,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <ctype.h>
 #include <string>
 
+enum TSheetFormat
+{
+	sf_A4V_25000,
+	sf_A4H_25000,
+	sf_A4V_50000,
+	sf_A4H_50000
+};
+
 //! Translate to double degrees for output
 double Degree(Int iDegree);
 //! Translate to Int degrees for internal usage

@@ -551,6 +551,48 @@ void CGMPainter::DownloadAddViewOfCurrentTileAtZoom(int Zoom00)
 	m_bGeoRectToDownload = true;
 }
 
+void CGMPainter::DownloadViewCorner(const int iCorner, const GeoPoint & gpCornerPoint)
+{
+	switch (iCorner)
+	{
+	case 1:
+		m_grectToDownload.minLon = gpCornerPoint.lon;
+		m_grectToDownload.maxLat = gpCornerPoint.lat;
+		break;
+	case 2:
+		m_grectToDownload.maxLon = gpCornerPoint.lon;
+		m_grectToDownload.minLat = gpCornerPoint.lat;
+		break;
+	}
+	m_bGeoRectToDownload = true;
+}
+
+#ifndef UNDER_CE
+void CGMPainter::DownloadViewFormat(const TSheetFormat iFormat, const GeoPoint & gpCenterPoint)
+{
+	switch (iFormat)
+	{
+	case sf_A4V_25000:
+		m_grectToDownload.Init  (gpCenterPoint.ShiftedPointInMeter(-2625, 3712.5));
+		m_grectToDownload.Append(gpCenterPoint.ShiftedPointInMeter(2625, -3712.5));
+		break;
+	case sf_A4H_25000:
+		m_grectToDownload.Init  (gpCenterPoint.ShiftedPointInMeter(-3712.5, 2625));
+		m_grectToDownload.Append(gpCenterPoint.ShiftedPointInMeter(3712.5, -2625));
+		break;
+	case sf_A4V_50000:
+		m_grectToDownload.Init  (gpCenterPoint.ShiftedPointInMeter(-5250, 7425));
+		m_grectToDownload.Append(gpCenterPoint.ShiftedPointInMeter(5250, -7425));
+		break;
+	case sf_A4H_50000:
+		m_grectToDownload.Init  (gpCenterPoint.ShiftedPointInMeter(-7425, 5250));
+		m_grectToDownload.Append(gpCenterPoint.ShiftedPointInMeter(7425, -5250));
+		break;
+	}
+	m_bGeoRectToDownload = true;
+}
+#endif
+
 void CGMPainter::DownloadClearView()
 {
 	m_bGeoRectToDownload = false;
@@ -713,6 +755,7 @@ std::wstring RemoveExtension(std::wstring fullName)
 	return strPath;
 }
 
+#ifndef UNDER_CE
 void CGMPainter::ExportCurrentZoom()
 {
 	GeoDataSet filesInCache;
@@ -975,6 +1018,7 @@ void CGMPainter::ExportCurrentZoom()
 	std::wstring sInfo = std::wstring(L("Exported to map folder as ")) + wcBaseFileName + L".*";
 	MessageBox(0, sInfo.c_str(), L("Export done"), MB_ICONINFORMATION);
 }
+#endif
 
 void CGMPainter::RefreshTiles(const GeoRect *pRegion)
 {

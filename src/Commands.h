@@ -173,6 +173,12 @@ enum enumMenuCommands
 	mcDownlRasterViewOfCurrentTileAtZoom13,
 	mcDownlRasterViewOfCurrentTileAtZoom14,
 	mcDownlRasterClearView,
+	mcDownlRasterViewCorner1,
+	mcDownlRasterViewCorner2,
+	mcDownlRasterViewA4V_25000,
+	mcDownlRasterViewA4H_25000,
+	mcDownlRasterViewA4V_50000,
+	mcDownlRasterViewA4H_50000,
 
 	mcGMapType = 0x2000,
 	mcFirstWMSMapType = mcGMapType + 9,

@@ -119,3 +119,18 @@ double DoubleDistanceToSegment(const GeoPoint & gp, const GeoPoint& gp1, const G
 		return DoubleDistance(gp2, gp);
 	return abs(asin(sin(d13/EARTH_RAD)*sin(a312)) * EARTH_RAD);
 }
+
+GeoPoint GeoPoint::ShiftedPointInMeter(double dX, double dY) const
+{
+	// Very approximate and only at small scale correct!!!
+
+	double dLat = Degree(lat);
+	double dLon = Degree(lon);
+    // On degree of longitude is approximatly 111.2km (length at equator) * cos(latitude)
+	double MeterPerLonDegree = 111200 * cos(dLat*pi/180);
+	double dNewLon = dLon + dX / MeterPerLonDegree;
+	// One degree of latitude is 60 minutes of latitude = approximatly 60*1852m
+	double MeterPerLatDegree = 60*1852;
+	double dNewLat = dLat + dY / MeterPerLatDegree;
+	return GeoPoint(dNewLon, dNewLat);
+}

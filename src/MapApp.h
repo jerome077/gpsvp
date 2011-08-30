@@ -267,10 +267,15 @@ public:
 	void SetRasterMapFolder();
 	void DRMAddCurrentView();
 	void DRMAddViewOfCurrentTileAtZ0(int Z0);
+	void DRMViewCorner1();
+	void DRMViewCorner2();
+	#ifndef UNDER_CE
+	void DRMViewFormat(TSheetFormat format);
+	void DRMExportCurZoom();
+	#endif
 	void DRMClearView();
 	void DRMStartWithCurrentZoom(bool withPreviousZooms);
 	void DRMShowAvailableTiles();
-	void DRMExportCurZoom();
 	void DRMByTrack();
 	void DRMRefreshInsideRegion();
 	void DRMRefreshAll();

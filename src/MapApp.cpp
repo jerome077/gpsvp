@@ -3393,6 +3393,8 @@ void CMapApp::InitMenu()
 			{
 				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
 				mmDownloadMaps.CreateItem(L("Aera: Use current View"), mcDownlRasterAddCurrentView);
+				mmDownloadMaps.CreateItem(L("Aera: Set first corner"), mcDownlRasterViewCorner1);
+				mmDownloadMaps.CreateItem(L("Aera: Set second corner"), mcDownlRasterViewCorner2);
 				CMenu & mmExtendOfTile = mmDownloadMaps.CreateSubMenu(L("Aera: Extend of center tile"));
 				{
 					mmExtendOfTile.CreateItem(L("by Z0=8"), mcDownlRasterViewOfCurrentTileAtZoom08);
@@ -3403,13 +3405,24 @@ void CMapApp::InitMenu()
 					mmExtendOfTile.CreateItem(L("by Z0=13"), mcDownlRasterViewOfCurrentTileAtZoom13);
 					mmExtendOfTile.CreateItem(L("by Z0=14"), mcDownlRasterViewOfCurrentTileAtZoom14);
 				}
+				#ifndef UNDER_CE
+				CMenu & mmPaperExtendOfTile = mmDownloadMaps.CreateSubMenu(L("Aera: Paper sizes"));
+				{
+					mmPaperExtendOfTile.CreateItem(L("Vertical A4 at 1:25000"), mcDownlRasterViewA4V_25000);
+					mmPaperExtendOfTile.CreateItem(L("Horizontal A4 at 1:25000"), mcDownlRasterViewA4H_25000);
+					mmPaperExtendOfTile.CreateItem(L("Vertical A4 at 1:50000"), mcDownlRasterViewA4V_50000);
+					mmPaperExtendOfTile.CreateItem(L("Horizontal A4 at 1:50000"), mcDownlRasterViewA4H_50000);
+				}
+				#endif
 				//mmDownloadMaps.CreateItem(L("Aera: By track"), mcDownlRasterByTrack);
 				//mmDownloadMaps.EnableMenuItem(mcDownlRasterByTrack, false);
 				mmDownloadMaps.CreateItem(L("Aera: Clear"), mcDownlRasterClearView);
 				mmDownloadMaps.CreateBreak();
 				mmDownloadMaps.CreateItem(L("Download current zoom"), mcDownlRasterStartWithCurZoom);
 				mmDownloadMaps.CreateItem(L("Download current and all previous zooms"), mcDownlRasterStartCurAndPreviousZooms);
+				#ifndef UNDER_CE
 				mmDownloadMaps.CreateItem(L("Export current zoom (experimental)"), mcDownlRasterExportCurZoom);
+				#endif
 				mmDownloadMaps.CreateItem(L("Show available tiles at current zoom"), mcDownlRasterShowAvailableTiles);
 			}
 			{
@@ -4035,6 +4048,26 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcDownlRasterViewOfCurrentTileAtZoom14:
 			DRMAddViewOfCurrentTileAtZ0(14);
 			break;
+		case mcDownlRasterViewCorner1:
+			DRMViewCorner1();
+			break;
+		case mcDownlRasterViewCorner2:
+			DRMViewCorner2();
+			break;
+#ifndef UNDER_CE
+		case mcDownlRasterViewA4V_25000:
+			DRMViewFormat(sf_A4V_25000);
+			break;
+		case mcDownlRasterViewA4H_25000:
+			DRMViewFormat(sf_A4H_25000);
+			break;
+		case mcDownlRasterViewA4V_50000:
+			DRMViewFormat(sf_A4V_50000);
+			break;
+		case mcDownlRasterViewA4H_50000:
+			DRMViewFormat(sf_A4H_50000);
+			break;
+#endif
 		case mcDownlRasterClearView:
 			DRMClearView();
 			break;
@@ -4047,9 +4080,11 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 		case mcDownlRasterShowAvailableTiles:
 			DRMShowAvailableTiles();
 			break;
+#ifndef UNDER_CE
 		case mcDownlRasterExportCurZoom:
 			DRMExportCurZoom();
 			break;
+#endif
 		case mcDownlRasterByTrack:
 			DRMByTrack();
 			break;
@@ -5375,6 +5410,30 @@ void CMapApp::DRMAddViewOfCurrentTileAtZ0(int Z0)
 	CheckMenu();
 }
 
+void CMapApp::DRMViewCorner1()
+{
+	m_pRasterMapPainter->DownloadViewCorner(1, m_painter.GetCenter());
+	m_painter.Redraw();
+	CheckMenu();
+}
+
+void CMapApp::DRMViewCorner2()
+{
+	m_pRasterMapPainter->DownloadViewCorner(2, m_painter.GetCenter());
+	m_painter.Redraw();
+	CheckMenu();
+}
+
+#ifndef UNDER_CE
+void CMapApp::DRMViewFormat(TSheetFormat format)
+{
+	m_pRasterMapPainter->DownloadViewFormat(format, m_painter.GetCenter());
+	m_painter.Redraw();
+	CheckMenu();
+}
+#endif
+
+
 void CMapApp::DRMClearView()
 {
 	m_pRasterMapPainter->DownloadClearView();
@@ -5395,11 +5454,13 @@ void CMapApp::DRMShowAvailableTiles()
 	CheckMenu();
 }
 
+#ifndef UNDER_CE
 void CMapApp::DRMExportCurZoom()
 {
 	m_pRasterMapPainter->ExportCurrentZoom();
 	CheckMenu();
 }
+#endif
 
 void CMapApp::DRMRefreshInsideRegion()
 {
