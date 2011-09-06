@@ -79,7 +79,7 @@ public:
 		WIN32_FIND_DATA FindFileData;
 
 		// Find all config files from the MapConfigs folder:
-		std::wstring strMapConfigsPath = FindApplicationBasePath() + L"MapConfigs\\";
+		std::wstring strMapConfigsPath = app.m_wstrBasePath + L"MapConfigs\\";
 		std::wstring strSearch = strMapConfigsPath + L"*.ini";
 		HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
 		if (INVALID_HANDLE_VALUE != hFind)
@@ -145,23 +145,6 @@ protected:
 				return true;
 		}
 		return false;
-	}
-
-	std::wstring FindApplicationBasePath()
-	{
-		TCHAR szTempName[MAX_PATH]=TEXT("\0");
-		int iLen = GetModuleFileName(NULL,szTempName,MAX_PATH);
-		if (0 != iLen)
-		{
-			std::wstring strPath = szTempName;
-			size_t found1 = strPath.rfind(L"\\");
-			if (std::string::npos != found1)
-			{
-				return strPath.substr(0, found1+1); // +1 to keep the trailing slash
-			}
-			else return L"";
-		}
-		else return L"";
 	}
 };
 

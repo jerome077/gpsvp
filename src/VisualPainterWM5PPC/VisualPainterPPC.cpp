@@ -69,6 +69,11 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 {
 	MSG msg;
 
+	app.m_wstrCmdLine = lpCmdLine;
+	wchar_t wcBuffer[MAX_PATH + 1];
+	GetModuleFileName(0, wcBuffer, MAX_PATH);
+	app.m_wstrProgName = wcBuffer;
+
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow)) 
 	{

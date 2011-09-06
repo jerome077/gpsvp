@@ -18,6 +18,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "Dialogs.h"
 #include "MapApp.h"
+#include "File.h"
 #include <resource.h>
 #include <sstream>
 
@@ -31,18 +32,6 @@ class CFileDlg : public CMADialog
 	CListView m_list;
 	CEditText m_filename;
 	CText m_path;
-	bool FileExist(const wchar_t * wcFilename)
-	{
-		WIN32_FIND_DATA wwd;
-		HANDLE h = FindFirstFile(wcFilename, &wwd);
-		if (h && (h != INVALID_HANDLE_VALUE))
-		{
-			FindClose(h);
-			if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-				return true;
-		}
-		return false;
-	}
 	void FillList()
 	{
 		m_filename.SetText(m_wstrResult.c_str());

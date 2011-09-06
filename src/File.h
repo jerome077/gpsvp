@@ -24,6 +24,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string>
 #include "PlatformDef.h"
 
+// ---------------------------------------------------------------
+
 //! OS file abstraction
 class CFile
 {
@@ -57,5 +59,11 @@ public:
 	void SetXOR(Byte bXOR) {m_bXOR = bXOR;}
 	operator bool();
 };
+
+// ---------------------------------------------------------------
+
+bool FileExist(const wchar_t * wcFilename);
+
+// ---------------------------------------------------------------
 
 #endif // FILE_H

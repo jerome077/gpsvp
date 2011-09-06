@@ -970,6 +970,7 @@ void CGMPainter::ExportCurrentZoom()
 	wstrFilename = wstrFolderPath + wcBaseFileName + L".bat";
 	pFile = wfopen(wstrFilename.c_str(), L"wb");
 	fputws_utf8(pFile, L"@Echo off\r\n");
+	fputws_utf8(pFile, L"call D:\\Programme\\Maps\\FWTools2.4.7\\setfw.bat\r\n");
 	fputws_utf8(pFile, L"SET PATH_7ZIP=\r\n");
 	fputws_utf8(pFile, L"\r\n");
 	fputws_utf8(pFile, L"Echo One of the .vrt file can be used directly by GDAL (http://www.gdal.org)\r\n");

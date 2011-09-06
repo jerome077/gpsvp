@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include "File.h"
 #include "Common.h"
+#include <windows.h>
 
 void CFile::Open(const std::wstring & filename)
 {
@@ -83,3 +84,20 @@ CFile::~CFile()
 		_close(m_iFD);
 #endif // USE_STDIO_H
 }
+
+// ---------------------------------------------------------------
+
+bool FileExist(const wchar_t * wcFilename)
+{
+	WIN32_FIND_DATA wwd;
+	HANDLE h = FindFirstFile(wcFilename, &wwd);
+	if (h && (h != INVALID_HANDLE_VALUE))
+	{
+		FindClose(h);
+		if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			return true;
+	}
+	return false;
+}
+
+// ---------------------------------------------------------------

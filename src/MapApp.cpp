@@ -2307,6 +2307,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 #else
 	RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\Vsevolod Shorin\\VSMapViewer", 0, L"", 0, 0, 0, &hRegKey, 0);
 #endif
+    m_wstrBasePath = FindApplicationBasePath();
+
 	m_rsTranslationFile.Init(hRegKey, L"TranslationFile");
 	if (m_rsTranslationFile() != L"")
 		m_dict.Read(m_rsTranslationFile().c_str());
@@ -5810,3 +5812,28 @@ void CMapApp::UninitComIfNecessary()
 		m_fComInitialized = false;
 	}
 }
+
+std::wstring CMapApp::FindApplicationBasePath()
+{
+	size_t found1 = m_wstrProgName.rfind(L"\\");
+	if (std::string::npos != found1)
+	{
+		return m_wstrProgName.substr(0, found1+1); // +1 to keep the trailing slash
+	}
+	else return L"";
+}
+
+void CMapApp::PlayFileSound(const std::wstring& wstrWavFile)
+{
+	if (m_Options[mcoSound])
+	{
+		#ifdef UNDER_CE
+		std::wstring wstrWavFullname = m_wstrBasePath + wstrWavFile;
+		if (FileExist(wstrWavFullname.c_str()))
+			PlaySound(wstrWavFullname.c_str(), g_hInst, SND_FILENAME | SND_ASYNC);
+		else
+			PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
+		#endif // UNDER_CE
+	}
+}
+

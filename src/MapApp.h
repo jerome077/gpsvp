@@ -174,6 +174,7 @@ public:
 	void AddOdometer(double dDist);
 	wchar_t * m_wstrCmdLine;
 	std::wstring m_wstrProgName;
+	std::wstring m_wstrBasePath;
 	DWORD m_dwConnected;
 	enumConnectionStatus m_iConnectionStatus;
 	bool m_fActive;
@@ -224,6 +225,7 @@ public:
 	void InitComIfNecessary();
 private:
 	void UninitComIfNecessary();
+	std::wstring FindApplicationBasePath();
 public:
 	virtual void NoFix();
 	virtual void Fix(GeoPoint gp, double dTimeUTC, double dHDOP);
@@ -405,6 +407,8 @@ public:
 	void CenterRouteTarget();
 	void ToolsNavigateRoute();
 	void ToolsStopNavigateRoute();
+
+	void PlayFileSound(const std::wstring& wstrWavFile);
 
 	bool IsInternetAllowed();
 #ifdef UNDER_CE

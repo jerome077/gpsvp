@@ -307,8 +307,8 @@ int WINAPI WinMain(
     g_hInst = hInstance;
 
 	app.m_wstrCmdLine = lpCmdLine;
-	wchar_t wcBuffer[1000];
-	GetModuleFileName(0, wcBuffer, 1000);
+	wchar_t wcBuffer[MAX_PATH + 1];
+	GetModuleFileName(0, wcBuffer, MAX_PATH);
 	app.m_wstrProgName = wcBuffer;
 
     if(FAILED(ActivatePreviousInstance(g_szAppWndClass, szAppTitle, &fActivated, 0, lpCmdLine)) ||
