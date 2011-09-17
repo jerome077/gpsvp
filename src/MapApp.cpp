@@ -3389,7 +3389,6 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
-				mmMapType.CreateItem(L("n.maps.yandex.ru"), mcGMapType + gtNYandex);
 				InitMenuAllWMSMaps(mmMapType);
 			}
 			{
