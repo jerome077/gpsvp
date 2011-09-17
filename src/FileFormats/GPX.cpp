@@ -535,7 +535,7 @@ CGPXFileWriter::CGPXFileWriter(const std::wstring& wstrFilename, const std::wstr
 	m_pFile = wfopen(wstrFilename.c_str(), L"wb");
 	if (!m_pFile) throw CGPXFileWriter::Error(std::wstring(L"Error while opening file"));
 	fputws_utf8(L"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
-	std::wstring wstrLine = L"<gpx version=\"1.1\" creator=\""+wstrCreator+L"\" xmlns:gpsVP=\"http://code.google.com/p/gpsvp/\">\n";
+	std::wstring wstrLine = L"<gpx version=\"1.1\" creator=\""+wstrCreator+L"\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpsVP=\"http://code.google.com/p/gpsvp/\">\n";
 	fputws_utf8(wstrLine.c_str());
 	wstrLine = L"<metadata><desc>"+g_wstrWaypointFileMark+L"</desc></metadata>\n";
 	fputws_utf8(wstrLine.c_str());

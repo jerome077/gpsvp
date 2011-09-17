@@ -266,7 +266,7 @@ void CTrack::CreateFileGPX()
 	GetFileName(); // initializes m_strGPXName
 	m_iBufferPos = _snprintf(m_writeBuffer, 4096,
 		"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"
-		"<gpx version=\"1.1\" creator=\"%s\">\r\n"
+		"<gpx version=\"1.1\" creator=\"%s\" xmlns=\"http://www.topografix.com/GPX/1/1\">\r\n"
 		"<trk><name>%s</name>\r\n"
 		"<trkseg>\r\n", GetCreator().c_str(), m_strGPXName.c_str());
 }
