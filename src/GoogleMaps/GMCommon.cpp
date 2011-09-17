@@ -31,26 +31,33 @@ double GoogleYZ17toLat(unsigned long y, unsigned char zoom17)
 
 // ---------------------------------------------------------------
 
-// Maps like Google Maps use the WGS84 coordinates and project it on the 
-// map as it they where spherical coordinates. But WGS84 is based on a ellipsoid!
-// The values for the latitude are not the same on a sphere or on an ellipsoid
-// (latitude is the angle between the equatorial plane and the normal vector of
-//  a plane tangent to the earth surface). This funtions convert a WGS84-latitude
-// into a spherical latitude.
-//
-// Calculation derived from: http://www.geodyssey.com/papers/ncsphere.html
-//
-// esq = ((a * a) - (b * b)) / (a * a)
-// b = a (1−f)
-// a = 6378137 m
-// f = 1/298.257223563
-// => 1-esp = 0.99330562000985868300386276645996
-const double OneMinusEsp = 0.99330562000985868300386276645996;
-
-double WGS84LatToSphericalLat(double dWGS84Lat)
-{
-	return atan(OneMinusEsp*tan(dWGS84Lat*pi/180))*180/pi;
-}
+// It seems that I was completely wrong about using the spherical latitude to correctly
+// georeference an exported map. During my first tests with tiles at high scale it seems
+// to me that Europe was shifted 2 pixels towards north if I don't do that. I don't know
+// why I haven't check that at low scales (high zoom level) earlier, because I was then
+// able to see that this transformation is wrong. If I do it, maps are shifted toward
+// south (to check it: compare the map with a gpx track in different programs).
+// 
+// // Maps like Google Maps use the WGS84 coordinates and project it on the 
+// // map as it they where spherical coordinates. But WGS84 is based on a ellipsoid!
+// // The values for the latitude are not the same on a sphere or on an ellipsoid
+// // (latitude is the angle between the equatorial plane and the normal vector of
+// //  a plane tangent to the earth surface). This funtions convert a WGS84-latitude
+// // into a spherical latitude.
+// //
+// // Calculation derived from: http://www.geodyssey.com/papers/ncsphere.html
+// //
+// // esq = ((a * a) - (b * b)) / (a * a)
+// // b = a (1−f)
+// // a = 6378137 m
+// // f = 1/298.257223563
+// // => 1-esp = 0.99330562000985868300386276645996
+// const double OneMinusEsp = 0.99330562000985868300386276645996;
+// 
+// double WGS84LatToSphericalLat(double dWGS84Lat)
+// {
+// 	return atan(OneMinusEsp*tan(dWGS84Lat*pi/180))*180/pi;
+// }
 
 // ---------------------------------------------------------------
 

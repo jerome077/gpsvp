@@ -37,7 +37,6 @@ double	GoogleYZ17toLat		(unsigned long y, unsigned char zoom17);
 
 // To convert a longitude or latitude to a spherical mercator coordinate
 // (EPSG:3857 alias EPSG:900913, R=6378137)
-double WGS84LatToSphericalLat(double dWGS84Lat);
 double LongToXSphericalMercator(double dLong);
 double LatToYSphericalMercator (double dLat);
 

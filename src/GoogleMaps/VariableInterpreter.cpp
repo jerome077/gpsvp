@@ -316,8 +316,6 @@ std::wstring CLatitude3785Schema::interpret(unsigned char l, unsigned long x, un
 	wchar_t buffer[32];
 	double Lat1 = GoogleYZ17toLat(y + m_delta, l);
 	// Should give the same output as a call "gdaltransform -s_srs EPSG:4326 -t_srs EPSG:900913"
-	// and it seems that WGS84LatToSphericalLat is not neede here...
-	//double SphericalLat = WGS84LatToSphericalLat(Lat1);
 	double YSpherMerc = LatToYSphericalMercator(Lat1);
 	swprintf(buffer, 32, L"%.14f", YSpherMerc);
 	return buffer;
