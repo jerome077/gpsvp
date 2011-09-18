@@ -74,7 +74,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib gdiplus.lib Msimg32.lib"
+				AdditionalDependencies="ws2_32.lib gdiplus.lib Msimg32.lib winmm.lib"
 				OutputFile="../../bin/VisualPainter.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
