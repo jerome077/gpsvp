@@ -2308,6 +2308,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\Vsevolod Shorin\\VSMapViewer", 0, L"", 0, 0, 0, &hRegKey, 0);
 #endif
     m_wstrBasePath = FindApplicationBasePath();
+	m_SoundPlayer.Init(m_wstrBasePath);
 
 	m_rsTranslationFile.Init(hRegKey, L"TranslationFile");
 	if (m_rsTranslationFile() != L"")
@@ -3161,11 +3162,9 @@ void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 		m_fCoursePointPresent = true;
 		m_gpCoursePoint = gp;
 	}
-#ifdef UNDER_CE
 	// We check the option first not to check for proximity in vain
 	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
-		PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
-#endif // UNDER_CE
+		m_SoundPlayer.PlaySoundProximity();
 	m_TrafficNodes.Fix(gp, GetTickCount());
 	m_TrackCompetition.Fix(gp, GetTickCount());
 	m_Sun.Fix(m_NMEAParser.GetTimeMonitor(), gp);
@@ -3177,6 +3176,8 @@ void CMapApp::VFix(double dAltitude, double dSeparation)
 	m_Tracks.GetCurTrack().SetAltitude(dAltitude);
 	(CDoubleMonitor &)m_monAltitude = dAltitude;
 	(CDoubleMonitor &)m_monSeparation = dSeparation;
+	if (m_Options[mcoSound])
+		m_SoundPlayer.PlaySoundAltitude(dAltitude);
 }	
 
 void CMapApp::UpdateMonitors()
@@ -5085,10 +5086,8 @@ void CMapApp::SetConnectionStatus(enumConnectionStatus iStatus)
 {
 	if (iStatus != m_iConnectionStatus)
 	{
-#ifdef UNDER_CE
 		if (IsConnectedStatus(m_iConnectionStatus) != IsConnectedStatus(iStatus) && m_Options[mcoWarnNoGPS] && m_Options[mcoSound])
-			PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
-#endif // UNDER_CE
+			m_SoundPlayer.PlaySoundGPS();
 		m_painter.Redraw();
 		m_iConnectionStatus = iStatus;
 	}
@@ -5820,19 +5819,5 @@ std::wstring CMapApp::FindApplicationBasePath()
 		return m_wstrProgName.substr(0, found1+1); // +1 to keep the trailing slash
 	}
 	else return L"";
-}
-
-void CMapApp::PlayFileSound(const std::wstring& wstrWavFile)
-{
-	if (m_Options[mcoSound])
-	{
-		#ifdef UNDER_CE
-		std::wstring wstrWavFullname = m_wstrBasePath + wstrWavFile;
-		if (FileExist(wstrWavFullname.c_str()))
-			PlaySound(wstrWavFullname.c_str(), g_hInst, SND_FILENAME | SND_ASYNC);
-		else
-			PlaySound(L"ProximitySound", g_hInst, SND_RESOURCE | SND_ASYNC);
-		#endif // UNDER_CE
-	}
 }
 

@@ -174,7 +174,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib gdiplus.lib Msimg32.lib"
+				AdditionalDependencies="ws2_32.lib gdiplus.lib Msimg32.lib winmm.lib"
 				OutputFile=".\VisualPainter___Win32_Debug/VisualPainter.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -910,6 +910,14 @@
 			</File>
 			<File
 				RelativePath="..\SimpleIniExt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Sounds.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Sounds.h"
 				>
 			</File>
 			<File

@@ -39,6 +39,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "TrackCompetition.h"
 #include "Sun.h"
 #include "Team.h"
+#include "Sounds.h"
 
 // Flags
 #define ALLOW_INTERNET_ALWAYS 0x01
@@ -218,6 +219,8 @@ public:
 	std::wstring m_wstrReplayNMEA;
 	TrafficNodes m_TrafficNodes;
 	std::wstring m_wstrVersionMessage;
+
+	CSoundPlayer m_SoundPlayer;
 
 public:
 	CMapApp();
@@ -407,8 +410,6 @@ public:
 	void CenterRouteTarget();
 	void ToolsNavigateRoute();
 	void ToolsStopNavigateRoute();
-
-	void PlayFileSound(const std::wstring& wstrWavFile);
 
 	bool IsInternetAllowed();
 #ifdef UNDER_CE

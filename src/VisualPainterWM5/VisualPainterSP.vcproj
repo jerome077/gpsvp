@@ -2786,6 +2786,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Sounds.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Sounds.h"
+				>
+			</File>
+			<File
 				RelativePath="..\StdAfx.cpp"
 				>
 				<FileConfiguration
