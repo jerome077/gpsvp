@@ -153,6 +153,8 @@ public:
 	CTextMonitor m_monZoom_00;
 	CTextMonitor m_monZoom_01;
 	CTextMonitor m_monZoom_17;
+	CTextMonitor m_monTileX;
+	CTextMonitor m_monTileY;
 	//! Cursor position
 	GeoPoint m_gpCursor;
 	bool m_fCursorVisible;

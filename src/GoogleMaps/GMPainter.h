@@ -125,6 +125,8 @@ public:
 	int GetLastZoom_00() const { return m_nLevelToDownload-1; };
 	int GetLastZoom_01() const { return m_nLevelToDownload; };
 	int GetLastZoom_17() const { return LEVEL_REVERSE_OFFSET - m_nLevelToDownload; };
+	long GetLastTileX() const { return m_nCenterXLastViewed/256; };
+	long GetLastTileY() const { return m_nCenterYLastViewed/256; };
 
 protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);

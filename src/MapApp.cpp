@@ -2539,6 +2539,12 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_monZoom_17.SetIdL(L"ZOOM_17");
 	m_MonitorSet.AddMonitor(&m_monZoom_17);
 
+	m_monTileX.SetIdL(L"Tile X");
+	m_MonitorSet.AddMonitor(&m_monTileX);
+
+	m_monTileY.SetIdL(L"Tile Y");
+	m_MonitorSet.AddMonitor(&m_monTileY);
+
 	if (m_rsWaypointsFile().empty())
 		m_rsWaypointsFile = L"\\My Documents\\Waypoints.wpt";
 	m_Waypoints.Read(m_rsWaypointsFile().c_str());
@@ -3307,6 +3313,8 @@ void CMapApp::UpdateMonitors()
 		m_monZoom_00 = IntToText(m_pRasterMapPainter->GetLastZoom_00()).c_str();
 		m_monZoom_01 = IntToText(m_pRasterMapPainter->GetLastZoom_01()).c_str();
 		m_monZoom_17 = IntToText(m_pRasterMapPainter->GetLastZoom_17()).c_str();
+		m_monTileX = IntToText(m_pRasterMapPainter->GetLastTileX()).c_str();
+		m_monTileY = IntToText(m_pRasterMapPainter->GetLastTileY()).c_str();
 	}
 	else
 	{
