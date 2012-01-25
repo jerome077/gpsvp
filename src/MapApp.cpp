@@ -4866,7 +4866,7 @@ public:
 	{
 		if (IntDistance(gp, m_gp) < m_dRadius)
 		{
-			m_pinfo.wstrName = wcName;
+			if (wcName) m_pinfo.wstrName = wcName;
 			m_pinfo.gp = gp;
 			m_pinfo.uiType = uiType;
 			m_pinfo.fPresent = true;
