@@ -46,7 +46,7 @@ public:
 	{
 		return m_wstrName.c_str();
 	}
-	void Reset()
+	virtual void Reset()
 	{
 		m_fSet = false;
 	}
@@ -418,6 +418,88 @@ class CSpeedMonitor : public CDoubleMonitor
 	{
 		AutoLock l;
 		PaintText(pPainter, m_fSet ? SpeedToText(m_dValue).c_str() : L"-");
+	}
+};
+
+/** Speed monitor based on position and time delta */
+class CCalcSpeedMonitor : public CSpeedMonitor
+{
+private:
+	static const int NOT_SET = -9999;
+	static const int SMOOTH_COUNT = 8;
+	double lastLon, lastLat, lastTime;
+	double speedSmooth[SMOOTH_COUNT];
+	int smoothPos;
+
+	/** see: http://de.wikipedia.org/wiki/Orthodrome#Genauere_Formel_zur_Abstandsberechnung_auf_der_Erde */
+	double Dist(double lat1, double lon1, double lat2, double lon2) {
+		static const double f = 1/298.257223563;
+		static const double a = 6378.137;
+		static const double PI = 3.14159265;
+		double F = (lat1 + lat2) / 2 * PI / 180;
+		double G = (lat1 - lat2) / 2 * PI / 180;
+		double l = (lon1 - lon2) / 2 * PI / 180;
+
+		double sg = sin(G);
+		double cl = cos(l);
+		double cf = cos(F);
+		double sl = sin(l);
+		double cg = cos(G);
+		double sf = sin(F);
+
+		double S = sg * sg * cl * cl + cf * cf * sl * sl;
+		double C = cg * cg * cl * cl + sf * sf * sl * sl;
+		if (C == 0) return 0;
+
+		double w = atan(sqrt(S / C));
+		if (w == 0) return 0;
+
+		double D = 2 * w * a;
+		double R = sqrt(S * C) / w;
+		double H1 = (3 * R - 1) / 2 / C;
+		double H2 = (3 * R + 1) / 2 / S;
+
+		return D * (1 + f * H1 * sf * sf * cg * cg - f * H2 * cf * cf * sg * sg);
+	}
+
+public:
+	CCalcSpeedMonitor() {
+		Reset();
+	}
+
+	virtual void Reset() {
+		CMonitorBase::Reset();
+		lastLon = NOT_SET;
+		for (int i = 0; i < SMOOTH_COUNT; i++) speedSmooth[i] = 0;
+		smoothPos = 0;
+	}
+
+	/** Set new position (in degrees) and new time (in hours) */
+	void Set(double lon, double lat, double time) {
+		AutoLock l;
+		// last values already set?
+		if (lastLon != NOT_SET) {
+			double dist = Dist(lastLat, lastLon, lat, lon);
+			double deltaT = time - lastTime;
+			if (deltaT <= 0) {
+				// error - indicates invalid measurements
+				Reset();
+				return;
+			}			
+			// remember new speed value
+			speedSmooth[smoothPos++] = dist / deltaT;
+			// smooth position rollover
+			if (smoothPos >= SMOOTH_COUNT) smoothPos = 0;
+			// calculate smoothed value
+			double smoothSpeed = 0;
+			for (int i = 0; i < SMOOTH_COUNT; i++)
+				smoothSpeed += speedSmooth[i];
+			CSpeedMonitor::Set(smoothSpeed / SMOOTH_COUNT);
+		}
+		// remember last values
+		lastLon = lon;
+		lastLat = lat;
+		lastTime = time;
 	}
 };
 

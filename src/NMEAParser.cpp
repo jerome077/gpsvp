@@ -32,6 +32,33 @@ void CNMEAParser::SetClient(IGPSClient * pClient)
 	m_pClient = pClient;
 }
 
+double EstimateTime(std::string str, CTimeMonitor monTime) {
+	SYSTEMTIME stTime;
+	int iYear, iMonth, iDay, iHour, iMinute, iSecond;
+	double dPreTimeUTC, dGPSPreTime, dTimeUTC;
+	if (monTime.Get(iYear, iMonth, iDay, iHour, iMinute, iSecond)) {
+		stTime.wYear = iYear;
+		stTime.wMonth = iMonth;
+		stTime.wDay = iDay;
+		stTime.wHour = iHour;
+		stTime.wMinute = iMinute;
+		stTime.wSecond = iSecond;
+	}
+	else
+		GetSystemTime(&stTime);
+	SystemTimeToVariantTime(&stTime, &dPreTimeUTC);
+	// Get GPS time
+	dGPSPreTime = atof(str.substr(4).c_str()) / 60.0;
+	dGPSPreTime = (dGPSPreTime + atoi(str.substr(2, 2).c_str())) / 60.0;
+	dGPSPreTime = (dGPSPreTime + atoi(str.substr(0, 2).c_str())) / 24.0;
+	// Now combine GPS time with date this way:
+	//    dGPSTime = round(dPreTimeUTC - dGPSPreTime) + dGPSPreTime
+	// This works after the year 1900  (dPreTimeUTC > 0)
+	modf(dPreTimeUTC - dGPSPreTime + 0.5, &dTimeUTC);
+	dTimeUTC += dGPSPreTime;
+	return dTimeUTC;
+}
+
 //! Comand is read completely, parse it
 void CNMEAParser::CommandComplete()
 {
@@ -69,6 +96,7 @@ void CNMEAParser::CommandComplete()
 			m_pClient->SetConnectionStatus(IGPSClient::csNoFix);
 			m_monTime.Reset();
 			m_monRawTime = L"-";
+			m_dCalcSpeed.Reset();
 		}
 		else
 		{
@@ -92,36 +120,14 @@ void CNMEAParser::CommandComplete()
 				m_pClient->NoVFix();
 			}
 			// Estimate date-time (GPGGA gives only time, get date from m_monTime or system time).
-			double dTimeUTC;
-			{
-				SYSTEMTIME stTime;
-				int iYear, iMonth, iDay, iHour, iMinute, iSecond;
-				double dPreTimeUTC, dGPSPreTime;
-				if (m_monTime.Get(iYear, iMonth, iDay, iHour, iMinute, iSecond)) {
-					stTime.wYear = iYear;
-					stTime.wMonth = iMonth;
-					stTime.wDay = iDay;
-					stTime.wHour = iHour;
-					stTime.wMinute = iMinute;
-					stTime.wSecond = iSecond;
-				}
-				else
-					GetSystemTime(&stTime);
-				SystemTimeToVariantTime(&stTime, &dPreTimeUTC);
-				// Get GPS time
-				dGPSPreTime = atof(listParts[1].substr(4).c_str()) / 60.0;
-				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(2, 2).c_str())) / 60.0;
-				dGPSPreTime = (dGPSPreTime + atoi(listParts[1].substr(0, 2).c_str())) / 24.0;
-				// Now combine GPS time with date this way:
-				//    dGPSTime = round(dPreTimeUTC - dGPSPreTime) + dGPSPreTime
-				// This works after the year 1900  (dPreTimeUTC > 0)
-				modf(dPreTimeUTC - dGPSPreTime + 0.5, &dTimeUTC);
-				dTimeUTC += dGPSPreTime;
-			}
+			double dTimeUTC = EstimateTime(listParts[1], m_monTime);
 
 			m_pClient->Fix(GeoPoint(dLongitude, dLatitude), dTimeUTC, dHDOP);
 			m_monStatus = L("Fix");
 			m_pClient->SetConnectionStatus(IGPSClient::csFix);
+
+			// update calculated speed monitor
+			m_dCalcSpeed.Set(dLongitude, dLatitude, dTimeUTC * 24.0);
 		}
 	}
 	if (listParts[0] == "GPGSV" && listParts.size() >= 20)
@@ -237,6 +243,7 @@ void CNMEAParser::NewStream()
 {
 	AutoLock l;
 	m_dSpeed.Reset();
+	m_dCalcSpeed.Reset();
 	m_pClient->NoFix();
 	m_pClient->NoVFix();
 	m_monStatus = L("No");
@@ -312,6 +319,9 @@ void CNMEAParser::InitMonitors(CMonitorSet & set, HKEY hRegKey, bool fDebugMode)
 	AutoLock l;
 	m_dSpeed.SetIdL(L"Speed");
 	set.AddMonitor(&m_dSpeed);
+
+	m_dCalcSpeed.SetIdL(L"CalcSpeed");
+	set.AddMonitor(&m_dCalcSpeed);
 
 	m_dMaxSpeed.SetIdL(L"Max speed");
 	m_dMaxSpeed.SetRegistry(hRegKey, L"MaxSpeed");

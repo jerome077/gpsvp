@@ -64,6 +64,7 @@ private:
 	int m_iSatNum;
 	std::map<int, int> m_mapSats;
 	CSpeedMonitor m_dSpeed;
+	CCalcSpeedMonitor m_dCalcSpeed;
 	CSpeedMonitor m_dMaxSpeed;
 	CTextMonitor m_monStatus;
 	CTimeMonitor m_monTime;
