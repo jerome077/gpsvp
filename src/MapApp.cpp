@@ -2342,8 +2342,8 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 	m_Options.AddOption(L("Warn on GPS loss"), L"WarnNoGPS", false, mcoWarnNoGPS);
 	m_Options.AddOption(L("Keep backlight"), L"KeepBacklight", false, mcoKeepBacklight);
 	m_Options.AddOption(L("Keep device on"), L"KeepDeviceOn", true, mcoKeepDeviceOn);
-//	m_Options.AddOption(L("Allow internet connection always"), L"AllowInternetAlways", true, mcoAllowInternetAlways);
-//	m_Options.AddOption(L("Allow internet connection home only"), L"AllowInternetHomeOnly", true, mcoAllowInternetHomeOnly);
+//	m_Options.AddOption(L("Allow Internet connection always"), L"AllowInternetAlways", true, mcoAllowInternetAlways);
+//	m_Options.AddOption(L("Allow Internet connection home only"), L"AllowInternetHomeOnly", true, mcoAllowInternetHomeOnly);
 	m_Options.AddOption(L("Use proxy server"), L"EnableProxy", false, mcoUseProxy);
 	m_Options.AddOption(L("Connect"), L"Connect", true, mcoConnect);
 	m_Options.AddOption(L("Show center"), L"ShowCenter", true, mcoShowCenter);
@@ -3615,12 +3615,12 @@ void CMapApp::InitMenu()
 #endif // SMARTPHONE
 		{
 #if UNDER_CE >= 0x500
-			CMenu & mmInet = mmSetup.CreateSubMenu(L("Allow internet connection"));
+			CMenu & mmInet = mmSetup.CreateSubMenu(L("Allow Internet connection"));
 			mmInet.CreateItem(L("Never"), mcoAllowInternetNever);
 			mmInet.CreateItem(L("Always"), mcoAllowInternetAlways);
 			mmInet.CreateItem(L("Home network only"), mcoAllowInternetHomeOnly);
 #else // UNDER_CE >= 0x500
-		mmSetup.CreateItem(L("Allow internet connection"), mcoAllowInternetAlways);
+		mmSetup.CreateItem(L("Allow Internet connection"), mcoAllowInternetAlways);
 #endif // UNDER_CE >= 0x500
 		}
 		mmSetup.CreateItem(L("Use proxy server"), mcoUseProxy);

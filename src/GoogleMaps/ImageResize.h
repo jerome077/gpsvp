@@ -94,7 +94,8 @@ HBITMAP ScaleBitmapInt(HDC dc, HBITMAP hBmp,
 	HBITMAP hOldBitmap1 = SelectObject(hDC1, hBmp);
 	HBITMAP hOldBitmap2 = SelectObject(hDC2, h);
 	BitBlt(hDC2, 0, 0, bmp.bmWidth, bmp.bmHeight, hDC1, 0, 0, SRCCOPY);
-	// Теперь из pBits аккуратно скопировать данные про картинку...
+	// Now copy image parameters from pBits... (???)
+	// (was: Теперь из pBits аккуратно скопировать данные про картинку...)
 
 	byte *pByteData = (byte*)pData;
 	int nPosition = 0;

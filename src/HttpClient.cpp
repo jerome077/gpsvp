@@ -229,7 +229,7 @@ void CHttpRequest::Data::Request(const std::string & uri, const std::string & us
 		return;
 	}
 	
-	const int maxdata = 100000;
+	const int maxdata = 200000;
 	std::auto_ptr<char> apBuffer(new char[maxdata + 1]);
 	char * buffer = apBuffer.get();
 	int rr = 0;
