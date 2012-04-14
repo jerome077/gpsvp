@@ -44,9 +44,9 @@ public:
 
 	bool GetFileName(const GEOFILE_DATA& data, std::wstring& name, int& zipIndex) const;
 	std::wstring GetUnzippedFileName(const GEOFILE_DATA& data) const;
-	// Метод для получения запроса для отрисовщика, которому не хватило фрагментов
+	// This method provides request URL to the painter when it lacks a tile
 	std::string GetRequestURL(const GEOFILE_DATA& data);
-	// Получить запрос
+	// Get an acquired tile
 	bool GetQueuedData(GEOFILE_DATA* pData);
 	long OnRequestProcessed(const std::string request, GEOFILE_DATA& gfdata, const char * data, int size);
 	long ProcessPrefixes(const std::string &s);
