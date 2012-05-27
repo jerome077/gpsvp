@@ -64,7 +64,10 @@ extern HINSTANCE g_hInst;
 
 extern int MakeScancode(WPARAM wParam, LPARAM lParam);
 
-const CVersionNumber g_gpsVPVersion(0, 4, 25);
+
+// Better use date of "gpsVP.exe" file, since compilation date of MapApp.cpp may differ from other source files
+#define FORMAT_VERSION(ssv) ssv, (((ssv) & 1) == 0) ? "" : __DATE__ __TIME__
+const CVersionNumber g_gpsVPVersion(0, 4, FORMAT_VERSION(25));
 
 class CNmeaCommandsDlg : public CMADialog
 {

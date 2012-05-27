@@ -19,85 +19,102 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #endif // USE_STDIO_H
 
 #include <string>
+#include <algorithm>
 #include <windows.h>
 #include "PlatformDef.h"
+
+// <algorithm> provides replace()
 
 
 class CVersionNumber
 {
 public:
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
+	// Only ASCII in Revision.
+	CVersionNumber(int MainVersion, int SubVersion, int SubSubVersion, std::string Revision)
+		: m_MainVersion(MainVersion), m_SubVersion(SubVersion), m_SubSubVersion(SubSubVersion)
+	{
+		/* if (Revision == "!") {
+			// Windows-specific code
+			char *cpAppFileName[MAX_DIR_CHARS];
+			GetModuleFileName(NULL, cpAppFileName, MAX_DIR_CHARS);
+			strftime(, "%Y%M%D-%H%M%S_(rev%s)");
+			return;
+		} */
+		if (Revision.empty()) m_Revision = "";
+		else m_Revision = "."+Revision;
+		m_Revision.replace(m_Revision.begin(), m_Revision.end(), " ", "_");
+	};
+	// ---------------------------------------------------------------
 	CVersionNumber(int MainVersion, int SubVersion, int SubSubVersion)
-		: m_MainVersion(MainVersion), m_SubVersion(SubVersion), m_SubSubVersion(SubSubVersion) 
+		: m_MainVersion(MainVersion), m_SubVersion(SubVersion), m_SubSubVersion(SubSubVersion), m_Revision ("")
 	{};
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
 	CVersionNumber(const CVersionNumber& source)
-		: m_MainVersion(source.m_MainVersion), m_SubVersion(source.m_SubVersion), m_SubSubVersion(source.m_SubSubVersion) 
+		: m_MainVersion(source.m_MainVersion), m_SubVersion(source.m_SubVersion), m_SubSubVersion(source.m_SubSubVersion), m_Revision(source.m_Revision)
 	{};
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
 	CVersionNumber(const std::string& sVersion)
-		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
+		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0), m_Revision("")
 	{
 		size_t found1 = sVersion.find(".");
-		if (std::string::npos != found1)
-		{
-			m_MainVersion = atoi(sVersion.substr(0, found1).c_str());
-			size_t found2 = sVersion.find(".", found1+1);
-			if (std::string::npos != found2)
-			{
-				m_SubVersion = atoi(sVersion.substr(found1+1, found2-found1-1).c_str());
-				m_SubSubVersion = atoi(sVersion.substr(found2+1, sVersion.length()).c_str());
-			}
-			else
-				m_SubVersion = atoi(sVersion.substr(found1+1, sVersion.length()).c_str());
-		}
-		else
-			m_MainVersion = atoi(sVersion.c_str());
+		m_MainVersion = atoi(sVersion.substr(0, found1).c_str());
+		if (found1++ == std::string::npos) return;
+
+		size_t found2 = sVersion.find(".", found1);
+		m_SubVersion = atoi(sVersion.substr(found1, found2-found1).c_str());
+		if (found2++ == std::string::npos) return;
+
+		size_t found3 = sVersion.find(".", found2);
+		m_SubSubVersion = atoi(sVersion.substr(found2, found3-found2).c_str());
+		if (found3 == std::string::npos) return;
+
+		m_Revision = sVersion.substr(found3);  // with the preceding separator
 	};
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
 	CVersionNumber(const std::wstring& sVersion)
-		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0) 
+		: m_MainVersion(0), m_SubVersion(0), m_SubSubVersion(0), m_Revision("")
 	{
 		size_t found1 = sVersion.find(L".");
-		if (std::string::npos != found1)
-		{
-			m_MainVersion = _wtoi(sVersion.substr(0, found1).c_str());
-			size_t found2 = sVersion.find(L".", found1+1);
-			if (std::string::npos != found2)
-			{
-				m_SubVersion = _wtoi(sVersion.substr(found1+1, found2-found1-1).c_str());
-				m_SubSubVersion = _wtoi(sVersion.substr(found2+1, sVersion.length()).c_str());
-			}
-			else
-				m_SubVersion = _wtoi(sVersion.substr(found1+1, sVersion.length()).c_str());
-		}
-		else
-			m_MainVersion = _wtoi(sVersion.c_str());
+		m_MainVersion = _wtoi(sVersion.substr(0, found1).c_str());
+		if (found1++ == std::string::npos) return;
+
+		size_t found2 = sVersion.find(L".", found1);
+		m_SubVersion = _wtoi(sVersion.substr(found1, found2-found1).c_str());
+		if (found2++ == std::string::npos) return;
+
+		size_t found3 = sVersion.find(L".", found2);
+		m_SubSubVersion = _wtoi(sVersion.substr(found2, found3-found2).c_str());
+		if (found3 == std::string::npos) return;
+
+		std::wstring wsRev = sVersion.substr(found3); // with the preceding separator
+		m_Revision.assign(wsRev.begin(), wsRev.end());
 	};
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
 	int GetMainVersion()   const { return m_MainVersion;   };
 	int GetSubVersion()    const { return m_SubVersion;    };
 	int GetSubSubVersion() const { return m_SubSubVersion; };
+	std::string GetRevision() const { return m_Revision.substr(m_Revision.empty()?0:1); };  // cutting the separator
 
 	std::string AsString() const
 	{
 		char buffer[64];
-	    sprintf(buffer, "%d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		sprintf(buffer, "%d.%d.%d%s", m_MainVersion, m_SubVersion, m_SubSubVersion, m_Revision.c_str());
 		return buffer;
-    }
+	}
 
 	std::string AsStringWithName() const
 	{
 		char buffer[64];
-	    sprintf(buffer, "gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		sprintf(buffer, "gpsVP %d.%d.%d%s", m_MainVersion, m_SubVersion, m_SubSubVersion, m_Revision.c_str());
 		return buffer;
-    }
+	}
 	std::wstring AswstringWithName() const
 	{
 		wchar_t buffer[128];
-	    wsprintf(buffer, L"gpsVP %d.%d.%d", m_MainVersion, m_SubVersion, m_SubSubVersion);
+		wsprintf(buffer, L"gpsVP %d.%d.%d%S", m_MainVersion, m_SubVersion, m_SubSubVersion, m_Revision.c_str());
 		return buffer;
-    }
+	}
 	// ---------------------------------------------------------------
 	bool operator< (const CVersionNumber &other) const
 	{
@@ -106,17 +123,23 @@ public:
 		if (m_SubVersion < other.m_SubVersion)			return true;
 		if (m_SubVersion > other.m_SubVersion)			return false;
 		if (m_SubSubVersion < other.m_SubSubVersion)	return true;
+		if (m_SubSubVersion > other.m_SubSubVersion)	return false;
+		if (m_Revision < other.m_Revision)	return true;
 		return false;
 	};
 
 	bool operator== (const CVersionNumber &other) const
 	{
-		return ((m_MainVersion == other.m_MainVersion) && (m_SubVersion == other.m_SubVersion) && (m_SubSubVersion == other.m_SubSubVersion));
+		return ((m_MainVersion == other.m_MainVersion) && 
+			(m_SubVersion == other.m_SubVersion) && 
+			(m_SubSubVersion == other.m_SubSubVersion) &&
+			(m_Revision == other.m_Revision));
 	};
-    // ---------------------------------------------------------------
+	// ---------------------------------------------------------------
 
 protected:
 	int m_MainVersion, m_SubVersion, m_SubSubVersion;
+	std::string m_Revision;
 };
 
 #endif // VERSIONNUMBER_H
