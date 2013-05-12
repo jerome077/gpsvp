@@ -28,7 +28,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 const DWORD MID_REQUEST_MSEC = 1000;
 
 CGMFileHolder::CGMFileHolder(void)
-	: m_WMSMapsListed(false)
+	: m_UserMapsListed(false)
 {
 	m_bInitialized = false;
 	m_wdLastRequestTicks = 0;
@@ -147,12 +147,12 @@ protected:
 	}
 };
 
-void CGMFileHolder::FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion)
+void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 {
 	// Test cases for the variables can be through the following line activated:
 	// Test_CStringSchema();
 
-	WPARAM currentWMSNumber = gtFirstWMSMapType;
+	WPARAM currentUserMapNumber = gtFirstUserMapType;
 
     bool bMapErrors = false;
 	std::wstring sMapErrors = L"Following maps won't be loaded (wrong configuration):";
@@ -162,30 +162,30 @@ void CGMFileHolder::FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion)
 	CMapConfigFinder::const_iterator iter = configList.begin();
 	while (configList.end() != iter)
 	{
-		CUserWMSMapSource* mapSource = new CUserWMSMapSource(currentWMSNumber,
+		CIniUserMapSource* mapSource = new CIniUserMapSource(currentUserMapNumber,
 			                                                 iter->MapName,
 			                                                 iter->IniFileWithPath,
 												             m_strMapsRoot,
 												             gpsVPVersion);
-		if (CUserWMSMapSource::cecError == mapSource->GetConfigError())
+		if (CIniUserMapSource::cecError == mapSource->GetConfigError())
 		{
 			bMapErrors = true;
 			sMapErrors += L" " + iter->MapName;
 			delete mapSource; //don't keep the map
 		}
-		else if (CUserWMSMapSource::cecMapVersionNewerAsGpsVP == mapSource->GetConfigError())
+		else if (CIniUserMapSource::cecMapVersionNewerAsGpsVP == mapSource->GetConfigError())
 		{
 			bMapVersionWarnings = true;
 			sMapVersionWarnings += L" " + iter->MapName;
 			m_vecRMS.push_back(mapSource); // Keep the map anyway
-			currentWMSNumber++;
+			currentUserMapNumber++;
 		}
 		else
 		{
 			m_vecRMS.push_back(mapSource); // Keep the map
-			currentWMSNumber++;
+			currentUserMapNumber++;
 		}
-		if (currentWMSNumber > gtLastGMapType) break; // Maximal count of WMS-Maps reached
+		if (currentUserMapNumber > gtLastGMapType) break; // Maximal count of User-Maps reached
 		iter++;
 	}
 	if (bMapErrors)
@@ -303,12 +303,12 @@ long CGMFileHolder::InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gp
 
 	NeedRelocateFiles();
 
-	// Adding WMS-Maps to the list
+	// Adding User-Maps to the list
 	// (Currently only the first time. You have to restart the program if you change the cache folder)
-	if (! m_WMSMapsListed)
+	if (! m_UserMapsListed)
 	{
-		FindAndAddWMSMaps(gpsVPVersion);
-		m_WMSMapsListed = true;
+		FindAndAddUserMaps(gpsVPVersion);
+		m_UserMapsListed = true;
 	}
 
 	return 0;
@@ -786,9 +786,9 @@ long CGMFileHolder::ProcessPrefixes(const std::string &s)
 	return 0;
 }
 
-std::wstring CGMFileHolder::GetWMSMapName(long indexWMS) const
+std::wstring CGMFileHolder::GetUserMapName(long indexUserMap) const
 {
-	return ((CUserWMSMapSource *)m_vecRMS[gtFirstWMSMapType+indexWMS])->GetName();
+	return ((CIniUserMapSource *)m_vecRMS[gtFirstUserMapType+indexUserMap])->GetName();
 }
 
 GeoPoint CGMFileHolder::GetDemoPoint(enumGMapType type, double &scale) const

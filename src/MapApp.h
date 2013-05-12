@@ -290,8 +290,7 @@ public:
 
 	void Create(HWND hWnd, wchar_t * wcHome = L"./");
 	void InitMenu();
-	void InitMenuAllWMSMaps(CMenu& baseMenu);
-	void SetWMSMapType(WPARAM wp);
+	void InitMenuAllUserMaps(CMenu& baseMenu);
 	void Paint();
 	void ThreadRoutine();
 	void StartListening();

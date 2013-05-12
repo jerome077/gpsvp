@@ -295,11 +295,11 @@ bool COSMSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) co
 	}
 }
 
-CUserWMSMapSource::CUserWMSMapSource(long iMapType,
+CIniUserMapSource::CIniUserMapSource(long iMapType,
 					                 const std::wstring& mapName,
 					                 const std::wstring& configFile,
-									 const std::wstring& cacheRoot,
-									 const CVersionNumber& gpsVPVersion)
+							         const std::wstring& cacheRoot,
+							         const CVersionNumber& gpsVPVersion)
 	: m_MapName(mapName),
 	  m_CacheRoot(cacheRoot),
 	  m_ConfigErrorCode(cecOK),
@@ -356,12 +356,12 @@ CUserWMSMapSource::CUserWMSMapSource(long iMapType,
 	m_DemoPoint = GeoPoint(DemoPointLon, DemoPointLat);
 }
 
-bool CUserWMSMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+bool CIniUserMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
 {
     return true;
 }
 
-std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
+std::string CIniUserMapSource::GetRequestURL(const GEOFILE_DATA& data)
 {
 	CUserMapZoomProp& zoomProps = GetZoomProps(data.level);
 	std::wstring wstrUrl = zoomProps.URLSchema.interpret(data.level, data.X, data.Y);
@@ -371,7 +371,7 @@ std::string CUserWMSMapSource::GetRequestURL(const GEOFILE_DATA& data)
 	return strUrl;
 }
 
-bool CUserWMSMapSource::GetDiskFileName(
+bool CIniUserMapSource::GetDiskFileName(
 		const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
 	)
 {
@@ -393,7 +393,7 @@ bool CUserWMSMapSource::GetDiskFileName(
 		return GetDiskGenericFileName(gfdata, root, path, m_MapName.c_str());
 }
 
-GeoPoint CUserWMSMapSource::GetDemoPoint(double &scale) const
+GeoPoint CIniUserMapSource::GetDemoPoint(double &scale) const
 {
 	// I don't exactely how to calculate the "scale". I've just tried and
 	// found out that the following works:

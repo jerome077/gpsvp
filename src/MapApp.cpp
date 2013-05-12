@@ -2577,7 +2577,7 @@ void CMapApp::Create(HWND hWnd, wchar_t * wcHome)
 		m_pRasterMapPainter->SetMapFolder(m_rsRasterMapFolder().c_str(), g_gpsVPVersion);
 		LoadCurrentRoute();
 	}
-	// Only after loading the list of WMS-Maps
+	// Only after loading the list of User-Maps
 	m_riGMapType.Init(hRegKey, L"GMapType", gtMap);
 	if (m_riGMapType() < 0 || m_riGMapType() >= m_pRasterMapPainter->GetGMapCount())
 		m_riGMapType.Set(0);
@@ -3401,7 +3401,7 @@ void CMapApp::InitMenu()
 				mmMapType.CreateItem(L("Live.com map"), mcGMapType + gtMSMap);
 				mmMapType.CreateItem(L("Live.com satellite"), mcGMapType + gtMSSat);
 				mmMapType.CreateItem(L("Live.com hybrid"), mcGMapType + gtMSHyb);
-				InitMenuAllWMSMaps(mmMapType);
+				InitMenuAllUserMaps(mmMapType);
 			}
 			{
 				CMenu & mmDownloadMaps = mmGoogleMaps.CreateSubMenu(L("Download maps"));
@@ -3658,12 +3658,12 @@ void CMapApp::InitMenu()
 	CheckMenu();
 }
 
-void CMapApp::InitMenuAllWMSMaps(CMenu& baseMenu)
+void CMapApp::InitMenuAllUserMaps(CMenu& baseMenu)
 {
-	for(int i=0, iEnd=m_pRasterMapPainter->GetWMSMapCount();
+	for(int i=0, iEnd=m_pRasterMapPainter->GetUserMapCount();
 		i<iEnd; i++)
 	{
-		baseMenu.CreateItem(m_pRasterMapPainter->GetWMSMapName(i).c_str(), mcFirstWMSMapType+i);
+		baseMenu.CreateItem(m_pRasterMapPainter->GetUserMapName(i).c_str(), mcFirstUserMapType+i);
 	}
 }
 

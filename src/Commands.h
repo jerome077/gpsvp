@@ -181,7 +181,7 @@ enum enumMenuCommands
 	mcDownlRasterViewA4H_50000,
 
 	mcGMapType = 0x2000,
-	mcFirstWMSMapType = mcGMapType + 8,
+	mcFirstUserMapType = mcGMapType + 8,
 	// ...reserved for Map Types...
 	mcLastGMapType = 0x2FFF,
 };

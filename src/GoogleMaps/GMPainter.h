@@ -113,8 +113,8 @@ public:
 	void RelocateFiles(); 
 	bool NeedRelocateFiles(); 
 	long GetGMapCount() const { return m_GMFH.GetGMapCount(); };
-	long GetWMSMapCount() const { return m_GMFH.GetWMSMapCount(); };
-	std::wstring GetWMSMapName(long indexWMS) const { return m_GMFH.GetWMSMapName(indexWMS); };
+	long GetUserMapCount() const { return m_GMFH.GetUserMapCount(); };
+	std::wstring GetUserMapName(long indexUserMap) const { return m_GMFH.GetUserMapName(indexUserMap); };
     GeoPoint GetDemoPoint(enumGMapType type, double &scale) const { return m_GMFH.GetDemoPoint(type, scale); };
     bool HasDemoPoint(enumGMapType type) const
 	{

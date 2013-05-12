@@ -77,8 +77,8 @@ public:
 	};
 
 	long GetGMapCount() const { return m_vecRMS.size(); };
-	long GetWMSMapCount() const { return m_vecRMS.size()-gtFirstWMSMapType; };
-	std::wstring GetWMSMapName(long indexWMS) const;
+	long GetUserMapCount() const { return m_vecRMS.size()-gtFirstUserMapType; };
+	std::wstring GetUserMapName(long indexUserMap) const;
 	GeoPoint GetDemoPoint(enumGMapType type, double &scale) const;
 
 protected:
@@ -89,7 +89,7 @@ protected:
 
 	bool GetDiskFileName(const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root = L"") const;
 
-    void FindAndAddWMSMaps(const CVersionNumber& gpsVPVersion);
+    void FindAndAddUserMaps(const CVersionNumber& gpsVPVersion);
 
 private:
 	// Common prefix for all raster map folders
@@ -110,7 +110,7 @@ private:
 
 	// Current server number
 	std::vector<PRasterMapSource> m_vecRMS;
-	bool m_WMSMapsListed;
+	bool m_UserMapsListed;
 
 	unsigned char m_nMTServerId;
 	unsigned char m_nKHServerId;

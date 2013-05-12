@@ -32,7 +32,7 @@ enum enumGMapType
 	gtMSSat,
 	gtMSHyb,
 	//gtHybrid = gtNYandex,
-	gtFirstWMSMapType,
+	gtFirstUserMapType,
 	gtLastGMapType = 0x1000,
 };
 
@@ -395,7 +395,7 @@ typedef std::map<std::wstring, CUserMapZoomProp> CUserMapZoomProp_MAP;
 
 
 // User defined map type (mapcfg.ini)
-class CUserWMSMapSource : public CRasterMapSource
+class CIniUserMapSource : public CRasterMapSource
 {
 private:
     std::wstring m_MapName;
@@ -404,7 +404,7 @@ private:
 	int m_DemoPointZoomOne;
 
 public:
-	CUserWMSMapSource(long iMapType,
+	CIniUserMapSource(long iMapType,
 					  const std::wstring& mapName,
 					  const std::wstring& configFile,
 					  const std::wstring& cacheRoot,
