@@ -3156,8 +3156,10 @@ void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 		m_painter.Redraw();
 	}
 	m_monHDOP = dHDOP;
-	(CDoubleMonitor&)m_monLatitude = Degree(gp.lat);
-	(CDoubleMonitor&)m_monLongitude = Degree(gp.lon);
+	double dLat = Degree(gp.lat);
+	double dLon = Degree(gp.lon);
+	(CDoubleMonitor&)m_monLatitude = dLat;
+	(CDoubleMonitor&)m_monLongitude = dLon;
 	if (m_fCoursePointPresent)
 	{
 		if (IntDistance(m_gpCoursePoint, gp) > 50)
@@ -3171,9 +3173,15 @@ void CMapApp::Fix(GeoPoint gp, double dTimeUTC, double dHDOP)
 		m_fCoursePointPresent = true;
 		m_gpCoursePoint = gp;
 	}
-	// We check the option first not to check for proximity in vain
-	if (m_Options[mcoSound] && m_Waypoints.CheckProximity(gp))
-		m_SoundPlayer.PlaySoundProximity();
+	// Alarms: We check the option first not to check for proximity in vain
+	if (m_Options[mcoSound])
+	{
+		if (m_Waypoints.CheckProximity(gp))
+		{
+			m_SoundPlayer.PlaySoundProximity();
+		}
+		m_SoundPlayer.PlaySoundUTM(dLon, dLat, m_riUTMZone());
+	}
 	m_TrafficNodes.Fix(gp, GetTickCount());
 	m_TrackCompetition.Fix(gp, GetTickCount());
 	m_Sun.Fix(m_NMEAParser.GetTimeMonitor(), gp);

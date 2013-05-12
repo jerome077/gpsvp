@@ -34,10 +34,12 @@ public:
 	void PlaySoundGPS();
 	void PlaySoundProximity();
 	void PlaySoundAltitude(double dAltitude);
+	void PlaySoundUTM(double dLon360, double dLat360, int iUtmZone);
 protected:
 	std::wstring m_wtsrWavBasePath;
 	std::wstring m_SndGPS;
 	std::wstring m_SndProximity;
+	// altitude:
 	bool m_WithSndAltitude;
 	std::wstring m_SndAltitudeX000;
 	std::wstring m_SndAltitudeX100;
@@ -50,6 +52,15 @@ protected:
 	std::wstring m_SndAltitudeX800;
 	std::wstring m_SndAltitudeX900;
 	int m_iLastSoundAltude;
+	// utm:
+	bool m_WithSndUTM;
+	int m_iLastSoundUtmX, m_iLastSoundUtmY;
+	std::wstring m_SndUtmX0000, m_SndUtmX1000, m_SndUtmX2000, m_SndUtmX3000, m_SndUtmX4000;
+	std::wstring m_SndUtmX5000, m_SndUtmX6000, m_SndUtmX7000, m_SndUtmX8000, m_SndUtmX9000;
+	std::wstring m_SndUtmY0000, m_SndUtmY1000, m_SndUtmY2000, m_SndUtmY3000, m_SndUtmY4000;
+	std::wstring m_SndUtmY5000, m_SndUtmY6000, m_SndUtmY7000, m_SndUtmY8000, m_SndUtmY9000;
+	std::wstring m_SndUtmXUp1, m_SndUtmXUp2, m_SndUtmXUp3, m_SndUtmXDown1, m_SndUtmXDown2, m_SndUtmXDown3;
+	std::wstring m_SndUtmYUp1, m_SndUtmYUp2, m_SndUtmYUp3, m_SndUtmYDown1, m_SndUtmYDown2, m_SndUtmYDown3;
 };
 
 // ---------------------------------------------------------------

@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "Sounds.h"
 #include "File.h"
 #include "SimpleIniExt.h"
+#include "Common.h"
 
 extern HINSTANCE g_hInst;
 
@@ -22,7 +23,9 @@ extern HINSTANCE g_hInst;
 CSoundPlayer::CSoundPlayer()
 	: m_iLastSoundAltude(-777),
 	  m_SndGPS(L"DEFAULT"), m_SndProximity(L"DEFAULT"),
-	  m_WithSndAltitude(false)
+	  m_WithSndAltitude(false),
+	  m_WithSndUTM(false),
+	  m_iLastSoundUtmX(0), m_iLastSoundUtmY(0)
 {
 };
 
@@ -52,6 +55,42 @@ void CSoundPlayer::Init(const std::wstring& wstrWavBasePath)
 			m_SndAltitudeX700 = iniFile.GetValue(L"Altitude", L"X700", L"");
 			m_SndAltitudeX800 = iniFile.GetValue(L"Altitude", L"X800", L"");
 			m_SndAltitudeX900 = iniFile.GetValue(L"Altitude", L"X900", L"");
+		}
+		if (iniFile.GetSectionSize(L"UTM") > 0)
+		{
+			m_WithSndUTM = true;
+			m_SndUtmX0000 = iniFile.GetValue(L"UTM", L"X0000", L"");
+			m_SndUtmX1000 = iniFile.GetValue(L"UTM", L"X1000", L"");
+			m_SndUtmX2000 = iniFile.GetValue(L"UTM", L"X2000", L"");
+			m_SndUtmX3000 = iniFile.GetValue(L"UTM", L"X3000", L"");
+			m_SndUtmX4000 = iniFile.GetValue(L"UTM", L"X4000", L"");
+			m_SndUtmX5000 = iniFile.GetValue(L"UTM", L"X5000", L"");
+			m_SndUtmX6000 = iniFile.GetValue(L"UTM", L"X6000", L"");
+			m_SndUtmX7000 = iniFile.GetValue(L"UTM", L"X7000", L"");
+			m_SndUtmX8000 = iniFile.GetValue(L"UTM", L"X8000", L"");
+			m_SndUtmX9000 = iniFile.GetValue(L"UTM", L"X9000", L"");
+			m_SndUtmY0000 = iniFile.GetValue(L"UTM", L"Y0000", L"");
+			m_SndUtmY1000 = iniFile.GetValue(L"UTM", L"Y1000", L"");
+			m_SndUtmY2000 = iniFile.GetValue(L"UTM", L"Y2000", L"");
+			m_SndUtmY3000 = iniFile.GetValue(L"UTM", L"Y3000", L"");
+			m_SndUtmY4000 = iniFile.GetValue(L"UTM", L"Y4000", L"");
+			m_SndUtmY5000 = iniFile.GetValue(L"UTM", L"Y5000", L"");
+			m_SndUtmY6000 = iniFile.GetValue(L"UTM", L"Y6000", L"");
+			m_SndUtmY7000 = iniFile.GetValue(L"UTM", L"Y7000", L"");
+			m_SndUtmY8000 = iniFile.GetValue(L"UTM", L"Y8000", L"");
+			m_SndUtmY9000 = iniFile.GetValue(L"UTM", L"Y9000", L"");
+			m_SndUtmXUp1 = iniFile.GetValue(L"UTM", L"XUp1", L"");
+			m_SndUtmXUp2 = iniFile.GetValue(L"UTM", L"XUp2", L"");
+			m_SndUtmXUp3 = iniFile.GetValue(L"UTM", L"XUp3", L"");
+			m_SndUtmXDown1 = iniFile.GetValue(L"UTM", L"XDown1", L"");
+			m_SndUtmXDown2 = iniFile.GetValue(L"UTM", L"XDown2", L"");
+			m_SndUtmXDown3 = iniFile.GetValue(L"UTM", L"XDown3", L"");
+			m_SndUtmYUp1 = iniFile.GetValue(L"UTM", L"YUp1", L"");
+			m_SndUtmYUp2 = iniFile.GetValue(L"UTM", L"YUp2", L"");
+			m_SndUtmYUp3 = iniFile.GetValue(L"UTM", L"YUp3", L"");
+			m_SndUtmYDown1 = iniFile.GetValue(L"UTM", L"YDown1", L"");
+			m_SndUtmYDown2 = iniFile.GetValue(L"UTM", L"YDown2", L"");
+			m_SndUtmYDown3 = iniFile.GetValue(L"UTM", L"YDown3", L"");
 		}
 	}
 }
@@ -138,3 +177,131 @@ void CSoundPlayer::PlaySoundAltitude(double dAltitude)
 }
 
 // ---------------------------------------------------------------
+
+void CSoundPlayer::PlaySoundUTM(double dLon360, double dLat360, int iUtmZone)
+{
+	if (m_WithSndUTM)
+	{
+		int iUtmX, iUtmY, iUtmZone2;
+		iUtmZone2 = iUtmZone;
+		LongLatToUTM(dLon360, dLat360, iUtmZone2, iUtmX, iUtmY);
+		int iDeltaX = iUtmX - m_iLastSoundUtmX;
+		int iDeltaY = iUtmY - m_iLastSoundUtmY;
+
+		// Sound for the X coordinate:
+		if ((iDeltaX >= 500) || (iDeltaX <= -500))
+		{
+			m_iLastSoundUtmX = 500*int((iUtmX+250)/500);
+			switch (m_iLastSoundUtmX % 10000)
+			{
+			case 0:
+				PlayFileSound(m_SndUtmX0000);
+				break;
+			case 1000:
+				PlayFileSound(m_SndUtmX1000);
+				break;
+			case 2000:
+				PlayFileSound(m_SndUtmX2000);
+				break;
+			case 3000:
+				PlayFileSound(m_SndUtmX3000);
+				break;
+			case 4000:
+				PlayFileSound(m_SndUtmX4000);
+				break;
+			case 5000:
+				PlayFileSound(m_SndUtmX5000);
+				break;
+			case 6000:
+				PlayFileSound(m_SndUtmX6000);
+				break;
+			case 7000:
+				PlayFileSound(m_SndUtmX7000);
+				break;
+			case 8000:
+				PlayFileSound(m_SndUtmX8000);
+				break;
+			case 9000:
+				PlayFileSound(m_SndUtmX9000);
+				break;
+			}
+			// Sound for the exit point:
+			int iThirdForY = int((iUtmY%1000)/334);
+			switch (iThirdForY)
+			{
+			case 0:
+				if (iDeltaX >= 0) PlayFileSound(m_SndUtmXUp1);
+				else PlayFileSound(m_SndUtmXDown1);
+				break;
+			case 1:
+				if (iDeltaX >= 0) PlayFileSound(m_SndUtmXUp2);
+				else PlayFileSound(m_SndUtmXDown2);
+				break;
+			case 2:
+				if (iDeltaX >= 0) PlayFileSound(m_SndUtmXUp3);
+				else PlayFileSound(m_SndUtmXDown3);
+				break;
+			}
+		}
+
+		// Sound for the Y coordinate:
+		if ((iDeltaY >= 500) || (iDeltaY <= -500))
+		{
+			m_iLastSoundUtmY = 500*int((iUtmY+250)/500);
+			switch (m_iLastSoundUtmY % 10000)
+			{
+			case 0:
+				PlayFileSound(m_SndUtmY0000);
+				break;
+			case 1000:
+				PlayFileSound(m_SndUtmY1000);
+				break;
+			case 2000:
+				PlayFileSound(m_SndUtmY2000);
+				break;
+			case 3000:
+				PlayFileSound(m_SndUtmY3000);
+				break;
+			case 4000:
+				PlayFileSound(m_SndUtmY4000);
+				break;
+			case 5000:
+				PlayFileSound(m_SndUtmY5000);
+				break;
+			case 6000:
+				PlayFileSound(m_SndUtmY6000);
+				break;
+			case 7000:
+				PlayFileSound(m_SndUtmY7000);
+				break;
+			case 8000:
+				PlayFileSound(m_SndUtmY8000);
+				break;
+			case 9000:
+				PlayFileSound(m_SndUtmY9000);
+				break;
+			}
+
+			// Sound for the exit point:
+			int iThirdForX = int((iUtmX%1000)/334);
+			switch (iThirdForX)
+			{
+			case 0:
+				if (iDeltaY >= 0) PlayFileSound(m_SndUtmYUp1);
+				else PlayFileSound(m_SndUtmYDown1);
+				break;
+			case 1:
+				if (iDeltaY >= 0) PlayFileSound(m_SndUtmYUp2);
+				else PlayFileSound(m_SndUtmYDown2);
+				break;
+			case 2:
+				if (iDeltaY >= 0) PlayFileSound(m_SndUtmYUp3);
+				else PlayFileSound(m_SndUtmYDown3);
+				break;
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------
+
