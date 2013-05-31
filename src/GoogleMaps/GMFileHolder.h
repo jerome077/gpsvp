@@ -21,6 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../Track.h"
 #include "RasterServerSources.h"
 #include "../VersionNumber.h"
+#include "../FileFormats/Decoder_Common.h"
 #if UNDER_CE && _WIN32_WCE < 0x500
 #else
 #  include "../FileFormats/Decoder_7z.h"
@@ -42,7 +43,7 @@ public:
 	long InitFromDir(const wchar_t *pszRoot, const CVersionNumber& gpsVPVersion, bool bCreateIndexIfNeeded = true);
 	void Deinit();
 
-	bool GetFileName(const GEOFILE_DATA& data, std::wstring& name, int& zipIndex) const;
+	bool GetFileName(const GEOFILE_DATA& data, CDecoderTileInfo*& itemInfo) const;
 	std::wstring GetUnzippedFileName(const GEOFILE_DATA& data) const;
 	// This method provides request URL to the painter when it lacks a tile
 	std::string GetRequestURL(const GEOFILE_DATA& data);

@@ -11,65 +11,39 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef DECODER_7Z_H
-#define DECODER_7Z_H
+#ifndef DECODER_COMMON_H
+#define DECODER_COMMON_H
 
-#include <string>
-#include <list>
-#include "Decoder_Common.h"
-#include "LZMA_SDK/types.h"
-#include "LZMA_SDK/7zFile.h"
-#include "LZMA_SDK/7z.h"
+#include "../GoogleMaps/GMCommon.h"
+#include <windows.h>
 
-class C7zItemInfo: public CDecoderTileInfo
-{
-protected:
-	int m_itemIndex;
-	std::wstring m_zipFilename;
-	char * m_buf;
-public:
-	C7zItemInfo(const std::wstring& zipFilename, int index) : m_itemIndex(index), m_zipFilename(zipFilename), m_buf(NULL) {};
-	virtual HBITMAP LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder);
-	virtual void DeleteTileIfPossible();
-	virtual bool Is7z() { return true; };
-	virtual std::wstring Get7zFilename() { return m_zipFilename; };
-	virtual char * OpenTile(int& len);
-	virtual void CloseTile();
-};
+#ifdef USE_GDI_PLUS
+#	include <gdiplus.h>
+#endif // USE_GDI_PLUS
+#ifdef UNDER_CE
+#  if UNDER_CE && _WIN32_WCE < 0x500
+#  else
+#    include <imaging.h> 
+#  endif // _WIN32_WCE
+#endif // UNDER_CE
 
-class CDecoder7z
+// Callback taht will be implemented in GMPainter
+class CHBitmapBuilder
 {
 public:
-	CDecoder7z(const std::wstring& filename);
-	~CDecoder7z();
-	bool IsFileOk() { return m_ok; };
-	C7zItemInfo* FindItem(const std::wstring& itemWithPath); // returns -1 when not found
-	UInt64 GetItemSize(int itemIndex);
-	bool UnzipItem(int itemIndex, void *buffer, UInt64 len);
-
-private:
-	CFileInStream m_archiveStream;
-	CLookToRead m_lookStream;
-	CSzArEx m_db;
-	ISzAlloc m_allocImp;
-	ISzAlloc m_allocTempImp;
-	bool m_ok;
-	std::wstring m_filename;
+	virtual HBITMAP BufferToHBitmap(char *buffer, size_t len, HDC dc) = 0;
 };
 
-class CDecoder7zPool
+// Result of a tile search, can decode the tile
+class CDecoderTileInfo
 {
 public:
-	CDecoder7zPool(int poolSize);
-	~CDecoder7zPool();
-	CDecoder7z* GetDecoder(const std::wstring& filename);
-
-protected:
-	typedef std::list<std::pair<std::wstring, CDecoder7z*> > TDecoderList;
-	TDecoderList m_pool;
-	int m_poolSize;
+	virtual HBITMAP LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder) = 0;
+	virtual void DeleteTileIfPossible() = 0;
+	virtual bool Is7z() { return false; };
+	virtual std::wstring Get7zFilename() { return L""; };
+	virtual char * OpenTile(int& len) = 0;
+	virtual void CloseTile() = 0;
 };
-
-extern CDecoder7zPool M_Decoder7zPool;
 
 #endif

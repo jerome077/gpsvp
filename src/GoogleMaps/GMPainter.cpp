@@ -26,10 +26,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <math.h>
 #include <set>
 #include "../MapApp.h"
-#if UNDER_CE && _WIN32_WCE < 0x500
-#else
-#  include "../FileFormats/Decoder_7z.h"
-#endif
 
 
 
@@ -292,9 +288,8 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 
 		bHBITMAPInited = true;
 	} else {
-		std::wstring strFullname;
-		int zipIndex;
-		if (!m_GMFH.GetFileName(data, strFullname, zipIndex)) {
+		CDecoderTileInfo* pItemInfo = NULL;
+		if (!m_GMFH.GetFileName(data, pItemInfo)) {
 			m_Missing = data;
 			m_fMissing = true;
 			//// Simply fill the given rect with some color
@@ -306,12 +301,12 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 			//}
 			return 1;
 		} else {
-			hbm = LoadTileOrZippedTile(strFullname, zipIndex, dc);
+			hbm = pItemInfo->LoadTile(dc, this);
 
 			if (hbm == NULL) {
-				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled & the file isn't in a zip file
-				if (app.m_Options[mcoDownloadGoogleMaps] && app.IsInternetAllowed() && (-1 == zipIndex))
-					DeleteFile(strFullname.c_str());
+				// It seems the image is broken... Delete the file, but only if internet & downloading are enabled & the storage type allows it
+				if (app.m_Options[mcoDownloadGoogleMaps] && app.IsInternetAllowed())
+					pItemInfo->DeleteTileIfPossible();
 				bHBITMAPInited = false;
 			} else {
 
@@ -391,6 +386,7 @@ int CGMPainter::DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GE
 				bHBITMAPInited = true;
 			}
 		}
+		if (pItemInfo) delete pItemInfo;
 	}
 
 	if (bHBITMAPInited) {
@@ -769,16 +765,11 @@ void CGMPainter::ExportCurrentZoom()
 	long maxY = 0;
 	long Z17 = -1;
 	enumGMapType mapType;
-	std::wstring sFormat;
 	GeoDataSet::iterator it = filesInCache.begin();
 	if (it != filesInCache.end())
 	{
 		Z17 = it->level;
 		mapType = (enumGMapType)it->type;
-		std::wstring name;
-		int zipIndex;
-		m_GMFH.GetFileName(*it, name, zipIndex);
-		sFormat = name.substr(name.length()-3);
 		for( ; it != filesInCache.end(); it++)
 		{
 			if (minX > it->X) minX = it->X;
@@ -934,12 +925,11 @@ void CGMPainter::ExportCurrentZoom()
 	std::set<std::wstring> zipFilesSet;
 	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
 	{
-		std::wstring name;
-		int zipIndex;
-		m_GMFH.GetFileName(*it, name, zipIndex);
-		if (zipIndex >= 0)
+		CDecoderTileInfo* pTileInfo;
+		m_GMFH.GetFileName(*it, pTileInfo);
+		if ((NULL != pTileInfo) && (pTileInfo->Is7z()))
 		{
-			name = name.substr(wstrMapPath.size()); // extracts relative name of the zip file
+			std::wstring name = pTileInfo->Get7zFilename().substr(wstrMapPath.size()); // extracts relative name of the zip file
 	 		std::wstring unzippedName = m_GMFH.GetUnzippedFileName(*it);
 			unzippedName = unzippedName.substr(wstrMapPath.size()+ExtractPath(name).size()); // extracts relative name of the file
 
@@ -963,6 +953,7 @@ void CGMPainter::ExportCurrentZoom()
 			fputws_utf8(pFile, std::wstring(L"xcopy \"..\\")+unzippedName+L"\" \""+ExtractPath(unzippedName)+L"*\" \r\n");
 			fclose(pFile);
 		}
+		if (pTileInfo) delete pTileInfo;
 	}
 
 	// Generating an explaination/batch file
@@ -1190,38 +1181,13 @@ void CGMPainter::InitImagingFactoryOnce()
 	#endif
 }
 
-HBITMAP CGMPainter::LoadTileOrZippedTile(const std::wstring& strFullname, int zipIndex, HDC dc)
+HBITMAP CGMPainter::BufferToHBitmap(char *buffer, size_t len, HDC dc)
 {
 	HBITMAP hbm = NULL;
 
-	// Tile is a normal file:
-	if (-1 == zipIndex)
-	{
-		#ifndef USE_GDI_PLUS
-		#  if defined(BARECE) || defined(UNDER_WINE)
-		#  else
-			hbm = SHLoadImageFile(strFullname.c_str());
-		#  endif
-		#else // UNDER_CE
-			Gdiplus::Bitmap bm(strFullname.c_str());
-			Gdiplus::Color clr;
-			bm.GetHBITMAP(clr, &hbm);
-		#endif // UNDER_CE
-
-		return hbm;
-	}
-	// Tile is in a 7z file:
-	else
-	{
-		#if UNDER_CE && _WIN32_WCE < 0x500
-		#else
-		char *buffer = NULL;
-		CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strFullname);
-		if (!pDec7z->IsFileOk()) return NULL;
-		size_t len = pDec7z->GetItemSize(zipIndex);
-		buffer = (char *)GlobalAlloc(GMEM_FIXED, len);
-		pDec7z->UnzipItem(zipIndex, buffer, len);
-
+	#if UNDER_CE && _WIN32_WCE < 0x500
+	  // not possible under WM2003
+	#else
 		#ifndef USE_GDI_PLUS
 		#  if defined(BARECE) || defined(UNDER_WINE)
 		#  else
@@ -1270,9 +1236,7 @@ HBITMAP CGMPainter::LoadTileOrZippedTile(const std::wstring& strFullname, int zi
 			}
 		#endif // UNDER_CE
 
-		GlobalFree(buffer);
-//		CloseZip(hz);
-		#endif
-	}
+	#endif
+
 	return hbm;
 }

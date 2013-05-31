@@ -11,65 +11,22 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef DECODER_7Z_H
-#define DECODER_7Z_H
+#ifndef DECODER_FILE_H
+#define DECODER_FILE_H
 
-#include <string>
-#include <list>
 #include "Decoder_Common.h"
-#include "LZMA_SDK/types.h"
-#include "LZMA_SDK/7zFile.h"
-#include "LZMA_SDK/7z.h"
 
-class C7zItemInfo: public CDecoderTileInfo
+class CFileTileInfo: public CDecoderTileInfo
 {
 protected:
-	int m_itemIndex;
-	std::wstring m_zipFilename;
+	std::wstring m_filename;
 	char * m_buf;
 public:
-	C7zItemInfo(const std::wstring& zipFilename, int index) : m_itemIndex(index), m_zipFilename(zipFilename), m_buf(NULL) {};
+	CFileTileInfo(const std::wstring& filename) : m_filename(filename), m_buf(NULL) {};
 	virtual HBITMAP LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder);
 	virtual void DeleteTileIfPossible();
-	virtual bool Is7z() { return true; };
-	virtual std::wstring Get7zFilename() { return m_zipFilename; };
 	virtual char * OpenTile(int& len);
 	virtual void CloseTile();
 };
-
-class CDecoder7z
-{
-public:
-	CDecoder7z(const std::wstring& filename);
-	~CDecoder7z();
-	bool IsFileOk() { return m_ok; };
-	C7zItemInfo* FindItem(const std::wstring& itemWithPath); // returns -1 when not found
-	UInt64 GetItemSize(int itemIndex);
-	bool UnzipItem(int itemIndex, void *buffer, UInt64 len);
-
-private:
-	CFileInStream m_archiveStream;
-	CLookToRead m_lookStream;
-	CSzArEx m_db;
-	ISzAlloc m_allocImp;
-	ISzAlloc m_allocTempImp;
-	bool m_ok;
-	std::wstring m_filename;
-};
-
-class CDecoder7zPool
-{
-public:
-	CDecoder7zPool(int poolSize);
-	~CDecoder7zPool();
-	CDecoder7z* GetDecoder(const std::wstring& filename);
-
-protected:
-	typedef std::list<std::pair<std::wstring, CDecoder7z*> > TDecoderList;
-	TDecoderList m_pool;
-	int m_poolSize;
-};
-
-extern CDecoder7zPool M_Decoder7zPool;
 
 #endif

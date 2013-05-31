@@ -32,6 +32,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <list>
 #include "../VersionNumber.h"
 #include "../Track.h"
+#include "../FileFormats/Decoder_Common.h"
+
 
 struct GEOFILE_CONTENTS {
 	HBITMAP h;
@@ -66,7 +68,7 @@ struct GEOFILE_RASTERIZED {
 	}
 };
 
-class CGMPainter
+class CGMPainter: public CHBitmapBuilder
 {
 public:
 	CGMPainter(void);
@@ -127,6 +129,7 @@ public:
 	int GetLastZoom_17() const { return LEVEL_REVERSE_OFFSET - m_nLevelToDownload; };
 	long GetLastTileX() const { return m_nCenterXLastViewed/256; };
 	long GetLastTileY() const { return m_nCenterYLastViewed/256; };
+	virtual HBITMAP BufferToHBitmap(char *buffer, size_t len, HDC dc);
 
 protected:
 	int DrawSegment(HDC dc, const RECT &srcrect, const RECT &dstrect, GEOFILE_DATA& data);
@@ -135,7 +138,6 @@ protected:
 	                                GeoDataSet *pSetNotInCache, long *pnInCacheCount, GeoDataSet *pSetInCache);
 	void DeleteFrontElementFromCache();
 	void DeleteElementFromCache(const GEOFILE_DATA &data);
-	HBITMAP LoadTileOrZippedTile(const std::wstring& strFullname, int zipIndex, HDC dc);
 	void InitImagingFactoryOnce();
 
 private:

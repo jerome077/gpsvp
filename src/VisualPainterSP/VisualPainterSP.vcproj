@@ -3886,6 +3886,18 @@
 				Name="FileFormats"
 				>
 				<File
+					RelativePath="..\FileFormats\Decoder_Common.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_File.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_File.h"
+					>
+				</File>
+				<File
 					RelativePath="..\FileFormats\GPX.cpp"
 					>
 				</File>

@@ -18,6 +18,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "../PlatformDef.h"
 #include "../Lock.h"
 #include "../MapApp.h"
+#include "../FileFormats/Decoder_File.h"
+#include "../FileFormats/Decoder_SQLite.h"
 #ifndef _MSC_VER
 #include <errno.h>
 #endif
@@ -147,6 +149,54 @@ protected:
 	}
 };
 
+// Class which looks after all sqlite maps
+class CSQLiteMapFinder
+{
+public:
+	// Datatype for the items of the list:
+	class CSQLiteMap
+	{
+	public:
+		std::wstring MapName;
+		std::wstring SQliteFileWithPath;
+	};
+	// iterator for the list:
+	typedef std::list<CSQLiteMap>::const_iterator const_iterator;
+	CSQLiteMapFinder::const_iterator begin() { return m_list.begin(); };
+	CSQLiteMapFinder::const_iterator end() { return m_list.end(); };
+
+	// constructor
+	CSQLiteMapFinder(const std::wstring& strMapsRoot)
+	{
+		WIN32_FIND_DATA FindFileData;
+
+		// Find all config files from the MapConfigs folder:
+		std::wstring strSearch = strMapsRoot + L"\\*.sqlitedb";
+		HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
+		if (INVALID_HANDLE_VALUE != hFind)
+		{
+			do
+			{
+				CSQLiteMap mapConfig;
+				mapConfig.MapName = GetNameWithoutSQLiteExtension(FindFileData);
+				mapConfig.SQliteFileWithPath = strMapsRoot + L"\\" + FindFileData.cFileName;
+				m_list.push_back(mapConfig);
+			}
+			while (FindNextFile(hFind, &FindFileData));
+			FindClose(hFind);
+		}
+	};
+
+protected:
+	std::list<CSQLiteMap> m_list;
+
+	std::wstring GetNameWithoutSQLiteExtension(const WIN32_FIND_DATA &FindFileData)
+	{
+		std::wstring strFilename = FindFileData.cFileName;
+		return strFilename.substr(0, strFilename.length()-9);
+	}
+};
+
 void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 {
 	// Test cases for the variables can be through the following line activated:
@@ -188,6 +238,18 @@ void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 		if (currentUserMapNumber > gtLastGMapType) break; // Maximal count of User-Maps reached
 		iter++;
 	}
+	CSQLiteMapFinder sqliteList(m_strMapsRoot);
+	CSQLiteMapFinder::const_iterator iter_sqlite = sqliteList.begin();
+	while (sqliteList.end() != iter_sqlite)
+	{
+		CSQLiteMapSource* mapSource = new CSQLiteMapSource(currentUserMapNumber,
+			                                               iter_sqlite->MapName,
+			                                               iter_sqlite->SQliteFileWithPath);
+		m_vecRMS.push_back(mapSource); // Keep the map
+		currentUserMapNumber++;
+		if (currentUserMapNumber > gtLastGMapType) break; // Maximal count of User-Maps reached
+		iter_sqlite++;
+	}
 	if (bMapErrors)
 		MessageBox(NULL, sMapErrors.c_str(), L"Wrong maps", MB_ICONEXCLAMATION);
 	if (bMapVersionWarnings)
@@ -212,15 +274,32 @@ std::wstring CGMFileHolder::GetUnzippedFileName(const GEOFILE_DATA& data) const
 // * returns true, zipIndex=-1, name = tile file name, when the tile is not zipped.
 // * returns true, zipIndex>=0, name = zip file name, when the tile is zipped.
 // * returns false, name = theoritical tile file name, when the tile does not exist in the cache.
-bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, int& zipIndex) const
+bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, CDecoderTileInfo*& itemInfo) const
 {
 	AutoLock l;
 
-	zipIndex = -1;
+	itemInfo = NULL;
 	std::wstring path, filename;
 	FILE *pFile = NULL;
 	if (!GetDiskFileName(data, path, filename))
 		return false;
+
+	// Is it a sqlite file?
+	#if UNDER_CE && _WIN32_WCE < 0x500
+	#else
+	if (std::wstring::npos != filename.find(L".sqlitedb"))
+	{
+		CDecoderSQLite* pDecSQlite = M_DecoderSQLitePool.GetDecoder(filename);
+		if (pDecSQlite->IsFileOk())
+		{
+			itemInfo = pDecSQlite->FindItem(data.X, data.Y, data.level);
+			if (NULL != itemInfo)
+			{
+				return true;
+			}
+		}
+	}
+	#endif
 
 	// Check if there is a file
 	std::wstring fullname = m_strMapsRoot + L"/" + path + L"/" + filename;
@@ -229,7 +308,7 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, in
 	{
 		fclose(pFile);
 		pFile = NULL;
-		name = fullname;
+		itemInfo = new CFileTileInfo(fullname);
 		return true;
 	}
 
@@ -254,10 +333,9 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, std::wstring& name, in
 			CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strZip);
 			if (pDec7z->IsFileOk())
 			{
-				zipIndex = pDec7z->FindItem(strNameInZip.c_str());
-				if (-1 != zipIndex)
+				itemInfo = pDec7z->FindItem(strNameInZip.c_str());
+				if (NULL != itemInfo)
 				{
-					name = strZip;
 					return true;
 				}
 			}
@@ -470,8 +548,10 @@ long CGMFileHolder::AddFileToDownload(const GeoDataSet& data)
 bool CGMFileHolder::IsFileInCache(const GEOFILE_DATA& data)
 {
 	std::wstring name;
-	int zipIndex;
-	return GetFileName(data, name, zipIndex);
+	CDecoderTileInfo* pTileInfo;
+	bool result = GetFileName(data, pTileInfo);
+	if (pTileInfo) delete pTileInfo;
+	return result;
 }
 
 HANDLE CGMFileHolder::RelocateFiles(HANDLE h, long nMaxMSec)
@@ -788,7 +868,7 @@ long CGMFileHolder::ProcessPrefixes(const std::string &s)
 
 std::wstring CGMFileHolder::GetUserMapName(long indexUserMap) const
 {
-	return ((CIniUserMapSource *)m_vecRMS[gtFirstUserMapType+indexUserMap])->GetName();
+	return ((CUserMapSource *)m_vecRMS[gtFirstUserMapType+indexUserMap])->GetName();
 }
 
 GeoPoint CGMFileHolder::GetDemoPoint(enumGMapType type, double &scale) const

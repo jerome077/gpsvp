@@ -3223,6 +3223,26 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FileFormats\Decoder_Common.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_File.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_File.h"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_SQLite.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FileFormats\Decoder_SQLite.h"
+					>
+				</File>
+				<File
 					RelativePath="..\FileFormats\GPX.cpp"
 					>
 				</File>
@@ -3295,6 +3315,18 @@
 					</File>
 					<File
 						RelativePath="..\FileFormats\LZMA_SDK\LzmaDec.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="sqlite"
+					>
+					<File
+						RelativePath="..\FileFormats\sqlite\sqlite3.c"
+						>
+					</File>
+					<File
+						RelativePath="..\FileFormats\sqlite\sqlite3.h"
 						>
 					</File>
 				</Filter>

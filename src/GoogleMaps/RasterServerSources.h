@@ -394,8 +394,15 @@ public:
 typedef std::map<std::wstring, CUserMapZoomProp> CUserMapZoomProp_MAP;
 
 
+// Base class for user defined maps
+class CUserMapSource : public CRasterMapSource
+{
+public:
+	virtual std::wstring GetName() = 0;
+};
+
 // User defined map type (mapcfg.ini)
-class CIniUserMapSource : public CRasterMapSource
+class CIniUserMapSource : public CUserMapSource
 {
 private:
     std::wstring m_MapName;
@@ -411,7 +418,7 @@ public:
 					  const CVersionNumber& gpsVPVersion);
 	const virtual std::wstring& GetFilePrefix() const { return m_MapName; };
 	virtual std::string GetRequestURL(const GEOFILE_DATA& data);
-	std::wstring GetName() { return m_MapName; };
+	virtual std::wstring GetName() { return m_MapName; };
 
 	virtual bool GetDiskFileName(
 			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
@@ -440,5 +447,27 @@ private:
 	};
 	enumConfigErrorType m_ConfigErrorCode;
 
+};
+
+// map type stored in a sqlite file
+class CSQLiteMapSource : public CUserMapSource
+{
+private:
+    std::wstring m_MapName;
+    std::wstring m_SQLiteFilename;
+
+public:
+	CSQLiteMapSource(long iMapType,
+					 const std::wstring& mapName,
+					 const std::wstring& sqliteFilename);
+	const virtual std::wstring& GetFilePrefix() const { return m_MapName; };
+	virtual std::string GetRequestURL(const GEOFILE_DATA& data) { return ""; };
+	virtual std::wstring GetName() { return m_MapName; };
+
+	virtual bool GetDiskFileName(
+			const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+		);
+
+	virtual bool IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const;
 };
 

@@ -400,3 +400,26 @@ GeoPoint CIniUserMapSource::GetDemoPoint(double &scale) const
 	scale = pow(2.0, 16.0-m_DemoPointZoomOne);
 	return m_DemoPoint;
 };
+
+CSQLiteMapSource::CSQLiteMapSource(long iMapType,
+                                   const std::wstring& mapName,
+					               const std::wstring& sqliteFilename)
+	: m_MapName(mapName),
+	  m_SQLiteFilename(sqliteFilename)
+{
+	SetType(enumGMapType(iMapType));
+}
+
+bool CSQLiteMapSource::IsGoodFileName(GEOFILE_DATA &data, const std::wstring &name) const
+{
+    return true;
+}
+
+bool CSQLiteMapSource::GetDiskFileName(
+		const GEOFILE_DATA& gfdata, std::wstring &path, std::wstring &name, const std::wstring root
+	)
+{
+	path = L"";
+	name = m_SQLiteFilename;
+	return true;
+}
