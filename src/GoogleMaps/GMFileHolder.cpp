@@ -23,6 +23,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef _MSC_VER
 #include <errno.h>
 #endif
+#include "RasterMapFinder.h"
 
 //const unsigned char MTSERVER_MAXID = 3;
 //const unsigned char KHSERVER_MAXID = 3;
@@ -57,146 +58,6 @@ CGMFileHolder::~CGMFileHolder(void)
 	}
 }
 
-
-// Class which looks after all possible map configuration files
-class CMapConfigFinder
-{
-public:
-	// Datatype for the items of the list:
-	class CMapConfig
-	{
-	public:
-		std::wstring MapName;
-		std::wstring IniFileWithPath;
-	};
-	// iterator for the list:
-	typedef std::list<CMapConfig>::const_iterator const_iterator;
-	CMapConfigFinder::const_iterator begin() { return m_list.begin(); };
-	CMapConfigFinder::const_iterator end() { return m_list.end(); };
-
-	// constructor
-	CMapConfigFinder(const std::wstring& strMapsRoot)
-	{
-		WIN32_FIND_DATA FindFileData;
-
-		// Find all config files from the MapConfigs folder:
-		std::wstring strMapConfigsPath = app.m_wstrBasePath + L"MapConfigs\\";
-		std::wstring strSearch = strMapConfigsPath + L"*.ini";
-		HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
-		if (INVALID_HANDLE_VALUE != hFind)
-		{
-			do
-			{
-				CMapConfig mapConfig;
-				mapConfig.MapName = GetNameWithoutINIExtension(FindFileData);
-				mapConfig.IniFileWithPath = strMapConfigsPath + FindFileData.cFileName;
-				m_list.push_back(mapConfig);
-			}
-			while (FindNextFile(hFind, &FindFileData));
-			FindClose(hFind);
-		}
-
-		// Find all folders in the map cache with a config file:
-		strSearch = strMapsRoot + L"\\*";
-		hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
-		if (INVALID_HANDLE_VALUE != hFind)
-		{
-			do
-			{
-				if (   isNormalDirectory(FindFileData)
-					&& hasMapCfgFile(strMapsRoot, FindFileData)
-				   )
-				{
-					CMapConfig mapConfig;
-					mapConfig.MapName = FindFileData.cFileName;
-					mapConfig.IniFileWithPath = strMapsRoot + L"\\" + FindFileData.cFileName + L"\\mapcfg.ini";
-					m_list.push_back(mapConfig);
-				}
-			}
-			while (FindNextFile(hFind, &FindFileData));
-			FindClose(hFind);
-		}
-	};
-
-protected:
-	std::list<CMapConfig> m_list;
-
-	std::wstring GetNameWithoutINIExtension(const WIN32_FIND_DATA &FindFileData)
-	{
-		std::wstring strFilename = FindFileData.cFileName;
-		return strFilename.substr(0, strFilename.length()-4);
-	}
-
-	bool isNormalDirectory(const WIN32_FIND_DATA& ffd)
-	{
-		return (  ((ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-			   && ('.' != ffd.cFileName[0]) // no "." at the beginning
-			   );
-	}
-
-	bool hasMapCfgFile(const std::wstring& mapRootFolder, const WIN32_FIND_DATA& ffd)
-	{
-		WIN32_FIND_DATA wwd;
-		std::wstring strSearch = mapRootFolder + L"\\" + ffd.cFileName + L"\\mapcfg.ini";
-		HANDLE h = FindFirstFile(strSearch.c_str(), &wwd);
-		if (h && (h != INVALID_HANDLE_VALUE))
-		{
-			FindClose(h);
-			if (!(wwd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-				return true;
-		}
-		return false;
-	}
-};
-
-// Class which looks after all sqlite maps
-class CSQLiteMapFinder
-{
-public:
-	// Datatype for the items of the list:
-	class CSQLiteMap
-	{
-	public:
-		std::wstring MapName;
-		std::wstring SQliteFileWithPath;
-	};
-	// iterator for the list:
-	typedef std::list<CSQLiteMap>::const_iterator const_iterator;
-	CSQLiteMapFinder::const_iterator begin() { return m_list.begin(); };
-	CSQLiteMapFinder::const_iterator end() { return m_list.end(); };
-
-	// constructor
-	CSQLiteMapFinder(const std::wstring& strMapsRoot)
-	{
-		WIN32_FIND_DATA FindFileData;
-
-		// Find all config files from the MapConfigs folder:
-		std::wstring strSearch = strMapsRoot + L"\\*.sqlitedb";
-		HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
-		if (INVALID_HANDLE_VALUE != hFind)
-		{
-			do
-			{
-				CSQLiteMap mapConfig;
-				mapConfig.MapName = GetNameWithoutSQLiteExtension(FindFileData);
-				mapConfig.SQliteFileWithPath = strMapsRoot + L"\\" + FindFileData.cFileName;
-				m_list.push_back(mapConfig);
-			}
-			while (FindNextFile(hFind, &FindFileData));
-			FindClose(hFind);
-		}
-	};
-
-protected:
-	std::list<CSQLiteMap> m_list;
-
-	std::wstring GetNameWithoutSQLiteExtension(const WIN32_FIND_DATA &FindFileData)
-	{
-		std::wstring strFilename = FindFileData.cFileName;
-		return strFilename.substr(0, strFilename.length()-9);
-	}
-};
-
 void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 {
 	// Test cases for the variables can be through the following line activated:
@@ -208,13 +69,13 @@ void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 	std::wstring sMapErrors = L"Following maps won't be loaded (wrong configuration):";
 	bool bMapVersionWarnings = false;
 	std::wstring sMapVersionWarnings = L"Following maps are for a newer version of gpsVP:";
-	CMapConfigFinder configList(m_strMapsRoot);
+	CMapConfigFinder configList(app.m_wstrBasePath, m_strMapsRoot);
 	CMapConfigFinder::const_iterator iter = configList.begin();
 	while (configList.end() != iter)
 	{
 		CIniUserMapSource* mapSource = new CIniUserMapSource(currentUserMapNumber,
 			                                                 iter->MapName,
-			                                                 iter->IniFileWithPath,
+			                                                 iter->MapPath,
 												             m_strMapsRoot,
 												             gpsVPVersion);
 		if (CIniUserMapSource::cecError == mapSource->GetConfigError())
@@ -244,11 +105,23 @@ void CGMFileHolder::FindAndAddUserMaps(const CVersionNumber& gpsVPVersion)
 	{
 		CSQLiteMapSource* mapSource = new CSQLiteMapSource(currentUserMapNumber,
 			                                               iter_sqlite->MapName,
-			                                               iter_sqlite->SQliteFileWithPath);
+			                                               iter_sqlite->MapPath);
 		m_vecRMS.push_back(mapSource); // Keep the map
 		currentUserMapNumber++;
 		if (currentUserMapNumber > gtLastGMapType) break; // Maximal count of User-Maps reached
 		iter_sqlite++;
+	}
+	CMultiSQLiteMapFinder multisqliteList(m_strMapsRoot);
+	CMultiSQLiteMapFinder::const_iterator iter_multisqlite = multisqliteList.begin();
+	while (multisqliteList.end() != iter_multisqlite)
+	{
+		CSQLiteMapSource* mapSource = new CSQLiteMapSource(currentUserMapNumber,
+			                                               iter_multisqlite->MapName,
+			                                               iter_multisqlite->MapPath);
+		m_vecRMS.push_back(mapSource); // Keep the map
+		currentUserMapNumber++;
+		if (currentUserMapNumber > gtLastGMapType) break; // Maximal count of User-Maps reached
+		iter_multisqlite++;
 	}
 	if (bMapErrors)
 		MessageBox(NULL, sMapErrors.c_str(), L"Wrong maps", MB_ICONEXCLAMATION);
@@ -290,13 +163,10 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, CDecoderTileInfo*& ite
 	if (std::wstring::npos != filename.find(L".sqlitedb"))
 	{
 		CDecoderSQLite* pDecSQlite = M_DecoderSQLitePool.GetDecoder(filename);
-		if (pDecSQlite->IsFileOk())
+		itemInfo = pDecSQlite->FindItem(data.X, data.Y, data.level);
+		if (NULL != itemInfo)
 		{
-			itemInfo = pDecSQlite->FindItem(data.X, data.Y, data.level);
-			if (NULL != itemInfo)
-			{
-				return true;
-			}
+			return true;
 		}
 	}
 	#endif
@@ -331,13 +201,10 @@ bool CGMFileHolder::GetFileName(const GEOFILE_DATA& data, CDecoderTileInfo*& ite
 			fclose(pFile);
 			pFile = NULL;
 			CDecoder7z* pDec7z = M_Decoder7zPool.GetDecoder(strZip);
-			if (pDec7z->IsFileOk())
+			itemInfo = pDec7z->FindItem(strNameInZip.c_str());
+			if (NULL != itemInfo)
 			{
-				itemInfo = pDec7z->FindItem(strNameInZip.c_str());
-				if (NULL != itemInfo)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		strPathToCurrent += strCurrent + L"/";

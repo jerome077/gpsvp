@@ -1199,6 +1199,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\GoogleMaps\RasterMapFinder.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\GoogleMaps\RasterMapFinder.h"
+				>
+			</File>
+			<File
 				RelativePath="..\GoogleMaps\RasterServerSources.cpp"
 				>
 			</File>

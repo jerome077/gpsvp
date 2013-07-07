@@ -85,6 +85,7 @@ CDecoder7z::~CDecoder7z()
 
 C7zItemInfo* CDecoder7z::FindItem(const std::wstring& itemWithPath)
 {
+	if (!m_ok) return NULL;
 	int result = -1;
 	UInt16 *temp = NULL;
 	size_t tempSize = 0;

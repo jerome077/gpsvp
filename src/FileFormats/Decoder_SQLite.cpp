@@ -19,7 +19,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "sqlite/sqlite3.h"
 
 
-CDecoderSQLite::CDecoderSQLite(const std::wstring& filename)
+// ---------------------------------------------------------------------------------------
+
+CSimpleDecoderSQLite::CSimpleDecoderSQLite(const std::wstring& filename)
 	: m_sqliteFilename(filename)
 {
 	m_ok = true;
@@ -32,7 +34,7 @@ CDecoderSQLite::CDecoderSQLite(const std::wstring& filename)
 	}
 }
 
-CDecoderSQLite::~CDecoderSQLite()
+CSimpleDecoderSQLite::~CSimpleDecoderSQLite()
 {
 	if (m_ok)
 	{
@@ -40,24 +42,25 @@ CDecoderSQLite::~CDecoderSQLite()
 	}
 }
 
-CSQLiteItemInfo* CDecoderSQLite::FindItem(int X, int Y, int Z0) // Finally not Z0 but Z17
+CSQLiteItemInfo* CSimpleDecoderSQLite::FindItem(int X, int Y, int Z17)
 {
+	if (!m_ok) return NULL;
 	char sqlstr[100];
-	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z0);
+	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z17);
 	sqlite3_stmt *stmt;
 	sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
     bool found = (sqlite3_step(stmt) == SQLITE_ROW);
 	sqlite3_finalize(stmt);
 	if (found)
-		return new CSQLiteItemInfo(m_sqliteFilename, X, Y, Z0);
+		return new CSQLiteItemInfo(m_sqliteFilename, X, Y, Z17);
 	else
 		return NULL;
 }
 
-const void * CDecoderSQLite::OpenItem(int X, int Y, int Z0, size_t& len, sqlite3_stmt*& stmt)
+const void * CSimpleDecoderSQLite::OpenItem(int X, int Y, int Z17, size_t& len, sqlite3_stmt*& stmt)
 {
 	char sqlstr[100];
-	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z0);
+	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z17);
 	sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
     if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
@@ -68,10 +71,104 @@ const void * CDecoderSQLite::OpenItem(int X, int Y, int Z0, size_t& len, sqlite3
 		return NULL;
 }
 
-void CDecoderSQLite::CloseItem(sqlite3_stmt* stmt)
+void CSimpleDecoderSQLite::CloseItem(sqlite3_stmt* stmt)
 {
 	sqlite3_finalize(stmt);
 }
+
+// ---------------------------------------------------------------------------------------
+
+CMultiDecoderSQLite::CSQLiteFileItem::CSQLiteFileItem(const std::wstring& strFileName)
+	: filename(strFileName),
+	  Xmin(INT_MAX), Xmax(INT_MIN),
+	  Ymin(INT_MAX), Ymax(INT_MIN),
+	  Zmin(INT_MAX), Zmax(INT_MIN)
+{
+	int rc;
+	sqlite3 *db;
+	rc = sqlite3_open16(filename.c_str(), &db);
+	if (!rc)
+	{
+		sqlite3_stmt *stmt;
+		char sqlstr[] = "SELECT MIN(x), MAX(x), MIN(y), MAX(y), MIN(z), MAX(z) FROM tiles";
+		sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
+		if (sqlite3_step(stmt) == SQLITE_ROW)
+		{
+			Xmin = sqlite3_column_int(stmt, 0);
+			Xmax = sqlite3_column_int(stmt, 1);
+			Ymin = sqlite3_column_int(stmt, 2);
+			Ymax = sqlite3_column_int(stmt, 3);
+			Zmin = sqlite3_column_int(stmt, 4);
+			Zmax = sqlite3_column_int(stmt, 5);
+		}
+		sqlite3_finalize(stmt);
+	}
+	sqlite3_close(db);
+}
+
+CMultiDecoderSQLite::CMultiDecoderSQLite(const std::wstring& filenameWithStar)
+	: m_list()
+{
+	m_ok = true;
+	WIN32_FIND_DATA FindFileData;
+
+	// Find all .sqlitedb files collections in subfolfers of the cache folder:
+	std::wstring strFoldername = filenameWithStar.substr(0, filenameWithStar.length()-10);
+	std::wstring strSearch = filenameWithStar;
+	HANDLE hFind = FindFirstFile(strSearch.c_str(), &FindFileData);
+	if (INVALID_HANDLE_VALUE != hFind)
+	{
+		do
+		{
+			m_list.push_back(CSQLiteFileItem(strFoldername + FindFileData.cFileName));
+		}
+		while (FindNextFile(hFind, &FindFileData));
+		FindClose(hFind);
+	}
+}
+
+CMultiDecoderSQLite::~CMultiDecoderSQLite()
+{
+}
+
+CSQLiteItemInfo* CMultiDecoderSQLite::FindItem(int X, int Y, int Z17)
+{
+	if (!m_ok) return NULL;
+	CSQLiteItemInfo* pResult = NULL;
+	for (SQLiteFile_iterator iter = m_list.begin(); iter != m_list.end(); ++iter)
+	{
+		if (iter->IsInRange(X, Y, Z17))
+		{
+			CDecoderSQLite* pDecSQlite = M_DecoderSQLitePool.GetDecoder(iter->filename);
+			pResult = pDecSQlite->FindItem(X, Y, Z17);
+			if (NULL != pResult) break;
+		}
+	}
+	return pResult;
+}
+
+const void * CMultiDecoderSQLite::OpenItem(int X, int Y, int Z17, size_t& len, sqlite3_stmt*& stmt)
+{
+	if (!m_ok) return NULL;
+	const void* pResult = NULL;
+	for (SQLiteFile_iterator iter = m_list.begin(); iter != m_list.end(); ++iter)
+	{
+		if (iter->IsInRange(X, Y, Z17))
+		{
+			CDecoderSQLite* pDecSQlite = M_DecoderSQLitePool.GetDecoder(iter->filename);
+			pResult = pDecSQlite->OpenItem(X, Y, Z17, len, stmt);
+			if (NULL != pResult) break;
+		}
+	}
+	return pResult;
+}
+
+void CMultiDecoderSQLite::CloseItem(sqlite3_stmt* stmt)
+{
+	sqlite3_finalize(stmt);
+}
+
+// ---------------------------------------------------------------------------------------
 
 HBITMAP CSQLiteItemInfo::LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder)
 {
@@ -81,7 +178,7 @@ HBITMAP CSQLiteItemInfo::LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder)
 	if (!pDec->IsFileOk()) return NULL;
 	sqlite3_stmt *stmt = NULL;
 	size_t len = 0;
-	char *buf1 = (char *)pDec->OpenItem(m_X, m_Y, m_Z0, len, stmt);
+	char *buf1 = (char *)pDec->OpenItem(m_X, m_Y, m_Z17, len, stmt);
 	char *buffer = (char *)GlobalAlloc(GMEM_FIXED, len);
 	memcpy(buffer, buf1, len);
 	pDec->CloseItem(stmt);
@@ -103,7 +200,7 @@ char * CSQLiteItemInfo::OpenTile(int& len)
 	if (!pDec->IsFileOk()) return NULL;
 	sqlite3_stmt *stmt = NULL;
 	size_t size = 0;
-	char * buf1 = (char *)pDec->OpenItem(m_X, m_Y, m_Z0, size, stmt);
+	char * buf1 = (char *)pDec->OpenItem(m_X, m_Y, m_Z17, size, stmt);
 	m_buf = (char *)GlobalAlloc(GMEM_FIXED, size);
 	len = size;
 	memcpy(m_buf, buf1, len);
@@ -117,8 +214,12 @@ void CSQLiteItemInfo::CloseTile()
 	m_buf = NULL;
 }
 
+// ---------------------------------------------------------------------------------------
+
 CDecoderSQLitePool::CDecoderSQLitePool(int poolSize)
-	: m_poolSize(poolSize)
+	: m_poolSize(poolSize),
+	  m_cachedMultiFilename(L""),
+	  m_cachedMultiDecoder(NULL)
 {
 }
 
@@ -130,27 +231,48 @@ CDecoderSQLitePool::~CDecoderSQLitePool()
 		CDecoderSQLite* pDecoder = it->second;
 		delete pDecoder;
 	}
+	if (NULL != m_cachedMultiDecoder) delete m_cachedMultiDecoder;
 }
 
 CDecoderSQLite* CDecoderSQLitePool::GetDecoder(const std::wstring& filename)
 {
-	TDecoderList::iterator it;
-	for (it = m_pool.begin(); it != m_pool.end(); ++it)
+	CDecoderSQLite* pDecoder;
+	if (std::wstring::npos != filename.find(L"*.sqlitedb")) // With "*" => MultiDecoder
 	{
-		if (it->first == filename)
-			return it->second;
+		if (filename == m_cachedMultiFilename)
+		{
+			pDecoder = m_cachedMultiDecoder;
+		}
+		else
+		{
+			pDecoder = new CMultiDecoderSQLite(filename);
+			if (NULL != m_cachedMultiDecoder) delete m_cachedMultiDecoder;
+			m_cachedMultiDecoder = pDecoder;
+			m_cachedMultiFilename = filename;
+		}
 	}
+	else
+	{
+		TDecoderList::iterator it;
+		for (it = m_pool.begin(); it != m_pool.end(); ++it)
+		{
+			if (it->first == filename)
+				return it->second;
+		}
 
-	// Not found? => New decoder
-	CDecoderSQLite* pDecoder = new CDecoderSQLite(filename);
-	if (m_pool.size() >= m_poolSize)
-	{
-		CDecoderSQLite* pDecoderToRemove = m_pool.back().second;
-		m_pool.pop_back();
-		delete pDecoderToRemove;
+		// Not found? => New decoder
+		pDecoder = new CSimpleDecoderSQLite(filename);
+		if (m_pool.size() >= m_poolSize)
+		{
+			CDecoderSQLite* pDecoderToRemove = m_pool.back().second;
+			m_pool.pop_back();
+			delete pDecoderToRemove;
+		}
+		m_pool.push_front(std::make_pair(filename, pDecoder));
 	}
-	m_pool.push_front(std::make_pair(filename, pDecoder));
 	return pDecoder;
 }
 
 CDecoderSQLitePool M_DecoderSQLitePool(4);
+
+// ---------------------------------------------------------------------------------------

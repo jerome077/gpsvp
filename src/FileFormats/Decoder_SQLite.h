@@ -21,16 +21,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "sqlite/sqlite3.h"
 #include "../GoogleMaps/RasterServerSources.h"
 
+// ---------------------------------------------------------------------------------------
+
 class CSQLiteItemInfo: public CDecoderTileInfo
 {
 protected:
 	int m_X;
 	int m_Y;
-	int m_Z0;
+	int m_Z17;
 	std::wstring m_sqliteFilename;
 	char* m_buf;
 public:
-	CSQLiteItemInfo(const std::wstring& sqliteFilename, int X, int Y, int Z0) : m_sqliteFilename(sqliteFilename), m_X(X), m_Y(Y), m_Z0(Z0),
+	CSQLiteItemInfo(const std::wstring& sqliteFilename, int X, int Y, int Z17) : m_sqliteFilename(sqliteFilename), m_X(X), m_Y(Y), m_Z17(Z17),
 	                                                                            m_buf(NULL) {};
 	virtual HBITMAP LoadTile(HDC dc, CHBitmapBuilder* pHBitmapBuilder);
 	virtual void DeleteTileIfPossible();
@@ -38,22 +40,62 @@ public:
 	virtual void CloseTile();
 };
 
+// ---------------------------------------------------------------------------------------
 
 class CDecoderSQLite
 {
 public:
-	CDecoderSQLite(const std::wstring& filename);
-	~CDecoderSQLite();
-	bool IsFileOk() { return m_ok; };
-	CSQLiteItemInfo* FindItem(int X, int Y, int Z0); // returns -1 when not found
-	const void * OpenItem(int X, int Y, int Z0, size_t& len, sqlite3_stmt*& stmt);
-	void CloseItem(sqlite3_stmt* stmt);
+	virtual bool IsFileOk() { return m_ok; };
+	virtual CSQLiteItemInfo* FindItem(int X, int Y, int Z17) = 0; // returns NULL when not found
+	virtual const void * OpenItem(int X, int Y, int Z17, size_t& len, sqlite3_stmt*& stmt) = 0;
+	virtual void CloseItem(sqlite3_stmt* stmt) = 0;
 
-private:
-	std::wstring m_sqliteFilename;
-	sqlite3 *db;
+protected:
 	bool m_ok;
 };
+
+// ---------------------------------------------------------------------------------------
+
+class CSimpleDecoderSQLite: public CDecoderSQLite
+{
+public:
+	CSimpleDecoderSQLite(const std::wstring& filename);
+	~CSimpleDecoderSQLite();
+	virtual CSQLiteItemInfo* FindItem(int X, int Y, int Z17);
+	virtual const void * OpenItem(int X, int Y, int Z17, size_t& len, sqlite3_stmt*& stmt);
+	virtual void CloseItem(sqlite3_stmt* stmt);
+
+protected:
+	std::wstring m_sqliteFilename;
+	sqlite3 *db;
+};
+
+// ---------------------------------------------------------------------------------------
+
+class CMultiDecoderSQLite: public CDecoderSQLite
+{
+public:
+	CMultiDecoderSQLite(const std::wstring& filenameWithStar);
+	~CMultiDecoderSQLite();
+	virtual CSQLiteItemInfo* FindItem(int X, int Y, int Z17);
+	virtual const void * OpenItem(int X, int Y, int Z17, size_t& len, sqlite3_stmt*& stmt);
+	virtual void CloseItem(sqlite3_stmt* stmt);
+
+protected:
+	class CSQLiteFileItem
+	{
+	public:
+		std::wstring filename;
+		int Xmin, Xmax, Ymin, Ymax, Zmin, Zmax;
+		CSQLiteFileItem(const std::wstring& strFileName);
+		bool IsInRange(int X, int Y, int Z17)
+		{ return ((Xmin <= X) && (X <= Xmax) && (Ymin <= Y) && (Y <= Ymax) && (Zmin <= Z17) && (Z17 <= Zmax)); };
+	};
+	std::list<CSQLiteFileItem> m_list;
+	typedef std::list<CSQLiteFileItem>::iterator SQLiteFile_iterator;
+};
+
+// ---------------------------------------------------------------------------------------
 
 class CDecoderSQLitePool
 {
@@ -66,8 +108,12 @@ protected:
 	typedef std::list<std::pair<std::wstring, CDecoderSQLite*> > TDecoderList;
 	TDecoderList m_pool;
 	int m_poolSize;
+	CDecoderSQLite*	m_cachedMultiDecoder;
+	std::wstring m_cachedMultiFilename;
 };
 
 extern CDecoderSQLitePool M_DecoderSQLitePool;
+
+// ---------------------------------------------------------------------------------------
 
 #endif
