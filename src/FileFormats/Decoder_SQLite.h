@@ -86,10 +86,9 @@ protected:
 	{
 	public:
 		std::wstring filename;
-		int Xmin, Xmax, Ymin, Ymax, Zmin, Zmax;
+		int XminAtZmax, XmaxAtZmax, YminAtZmax, YmaxAtZmax, Z17min, Z17max;
 		CSQLiteFileItem(const std::wstring& strFileName);
-		bool IsInRange(int X, int Y, int Z17)
-		{ return ((Xmin <= X) && (X <= Xmax) && (Ymin <= Y) && (Y <= Ymax) && (Zmin <= Z17) && (Z17 <= Zmax)); };
+		bool IsInRange(int X, int Y, int Z17);
 	};
 	std::list<CSQLiteFileItem> m_list;
 	typedef std::list<CSQLiteFileItem>::iterator SQLiteFile_iterator;
@@ -113,6 +112,25 @@ protected:
 };
 
 extern CDecoderSQLitePool M_DecoderSQLitePool;
+
+// ---------------------------------------------------------------------------------------
+
+#ifndef UNDER_CE
+class CEncoderSQLite: public CCustomEncoder
+{
+public:
+	CEncoderSQLite(const std::wstring& filename);
+	~CEncoderSQLite();
+	virtual bool AddTile(const GEOFILE_DATA& data, CDecoderTileInfo*& itemInfo);
+	virtual void UpdateGlobalInfo();
+
+private:
+	std::wstring m_sqliteFilename;
+	sqlite3 *db;
+	bool m_ok;
+	sqlite3_stmt *m_stmt; 
+};
+#endif
 
 // ---------------------------------------------------------------------------------------
 

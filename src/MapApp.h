@@ -279,6 +279,8 @@ public:
 	#ifndef UNDER_CE
 	void DRMViewFormat(TSheetFormat format);
 	void DRMExportCurZoom();
+	void DRMExportSQLite();
+	void DRMExportSQLiteAtZ0(int Z0);
 	#endif
 	void DRMClearView();
 	void DRMStartWithCurrentZoom(bool withPreviousZooms);

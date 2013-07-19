@@ -179,6 +179,10 @@ enum enumMenuCommands
 	mcDownlRasterViewA4H_25000,
 	mcDownlRasterViewA4V_50000,
 	mcDownlRasterViewA4H_50000,
+	mcDownlRasterExportSQLite,
+	mcDownlRasterExportSQLiteAtZoom08,
+	mcDownlRasterExportSQLiteAtZoom09,
+	mcDownlRasterExportSQLiteAtZoom10,
 
 	mcGMapType = 0x2000,
 	mcFirstUserMapType = mcGMapType + 8,

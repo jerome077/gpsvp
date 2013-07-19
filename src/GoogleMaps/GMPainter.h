@@ -101,6 +101,8 @@ public:
 	#ifndef UNDER_CE
     void DownloadViewFormat(const TSheetFormat iFormat, const GeoPoint & gpCenterPoint);
 	void ExportCurrentZoom();
+	void ExportCurrentZoomToSQLite(const std::wstring& wstrFilename);
+	void ExportExtentToSQLite(int Z0min, int Z0max, const std::wstring& wstrFilename);
 	#endif
 	void DownloadClearView();
 	void DownloadStartWithCurrentZoom(bool withPreviousZooms);
@@ -127,8 +129,8 @@ public:
 	int GetLastZoom_00() const { return m_nLevelToDownload-1; };
 	int GetLastZoom_01() const { return m_nLevelToDownload; };
 	int GetLastZoom_17() const { return LEVEL_REVERSE_OFFSET - m_nLevelToDownload; };
-	long GetLastTileX() const { return m_nCenterXLastViewed/256; };
-	long GetLastTileY() const { return m_nCenterYLastViewed/256; };
+	long GetLastTileX() const { return m_nCenterXLastViewed >> 8; };
+	long GetLastTileY() const { return m_nCenterYLastViewed >> 8; };
 	virtual HBITMAP BufferToHBitmap(char *buffer, size_t len, HDC dc);
 
 protected:
@@ -139,6 +141,7 @@ protected:
 	void DeleteFrontElementFromCache();
 	void DeleteElementFromCache(const GEOFILE_DATA &data);
 	void InitImagingFactoryOnce();
+	void ExportToEncoder(int Z0, CCustomEncoder& encoder);
 
 private:
 	// Opened files

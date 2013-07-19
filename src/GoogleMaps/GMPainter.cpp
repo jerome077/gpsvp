@@ -26,6 +26,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <math.h>
 #include <set>
 #include "../MapApp.h"
+#if UNDER_CE && _WIN32_WCE < 0x500
+#else
+#  include "../FileFormats/Decoder_SQLite.h"
+#endif
 
 
 
@@ -1005,6 +1009,57 @@ void CGMPainter::ExportCurrentZoom()
 
 	// Displaying a few Infos about the export
 	std::wstring sInfo = std::wstring(L("Exported to map folder as ")) + wcBaseFileName + L".*";
+	MessageBox(0, sInfo.c_str(), L("Export done"), MB_ICONINFORMATION);
+}
+#endif
+
+#ifndef UNDER_CE
+void CGMPainter::ExportToEncoder(int Z0, CCustomEncoder& encoder)
+{
+	GeoDataSet filesInCache;
+	EnumerateAndProcessGeoRect(m_grectToDownload, Z0+1, m_enTypeToDownload, false,
+			                   NULL, NULL, &filesInCache);
+
+	// Export as sqlite
+	for(GeoDataSet::iterator it = filesInCache.begin(); it != filesInCache.end(); it++)
+	{
+		CDecoderTileInfo* pTileInfo;
+		m_GMFH.GetFileName(*it, pTileInfo);
+		if (NULL != pTileInfo)
+		{
+			encoder.AddTile(*it, pTileInfo);
+		}
+	}
+}
+
+void CGMPainter::ExportCurrentZoomToSQLite(const std::wstring& wstrFilename)
+{
+	{
+		CEncoderSQLite encoder(wstrFilename);
+		ExportToEncoder(GetLastZoom_00(), encoder);
+		encoder.UpdateGlobalInfo();
+	}
+
+	// Displaying a few Infos about the export
+	std::wstring sInfo = std::wstring(L("Exported to ")) + wstrFilename;
+	MessageBox(0, sInfo.c_str(), L("Export done"), MB_ICONINFORMATION);
+}
+
+
+void CGMPainter::ExportExtentToSQLite(int Z0min, int Z0max, const std::wstring& wstrFilename)
+{
+	{
+		CEncoderSQLite encoder(wstrFilename);
+		DownloadAddViewOfCurrentTileAtZoom(Z0min);
+		for(int iZ0=Z0min; iZ0<=Z0max; iZ0++)
+		{
+			ExportToEncoder(iZ0, encoder);
+		}
+		encoder.UpdateGlobalInfo();
+	}
+
+	// Displaying a few Infos about the export
+	std::wstring sInfo = std::wstring(L("Exported to ")) + wstrFilename;
 	MessageBox(0, sInfo.c_str(), L("Export done"), MB_ICONINFORMATION);
 }
 #endif

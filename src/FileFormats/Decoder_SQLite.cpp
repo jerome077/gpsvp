@@ -48,7 +48,7 @@ CSQLiteItemInfo* CSimpleDecoderSQLite::FindItem(int X, int Y, int Z17)
 	char sqlstr[100];
 	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z17);
 	sqlite3_stmt *stmt;
-	sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
+	sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
     bool found = (sqlite3_step(stmt) == SQLITE_ROW);
 	sqlite3_finalize(stmt);
 	if (found)
@@ -61,7 +61,7 @@ const void * CSimpleDecoderSQLite::OpenItem(int X, int Y, int Z17, size_t& len, 
 {
 	char sqlstr[100];
 	sprintf(sqlstr, "SELECT image FROM tiles WHERE x = %d AND y = %d AND z = %d", X, Y, Z17);
-	sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
+	sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
     if (sqlite3_step(stmt) == SQLITE_ROW)
 	{
 		len = sqlite3_column_bytes(stmt, 0);
@@ -80,9 +80,9 @@ void CSimpleDecoderSQLite::CloseItem(sqlite3_stmt* stmt)
 
 CMultiDecoderSQLite::CSQLiteFileItem::CSQLiteFileItem(const std::wstring& strFileName)
 	: filename(strFileName),
-	  Xmin(INT_MAX), Xmax(INT_MIN),
-	  Ymin(INT_MAX), Ymax(INT_MIN),
-	  Zmin(INT_MAX), Zmax(INT_MIN)
+	  XminAtZmax(INT_MAX), XmaxAtZmax(INT_MIN),
+	  YminAtZmax(INT_MAX), YmaxAtZmax(INT_MIN),
+	  Z17min(INT_MAX), Z17max(INT_MIN)
 {
 	int rc;
 	sqlite3 *db;
@@ -90,20 +90,38 @@ CMultiDecoderSQLite::CSQLiteFileItem::CSQLiteFileItem(const std::wstring& strFil
 	if (!rc)
 	{
 		sqlite3_stmt *stmt;
-		char sqlstr[] = "SELECT MIN(x), MAX(x), MIN(y), MAX(y), MIN(z), MAX(z) FROM tiles";
-		sqlite3_prepare(db, sqlstr, strlen(sqlstr), &stmt, NULL);
+		sqlite3_prepare_v2(db, "SELECT MIN(z), MAX(z) FROM tiles", -1, &stmt, NULL);
 		if (sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			Xmin = sqlite3_column_int(stmt, 0);
-			Xmax = sqlite3_column_int(stmt, 1);
-			Ymin = sqlite3_column_int(stmt, 2);
-			Ymax = sqlite3_column_int(stmt, 3);
-			Zmin = sqlite3_column_int(stmt, 4);
-			Zmax = sqlite3_column_int(stmt, 5);
+			Z17min = sqlite3_column_int(stmt, 0);
+			Z17max = sqlite3_column_int(stmt, 1);
 		}
 		sqlite3_finalize(stmt);
+		for(int Z17=Z17min; Z17<=Z17max; Z17++)
+		{
+			char sqlstr[100];
+			sprintf(sqlstr, "SELECT MIN(x), MAX(x), MIN(y), MAX(y) FROM tiles WHERE z=%d", Z17);
+			sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
+			if (sqlite3_step(stmt) == SQLITE_ROW)
+			{
+				XminAtZmax = mymin(XminAtZmax, sqlite3_column_int(stmt, 0) >> (Z17max-Z17));
+				XmaxAtZmax = mymax(XmaxAtZmax, sqlite3_column_int(stmt, 1) >> (Z17max-Z17));
+				YminAtZmax = mymin(YminAtZmax, sqlite3_column_int(stmt, 2) >> (Z17max-Z17));
+				YmaxAtZmax = mymax(YmaxAtZmax, sqlite3_column_int(stmt, 3) >> (Z17max-Z17));
+			}
+			sqlite3_finalize(stmt);
+		}
 	}
 	sqlite3_close(db);
+}
+
+bool CMultiDecoderSQLite::CSQLiteFileItem::IsInRange(int X, int Y, int Z17)
+{
+	if ((Z17 < Z17min) || (Z17max < Z17))
+		return false;
+	int XAtZmax = X >> (Z17max-Z17);
+	int YAtZmax = Y >> (Z17max-Z17);
+	return ((XminAtZmax <= XAtZmax) && (XAtZmax <= XmaxAtZmax) && (YminAtZmax <= YAtZmax) && (YAtZmax <= YmaxAtZmax));
 }
 
 CMultiDecoderSQLite::CMultiDecoderSQLite(const std::wstring& filenameWithStar)
@@ -274,5 +292,82 @@ CDecoderSQLite* CDecoderSQLitePool::GetDecoder(const std::wstring& filename)
 }
 
 CDecoderSQLitePool M_DecoderSQLitePool(4);
+
+// ---------------------------------------------------------------------------------------
+
+#ifndef UNDER_CE
+CEncoderSQLite::CEncoderSQLite(const std::wstring& filename)
+	: m_sqliteFilename(filename),
+	  m_stmt(NULL)
+{
+	m_ok = true;
+	int rc;
+	rc = sqlite3_open16(filename.c_str(), &db);
+	if (rc)
+	{
+		m_ok = false;
+		return;
+	}
+
+    sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
+    sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS tiles (x int, y int, z int, s int, image blob, PRIMARY KEY (x,y,z,s))", NULL, NULL, NULL);
+    sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS info (minzoom int, maxzoom int, url text)", NULL, NULL, NULL);
+	sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS android_metadata (locale TEXT)", NULL, NULL, NULL);
+	sqlite3_exec(db, "INSERT OR IGNORE INTO android_metadata (rowid, locale) VALUES (1, 'en_US')", NULL, NULL, NULL);
+	// Drop index to be able to insert new tiles quickly:
+    sqlite3_exec(db, "drop index IND if exists", NULL, NULL, NULL);
+}
+
+CEncoderSQLite::~CEncoderSQLite()
+{
+	if (m_ok)
+	{
+	    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
+		sqlite3_close(db);
+	}
+}
+
+bool CEncoderSQLite::AddTile(const GEOFILE_DATA& data, CDecoderTileInfo*& itemInfo)
+{
+	int rc;
+	char sqlstr[100];
+	sprintf(sqlstr, "INSERT INTO tiles (x, y, z, s, image) VALUES (%d, %d, %d, 0, ?)", data.X, data.Y, data.level);
+    rc = sqlite3_prepare_v2(db, sqlstr, -1, &m_stmt, NULL);
+    bool ok = (rc == SQLITE_OK);
+	if (ok)
+	{
+		int len;
+		char * buf = itemInfo->OpenTile(len);
+		rc = sqlite3_bind_blob(m_stmt, 1, buf, len, SQLITE_TRANSIENT);
+		bool ok = ((rc = sqlite3_step(m_stmt)) == SQLITE_DONE);
+		sqlite3_finalize(m_stmt);
+		itemInfo->CloseTile();
+    }
+	return ok;
+}
+
+void CEncoderSQLite::UpdateGlobalInfo()
+{
+	// Regenerate Index to optimize access on big tables: 
+    sqlite3_exec(db, "create index IND on tiles (x,y,z,s)", NULL, NULL, NULL);
+
+	// Get current info:
+	int Zmin = 0;
+	int Zmax = 0;
+	sqlite3_stmt *stmt;
+	sqlite3_prepare_v2(db, "SELECT MIN(z), MAX(z) FROM tiles", -1, &stmt, NULL);
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+	{
+		Zmin = sqlite3_column_int(stmt, 0);
+		Zmax = sqlite3_column_int(stmt, 1);
+	}
+	sqlite3_finalize(stmt);
+
+	// Write current info:
+	char sqlstr[100];
+	sprintf(sqlstr, "INSERT OR REPLACE INTO info (rowid, minzoom, maxzoom) VALUES (1, %d, %d)", Zmin, Zmax);
+    sqlite3_exec(db, sqlstr, NULL, NULL, NULL);
+}
+#endif
 
 // ---------------------------------------------------------------------------------------

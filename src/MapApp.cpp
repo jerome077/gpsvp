@@ -3435,6 +3435,13 @@ void CMapApp::InitMenu()
 				mmDownloadMaps.CreateItem(L("Download current and all previous zooms"), mcDownlRasterStartCurAndPreviousZooms);
 				#ifndef UNDER_CE
 				mmDownloadMaps.CreateItem(L("Export current zoom (experimental)"), mcDownlRasterExportCurZoom);
+				CMenu & mmExportSQlite = mmDownloadMaps.CreateSubMenu(L("Export to sqlitedb"));
+				{
+					mmExportSQlite.CreateItem(L("Current zoom to new or existing file"), mcDownlRasterExportSQLite);
+					mmExportSQlite.CreateItem(L("From Z0=8 to current zoom, extent of Z0=8"), mcDownlRasterExportSQLiteAtZoom08);
+					mmExportSQlite.CreateItem(L("From Z0=9 to current zoom, extent of Z0=9"), mcDownlRasterExportSQLiteAtZoom09);
+					mmExportSQlite.CreateItem(L("From Z0=10 to current zoom, extent of Z0=10"), mcDownlRasterExportSQLiteAtZoom10);
+				}
 				#endif
 				mmDownloadMaps.CreateItem(L("Show available tiles at current zoom"), mcDownlRasterShowAvailableTiles);
 			}
@@ -3710,7 +3717,13 @@ void CMapApp::CheckMenu()
 	bool fDownloadOK = m_Options[mcoDownloadGoogleMaps] && m_pRasterMapPainter->IsSelectingZoomToDownload();
 	menu.EnableMenuItem(mcDownlRasterStartWithCurZoom, fDownloadOK);
 	menu.EnableMenuItem(mcDownlRasterStartCurAndPreviousZooms, fDownloadOK);
+	#ifndef UNDER_CE
 	menu.EnableMenuItem(mcDownlRasterExportCurZoom, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterExportSQLite, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterExportSQLiteAtZoom08, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterExportSQLiteAtZoom09, fDownloadOK);
+	menu.EnableMenuItem(mcDownlRasterExportSQLiteAtZoom10, fDownloadOK);
+	#endif
 	menu.EnableMenuItem(mcDownlRasterShowAvailableTiles, fDownloadOK);
 	
 	menu.EnableMenuItem(mcCloseTranslation, !m_rsTranslationFile().empty());
@@ -4096,6 +4109,18 @@ bool CMapApp::ProcessCommand(WPARAM wp)
 #ifndef UNDER_CE
 		case mcDownlRasterExportCurZoom:
 			DRMExportCurZoom();
+			break;
+		case mcDownlRasterExportSQLite:
+			DRMExportSQLite();
+			break;
+		case mcDownlRasterExportSQLiteAtZoom08:
+			DRMExportSQLiteAtZ0(8);
+			break;
+		case mcDownlRasterExportSQLiteAtZoom09:
+			DRMExportSQLiteAtZ0(9);
+			break;
+		case mcDownlRasterExportSQLiteAtZoom10:
+			DRMExportSQLiteAtZ0(10);
 			break;
 #endif
 		case mcDownlRasterByTrack:
@@ -5470,6 +5495,52 @@ void CMapApp::DRMExportCurZoom()
 {
 	m_pRasterMapPainter->ExportCurrentZoom();
 	CheckMenu();
+}
+#endif
+
+#ifndef UNDER_CE
+void CMapApp::DRMExportSQLite()
+{
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("SQLite files\0*.sqlitedb\0"), strFile, false, false, false);
+	if (GetSaveFileName(&of))
+	{
+		int iLen = wcslen(strFile);
+		if (iLen >= 9 && !!_wcsicmp(strFile + iLen - 9, L".sqlitedb"))
+			wcscpy(strFile + iLen, L".sqlitedb");
+		m_pRasterMapPainter->ExportCurrentZoomToSQLite(strFile);
+		CheckMenu();
+	}
+}
+#endif
+
+#ifndef UNDER_CE
+int ShiftXOrY(int Value, int CurrentZ0, int WantedZ0)
+{
+	int deltaZ0 = CurrentZ0 - WantedZ0;
+	if (deltaZ0>0)
+		return (Value >> deltaZ0);
+	else if (deltaZ0<0)
+		return (Value << -deltaZ0);
+	else
+		return Value;
+}
+
+void CMapApp::DRMExportSQLiteAtZ0(int Z0)
+{
+	int Z0max = m_pRasterMapPainter->GetLastZoom_00();
+	int X = ShiftXOrY(m_pRasterMapPainter->GetLastTileX(), Z0max, Z0);
+	int Y = ShiftXOrY(m_pRasterMapPainter->GetLastTileY(), Z0max, Z0);
+	wchar_t strFile[MAX_PATH + 1] = {0};
+	wsprintf(strFile, L"%d_%d_Z%d-Z%d.sqlitedb", X, Y, Z0, Z0max);
+	OPENFILENAME of;
+	FillOpenFileName(&of, m_hWnd, L("SQLite files\0*.sqlitedb\0"), strFile, false, false, false);
+	if (GetSaveFileName(&of))
+	{
+		m_pRasterMapPainter->ExportExtentToSQLite(Z0, Z0max, strFile);
+		CheckMenu();
+	}
 }
 #endif
 

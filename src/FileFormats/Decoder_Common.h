@@ -14,7 +14,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #ifndef DECODER_COMMON_H
 #define DECODER_COMMON_H
 
+#include <string>
+#include <list>
+#include <map>
 #include "../GoogleMaps/GMCommon.h"
+#include "../GoogleMaps/RasterServerSources.h"
 #include <windows.h>
 
 #ifdef USE_GDI_PLUS
@@ -27,7 +31,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #  endif // _WIN32_WCE
 #endif // UNDER_CE
 
-// Callback taht will be implemented in GMPainter
+// ---------------------------------------------------------------------------------------
+
+// Callback that will be implemented in GMPainter
 class CHBitmapBuilder
 {
 public:
@@ -45,5 +51,16 @@ public:
 	virtual char * OpenTile(int& len) = 0;
 	virtual void CloseTile() = 0;
 };
+
+// ---------------------------------------------------------------------------------------
+
+class CCustomEncoder
+{
+public:
+	virtual bool AddTile(const GEOFILE_DATA& data, CDecoderTileInfo*& itemInfo) = 0;
+	virtual void UpdateGlobalInfo() = 0;
+};
+
+// ---------------------------------------------------------------------------------------
 
 #endif
