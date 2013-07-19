@@ -3434,7 +3434,7 @@ void CMapApp::InitMenu()
 				mmDownloadMaps.CreateItem(L("Download current zoom"), mcDownlRasterStartWithCurZoom);
 				mmDownloadMaps.CreateItem(L("Download current and all previous zooms"), mcDownlRasterStartCurAndPreviousZooms);
 				#ifndef UNDER_CE
-				mmDownloadMaps.CreateItem(L("Export current zoom (experimental)"), mcDownlRasterExportCurZoom);
+				mmDownloadMaps.CreateItem(L("Export current zoom to VRT/GeoTiff"), mcDownlRasterExportCurZoom);
 				CMenu & mmExportSQlite = mmDownloadMaps.CreateSubMenu(L("Export to sqlitedb"));
 				{
 					mmExportSQlite.CreateItem(L("Current zoom to new or existing file"), mcDownlRasterExportSQLite);
