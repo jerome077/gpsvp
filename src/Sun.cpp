@@ -140,8 +140,8 @@ void FillAmS(double t)
 	AskS[5] =-20e-6;	AckS[5] = 11e-6;	AsrS[5] =-1146e-9;	AcrS[5] =-2062e-9;
 	AskS[6] = 0;		AckS[6] = 0;		AsrS[6] = 136e-9;	AcrS[6] = 84e-9;
 	AskS[7] = 14e-6;	AckS[7] =-23e-6;	AsrS[7] = 5822e-9;	AcrS[7] = 3593e-9;
-	AskS[8] =-8e-6;		AckS[7] = 9e-6;		AsrS[8] =-632e-9;	AcrS[8] =-596e-9;
-	AskS[9] = 0;		AckS[8] =-3e-6;		AsrS[9] = 1044e-9;	AcrS[9] = 0;
+	AskS[8] =-8e-6;		AckS[8] = 9e-6;		AsrS[8] =-632e-9;	AcrS[8] =-596e-9;
+	AskS[9] = 0;		AckS[9] =-3e-6;		AsrS[9] = 1044e-9;	AcrS[9] = 0;
 	AskS[10] =-2e-6;	AckS[10] = 7e-6;	AsrS[10] =-1448e-9;	AcrS[10] =-381e-9;
 	AskS[11] =-3e-6;	AckS[11] = 4e-6;	AsrS[11] = 148e-9;	AcrS[11] = 126e-9;
 	AskS[12] = 0;		AckS[12] =-1e-6;	AsrS[12] = 337e-9;	AcrS[12] =-166e-9;
